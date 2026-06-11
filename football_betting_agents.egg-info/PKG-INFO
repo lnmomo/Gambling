@@ -1,0 +1,87 @@
+Metadata-Version: 2.4
+Name: football-betting-agents
+Version: 1.0.0
+Summary: 竞彩足球概率建模、赔率比较、风控与复盘系统
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi>=0.115
+Requires-Dist: uvicorn[standard]>=0.30
+Requires-Dist: pydantic>=2.8
+Requires-Dist: numpy>=2.0
+Requires-Dist: pandas>=2.2
+Requires-Dist: python-multipart>=0.0.9
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+Requires-Dist: httpx>=0.27; extra == "dev"
+
+# 竞彩足球多 Agent 概率决策辅助系统
+
+一个可运行、可审计的胜平负（1X2）概率研究系统，实现策划案中的核心闭环：赔率快照、Elo、Dixon-Coles Poisson、市场去水、概率集成、EV 比较、批判者硬规则、分数凯利、回测指标、REST API 和中文看板。
+
+> 重要：本项目只用于数据分析、课程研究与理性决策参考。不保证收益，不自动购买彩票，不提供追损或倍投能力，不面向未成年人。默认输出是 `NO_BET`。
+
+## 快速开始
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -e .
+python -m football_agents.cli init-db
+python -m football_agents.cli seed-demo
+python -m football_agents.cli serve
+```
+
+打开 `http://127.0.0.1:8000` 查看看板，`http://127.0.0.1:8000/docs` 查看 OpenAPI 文档。
+
+也可以直接使用 Docker：
+
+```powershell
+docker compose up --build
+```
+
+## 系统结构
+
+```text
+football_agents/
+  agents/          确定性多 Agent 工作流与审计链
+  backtesting/     时间序列回测、Brier、Log Loss、ECE、ROI、回撤
+  database/        SQLite schema（表边界可迁移到 PostgreSQL）
+  models/          Elo、Dixon-Coles Poisson、市场概率与集成
+  risk/            批判者硬规则、四分之一凯利、额度控制
+  sample_data/     仅用于功能验证的虚构历史数据
+  web/             无构建依赖的中文响应式看板
+```
+
+## 决策逻辑
+
+1. 保存官方 SP 与外部市场赔率快照，缺少任一完整 1X2 组即 `NO_BET`。
+2. Elo 估计长期实力，Dixon-Coles Poisson 估计比分分布，市场赔率去水后形成市场概率。
+3. 默认权重为 Elo 20%、Poisson 45%、市场 35%，输出归一化集成概率。
+4. 对三个选项计算 `EV = probability * SP - 1`，选择最高 EV 候选。
+5. 批判者检查赔率新鲜度、来源置信度、模型分歧、EV、比赛状态、历史回测、日周暴露及连续亏损。
+6. 全部通过才允许 `BET`；正 EV 但未通过为 `WATCH`；其余为 `NO_BET`。
+7. 仓位为四分之一凯利，并受单场 1%、单日 3%、单周 8% 硬上限约束。
+
+所有阈值都可通过 `.env.example` 中的环境变量调整。正式使用前应基于真实、合法获得的历史数据完成 walk-forward 验证与概率校准。
+
+## 数据导入与回测
+
+CSV 字段参考 `football_agents/sample_data/historical_matches.csv`：
+
+```powershell
+python -m football_agents.cli backtest football_agents/sample_data/historical_matches.csv
+```
+
+API 支持 `POST /api/backtest/run`（JSON）和 `POST /api/backtest/upload-csv`。回测严格按日期排序，先用赛前信息预测，再用赛果更新 Elo。
+
+## 数据源边界
+
+项目不内置绕过反爬或访问控制的采集器。生产接入应优先使用授权 API、公开下载、合规 CSV 导入或人工录入，并为每条数据保存来源与时间戳。第三方新闻、天气、xG 与赔率源可通过仓储接口增加适配器，但未经验证的数据不应驱动推荐。
+
+## 测试
+
+```powershell
+python -m unittest discover -s tests -v
+```
+
+覆盖概率归一化、赔率去水、数据过期 veto、连续亏损暂停、仓位硬上限、缺失数据 `NO_BET`、持久化审计链及样例回测。

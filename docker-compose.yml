@@ -1,0 +1,13 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_PATH: /app/data/football_agents.db
+      BANKROLL: 10000
+    volumes:
+      - football_data:/app/data
+volumes:
+  football_data:
+
