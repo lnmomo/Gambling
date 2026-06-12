@@ -158,7 +158,8 @@ def official_matches() -> list[dict]:
                        "weather": repository.latest_weather(match["id"]),
                        "metadata": repository.get_match_metadata(match["id"]),
                        "signal": repository.latest_signal(match["id"]),
-                       "llm_analysis": repository.latest_llm_analysis(match["id"])})
+                       "llm_analysis": repository.latest_llm_analysis(match["id"]),
+                       "features": repository.latest_features(match["id"])})
     return output
 
 

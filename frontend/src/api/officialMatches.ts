@@ -1,56 +1,11 @@
-import type {MatchStatus,OfficialMatch,Recommendation} from "../types";
+import {calculatePredictionForMatch,clamp} from "../services/probabilityEngine";
+import type {LeagueStats,MatchContext,MatchStatus,OfficialMatch,OfficialSp,TeamStats} from "../types";
 
-interface OfficialMatchResponse {
-  id:number;
-  official_match_id:string;
-  league:string;
-  home_team:string;
-  away_team:string;
-  kickoff_time:string;
-  status:string;
-  last_seen_at:string|null;
-  official_odds:Partial<Record<"home"|"draw"|"away",number>>;
-  market_odds:Partial<Record<"home"|"draw"|"away",number>>;
-  prediction:{model_name:string;p_home:number;p_draw:number;p_away:number;fair_odds_home:number|null;fair_odds_draw:number|null;fair_odds_away:number|null;metadata?:{market_calibrated?:boolean}}|null;
-  signal:{status:string;option:"home"|"draw"|"away"|null;confidence:string}|null;
-  news:Array<{raw_text:string;source_url:string;published_at:string;confidence:number}>;
-  weather:{temperature:number|null;humidity:number|null;rainfall:number|null;wind_speed:number|null;fetched_at:string}|null;
-  metadata:{venue:string|null;city:string|null}|null;
-  llm_analysis:{model:string;created_at:string;analysis:{summary:string;home_team_impact:number;away_team_impact:number;lineup_confidence:number;news_confidence:number;injuries:string[];risks:string[];evidence:string[]}}|null;
-}
-
-const statusMap:Record<string,MatchStatus>={
-  scheduled:"NOT_STARTED",live:"LIVE",finished:"FINISHED",cancelled:"CANCELLED",
-  postponed:"POSTPONED",closed:"CLOSED",unknown:"CLOSED"
-};
-
-export function mapOfficialMatch(row:OfficialMatchResponse):OfficialMatch {
-  const prediction={home:row.prediction?.p_home??0,draw:row.prediction?.p_draw??0,away:row.prediction?.p_away??0};
-  const modelFairOdds={home:row.prediction?.fair_odds_home??0,draw:row.prediction?.fair_odds_draw??0,away:row.prediction?.fair_odds_away??0};
-  const marketCalibrated=row.prediction?.model_name==="ensemble";
-  const recommendation=row.signal?.status==="BET"&&row.signal.option?row.signal.option.toUpperCase() as "HOME"|"DRAW"|"AWAY":"NO_BET";
-  const officialSp={home:row.official_odds.home??0,draw:row.official_odds.draw??0,away:row.official_odds.away??0};
-  return {
-    id:String(row.id),officialMatchId:row.official_match_id,league:row.league,
-    homeTeam:row.home_team,awayTeam:row.away_team,kickoffTime:row.kickoff_time,
-    status:statusMap[row.status]??"CLOSED",
-    officialSp,marketOdds:{home:row.market_odds.home??0,draw:row.market_odds.draw??0,away:row.market_odds.away??0},
-    modelProbability:prediction,modelFairOdds,predictionType:row.prediction?.model_name??null,marketCalibrated,
-    ev:marketCalibrated?{home:prediction.home*officialSp.home-1,draw:prediction.draw*officialSp.draw-1,away:prediction.away*officialSp.away-1}:{home:0,draw:0,away:0},
-    recommendation,confidence:row.signal?.confidence??"-",riskLevel:row.signal?.status==="BET"?"LOW":"MEDIUM",
-    updatedAt:row.last_seen_at??"-",news:(row.news??[]).map(item=>({title:item.raw_text,url:item.source_url,publishedAt:item.published_at,confidence:item.confidence})),
-    weather:row.weather?{temperature:row.weather.temperature,humidity:row.weather.humidity,rainfall:row.weather.rainfall,windSpeed:row.weather.wind_speed,fetchedAt:row.weather.fetched_at}:null,
-    venue:row.metadata?.venue??row.metadata?.city??null,
-    llmAnalysis:row.llm_analysis?{summary:row.llm_analysis.analysis.summary,homeTeamImpact:row.llm_analysis.analysis.home_team_impact,awayTeamImpact:row.llm_analysis.analysis.away_team_impact,lineupConfidence:row.llm_analysis.analysis.lineup_confidence,newsConfidence:row.llm_analysis.analysis.news_confidence,injuries:row.llm_analysis.analysis.injuries,risks:row.llm_analysis.analysis.risks,evidence:row.llm_analysis.analysis.evidence,model:row.llm_analysis.model,createdAt:row.llm_analysis.created_at}:null
-  };
-}
-
-export async function fetchOfficialMatches(signal?:AbortSignal):Promise<OfficialMatch[]> {
-  const response=await fetch("/api/official/matches",{signal});
-  if(!response.ok)throw new Error(`官方比赛接口请求失败 (${response.status})`);
-  return ((await response.json()) as OfficialMatchResponse[]).map(mapOfficialMatch);
-}
-
-export function toNoBetRecommendation(match:OfficialMatch):Recommendation {
-  return {matchId:match.id,type:"NO_BET",confidence:"-",stake:"0%",riskReason:"尚无完整模型预测，暂不推荐"};
-}
+interface ApiMatch{id:number;official_match_id:string;league:string;home_team:string;away_team:string;kickoff_time:string;status:string;last_seen_at:string|null;official_odds:Partial<OfficialSp>;odds_fetched_at:string|null;market_odds:Partial<OfficialSp>;news:Array<{raw_text:string;source_url:string;published_at:string;confidence:number}>;weather:{temperature:number|null;humidity:number|null;rainfall:number|null;wind_speed:number|null;fetched_at:string}|null;metadata:{venue:string|null;city:string|null}|null;llm_analysis:{model:string;created_at:string;analysis:{summary:string;home_team_impact:number;away_team_impact:number;lineup_confidence:number;news_confidence:number;injuries:string[];risks:string[];evidence:string[]}}|null;features:Record<string,unknown>}
+const statusMap:Record<string,MatchStatus>={scheduled:"NOT_STARTED",live:"LIVE",finished:"FINISHED",cancelled:"CANCELLED",postponed:"POSTPONED",closed:"CLOSED",unknown:"CLOSED"};
+const num=(value:unknown,fallback=0)=>typeof value==="number"&&Number.isFinite(value)?value:fallback;
+function contextFor(row:ApiMatch):MatchContext{const llm=row.llm_analysis?.analysis,confidence=llm?.news_confidence??0,w=row.weather;let weather=1;if(w){if(num(w.rainfall)>=5)weather-=.08;else if(num(w.rainfall)>=1)weather-=.03;if(num(w.wind_speed)>=35)weather-=.07;else if(num(w.wind_speed)>=20)weather-=.03;const t=num(w.temperature,18);if(t<=0||t>=34)weather-=.04}return{weatherGoalFactor:clamp(weather,.85,1.08),homeNewsAdjustment:clamp(1+(confidence>=.4?(llm?.home_team_impact??0):0),.85,1.15),awayNewsAdjustment:clamp(1+(confidence>=.4?(llm?.away_team_impact??0):0),.85,1.15),newsReliability:llm?(confidence>=.75?"HIGH":confidence>=.4?"MEDIUM":"LOW"):undefined,lineupKnown:llm?llm.lineup_confidence>=.6:undefined,isCupOrFriendly:/杯|友谊|国际赛/i.test(row.league)}}
+function teamStats(row:ApiMatch,side:"home"|"away"):TeamStats|undefined{const f=row.features??{},prefix=side,recentMatches=num(f[`${prefix}_recent_matches`]);if(!recentMatches&&typeof f[`${prefix}_rating`]!=="number")return undefined;return{team:side==="home"?row.home_team:row.away_team,league:row.league,elo:num(f[`${prefix}_rating`],1500),recentGoalsFor:num(f[`${prefix}_recent_goals_for`]),recentGoalsAgainst:num(f[`${prefix}_recent_goals_against`]),recentMatches}}
+function leagueStats(row:ApiMatch):LeagueStats|undefined{const f=row.features??{};if(typeof f.league_avg_home_goals!=="number"&&typeof f.league_avg_away_goals!=="number")return undefined;return{league:row.league,avgHomeGoals:num(f.league_avg_home_goals,1.45),avgAwayGoals:num(f.league_avg_away_goals,1.15),avgTeamGoals:num(f.league_avg_team_goals,1.3)}}
+export function mapOfficialMatch(row:ApiMatch):OfficialMatch{const officialSp={home:num(row.official_odds.home),draw:num(row.official_odds.draw),away:num(row.official_odds.away)},marketOdds={home:num(row.market_odds.home),draw:num(row.market_odds.draw),away:num(row.market_odds.away)},home=teamStats(row,"home"),away=teamStats(row,"away"),context=contextFor(row),base={id:String(row.id),officialMatchId:row.official_match_id,league:row.league,homeTeam:row.home_team,awayTeam:row.away_team,kickoffTime:row.kickoff_time,status:statusMap[row.status]??"CLOSED",officialSp,updatedAt:row.odds_fetched_at??row.last_seen_at??"",marketOdds,news:(row.news??[]).map(item=>({title:item.raw_text,url:item.source_url,publishedAt:item.published_at,confidence:item.confidence})),weather:row.weather?{temperature:row.weather.temperature,humidity:row.weather.humidity,rainfall:row.weather.rainfall,windSpeed:row.weather.wind_speed,fetchedAt:row.weather.fetched_at}:null,venue:row.metadata?.venue??row.metadata?.city??null,llmAnalysis:row.llm_analysis?{summary:row.llm_analysis.analysis.summary,homeTeamImpact:row.llm_analysis.analysis.home_team_impact,awayTeamImpact:row.llm_analysis.analysis.away_team_impact,lineupConfidence:row.llm_analysis.analysis.lineup_confidence,newsConfidence:row.llm_analysis.analysis.news_confidence,injuries:row.llm_analysis.analysis.injuries,risks:row.llm_analysis.analysis.risks,evidence:row.llm_analysis.analysis.evidence,model:row.llm_analysis.model,createdAt:row.llm_analysis.created_at}:null,homeStats:home,awayStats:away,context};const teams:Record<string,TeamStats>={};if(home)teams[row.home_team]=home;if(away)teams[row.away_team]=away;const leagues:Record<string,LeagueStats>={};const league=leagueStats(row);if(league)leagues[row.league]=league;const prediction=calculatePredictionForMatch(base,teams,leagues,{[base.id]:context});return{...base,prediction,modelProbability:prediction.finalProbability,modelFairOdds:prediction.fairOdds,ev:prediction.ev,recommendation:prediction.recommendation,confidence:prediction.confidenceGrade,riskLevel:prediction.modelDisagreement>.12||!prediction.criticPassed?"HIGH":prediction.modelDisagreement>.08?"MEDIUM":"LOW",predictionType:"market + poisson + elo",marketCalibrated:Object.values(marketOdds).every(value=>value>1)}}
+export async function fetchOfficialMatches(signal?:AbortSignal):Promise<OfficialMatch[]>{const response=await fetch("/api/official/matches",{signal});if(!response.ok)throw new Error(`官方比赛接口请求失败 (${response.status})`);return((await response.json()) as ApiMatch[]).map(mapOfficialMatch)}

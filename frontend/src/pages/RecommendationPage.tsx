@@ -1,9 +1,7 @@
-﻿import EmptyState from "../components/EmptyState";
+import {useMemo,useState} from "react";
+import FilterBar from "../components/FilterBar";
+import MatchTable from "../components/MatchTable";
 import PageHeader from "../components/PageHeader";
 import useOfficialMatches from "../hooks/useOfficialMatches";
 
-export default function RecommendationPage(){
-  const {matches,loading,error}=useOfficialMatches();
-  return <div className="page"><PageHeader title="推荐中心" subtitle="只展示后端真实模型决策，不根据官方 SP 伪造推荐"/><section className="panel">{loading?<p className="empty-state">正在检查推荐数据...</p>:error?<p className="empty-state">{error}</p>:<EmptyState title="暂无真实推荐数据" description={`已接入 ${matches.length} 场官方比赛，但尚未接入真实球队特征和外部市场赔率，因此不生成预测，全部保持 No Bet。`}/>}</section></div>;
-}
-
+export default function RecommendationPage(){const {matches,loading,error}=useOfficialMatches();const [decision,setDecision]=useState(""),[league,setLeague]=useState("");const filtered=useMemo(()=>matches.filter(m=>(!decision||m.recommendation===decision)&&(!league||m.league===league)),[matches,decision,league]);return <div className="page"><PageHeader title="推荐中心" subtitle="展示概率引擎计算结果；未通过质检的比赛明确标记 No Bet"/><section className="summary-strip"><span>全部比赛<b>{matches.length}</b></span><span>可执行推荐<b>{matches.filter(m=>m.recommendation!=="NO_BET").length}</b></span><span>No Bet<b>{matches.filter(m=>m.recommendation==="NO_BET").length}</b></span></section><section className="panel"><FilterBar><select value={decision} onChange={e=>setDecision(e.target.value)}><option value="">全部决策</option><option value="HOME">主胜</option><option value="DRAW">平局</option><option value="AWAY">客胜</option><option value="NO_BET">No Bet</option></select><select value={league} onChange={e=>setLeague(e.target.value)}><option value="">全部联赛</option>{[...new Set(matches.map(m=>m.league))].map(x=><option key={x}>{x}</option>)}</select></FilterBar>{loading?<p className="empty-state">正在计算...</p>:error?<p className="empty-state">{error}</p>:<MatchTable matches={filtered}/>}</section></div>}
