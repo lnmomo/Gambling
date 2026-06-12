@@ -1,0 +1,2 @@
+import { useLocation } from "react-router-dom";
+export default function PlaceholderPage(){const section=useLocation().pathname.slice(1);return <div className="page"><div className="page-heading"><div><p>工作台 / {section}</p><h1>功能模块建设中</h1><span>当前版本优先交付 Dashboard 与 Agent Workflow 监控。</span></div></div><section className="panel placeholder-panel"><h2>{section}</h2><p>该入口已纳入后台信息架构，后续接入对应业务数据。</p></section></div>}

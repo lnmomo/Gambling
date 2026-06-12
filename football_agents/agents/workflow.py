@@ -28,6 +28,7 @@ class DecisionWorkflow:
         self.critic = CriticPolicy(self.limits)
 
     def evaluate(self, match_id: int, bankroll: float | None = None) -> dict[str, Any]:
+        limits = self._current_limits()
         match = self.repository.get_match(match_id)
         if not match:
             raise KeyError(f"Match {match_id} not found")
@@ -36,15 +37,29 @@ class DecisionWorkflow:
         features = self.repository.latest_features(match_id)
         if len(official["odds"]) != 3:
             return self._blocked(match_id, "缺少完整的官方胜平负 SP 快照")
-        if len(market["odds"]) != 3:
-            return self._blocked(match_id, "缺少完整的外部市场赔率，无法进行市场校准")
+        required_features = {"home_rating", "away_rating", "lambda_home", "lambda_away"}
+        missing_features = sorted(required_features - features.keys())
+        if missing_features:
+            return self._blocked(match_id, f"缺少真实球队特征：{', '.join(missing_features)}；禁止使用默认参数生成同质化预测")
 
         elo_prediction = self.elo.predict(
-            match["home_team"], match["away_team"], features.get("home_rating"), features.get("away_rating")
+            match["home_team"], match["away_team"], features["home_rating"], features["away_rating"]
         )
         poisson_prediction = self.poisson.predict(
-            features.get("lambda_home", 1.45), features.get("lambda_away", 1.10)
+            features["lambda_home"], features["lambda_away"]
         )
+        self.repository.add_prediction(match_id, "elo", elo_prediction)
+        self.repository.add_prediction(match_id, "poisson", poisson_prediction)
+        baseline = self.ensemble.predict({"elo": elo_prediction, "poisson": poisson_prediction})
+        baseline_fair_odds = {option: 1 / probability for option, probability in baseline.items()}
+        self.repository.add_prediction(match_id, "baseline", baseline, {
+            "market_calibrated": False, "fair_odds": baseline_fair_odds,
+        })
+        if len(market["odds"]) != 3:
+            blocked = self._blocked(match_id, "缺少完整的外部市场赔率，基线模型已生成但禁止计算 EV 与推荐")
+            return {**blocked, "models": {"elo": elo_prediction, "poisson": poisson_prediction},
+                    "baseline": baseline, "fair_odds": baseline_fair_odds, "market_calibrated": False}
+
         market_prediction = market_probabilities(market["odds"])
         component_predictions = {
             "elo": elo_prediction,
@@ -53,10 +68,10 @@ class DecisionWorkflow:
         }
         ensemble_prediction = self.ensemble.predict(component_predictions)
         disagreement = self.ensemble.disagreement(component_predictions)
-        for name, prediction in component_predictions.items():
-            self.repository.add_prediction(match_id, name, prediction)
+        self.repository.add_prediction(match_id, "market", market_prediction)
         self.repository.add_prediction(match_id, "ensemble", ensemble_prediction, {
-            "weights": self.ensemble.weights, "disagreement": disagreement
+            "weights": self.ensemble.weights, "disagreement": disagreement,
+            "fair_odds": {option: 1 / probability for option, probability in ensemble_prediction.items()},
         })
 
         candidates = []
@@ -70,7 +85,7 @@ class DecisionWorkflow:
                 "ev": probability * sp - 1,
             })
         best = max(candidates, key=lambda item: item["ev"])
-        critic = self.critic.evaluate(
+        critic = CriticPolicy(limits).evaluate(
             odds_fetched_at=official["fetched_at"],
             source_confidence=features.get("source_confidence", 0.9),
             disagreement=disagreement,
@@ -87,7 +102,7 @@ class DecisionWorkflow:
             status = "BET"
             confidence = "A" if best["ev"] >= 0.10 and disagreement <= 0.04 else "B"
             stake = calculate_stake(
-                bankroll or settings.bankroll, best["probability"], best["sp"], self.limits,
+                bankroll or settings.bankroll, best["probability"], best["sp"], limits,
                 features.get("daily_exposure_fraction", 0) * (bankroll or settings.bankroll),
                 features.get("weekly_exposure_fraction", 0) * (bankroll or settings.bankroll),
             )
@@ -103,12 +118,24 @@ class DecisionWorkflow:
             "match": match,
             "models": component_predictions,
             "ensemble": ensemble_prediction,
+            "fair_odds": {option: 1 / probability for option, probability in ensemble_prediction.items()},
+            "market_calibrated": True,
             "model_disagreement": disagreement,
             "candidates": candidates,
             "critic": critic,
             "signal": signal,
-            "risk_limits": asdict(self.limits),
+            "risk_limits": asdict(limits),
         }
+
+    def _current_limits(self) -> RiskLimits:
+        saved = self.repository.get_settings().get("rules", {})
+        return RiskLimits(
+            min_ev=float(saved.get("min_ev", self.limits.min_ev)),
+            max_odds_age_minutes=int(saved.get("odds_max_age_minutes", self.limits.max_odds_age_minutes)),
+            max_single_fraction=float(saved.get("max_single_stake", self.limits.max_single_fraction)),
+            max_daily_fraction=float(saved.get("max_daily_exposure", self.limits.max_daily_fraction)),
+            max_weekly_fraction=float(saved.get("max_weekly_exposure", self.limits.max_weekly_fraction)),
+        )
 
     def _blocked(self, match_id: int, reason: str) -> dict[str, Any]:
         critic = {"passed": False, "risk_level": "HIGH", "checks": {"required_data": False}, "reasons": [reason]}

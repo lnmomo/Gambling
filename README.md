@@ -12,10 +12,42 @@ python -m venv .venv
 pip install -e .
 python -m football_agents.cli init-db
 python -m football_agents.cli seed-demo
+python -m football_agents.cli sync-official
+python -m football_agents.cli sync-data
 python -m football_agents.cli serve
 ```
 
 打开 `http://127.0.0.1:8000` 查看看板，`http://127.0.0.1:8000/docs` 查看 OpenAPI 文档。
+
+## 官方比赛数据同步
+
+系统通过本机 Microsoft Edge 渲染中国竞彩网公开赛事页面，读取页面中已展示的官方比赛、销售状态与胜平负 SP。默认 60 秒内不会重复抓取，可用以下命令强制刷新：
+
+```powershell
+python -m football_agents.cli sync-official --force
+```
+
+对应接口为 `POST /api/official/sync`、`GET /api/official/status` 和 `GET /api/official/matches`。浏览器路径、超时和最小同步间隔可在 `.env` 中配置。SP 不完整的比赛仍会进入官方比赛池，但不会写入有效赔率快照，也不会驱动推荐。
+
+本实现只读取公开页面正常渲染的内容，不绕过验证码、登录、访问控制或网站限制。正式长期运行前，应向数据提供方确认授权、频率与使用条款。
+
+## 外部数据与模型
+
+- 外部胜平负赔率：The Odds API。需要在 `.env` 配置 `THE_ODDS_API_KEY`，系统按球队和开赛时间匹配并计算多家机构平均赔率。
+- 新闻：优先读取 Google News RSS，GDELT DOC API 作为备用；文章标题、链接、时间和来源置信度会保存到数据库。
+- 天气：使用 Open-Meteo 逐小时预报。必须先通过 `PUT /api/matches/{id}/metadata` 保存真实场地经纬度，系统不会根据主队猜测中立场地。
+- 模型：只有具备真实 Elo 实力评分及双方预期进球参数时，才生成 Elo + Poisson 基线概率和模型公平赔率（`1 / 概率`）。缺少球队特征时不使用默认参数；只有外部市场赔率匹配成功后，才生成市场校准集成预测、EV 和最终风控信号。模型公平赔率不是对未来庄家开盘值的猜测。
+
+统一同步命令和接口：
+
+```powershell
+python -m football_agents.cli sync-data --limit 40
+```
+
+```text
+POST /api/data/sync
+GET  /api/data/status
+```
 
 也可以直接使用 Docker：
 

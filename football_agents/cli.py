@@ -9,6 +9,9 @@ import uvicorn
 
 from .backtesting import BacktestEngine
 from .db import db
+from .official_data import OfficialDataService
+from .integrations import DataEnrichmentService
+from .llm import LLMNewsAgent
 from .seed import seed_demo
 
 
@@ -20,6 +23,13 @@ def main() -> None:
     serve.add_argument("--port", type=int, default=8000)
     sub.add_parser("init-db", help="初始化数据库")
     sub.add_parser("seed-demo", help="写入并评估演示比赛")
+    sync = sub.add_parser("sync-official", help="低频同步中国竞彩网公开赛程与 SP")
+    sync.add_argument("--force", action="store_true", help="忽略最小同步间隔")
+    data_sync = sub.add_parser("sync-data", help="同步外部赔率、新闻、天气并运行模型")
+    data_sync.add_argument("--limit", type=int, default=40)
+    llm = sub.add_parser("analyze-news", help="使用大模型分析指定比赛新闻")
+    llm.add_argument("match_id", type=int)
+    llm.add_argument("--force", action="store_true")
     backtest = sub.add_parser("backtest", help="运行历史 CSV 回测")
     backtest.add_argument("csv")
     backtest.add_argument("--bankroll", type=float, default=10_000)
@@ -32,6 +42,15 @@ def main() -> None:
         print(f"Database initialized: {db.path}")
     elif args.command == "seed-demo":
         print(json.dumps(seed_demo(), ensure_ascii=False, indent=2))
+    elif args.command == "sync-official":
+        db.initialize()
+        print(json.dumps(OfficialDataService().sync(force=args.force), ensure_ascii=False, indent=2))
+    elif args.command == "sync-data":
+        db.initialize()
+        print(json.dumps(DataEnrichmentService().sync(limit=args.limit), ensure_ascii=False, indent=2))
+    elif args.command == "analyze-news":
+        db.initialize()
+        print(json.dumps(LLMNewsAgent().analyze(args.match_id, force=args.force), ensure_ascii=False, indent=2))
     else:
         with Path(args.csv).open(encoding="utf-8-sig", newline="") as handle:
             rows = list(csv.DictReader(handle))

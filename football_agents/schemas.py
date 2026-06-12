@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -32,10 +32,10 @@ class OddsCreate(BaseModel):
 
 
 class FeatureCreate(BaseModel):
-    home_rating: float = 1500
-    away_rating: float = 1500
-    lambda_home: float = Field(default=1.45, gt=0)
-    lambda_away: float = Field(default=1.10, gt=0)
+    home_rating: float
+    away_rating: float
+    lambda_home: float = Field(gt=0)
+    lambda_away: float = Field(gt=0)
     source_confidence: float = Field(default=0.9, ge=0, le=1)
     lineup_confirmed: bool = False
     backtest_roi: float | None = None
@@ -51,6 +51,19 @@ class EvaluateRequest(BaseModel):
     official_source: str = "manual"
     market_source: str = "market_consensus"
     fetched_at: datetime | None = None
+
+
+class MatchMetadataCreate(BaseModel):
+    venue: str | None = None
+    city: str | None = None
+    country: str | None = None
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
+    source: str = "manual"
+
+
+class SettingsUpdate(BaseModel):
+    values: dict[str, Any]
 
 
 class HistoricalRow(BaseModel):

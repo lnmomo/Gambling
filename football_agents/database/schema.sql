@@ -72,6 +72,9 @@ CREATE TABLE IF NOT EXISTS model_predictions (
     p_home REAL NOT NULL,
     p_draw REAL NOT NULL,
     p_away REAL NOT NULL,
+    fair_odds_home REAL NOT NULL,
+    fair_odds_draw REAL NOT NULL,
+    fair_odds_away REAL NOT NULL,
     predicted_at TEXT NOT NULL,
     metadata_json TEXT NOT NULL DEFAULT '{}'
 );
@@ -127,5 +130,74 @@ CREATE TABLE IF NOT EXISTS backtest_reports (
     metrics_json TEXT NOT NULL,
     equity_json TEXT NOT NULL,
     created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS official_fetch_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    source_name TEXT NOT NULL,
+    source_url TEXT NOT NULL,
+    fetched_at TEXT NOT NULL,
+    success INTEGER NOT NULL,
+    status_code INTEGER,
+    raw_hash TEXT,
+    record_count INTEGER NOT NULL DEFAULT 0,
+    error_message TEXT
+);
+
+CREATE TABLE IF NOT EXISTS match_status_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    match_id INTEGER NOT NULL REFERENCES matches(id),
+    old_status TEXT,
+    new_status TEXT NOT NULL,
+    detected_at TEXT NOT NULL,
+    reason TEXT
+);
+
+CREATE TABLE IF NOT EXISTS match_metadata (
+    match_id INTEGER PRIMARY KEY REFERENCES matches(id),
+    venue TEXT,
+    city TEXT,
+    country TEXT,
+    latitude REAL,
+    longitude REAL,
+    source TEXT,
+    updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS provider_sync_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    provider TEXT NOT NULL,
+    match_id INTEGER REFERENCES matches(id),
+    status TEXT NOT NULL,
+    records INTEGER NOT NULL DEFAULT 0,
+    message TEXT,
+    synced_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS app_settings (
+    setting_key TEXT PRIMARY KEY,
+    setting_value TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS audit_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    operator TEXT NOT NULL DEFAULT 'system',
+    module TEXT NOT NULL,
+    action TEXT NOT NULL,
+    detail TEXT,
+    result TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS llm_match_analyses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    match_id INTEGER NOT NULL REFERENCES matches(id),
+    provider TEXT NOT NULL,
+    model TEXT NOT NULL,
+    input_hash TEXT NOT NULL,
+    analysis_json TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    UNIQUE(match_id, provider, model, input_hash)
 );
 

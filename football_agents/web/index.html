@@ -1,37 +1,14 @@
 <!doctype html>
 <html lang="zh-CN">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>竞彩足球概率决策台</title>
-  <link rel="stylesheet" href="/static/styles.css">
-</head>
-<body>
-  <header>
-    <div>
-      <p class="eyebrow">MULTI-AGENT PROBABILITY LAB</p>
-      <h1>竞彩足球概率决策台</h1>
-      <p class="subtitle">模型概率、赔率价格、风险否决与历史复盘集中在一处。</p>
-    </div>
-    <div class="status"><span></span> 系统在线</div>
-  </header>
-  <main>
-    <section class="warning"><strong>理性购彩声明</strong><span>本系统仅用于概率研究与复盘，不保证收益，不执行自动下单，不面向未成年人。默认决策是 No Bet。</span></section>
-    <section class="metrics" id="metrics"></section>
-    <section class="panel">
-      <div class="panel-head"><div><p class="eyebrow">TODAY'S BOARD</p><h2>比赛与决策信号</h2></div><button id="refresh">刷新</button></div>
-      <div class="table-wrap">
-        <table><thead><tr><th>比赛</th><th>推荐</th><th>模型概率</th><th>官方 SP</th><th>公平赔率</th><th>EV</th><th>建议仓位</th><th>风险说明</th></tr></thead><tbody id="signals"></tbody></table>
-      </div>
-      <div class="empty" id="empty">暂无信号。运行 <code>python -m football_agents.cli seed-demo</code> 生成演示数据。</div>
-    </section>
-    <section class="lower-grid">
-      <article class="panel"><p class="eyebrow">RISK GUARDRAILS</p><h2>资金与行为边界</h2><div id="risk"></div></article>
-      <article class="panel"><p class="eyebrow">DECISION PIPELINE</p><h2>可审计工作流</h2><ol><li>赔率与特征快照</li><li>Elo / Poisson / 市场去水</li><li>概率集成与 EV 比较</li><li>批判者硬规则否决</li><li>分数凯利与额度上限</li></ol></article>
-    </section>
-  </main>
-  <footer>研究工具，不是收益承诺。请遵守当地法律法规与中国体育彩票相关规则。</footer>
-  <script src="/static/app.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>竞彩多Agent决策平台</title>
+    <script type="module" crossorigin src="/static/app.js"></script>
+    <link rel="stylesheet" crossorigin href="/static/styles.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
 </html>
-

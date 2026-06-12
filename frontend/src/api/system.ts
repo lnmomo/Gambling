@@ -1,0 +1,2 @@
+export async function apiGet<T>(path:string,signal?:AbortSignal):Promise<T>{const response=await fetch(path,{signal});if(!response.ok)throw new Error(`${path} 请求失败 (${response.status})`);return response.json()}
+export async function apiPut<T>(path:string,values:Record<string,unknown>):Promise<T>{const response=await fetch(path,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({values})});if(!response.ok)throw new Error(`${path} 保存失败 (${response.status})`);return response.json()}

@@ -25,8 +25,20 @@ class WorkflowTests(unittest.TestCase):
 
     def test_missing_market_data_is_no_bet(self):
         self.repo.add_odds(self.match_id, {"home": 2, "draw": 3.4, "away": 4}, "official")
+        self.repo.add_features(self.match_id, {"home_rating": 1575, "away_rating": 1480,
+                                               "lambda_home": 1.65, "lambda_away": 1.05})
         result = self.workflow.evaluate(self.match_id)
         self.assertEqual(result["signal"]["status"], "NO_BET")
+        self.assertAlmostEqual(result["fair_odds"]["home"], 1 / result["baseline"]["home"])
+        stored = self.repo.latest_prediction(self.match_id)
+        self.assertGreater(stored["fair_odds_home"], 1)
+
+    def test_missing_team_features_does_not_create_prediction(self):
+        self.repo.add_odds(self.match_id, {"home": 2, "draw": 3.4, "away": 4}, "official")
+        result = self.workflow.evaluate(self.match_id)
+        self.assertEqual(result["signal"]["status"], "NO_BET")
+        self.assertIn("缺少真实球队特征", result["signal"]["reasons"][0])
+        self.assertIsNone(self.repo.latest_prediction(self.match_id))
 
     def test_complete_data_creates_audited_signal(self):
         now = datetime.now(timezone.utc).isoformat()
@@ -38,6 +50,7 @@ class WorkflowTests(unittest.TestCase):
         result = self.workflow.evaluate(self.match_id)
         self.assertIn(result["signal"]["status"], {"BET", "WATCH", "NO_BET"})
         self.assertAlmostEqual(sum(result["ensemble"].values()), 1, places=8)
+        self.assertAlmostEqual(result["fair_odds"]["draw"], 1 / result["ensemble"]["draw"])
         self.assertIsNotNone(self.repo.latest_signal(self.match_id))
 
 
