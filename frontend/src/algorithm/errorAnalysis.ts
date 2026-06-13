@@ -1,0 +1,11 @@
+import {calculateBacktestMetrics, type BacktestMetricRecord} from "./backtestMetrics";
+type DiagnosticRecord = BacktestMetricRecord & {league?: string; riskLevel?: string; disagreementLevel?: string; reasons?: string[]; warnings?: string[]};
+const group = (records: DiagnosticRecord[], key: (record: DiagnosticRecord) => string) => Object.fromEntries([...new Set(records.map(key))].map(value => [value, calculateBacktestMetrics(records.filter(record => key(record) === value))]));
+const bucket = (value: number, cuts: number[], labels: string[]) => labels[cuts.findIndex(cut => value < cut)] ?? labels[labels.length - 1];
+export function analyzePredictionErrors(records: DiagnosticRecord[]) {
+  const probabilityLabels = ["0%-20%", "20%-30%", "30%-40%", "40%-50%", "50%-60%", "60%-70%", "70%-80%", "80%+"];
+  const probabilityKey = (record: DiagnosticRecord) => bucket(record.probability, [.2, .3, .4, .5, .6, .7, .8], probabilityLabels);
+  const calibrationTable = probabilityLabels.map(label => { const rows = records.filter(record => probabilityKey(record) === label); const count = rows.length, avgPredictedProbability = count ? rows.reduce((sum, row) => sum + row.probability, 0) / count : 0, actualHitRate = count ? rows.filter(row => row.profit > 0).length / count : 0; return {bucket: label, count, avgPredictedProbability, actualHitRate, calibrationError: actualHitRate - avgPredictedProbability}; }).filter(row => row.count);
+  const failures = records.flatMap(record => [...(record.reasons ?? []), ...(record.warnings ?? [])]).reduce<Record<string, number>>((acc, reason) => ({...acc, [reason]: (acc[reason] ?? 0) + 1}), {});
+  return {overallMetrics: calculateBacktestMetrics(records), byLeague: group(records, record => record.league ?? "UNKNOWN"), byRecommendationType: group(records, record => record.recommendation), byEvBucket: group(records, record => bucket(record.ev, [0, .03, .05, .08, .12], ["0%以下", "0%-3%", "3%-5%", "5%-8%", "8%-12%", "12%以上"])), byProbabilityBucket: group(records, probabilityKey), byRiskLevel: group(records, record => record.riskLevel ?? "UNKNOWN"), byDisagreementLevel: group(records, record => record.disagreementLevel ?? "UNKNOWN"), calibrationTable, commonFailureReasons: Object.entries(failures).sort((a, b) => b[1] - a[1]).map(([reason, count]) => ({reason, count}))};
+}

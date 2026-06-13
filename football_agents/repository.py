@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from datetime import datetime, timezone
 from typing import Any, Iterable
 
@@ -177,6 +178,69 @@ class Repository:
                             (match_id,)).fetchone()
         return json.loads(row["feature_json"]) if row else {}
 
+    def upsert_historical_matches(self, rows: Iterable[dict[str, Any]], source: str = "csv") -> dict[str, int]:
+        imported = updated = dropped = 0
+        with self.db.connect() as c:
+            for row in rows:
+                try:
+                    league = str(row.get("league") or "").strip()
+                    home_team = str(row.get("home_team") or row.get("homeTeam") or "").strip()
+                    away_team = str(row.get("away_team") or row.get("awayTeam") or "").strip()
+                    played_at = str(row.get("played_at") or row.get("playedAt") or row.get("date") or "").strip()
+                    home_goals = int(row.get("home_goals", row.get("homeGoals", row.get("home_score"))))
+                    away_goals = int(row.get("away_goals", row.get("awayGoals", row.get("away_score"))))
+                    match_type = str(row.get("match_type") or row.get("matchType") or "LEAGUE").upper()
+                    if not league or not home_team or not away_team or home_team == away_team or not played_at:
+                        raise ValueError("invalid historical match")
+                    if home_goals < 0 or away_goals < 0 or match_type not in {"LEAGUE", "CUP", "FRIENDLY"}:
+                        raise ValueError("invalid historical result")
+                    natural_key = f"{league}|{home_team}|{away_team}|{played_at}"
+                    row_id = str(row.get("id") or hashlib.sha256(natural_key.encode("utf-8")).hexdigest()[:24])
+                    existed = c.execute("SELECT 1 FROM historical_matches WHERE id=?", (row_id,)).fetchone()
+                    c.execute("""INSERT INTO historical_matches
+                        (id,league,home_team,away_team,home_goals,away_goals,played_at,match_type,source,imported_at)
+                        VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET
+                        league=excluded.league,home_team=excluded.home_team,away_team=excluded.away_team,
+                        home_goals=excluded.home_goals,away_goals=excluded.away_goals,played_at=excluded.played_at,
+                        match_type=excluded.match_type,source=excluded.source,imported_at=excluded.imported_at""",
+                        (row_id, league, home_team, away_team, home_goals, away_goals, played_at,
+                         match_type, source, utcnow()))
+                    if existed:
+                        updated += 1
+                    else:
+                        imported += 1
+                except (TypeError, ValueError):
+                    dropped += 1
+        return {"imported": imported, "updated": updated, "dropped": dropped}
+
+    def list_historical_matches(self, cutoff_time: str | None = None, league: str | None = None,
+                                teams: Iterable[str] | None = None, limit: int = 20_000) -> list[dict[str, Any]]:
+        conditions: list[str] = []
+        params: list[Any] = []
+        if cutoff_time:
+            conditions.append("played_at < ?")
+            params.append(cutoff_time)
+        if league:
+            conditions.append("league = ?")
+            params.append(league)
+        team_list = [team for team in (teams or []) if team]
+        if team_list:
+            placeholders = ",".join("?" for _ in team_list)
+            conditions.append(f"(home_team IN ({placeholders}) OR away_team IN ({placeholders}))")
+            params.extend(team_list)
+            params.extend(team_list)
+        query = "SELECT * FROM historical_matches"
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+        query += " ORDER BY played_at ASC LIMIT ?"
+        params.append(max(1, min(limit, 100_000)))
+        with self.db.connect() as c:
+            return [dict(row) for row in c.execute(query, tuple(params)).fetchall()]
+
+    def historical_match_count(self) -> int:
+        with self.db.connect() as c:
+            return int(c.execute("SELECT COUNT(*) FROM historical_matches").fetchone()[0])
+
     def latest_prediction(self, match_id: int) -> dict[str, Any] | None:
         with self.db.connect() as c:
             row = c.execute("""SELECT * FROM model_predictions WHERE match_id=?
@@ -291,6 +355,11 @@ class Repository:
                 FROM provider_sync_logs ORDER BY id DESC LIMIT ?""", (limit,)).fetchall()]
         return sorted(own + official + providers, key=lambda item: item["time"], reverse=True)[:limit]
 
+    def add_audit_event(self, operator: str, module: str, action: str, detail: str, result: str) -> None:
+        with self.db.connect() as c:
+            c.execute("INSERT INTO audit_events(operator,module,action,detail,result,created_at) VALUES(?,?,?,?,?,?)",
+                      (operator, module, action, detail, result, utcnow()))
+
     def list_backtest_reports(self, limit: int = 100) -> list[dict[str, Any]]:
         with self.db.connect() as c:
             rows = c.execute("SELECT * FROM backtest_reports ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()
@@ -323,6 +392,7 @@ class Repository:
                 "predictions": f"SELECT COUNT(*) FROM model_predictions WHERE match_id IN ({official_ids})",
                 "signals": f"SELECT COUNT(*) FROM bet_signals WHERE match_id IN ({official_ids})",
                 "backtests": "SELECT COUNT(*) FROM backtest_reports",
+                "historical_matches": "SELECT COUNT(*) FROM historical_matches",
                 "llm_analyses": f"SELECT COUNT(*) FROM llm_match_analyses WHERE match_id IN ({official_ids})",
             }
             return {key: int(c.execute(query).fetchone()[0]) for key, query in queries.items()}

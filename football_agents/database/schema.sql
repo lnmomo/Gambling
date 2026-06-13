@@ -132,6 +132,24 @@ CREATE TABLE IF NOT EXISTS backtest_reports (
     created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS historical_matches (
+    id TEXT PRIMARY KEY,
+    league TEXT NOT NULL,
+    home_team TEXT NOT NULL,
+    away_team TEXT NOT NULL,
+    home_goals INTEGER NOT NULL CHECK(home_goals >= 0),
+    away_goals INTEGER NOT NULL CHECK(away_goals >= 0),
+    played_at TEXT NOT NULL,
+    match_type TEXT NOT NULL DEFAULT 'LEAGUE' CHECK(match_type IN ('LEAGUE','CUP','FRIENDLY')),
+    source TEXT NOT NULL DEFAULT 'csv',
+    imported_at TEXT NOT NULL,
+    UNIQUE(league, home_team, away_team, played_at)
+);
+CREATE INDEX IF NOT EXISTS idx_historical_played_at ON historical_matches(played_at);
+CREATE INDEX IF NOT EXISTS idx_historical_league ON historical_matches(league, played_at);
+CREATE INDEX IF NOT EXISTS idx_historical_home ON historical_matches(home_team, played_at);
+CREATE INDEX IF NOT EXISTS idx_historical_away ON historical_matches(away_team, played_at);
+
 CREATE TABLE IF NOT EXISTS official_fetch_logs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     source_name TEXT NOT NULL,

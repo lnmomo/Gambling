@@ -16,6 +16,8 @@ from .db import db
 from .official_data import OfficialDataService
 from .integrations import DataEnrichmentService
 from .llm import LLMNewsAgent
+from .historical_data import HistoricalDataService
+from .historical_agent import HistoricalCollectionAgent
 from .repository import Repository
 from .schemas import BacktestRequest, EvaluateRequest, FeatureCreate, MatchCreate, MatchMetadataCreate, OddsCreate, SettingsUpdate
 
@@ -32,11 +34,14 @@ workflow = DecisionWorkflow(repository)
 official_data = OfficialDataService(repository)
 enrichment = DataEnrichmentService(repository)
 llm_news = LLMNewsAgent(repository)
+historical_data = HistoricalDataService(repository)
+historical_agent = HistoricalCollectionAgent(repository)
 
 
 @app.on_event("startup")
 def startup() -> None:
     db.initialize()
+    historical_data.bootstrap_sample()
 
 
 @app.get("/", include_in_schema=False)
@@ -163,6 +168,43 @@ def official_matches() -> list[dict]:
     return output
 
 
+@app.get("/api/historical-matches")
+def historical_matches(cutoff_time: str | None = None, league: str | None = None,
+                       teams: str | None = None, limit: int = 20_000) -> list[dict]:
+    team_list = [team.strip() for team in (teams or "").split(",") if team.strip()]
+    return repository.list_historical_matches(cutoff_time, league, team_list, limit)
+
+
+@app.get("/api/historical-matches/status")
+def historical_matches_status() -> dict:
+    rows = repository.list_historical_matches(limit=100_000)
+    leagues = sorted({row["league"] for row in rows})
+    teams = {row["home_team"] for row in rows} | {row["away_team"] for row in rows}
+    return {"matches": len(rows), "leagues": len(leagues), "teams": len(teams),
+            "first_match": rows[0]["played_at"] if rows else None,
+            "last_match": rows[-1]["played_at"] if rows else None}
+
+
+@app.post("/api/historical-matches/upload-csv")
+async def upload_historical_matches(file: UploadFile = File(...)) -> dict:
+    try:
+        text = (await file.read()).decode("utf-8-sig")
+        report = historical_data.import_csv_text(text, file.filename or "uploaded-csv")
+    except (UnicodeDecodeError, ValueError) as exc:
+        raise HTTPException(400, f"历史 CSV 格式错误: {exc}") from exc
+    return {**report, **historical_matches_status()}
+
+
+@app.post("/api/historical-matches/sync")
+def sync_historical_matches(years_back: int = settings.historical_data_years_back,
+                            divisions: str | None = None) -> dict:
+    selected = [item.strip().upper() for item in (divisions or "").split(",") if item.strip()]
+    try:
+        return historical_agent.sync(max(1, min(years_back, 10)), selected or None)
+    except Exception as exc:
+        raise HTTPException(502, f"历史数据同步失败: {exc}") from exc
+
+
 @app.post("/api/data/sync")
 def sync_external_data(limit: int = 40) -> dict:
     return enrichment.sync(max(1, min(limit, 100)))
@@ -286,6 +328,7 @@ async def upload_backtest(file: UploadFile = File(...), bankroll: float = 10_000
     try:
         text = (await file.read()).decode("utf-8-sig")
         rows = list(csv.DictReader(io.StringIO(text)))
+        history_report = repository.upsert_historical_matches(rows, file.filename or "backtest-csv")
         for row in rows:
             for key in ("home_score", "away_score"):
                 row[key] = int(row[key])
@@ -304,7 +347,7 @@ def backtest_report(report_id: str) -> dict:
     report = repository.get_backtest(report_id)
     if not report:
         raise HTTPException(404, "回测报告不存在")
-    return report
+    return {**report, "history_import": history_report}
 
 
 @app.get("/{frontend_path:path}", include_in_schema=False)

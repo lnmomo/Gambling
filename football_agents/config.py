@@ -52,6 +52,15 @@ class Settings:
     llm_model: str = os.getenv("LLM_MODEL", "")
     llm_timeout_seconds: int = int(os.getenv("LLM_TIMEOUT_SECONDS", "45"))
     llm_max_news_items: int = int(os.getenv("LLM_MAX_NEWS_ITEMS", "5"))
+    historical_data_base_url: str = os.getenv(
+        "HISTORICAL_DATA_BASE_URL", "https://www.football-data.co.uk/mmz4281"
+    ).rstrip("/")
+    historical_data_years_back: int = int(os.getenv("HISTORICAL_DATA_YEARS_BACK", "3"))
+    historical_data_divisions: tuple[str, ...] = tuple(filter(None, os.getenv(
+        "HISTORICAL_DATA_DIVISIONS", "E0,E1,E2,E3,SC0,D1,D2,I1,I2,SP1,SP2,F1,F2,N1,B1,P1,T1,G1"
+    ).split(",")))
+    historical_data_timeout_seconds: int = int(os.getenv("HISTORICAL_DATA_TIMEOUT_SECONDS", "12"))
+    historical_data_workers: int = int(os.getenv("HISTORICAL_DATA_WORKERS", "8"))
 
 
 settings = Settings()

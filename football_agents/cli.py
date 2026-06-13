@@ -8,10 +8,8 @@ from pathlib import Path
 import uvicorn
 
 from .backtesting import BacktestEngine
+from .config import settings
 from .db import db
-from .official_data import OfficialDataService
-from .integrations import DataEnrichmentService
-from .llm import LLMNewsAgent
 from .seed import seed_demo
 
 
@@ -34,6 +32,11 @@ def main() -> None:
     backtest.add_argument("csv")
     backtest.add_argument("--bankroll", type=float, default=10_000)
     backtest.add_argument("--min-ev", type=float, default=0.05)
+    history = sub.add_parser("import-history", help="导入历史比赛 CSV")
+    history.add_argument("csv")
+    collect = sub.add_parser("sync-history", help="从公开 CSV 来源增量同步真实历史赛果")
+    collect.add_argument("--years-back", type=int, default=settings.historical_data_years_back)
+    collect.add_argument("--divisions", default="", help="逗号分隔，如 E0,D1,I1,SP1")
     args = parser.parse_args()
     if args.command == "serve":
         uvicorn.run("football_agents.app:app", host=args.host, port=args.port, reload=False)
@@ -43,14 +46,27 @@ def main() -> None:
     elif args.command == "seed-demo":
         print(json.dumps(seed_demo(), ensure_ascii=False, indent=2))
     elif args.command == "sync-official":
+        from .official_data import OfficialDataService
         db.initialize()
         print(json.dumps(OfficialDataService().sync(force=args.force), ensure_ascii=False, indent=2))
     elif args.command == "sync-data":
+        from .integrations import DataEnrichmentService
         db.initialize()
         print(json.dumps(DataEnrichmentService().sync(limit=args.limit), ensure_ascii=False, indent=2))
     elif args.command == "analyze-news":
+        from .llm import LLMNewsAgent
         db.initialize()
         print(json.dumps(LLMNewsAgent().analyze(args.match_id, force=args.force), ensure_ascii=False, indent=2))
+    elif args.command == "import-history":
+        from .historical_data import HistoricalDataService
+        db.initialize()
+        text = Path(args.csv).read_text(encoding="utf-8-sig")
+        print(json.dumps(HistoricalDataService().import_csv_text(text, str(args.csv)), ensure_ascii=False, indent=2))
+    elif args.command == "sync-history":
+        from .historical_agent import HistoricalCollectionAgent
+        db.initialize()
+        divisions = [item.strip().upper() for item in args.divisions.split(",") if item.strip()]
+        print(json.dumps(HistoricalCollectionAgent().sync(args.years_back, divisions or None), ensure_ascii=False, indent=2))
     else:
         with Path(args.csv).open(encoding="utf-8-sig", newline="") as handle:
             rows = list(csv.DictReader(handle))
