@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import uuid
 import hashlib
 from datetime import datetime, timezone
 from typing import Any, Iterable
@@ -101,6 +102,32 @@ class Repository:
                 [(match_id, source, option, value, timestamp) for option, value in odds.items()],
             )
 
+    def add_external_bookmaker_odds(self, match_id: int, bookmakers: list[dict[str, Any]],
+                                    fetched_at: str | None = None) -> int:
+        timestamp = fetched_at or utcnow()
+        valid = [item for item in bookmakers if all(float(item.get("odds", {}).get(key, 0)) > 1
+                                                     for key in ("home", "draw", "away"))]
+        with self.db.connect() as c:
+            c.executemany("""INSERT INTO external_bookmaker_odds
+                (match_id,bookmaker,bookmaker_key,market,home_odds,draw_odds,away_odds,last_update,fetched_at)
+                VALUES(?,?,?,?,?,?,?,?,?)""", [
+                (match_id, item["bookmaker"], item.get("bookmaker_key"), item.get("market", "H2H"),
+                 item["odds"]["home"], item["odds"]["draw"], item["odds"]["away"],
+                 item.get("last_update") or timestamp, timestamp) for item in valid
+            ])
+        return len(valid)
+
+    def latest_external_bookmaker_odds(self, match_id: int) -> list[dict[str, Any]]:
+        with self.db.connect() as c:
+            rows = c.execute("""SELECT bookmaker,bookmaker_key,market,home_odds,draw_odds,away_odds,last_update
+                FROM external_bookmaker_odds WHERE match_id=? AND fetched_at=(
+                    SELECT MAX(fetched_at) FROM external_bookmaker_odds WHERE match_id=?
+                ) ORDER BY bookmaker""", (match_id, match_id)).fetchall()
+        return [{"bookmaker": row["bookmaker"], "bookmaker_key": row["bookmaker_key"],
+                 "market": row["market"], "odds": {"home": row["home_odds"],
+                 "draw": row["draw_odds"], "away": row["away_odds"]},
+                 "last_update": row["last_update"], "source": "The Odds API"} for row in rows]
+
     def add_features(self, match_id: int, features: dict[str, Any], version: str = "v1") -> None:
         with self.db.connect() as c:
             c.execute("INSERT INTO match_features(match_id,feature_version,feature_json,created_at) VALUES(?,?,?,?)",
@@ -150,13 +177,17 @@ class Repository:
         with self.db.connect() as c:
             return [dict(row) for row in c.execute(query, params).fetchall()]
 
-    def list_official_matches(self) -> list[dict[str, Any]]:
+    def list_official_matches(self, from_date: str | None = None) -> list[dict[str, Any]]:
+        date_filter = " AND substr(kickoff_time,1,10)>=?" if from_date else ""
+        params = (from_date,) if from_date else ()
         with self.db.connect() as c:
             rows = c.execute(
-                """SELECT * FROM matches
+                f"""SELECT * FROM matches
                    WHERE official_match_id LIKE 'sporttery-%'
                      AND source_url IS NOT NULL
-                   ORDER BY kickoff_time"""
+                     {date_filter}
+                   ORDER BY kickoff_time""",
+                params,
             ).fetchall()
             return [dict(row) for row in rows]
 
@@ -244,9 +275,9 @@ class Repository:
     def latest_prediction(self, match_id: int) -> dict[str, Any] | None:
         with self.db.connect() as c:
             row = c.execute("""SELECT * FROM model_predictions WHERE match_id=?
-                AND model_name IN ('ensemble','baseline')
+                AND model_name IN ('contextual_ensemble','ensemble','baseline')
                 AND EXISTS (SELECT 1 FROM match_features f WHERE f.match_id=model_predictions.match_id)
-                ORDER BY predicted_at DESC, CASE model_name WHEN 'ensemble' THEN 0 ELSE 1 END LIMIT 1""",
+                ORDER BY predicted_at DESC, CASE model_name WHEN 'contextual_ensemble' THEN 0 WHEN 'ensemble' THEN 1 ELSE 2 END LIMIT 1""",
                             (match_id,)).fetchone()
         if not row:
             return None
@@ -324,6 +355,52 @@ class Repository:
                 JOIN (SELECT provider,MAX(id) id FROM provider_sync_logs GROUP BY provider) x ON x.id=p.id
                 ORDER BY p.provider""").fetchall()
             return [dict(row) for row in rows]
+
+    def start_agent_run(self, trigger_name: str) -> str:
+        run_id = uuid.uuid4().hex
+        with self.db.connect() as c:
+            c.execute("INSERT INTO agent_runs(id,status,trigger_name,started_at) VALUES(?,?,?,?)",
+                      (run_id, "running", trigger_name, utcnow()))
+        return run_id
+
+    def start_agent_step(self, run_id: str, agent_name: str, inputs: dict[str, Any] | None = None) -> int:
+        with self.db.connect() as c:
+            cursor = c.execute("""INSERT INTO agent_run_steps
+                (run_id,agent_name,status,input_json,started_at) VALUES(?,?,?,?,?)""",
+                (run_id, agent_name, "running", json.dumps(inputs or {}, ensure_ascii=False), utcnow()))
+            return int(cursor.lastrowid)
+
+    def finish_agent_step(self, step_id: int, status: str, output: dict[str, Any] | None = None,
+                          error_message: str | None = None) -> None:
+        with self.db.connect() as c:
+            c.execute("""UPDATE agent_run_steps SET status=?,output_json=?,error_message=?,finished_at=?
+                WHERE id=?""", (status, json.dumps(output or {}, ensure_ascii=False), error_message, utcnow(), step_id))
+
+    def finish_agent_run(self, run_id: str, status: str, summary: dict[str, Any]) -> None:
+        with self.db.connect() as c:
+            c.execute("UPDATE agent_runs SET status=?,summary_json=?,finished_at=? WHERE id=?",
+                      (status, json.dumps(summary, ensure_ascii=False), utcnow(), run_id))
+
+    def get_agent_run(self, run_id: str) -> dict[str, Any] | None:
+        with self.db.connect() as c:
+            run = c.execute("SELECT * FROM agent_runs WHERE id=?", (run_id,)).fetchone()
+            if not run:
+                return None
+            steps = c.execute("SELECT * FROM agent_run_steps WHERE run_id=? ORDER BY id", (run_id,)).fetchall()
+        result = dict(run)
+        result["summary"] = json.loads(result.pop("summary_json"))
+        result["steps"] = []
+        for row in steps:
+            item = dict(row)
+            item["input"] = json.loads(item.pop("input_json"))
+            item["output"] = json.loads(item.pop("output_json"))
+            result["steps"].append(item)
+        return result
+
+    def list_agent_runs(self, limit: int = 20) -> list[dict[str, Any]]:
+        with self.db.connect() as c:
+            rows = c.execute("SELECT id FROM agent_runs ORDER BY started_at DESC LIMIT ?", (limit,)).fetchall()
+        return [run for row in rows if (run := self.get_agent_run(row["id"]))]
 
     def save_settings(self, values: dict[str, Any], operator: str = "admin") -> dict[str, Any]:
         now = utcnow()

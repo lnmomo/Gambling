@@ -27,6 +27,14 @@ export function getDynamicEnsembleWeights(input: {leagueReliability: "LOW" | "ME
   for (const key of Object.keys(weights) as Array<keyof typeof weights>) weights[key] = (weights[key] ?? 0) / total;
   return weights;
 }
+export function getExternalMarketEnsembleWeights(level: "HIGH" | "MEDIUM" | "LOW" | "UNAVAILABLE") {
+  const externalMarket = level === "HIGH" ? .25 : level === "MEDIUM" ? .18 : level === "LOW" ? .08 : 0;
+  const remaining = 1 - externalMarket, baseRemaining = .35 + .40;
+  return {market: remaining * .35 / baseRemaining, externalMarket, pureModel: remaining * .40 / baseRemaining};
+}
+export function ensembleMarketAndModel(market: ThreeWayProbability, externalMarket: ThreeWayProbability, pureModel: ThreeWayProbability, weights: {market: number; externalMarket: number; pureModel: number}) {
+  return normalizeProbability({home: market.home * weights.market + externalMarket.home * weights.externalMarket + pureModel.home * weights.pureModel, draw: market.draw * weights.market + externalMarket.draw * weights.externalMarket + pureModel.draw * weights.pureModel, away: market.away * weights.market + externalMarket.away * weights.externalMarket + pureModel.away * weights.pureModel});
+}
 export function calculateModelDisagreement(models: ThreeWayProbability[]): ModelDisagreement {
   const spread = (key: typeof keys[number]) => Math.max(...models.map(model => model[key])) - Math.min(...models.map(model => model[key]));
   const homeDisagreement = spread("home"), drawDisagreement = spread("draw"), awayDisagreement = spread("away");

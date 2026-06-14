@@ -54,6 +54,26 @@ class HistoricalDataTests(unittest.TestCase):
         result = self.repository.upsert_historical_matches(rows, "test-source")
         self.assertEqual(result["imported"], 1)
 
+    def test_collection_agent_uses_archive_when_network_fails(self):
+        archive = Path(self.temp.name) / "archive"
+        agent = HistoricalCollectionAgent(self.repository, archive)
+        source = HistoricalSource("2526", "E0")
+        path = agent.archive_path(source)
+        path.parent.mkdir(parents=True)
+        path.write_text(
+            "Div,Date,HomeTeam,AwayTeam,FTHG,FTAG\nE0,01/08/2025,Arsenal,Chelsea,2,1\n",
+            encoding="utf-8",
+        )
+        agent.sources = lambda years_back, divisions=None: [source]
+        agent.fetch = lambda item: (_ for _ in ()).throw(OSError("DNS unavailable"))
+        result = agent.sync(1)
+        self.assertEqual(result["downloaded"], 0)
+        self.assertEqual(result["cached"], 1)
+        self.assertEqual(result["stale"], 1)
+        self.assertEqual(result["failed"], 0)
+        self.assertEqual(result["database_matches"], 1)
+        self.assertEqual(result["sources"][0]["status"], "cached")
+
 
 if __name__ == "__main__":
     unittest.main()

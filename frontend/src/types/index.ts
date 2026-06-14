@@ -10,6 +10,13 @@ export interface ThreeWayProbability { home: number; draw: number; away: number 
 export type ProbabilityTriple = ThreeWayProbability;
 export type ModelProbability = ThreeWayProbability;
 export interface OfficialSp extends ThreeWayProbability {}
+export type ThreeWayOdds = OfficialSp;
+export type ThreeWayEdge = ThreeWayProbability;
+export interface ExternalBookmakerOdds { bookmaker: string; bookmakerKey?: string; market: "H2H" | "1X2"; odds: ThreeWayOdds; lastUpdate: string; source?: string; weight?: number }
+export interface NormalizedBookmakerProbability { bookmaker: string; bookmakerKey?: string; rawOdds: ThreeWayOdds; rawImpliedProbability: ThreeWayProbability; normalizedProbability: ThreeWayProbability; overround: number; weight: number; included: boolean; exclusionReason?: string; lastUpdate: string }
+export interface ExternalMarketDeviation { homeDeviation: number; drawDeviation: number; awayDeviation: number; maxDeviation: number }
+export interface ExternalMarketQuality { available: boolean; bookmakerCount: number; includedBookmakerCount: number; excludedBookmakerCount: number; averageOverround: number; maxBookmakerDeviation: number; officialMarketDeviation: ExternalMarketDeviation; staleCount: number; qualityScore: number; qualityLevel: "HIGH" | "MEDIUM" | "LOW" | "UNAVAILABLE"; warnings: string[] }
+export interface ExternalMarketConsensus { probability: ThreeWayProbability; fairOdds: ThreeWayOdds; normalizedBookmakers: NormalizedBookmakerProbability[]; quality: ExternalMarketQuality; warnings: string[]; fallbackUsed: boolean; fallbackReason?: string }
 export type ThreeWayEv = ThreeWayProbability;
 export type EvTriple = ThreeWayEv;
 export type FairOddsTriple = OfficialSp;
@@ -64,7 +71,7 @@ export interface ModelDisagreement {
 }
 export interface LeagueParameters { league: string; matchCount: number; avgHomeGoals: number; avgAwayGoals: number; avgTotalGoals: number; homeWinRate: number; drawRate: number; awayWinRate: number; baseDrawRate: number; homeAdvantageFactor: number; defaultRho: number; reliability: "LOW" | "MEDIUM" | "HIGH" }
 export interface MarketDeviation { homeDeviation: number; drawDeviation: number; awayDeviation: number; maxDeviation: number }
-export interface PredictionDiagnostics { homeMatchCount: number; awayMatchCount: number; leagueMatchCount: number; teamStatsReliability: "LOW" | "MEDIUM" | "HIGH"; eloReliability: "LOW" | "MEDIUM" | "HIGH"; leagueReliability: "LOW" | "MEDIUM" | "HIGH"; marketDeviation: MarketDeviation; deviationAfterAnchor: MarketDeviation; marketAnchored: boolean; ensembleWeights: {market: number; dixonColes: number; elo: number; ml?: number}; warnings: string[] }
+export interface PredictionDiagnostics { homeMatchCount: number; awayMatchCount: number; leagueMatchCount: number; teamStatsReliability: "LOW" | "MEDIUM" | "HIGH"; eloReliability: "LOW" | "MEDIUM" | "HIGH"; leagueReliability: "LOW" | "MEDIUM" | "HIGH"; marketDeviation: MarketDeviation; deviationAfterAnchor: MarketDeviation; marketAnchored: boolean; ensembleWeights: {market: number; externalMarket?: number; pureModel?: number; dixonColes?: number; elo?: number; ml?: number}; warnings: string[] }
 export interface CriticReport {
   passed: boolean; finalAction: RecommendationType; reasons: string[]; warnings: string[];
   dynamicEvThreshold: number; confidenceLevel: ConfidenceLevel; riskLevel: RiskLevel;
@@ -72,11 +79,22 @@ export interface CriticReport {
 
 export interface MatchPrediction {
   matchId: string; officialMatchId: string;
-  marketProbability: ThreeWayProbability; dixonColesProbability: ThreeWayProbability;
+  officialSp: ThreeWayOdds;
+  externalBookmakerOdds?: ExternalBookmakerOdds[];
+  probabilityAvailable: boolean;
+  marketProbability: ThreeWayProbability; externalMarketProbability: ThreeWayProbability;
+  pureModelProbability: ThreeWayProbability; dixonColesProbability: ThreeWayProbability;
   poissonProbability: ThreeWayProbability; eloProbability: ThreeWayProbability;
   mlProbability?: ThreeWayProbability; finalProbability: ThreeWayProbability;
   expectedGoals: ExpectedGoalsOutput; lambdaHome: number; lambdaAway: number;
-  fairOdds: OfficialSp; ev: ThreeWayEv; topScores: ScoreProbability[];
+  marketFairOdds: ThreeWayOdds; externalMarketFairOdds: ThreeWayOdds;
+  externalMarketQuality: ExternalMarketQuality; externalMarketWarnings: string[];
+  normalizedBookmakers: NormalizedBookmakerProbability[];
+  pureModelFairOdds: ThreeWayOdds; finalFairOdds: ThreeWayOdds;
+  pureModelEdge: ThreeWayEdge; finalEdge: ThreeWayEdge;
+  /** @deprecated Use finalFairOdds. */
+  fairOdds: ThreeWayOdds;
+  ev: ThreeWayEv; topScores: ScoreProbability[];
   modelDisagreement: ModelDisagreement; dynamicEvThreshold: number; criticReport: CriticReport;
   anchoredProbability: ThreeWayProbability; diagnostics: PredictionDiagnostics;
   criticPassed: boolean; criticReasons: string[];
@@ -96,6 +114,7 @@ export interface LlmAnalysis { summary: string; homeTeamImpact: number; awayTeam
 export interface OfficialMatch {
   id: string; officialMatchId: string; league: string; homeTeam: string; awayTeam: string;
   kickoffTime: string; status: MatchStatus; officialSp: OfficialSp;
+  externalBookmakerOdds?: ExternalBookmakerOdds[];
   homeElo?: number; awayElo?: number; updatedAt: string;
   marketOdds: ThreeWayProbability; news: NewsItem[]; weather: WeatherData | null;
   venue: string | null; llmAnalysis: LlmAnalysis | null; context?: MatchContext;

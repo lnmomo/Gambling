@@ -37,6 +37,12 @@ def main() -> None:
     collect = sub.add_parser("sync-history", help="从公开 CSV 来源增量同步真实历史赛果")
     collect.add_argument("--years-back", type=int, default=settings.historical_data_years_back)
     collect.add_argument("--divisions", default="", help="逗号分隔，如 E0,D1,I1,SP1")
+    sub.add_parser("sync-international-history", help="同步真实国家队历史赛果")
+    agent_run = sub.add_parser("run-agents", help="Run data, Qwen, model, and critic agents")
+    agent_run.add_argument("--limit", type=int, default=settings.agent_match_limit)
+    agent_run.add_argument("--include-history", action="store_true")
+    agent_run.add_argument("--force-official", action="store_true")
+    agent_run.add_argument("--force-qwen", action="store_true")
     args = parser.parse_args()
     if args.command == "serve":
         uvicorn.run("football_agents.app:app", host=args.host, port=args.port, reload=False)
@@ -47,12 +53,16 @@ def main() -> None:
         print(json.dumps(seed_demo(), ensure_ascii=False, indent=2))
     elif args.command == "sync-official":
         from .official_data import OfficialDataService
+        from .llm import QwenOpsAgent
         db.initialize()
-        print(json.dumps(OfficialDataService().sync(force=args.force), ensure_ascii=False, indent=2))
+        report = OfficialDataService().sync(force=args.force)
+        print(json.dumps(QwenOpsAgent().attach("official-data-agent", report), ensure_ascii=False, indent=2))
     elif args.command == "sync-data":
         from .integrations import DataEnrichmentService
+        from .llm import QwenOpsAgent
         db.initialize()
-        print(json.dumps(DataEnrichmentService().sync(limit=args.limit), ensure_ascii=False, indent=2))
+        report = DataEnrichmentService().sync(limit=args.limit)
+        print(json.dumps(QwenOpsAgent().attach("market-news-weather-agent", report), ensure_ascii=False, indent=2))
     elif args.command == "analyze-news":
         from .llm import LLMNewsAgent
         db.initialize()
@@ -64,9 +74,23 @@ def main() -> None:
         print(json.dumps(HistoricalDataService().import_csv_text(text, str(args.csv)), ensure_ascii=False, indent=2))
     elif args.command == "sync-history":
         from .historical_agent import HistoricalCollectionAgent
+        from .llm import QwenOpsAgent
         db.initialize()
         divisions = [item.strip().upper() for item in args.divisions.split(",") if item.strip()]
-        print(json.dumps(HistoricalCollectionAgent().sync(args.years_back, divisions or None), ensure_ascii=False, indent=2))
+        report = HistoricalCollectionAgent().sync(args.years_back, divisions or None)
+        print(json.dumps(QwenOpsAgent().attach("historical-data-agent", report), ensure_ascii=False, indent=2))
+    elif args.command == "sync-international-history":
+        from .international_history_agent import InternationalHistoryAgent
+        from .llm import QwenOpsAgent
+        db.initialize()
+        report = InternationalHistoryAgent().sync()
+        print(json.dumps(QwenOpsAgent().attach("international-history-agent", report), ensure_ascii=False, indent=2))
+    elif args.command == "run-agents":
+        from .agents.orchestrator import AgentOrchestrator
+        db.initialize()
+        result = AgentOrchestrator().run(args.limit, args.include_history, args.force_official,
+                                         args.force_qwen, trigger_name="cli")
+        print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
         with Path(args.csv).open(encoding="utf-8-sig", newline="") as handle:
             rows = list(csv.DictReader(handle))

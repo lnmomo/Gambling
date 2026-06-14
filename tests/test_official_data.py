@@ -4,6 +4,7 @@ from pathlib import Path
 
 from football_agents.db import Database
 from football_agents.official_data import OfficialDataService
+from football_agents.official_data.service import STATUS_MAP
 from football_agents.repository import Repository
 
 
@@ -45,6 +46,18 @@ class OfficialDataTests(unittest.TestCase):
         self.service.sync(force=True)
         report = self.service.sync(force=True)
         self.assertEqual(report["odds_snapshots"], 0)
+
+    def test_official_pool_can_be_filtered_from_local_match_date(self):
+        self.service.sync(force=True)
+        june_13 = self.repository.list_official_matches("2026-06-13")
+        june_14 = self.repository.list_official_matches("2026-06-14")
+        self.assertEqual([row["official_match_id"] for row in june_13],
+                         ["sporttery-2040164", "sporttery-2040166"])
+        self.assertEqual([row["official_match_id"] for row in june_14], ["sporttery-2040166"])
+
+    def test_current_official_sale_statuses_are_mapped(self):
+        self.assertEqual(STATUS_MAP["直播结束"], "finished")
+        self.assertEqual(STATUS_MAP["暂停销售"], "closed")
 
 
 if __name__ == "__main__":

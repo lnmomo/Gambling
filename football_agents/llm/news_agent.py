@@ -3,12 +3,12 @@ from __future__ import annotations
 import hashlib
 import json
 from typing import Any
-from urllib.request import Request, urlopen
 
 from pydantic import BaseModel, Field
 
 from ..config import settings
 from ..repository import Repository
+from .client import QwenClient
 
 
 class NewsAnalysis(BaseModel):
@@ -25,9 +25,10 @@ class NewsAnalysis(BaseModel):
 class LLMNewsAgent:
     def __init__(self, repository: Repository | None = None) -> None:
         self.repository = repository or Repository()
+        self.client = QwenClient()
 
     def configured(self) -> bool:
-        return all((settings.llm_api_key, settings.llm_base_url, settings.llm_model))
+        return self.client.configured()
 
     def analyze(self, match_id: int, force: bool = False) -> dict[str, Any]:
         if not self.configured():
@@ -49,17 +50,11 @@ class LLMNewsAgent:
                                                            input_hash, normalized)
             return {"status": "cached", **cached}
         prompt = self._prompt(match, evidence)
-        payload = {"model": settings.llm_model, "temperature": 0.1, "max_tokens": 900,
-                   "response_format": {"type": "json_object"},
-                   "messages": [{"role": "system", "content": "你是足球情报结构化分析器。只依据给定新闻，禁止补充未知事实，输出严格 JSON。"},
-                                {"role": "user", "content": prompt}]}
-        request = Request(f"{settings.llm_base_url}/chat/completions", data=json.dumps(payload).encode(),
-                          headers={"Authorization": f"Bearer {settings.llm_api_key}",
-                                   "Content-Type": "application/json"}, method="POST")
-        with urlopen(request, timeout=settings.llm_timeout_seconds) as response:
-            body = json.loads(response.read().decode("utf-8"))
-        content = body["choices"][0]["message"]["content"]
-        analysis = self._conservative(NewsAnalysis.model_validate(json.loads(content)).model_dump())
+        content = self.client.chat_json(
+            "你是足球情报结构化分析器。只依据给定新闻，禁止补充未知事实，输出严格 JSON。",
+            prompt, max_tokens=900, temperature=0.1,
+        )
+        analysis = self._conservative(NewsAnalysis.model_validate(content).model_dump())
         saved = self.repository.save_llm_analysis(match_id, settings.llm_provider, settings.llm_model,
                                                    input_hash, analysis)
         return {"status": "created", **saved}
@@ -74,8 +69,7 @@ class LLMNewsAgent:
                 "impact 表示新闻对对应球队胜率的方向性微调，范围 -0.2 到 0.2；证据不足必须为 0。")
 
     def status(self) -> dict[str, Any]:
-        return {"configured": self.configured(), "provider": settings.llm_provider,
-                "model": settings.llm_model, "base_host": settings.llm_base_url.split("//")[-1].split("/")[0]}
+        return self.client.status()
 
     @staticmethod
     def _conservative(analysis: dict[str, Any]) -> dict[str, Any]:

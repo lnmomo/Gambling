@@ -2,22 +2,26 @@ from __future__ import annotations
 
 import csv
 import io
-from datetime import date
+import threading
+from datetime import date, datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from .agents import DecisionWorkflow
+from .agents.orchestrator import AgentOrchestrator
 from .backtesting import BacktestEngine
 from .config import settings
 from .db import db
 from .official_data import OfficialDataService
 from .integrations import DataEnrichmentService
-from .llm import LLMNewsAgent
+from .llm import LLMNewsAgent, QwenOpsAgent
 from .historical_data import HistoricalDataService
 from .historical_agent import HistoricalCollectionAgent
+from .international_history_agent import InternationalHistoryAgent
 from .repository import Repository
 from .schemas import BacktestRequest, EvaluateRequest, FeatureCreate, MatchCreate, MatchMetadataCreate, OddsCreate, SettingsUpdate
 
@@ -34,14 +38,34 @@ workflow = DecisionWorkflow(repository)
 official_data = OfficialDataService(repository)
 enrichment = DataEnrichmentService(repository)
 llm_news = LLMNewsAgent(repository)
+qwen_ops = QwenOpsAgent()
 historical_data = HistoricalDataService(repository)
 historical_agent = HistoricalCollectionAgent(repository)
+international_history_agent = InternationalHistoryAgent(repository)
+agent_orchestrator = AgentOrchestrator(repository)
+official_sync_stop = threading.Event()
+
+
+def _official_sync_loop() -> None:
+    interval = max(60, settings.official_auto_sync_interval_seconds)
+    while not official_sync_stop.wait(interval):
+        try:
+            official_data.sync()
+        except Exception:
+            # The service persists failures; keep the scheduler alive for the next retry.
+            pass
 
 
 @app.on_event("startup")
 def startup() -> None:
     db.initialize()
     historical_data.bootstrap_sample()
+    threading.Thread(target=_official_sync_loop, name="official-data-sync", daemon=True).start()
+
+
+@app.on_event("shutdown")
+def shutdown() -> None:
+    official_sync_stop.set()
 
 
 @app.get("/", include_in_schema=False)
@@ -108,7 +132,7 @@ def evaluate(match_id: int, payload: EvaluateRequest | None = None) -> dict:
             repository.add_odds(match_id, payload.market_odds.model_dump(), payload.market_source, timestamp, external=True)
         if payload.features:
             repository.add_features(match_id, payload.features.model_dump())
-    return workflow.evaluate(match_id)
+    return qwen_ops.attach("model-critic-agent", workflow.evaluate(match_id))
 
 
 @app.get("/api/predictions/{match_id}")
@@ -139,7 +163,7 @@ def bankroll_status() -> dict:
 @app.post("/api/official/sync")
 def sync_official_data(force: bool = False) -> dict:
     try:
-        return official_data.sync(force=force)
+        return qwen_ops.attach("official-data-agent", official_data.sync(force=force))
     except Exception as exc:
         raise HTTPException(502, f"官方数据同步失败: {exc}") from exc
 
@@ -150,15 +174,18 @@ def official_data_status() -> dict:
 
 
 @app.get("/api/official/matches")
-def official_matches() -> list[dict]:
+def official_matches(target_date: date | None = None) -> list[dict]:
+    china_today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
+    selected_date = (target_date or china_today).isoformat()
     output = []
-    for match in repository.list_official_matches():
+    for match in repository.list_official_matches(selected_date):
         odds = repository.latest_odds(match["id"])
         market = repository.latest_odds(match["id"], external=True)
         prediction = repository.latest_prediction(match["id"])
         output.append({**match, "official_odds": odds["odds"],
                        "odds_fetched_at": odds["fetched_at"], "odds_source": odds["source"],
                        "market_odds": market["odds"], "market_odds_source": market["source"],
+                       "external_bookmaker_odds": repository.latest_external_bookmaker_odds(match["id"]),
                        "prediction": prediction, "news": repository.list_news(match["id"], 5),
                        "weather": repository.latest_weather(match["id"]),
                        "metadata": repository.get_match_metadata(match["id"]),
@@ -200,14 +227,23 @@ def sync_historical_matches(years_back: int = settings.historical_data_years_bac
                             divisions: str | None = None) -> dict:
     selected = [item.strip().upper() for item in (divisions or "").split(",") if item.strip()]
     try:
-        return historical_agent.sync(max(1, min(years_back, 10)), selected or None)
+        return qwen_ops.attach("historical-data-agent",
+                               historical_agent.sync(max(1, min(years_back, 10)), selected or None))
     except Exception as exc:
         raise HTTPException(502, f"历史数据同步失败: {exc}") from exc
 
 
+@app.post("/api/historical-matches/sync-international")
+def sync_international_historical_matches() -> dict:
+    try:
+        return qwen_ops.attach("international-history-agent", international_history_agent.sync())
+    except Exception as exc:
+        raise HTTPException(502, f"国家队历史数据同步失败: {exc}") from exc
+
+
 @app.post("/api/data/sync")
 def sync_external_data(limit: int = 40) -> dict:
-    return enrichment.sync(max(1, min(limit, 100)))
+    return qwen_ops.attach("market-news-weather-agent", enrichment.sync(max(1, min(limit, 100))))
 
 
 @app.get("/api/data/status")
@@ -218,6 +254,17 @@ def external_data_status() -> dict:
 @app.get("/api/llm/status")
 def llm_status() -> dict:
     return llm_news.status()
+
+
+@app.post("/api/agents/run")
+def run_agents(limit: int = settings.agent_match_limit, include_history: bool = False,
+               force_official: bool = False, force_qwen: bool = False) -> dict:
+    return agent_orchestrator.run(max(1, min(limit, 100)), include_history, force_official, force_qwen)
+
+
+@app.get("/api/agents/status")
+def agents_status(limit: int = 20) -> dict:
+    return agent_orchestrator.status(max(1, min(limit, 100)))
 
 
 @app.post("/api/llm/analyze/{match_id}")
@@ -245,14 +292,13 @@ def system_overview() -> dict:
         agents.append({"id": item["provider"], "name": provider_names.get(item["provider"], item["provider"]),
                        "state": state, "success_rate": 100 if state == "RUNNING" else 0,
                        "latency": item["status"], "task_count": item["records"], "last_updated": item["synced_at"]})
-    agents.extend([
-        {"id":"features","name":"特征工程Agent","state":"RUNNING" if counts["features"] else "DELAYED",
-         "success_rate":0,"latency":"等待真实球队特征","task_count":counts["features"],"last_updated":None},
-        {"id":"prediction","name":"概率预测Agent","state":"RUNNING" if counts["predictions"] else "DELAYED",
-         "success_rate":0,"latency":"等待完整输入","task_count":counts["predictions"],"last_updated":None},
-        {"id":"decision","name":"推荐决策Agent","state":"RUNNING","success_rate":100,
-         "latency":"按需评估","task_count":counts["signals"],"last_updated":None},
-    ])
+    recent_runs = repository.list_agent_runs(1)
+    if recent_runs:
+        for step in recent_runs[0]["steps"]:
+            state = "RUNNING" if step["status"] == "success" else "DELAYED" if step["status"] == "partial" else "WARNING"
+            agents.append({"id": f'run-step-{step["id"]}', "name": step["agent_name"], "state": state,
+                           "success_rate": 100 if state == "RUNNING" else 0, "latency": step["status"],
+                           "task_count": len(step["output"]), "last_updated": step["finished_at"]})
     return {"counts": counts, "agents": agents, "logs": repository.list_audit_events(100),
             "alerts": [log for log in repository.list_audit_events(100) if str(log["result"]).lower() not in {"成功","success"}][:20]}
 

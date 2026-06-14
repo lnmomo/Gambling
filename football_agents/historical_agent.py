@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
@@ -81,9 +82,21 @@ class HistoricalCollectionAgent:
         return rows
 
     def fetch(self, source: HistoricalSource, timeout: int | None = None) -> str:
-        request = Request(source.url, headers={"User-Agent": "football-agents-history/1.0"})
-        with urlopen(request, timeout=timeout or settings.historical_data_timeout_seconds) as response:
-            data = response.read()
+        attempts = max(1, settings.historical_data_retries + 1)
+        last_error: Exception | None = None
+        for attempt in range(attempts):
+            try:
+                request = Request(source.url, headers={"User-Agent": "football-agents-history/1.0"})
+                with urlopen(request, timeout=timeout or settings.historical_data_timeout_seconds) as response:
+                    data = response.read()
+                break
+            except Exception as exc:
+                last_error = exc
+                if attempt + 1 >= attempts:
+                    raise
+                time.sleep(settings.historical_data_retry_backoff_seconds * (2 ** attempt))
+        else:
+            raise last_error or RuntimeError("historical CSV download failed")
         for encoding in ("utf-8-sig", "cp1252", "latin-1"):
             try:
                 return data.decode(encoding)
@@ -91,9 +104,13 @@ class HistoricalCollectionAgent:
                 continue
         raise UnicodeDecodeError("utf-8", data, 0, 1, "unsupported CSV encoding")
 
+    def archive_path(self, source: HistoricalSource) -> Path:
+        return self.archive_dir / source.season / f"{source.division}.csv"
+
     def sync(self, years_back: int = 3, divisions: list[str] | None = None) -> dict[str, Any]:
         self.archive_dir.mkdir(parents=True, exist_ok=True)
-        totals = {"imported": 0, "updated": 0, "dropped": 0, "downloaded": 0, "failed": 0}
+        totals = {"imported": 0, "updated": 0, "dropped": 0, "downloaded": 0,
+                  "cached": 0, "stale": 0, "failed": 0}
         reports: list[dict[str, Any]] = []
         sources = self.sources(years_back, divisions)
         fetched: dict[HistoricalSource, str | Exception] = {}
@@ -108,23 +125,41 @@ class HistoricalCollectionAgent:
         for source in sources:
             try:
                 result_or_error = fetched[source]
+                network_error: Exception | None = None
                 if isinstance(result_or_error, Exception):
-                    raise result_or_error
-                text = result_or_error
+                    network_error = result_or_error
+                    archive_path = self.archive_path(source)
+                    if not archive_path.exists():
+                        raise result_or_error
+                    text = archive_path.read_text(encoding="utf-8-sig")
+                    source_status = "cached"
+                else:
+                    text = result_or_error
+                    source_status = "success"
                 rows = self.normalize_csv(text, source)
-                archive = self.archive_dir / source.season
-                archive.mkdir(parents=True, exist_ok=True)
-                (archive / f"{source.division}.csv").write_text(text, encoding="utf-8")
+                archive_path = self.archive_path(source)
+                archive_path.parent.mkdir(parents=True, exist_ok=True)
+                if source_status == "success":
+                    archive_path.write_text(text, encoding="utf-8")
                 result = self.repository.upsert_historical_matches(rows, source.url)
-                totals["downloaded"] += 1
+                if source_status == "success":
+                    totals["downloaded"] += 1
+                else:
+                    totals["cached"] += 1
+                    totals["stale"] += 1
                 for key in ("imported", "updated", "dropped"):
                     totals[key] += result[key]
-                reports.append({"url": source.url, "rows": len(rows), **result, "status": "success"})
+                report = {"url": source.url, "rows": len(rows), **result, "status": source_status}
+                if network_error:
+                    report["warning"] = str(network_error)
+                    report["archive"] = str(archive_path)
+                reports.append(report)
             except Exception as exc:
                 totals["failed"] += 1
                 reports.append({"url": source.url, "status": "failed", "error": str(exc)})
         self.repository.add_audit_event("history-agent", "历史数据", "增量同步",
                                         json.dumps(totals, ensure_ascii=False),
-                                        "success" if totals["downloaded"] else "failed")
+                                        "success" if totals["downloaded"] and not totals["stale"] else
+                                        "partial" if totals["cached"] else "failed")
         return {**totals, "database_matches": self.repository.historical_match_count(),
                 "synced_at": datetime.now(timezone.utc).isoformat(), "sources": reports}

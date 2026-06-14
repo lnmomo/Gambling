@@ -1,8 +1,9 @@
 import {calculateMatchPrediction, calculatePredictionForMatch, clamp} from "../services/probabilityEngine";
 import {limitDailyRecommendations} from "../algorithm/criticRules";
-import type {HistoricalMatch, LeagueStats, MatchContext, MatchStatus, OfficialMatch, OfficialSp, TeamStats} from "../types";
+import {normalizeTeamName} from "../algorithm/teamNameNormalizer";
+import type {ExternalBookmakerOdds, HistoricalMatch, LeagueStats, MatchContext, MatchStatus, OfficialMatch, OfficialSp, TeamStats} from "../types";
 
-interface ApiMatch {id: number; official_match_id: string; league: string; home_team: string; away_team: string; kickoff_time: string; status: string; last_seen_at: string | null; official_odds: Partial<OfficialSp>; odds_fetched_at: string | null; market_odds: Partial<OfficialSp>; news: Array<{raw_text: string; source_url: string; published_at: string; confidence: number}>; weather: {temperature: number | null; humidity: number | null; rainfall: number | null; wind_speed: number | null; fetched_at: string} | null; metadata: {venue: string | null; city: string | null} | null; llm_analysis: {model: string; created_at: string; analysis: {summary: string; home_team_impact: number; away_team_impact: number; lineup_confidence: number; news_confidence: number; injuries: string[]; risks: string[]; evidence: string[]}} | null; features: Record<string, unknown>}
+interface ApiMatch {id: number; official_match_id: string; league: string; home_team: string; away_team: string; kickoff_time: string; status: string; last_seen_at: string | null; official_odds: Partial<OfficialSp>; odds_fetched_at: string | null; market_odds: Partial<OfficialSp>; external_bookmaker_odds?: Array<{bookmaker: string; bookmaker_key?: string; market: string; odds: OfficialSp; last_update: string; source?: string}>; news: Array<{raw_text: string; source_url: string; published_at: string; confidence: number}>; weather: {temperature: number | null; humidity: number | null; rainfall: number | null; wind_speed: number | null; fetched_at: string} | null; metadata: {venue: string | null; city: string | null} | null; llm_analysis: {model: string; created_at: string; analysis: {summary: string; home_team_impact: number; away_team_impact: number; lineup_confidence: number; news_confidence: number; injuries: string[]; risks: string[]; evidence: string[]}} | null; features: Record<string, unknown>}
 const statusMap: Record<string, MatchStatus> = {scheduled: "NOT_STARTED", live: "LIVE", finished: "FINISHED", cancelled: "CANCELLED", postponed: "POSTPONED", closed: "CLOSED", unknown: "CLOSED"};
 const num = (value: unknown, fallback = 0) => typeof value === "number" && Number.isFinite(value) ? value : fallback;
 
@@ -41,8 +42,9 @@ const mapHistoricalMatch = (row: ApiHistoricalMatch): HistoricalMatch => ({id: r
 export function mapOfficialMatch(row: ApiMatch, historicalMatches: HistoricalMatch[] = []): OfficialMatch {
   const officialSp = {home: num(row.official_odds.home), draw: num(row.official_odds.draw), away: num(row.official_odds.away)};
   const marketOdds = {home: num(row.market_odds.home), draw: num(row.market_odds.draw), away: num(row.market_odds.away)};
+  const externalBookmakerOdds: ExternalBookmakerOdds[] = (row.external_bookmaker_odds ?? []).map(item => ({bookmaker: item.bookmaker, bookmakerKey: item.bookmaker_key, market: item.market === "1X2" ? "1X2" : "H2H", odds: item.odds, lastUpdate: item.last_update, source: item.source}));
   const home = teamStats(row, "home"), away = teamStats(row, "away"), context = contextFor(row);
-  const base = {id: String(row.id), officialMatchId: row.official_match_id, league: row.league, homeTeam: row.home_team, awayTeam: row.away_team, kickoffTime: row.kickoff_time, status: statusMap[row.status] ?? "CLOSED", officialSp, homeElo: home?.elo, awayElo: away?.elo, updatedAt: row.odds_fetched_at ?? row.last_seen_at ?? "", marketOdds, news: (row.news ?? []).map(item => ({title: item.raw_text, url: item.source_url, publishedAt: item.published_at, confidence: item.confidence})), weather: row.weather ? {temperature: row.weather.temperature, humidity: row.weather.humidity, rainfall: row.weather.rainfall, windSpeed: row.weather.wind_speed, fetchedAt: row.weather.fetched_at} : null, venue: row.metadata?.venue ?? row.metadata?.city ?? null, llmAnalysis: row.llm_analysis ? {summary: row.llm_analysis.analysis.summary, homeTeamImpact: row.llm_analysis.analysis.home_team_impact, awayTeamImpact: row.llm_analysis.analysis.away_team_impact, lineupConfidence: row.llm_analysis.analysis.lineup_confidence, newsConfidence: row.llm_analysis.analysis.news_confidence, injuries: row.llm_analysis.analysis.injuries, risks: row.llm_analysis.analysis.risks, evidence: row.llm_analysis.analysis.evidence, model: row.llm_analysis.model, createdAt: row.llm_analysis.created_at} : null, context};
+  const base = {id: String(row.id), officialMatchId: row.official_match_id, league: row.league, homeTeam: row.home_team, awayTeam: row.away_team, kickoffTime: row.kickoff_time, status: statusMap[row.status] ?? "CLOSED", officialSp, externalBookmakerOdds, homeElo: home?.elo, awayElo: away?.elo, updatedAt: row.odds_fetched_at ?? row.last_seen_at ?? "", marketOdds, news: (row.news ?? []).map(item => ({title: item.raw_text, url: item.source_url, publishedAt: item.published_at, confidence: item.confidence})), weather: row.weather ? {temperature: row.weather.temperature, humidity: row.weather.humidity, rainfall: row.weather.rainfall, windSpeed: row.weather.wind_speed, fetchedAt: row.weather.fetched_at} : null, venue: row.metadata?.venue ?? row.metadata?.city ?? null, llmAnalysis: row.llm_analysis ? {summary: row.llm_analysis.analysis.summary, homeTeamImpact: row.llm_analysis.analysis.home_team_impact, awayTeamImpact: row.llm_analysis.analysis.away_team_impact, lineupConfidence: row.llm_analysis.analysis.lineup_confidence, newsConfidence: row.llm_analysis.analysis.news_confidence, injuries: row.llm_analysis.analysis.injuries, risks: row.llm_analysis.analysis.risks, evidence: row.llm_analysis.analysis.evidence, model: row.llm_analysis.model, createdAt: row.llm_analysis.created_at} : null, context};
   const teams: Record<string, TeamStats> = {};
   if (home) teams[row.home_team] = home;
   if (away) teams[row.away_team] = away;
@@ -50,15 +52,19 @@ export function mapOfficialMatch(row: ApiMatch, historicalMatches: HistoricalMat
   const league = leagueStats(row);
   if (league) leagues[row.league] = league;
   const prediction = historicalMatches.length ? calculateMatchPrediction(base, historicalMatches, context, 10_000) : calculatePredictionForMatch(base, teams, leagues, {[base.id]: context});
-  return {...base, prediction, modelProbability: prediction.finalProbability, modelFairOdds: prediction.fairOdds, ev: prediction.ev, recommendation: prediction.recommendation, confidence: prediction.confidenceGrade, riskLevel: prediction.riskLevel, predictionType: "market + dixon-coles + elo", marketCalibrated: Object.values(marketOdds).every(value => value > 1)};
+  return {...base, prediction, modelProbability: prediction.finalProbability, modelFairOdds: prediction.finalFairOdds, ev: prediction.ev, recommendation: prediction.recommendation, confidence: prediction.confidenceGrade, riskLevel: prediction.riskLevel, predictionType: "official market + external market + pure model", marketCalibrated: Object.values(marketOdds).every(value => value > 1)};
 }
 
 export async function fetchOfficialMatches(signal?: AbortSignal): Promise<OfficialMatch[]> {
-  const [officialResponse, historyResponse] = await Promise.all([fetch("/api/official/matches", {signal}), fetch("/api/historical-matches?limit=100000", {signal})]);
+  const officialResponse = await fetch("/api/official/matches", {signal});
   if (!officialResponse.ok) throw new Error(`官方比赛接口请求失败 (${officialResponse.status})`);
+  const officialRows = (await officialResponse.json()) as ApiMatch[];
+  const teams = [...new Set(officialRows.flatMap(row => [normalizeTeamName(row.home_team), normalizeTeamName(row.away_team)]))];
+  const query = new URLSearchParams({limit: "100000", teams: teams.join(",")});
+  const historyResponse = await fetch(`/api/historical-matches?${query}`, {signal});
   if (!historyResponse.ok) throw new Error(`历史比赛接口请求失败 (${historyResponse.status})`);
   const history = ((await historyResponse.json()) as ApiHistoricalMatch[]).map(mapHistoricalMatch);
-  const matches = ((await officialResponse.json()) as ApiMatch[]).map(row => mapOfficialMatch(row, history));
+  const matches = officialRows.map(row => mapOfficialMatch(row, history));
   const limited = new Map(limitDailyRecommendations(matches.map(match => match.prediction)).map(prediction => [prediction.matchId, prediction]));
   return matches.map(match => { const prediction = limited.get(match.id) ?? match.prediction; return {...match, prediction, recommendation: prediction.recommendation, ev: prediction.ev, riskLevel: prediction.riskLevel, confidence: prediction.confidenceGrade}; });
 }

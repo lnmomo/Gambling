@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from collections import defaultdict
 from datetime import datetime
 from difflib import SequenceMatcher
 from typing import Any
@@ -27,15 +26,30 @@ def normalize_team(name: str) -> str:
 
 
 class OddsApiClient:
+    def __init__(self) -> None:
+        self.warnings: list[str] = []
+
     def configured(self) -> bool:
         return bool(settings.odds_api_key)
 
     def events(self) -> tuple[list[dict[str, Any]], dict[str, str]]:
         if not self.configured():
             return [], {}
+        self.warnings = []
         output: list[dict[str, Any]] = []
         response_headers: dict[str, str] = {}
-        for sport in settings.odds_api_sport_keys:
+        sports, response_headers = get_json(
+            f"{settings.odds_api_base_url}/sports", {"apiKey": settings.odds_api_key},
+            settings.enrichment_timeout_seconds,
+        )
+        active_keys = {item.get("key") for item in sports if item.get("active")}
+        selected = [sport for sport in settings.odds_api_sport_keys if sport in active_keys]
+        missing = [sport for sport in settings.odds_api_sport_keys if sport not in active_keys]
+        if missing:
+            self.warnings.append("The Odds API 当前无可用项目: " + ", ".join(missing))
+        if not selected:
+            raise RuntimeError("配置的 ODDS_API_SPORT_KEYS 当前均不可用")
+        for sport in selected:
             data, response_headers = get_json(
                 f"{settings.odds_api_base_url}/sports/{sport}/odds",
                 {"apiKey": settings.odds_api_key, "regions": "uk,eu", "markets": "h2h", "oddsFormat": "decimal"},
@@ -63,18 +77,39 @@ class OddsApiClient:
         return best[1] if best else None
 
     @staticmethod
-    def consensus(event: dict[str, Any]) -> dict[str, float] | None:
-        prices: dict[str, list[float]] = defaultdict(list)
+    def bookmaker_odds(event: dict[str, Any]) -> list[dict[str, Any]]:
+        output: list[dict[str, Any]] = []
         home = event["home_team"]; away = event["away_team"]
         for bookmaker in event.get("bookmakers", []):
             for market in bookmaker.get("markets", []):
                 if market.get("key") != "h2h":
                     continue
+                odds: dict[str, float] = {}
                 for outcome in market.get("outcomes", []):
                     name = outcome.get("name")
                     key = "home" if name == home else "away" if name == away else "draw" if name == "Draw" else None
                     if key and float(outcome.get("price", 0)) > 1:
-                        prices[key].append(float(outcome["price"]))
-        if set(prices) != {"home", "draw", "away"}:
+                        odds[key] = float(outcome["price"])
+                if set(odds) == {"home", "draw", "away"}:
+                    output.append({"bookmaker": bookmaker.get("title") or bookmaker.get("key") or "Unknown",
+                                   "bookmaker_key": bookmaker.get("key"), "market": "H2H", "odds": odds,
+                                   "last_update": market.get("last_update") or bookmaker.get("last_update")})
+        return output
+
+    @staticmethod
+    def consensus(event: dict[str, Any]) -> dict[str, float] | None:
+        bookmaker_probabilities: list[dict[str, float]] = []
+        for item in OddsApiClient.bookmaker_odds(event):
+            odds = item["odds"]
+            inverse = {key: 1 / value for key, value in odds.items()}
+            overround_total = sum(inverse.values())
+            bookmaker_probabilities.append(
+                {key: probability / overround_total for key, probability in inverse.items()}
+            )
+        if not bookmaker_probabilities:
             return None
-        return {key: round(sum(values) / len(values), 4) for key, values in prices.items()}
+        consensus_probability = {
+            key: sum(item[key] for item in bookmaker_probabilities) / len(bookmaker_probabilities)
+            for key in ("home", "draw", "away")
+        }
+        return {key: round(1 / probability, 4) for key, probability in consensus_probability.items()}

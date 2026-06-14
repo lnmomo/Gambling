@@ -12,9 +12,9 @@ from .browser import SportteryBrowserClient
 
 STATUS_MAP = {
     "已开售": "scheduled", "待开售": "scheduled", "未开赛": "scheduled",
-    "进行中": "live", "比赛中": "live", "已完成": "finished",
+    "进行中": "live", "比赛中": "live", "已完成": "finished", "直播结束": "finished",
     "已取消": "cancelled", "取消": "cancelled", "延期": "postponed",
-    "已延期": "postponed", "停售": "closed", "已停售": "closed",
+    "已延期": "postponed", "停售": "closed", "已停售": "closed", "暂停销售": "closed",
 }
 
 class OfficialDataService:

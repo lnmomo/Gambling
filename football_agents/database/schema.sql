@@ -132,6 +132,21 @@ CREATE TABLE IF NOT EXISTS backtest_reports (
     created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS external_bookmaker_odds (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    match_id INTEGER NOT NULL REFERENCES matches(id),
+    bookmaker TEXT NOT NULL,
+    bookmaker_key TEXT,
+    market TEXT NOT NULL DEFAULT 'H2H',
+    home_odds REAL NOT NULL,
+    draw_odds REAL NOT NULL,
+    away_odds REAL NOT NULL,
+    last_update TEXT NOT NULL,
+    fetched_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_external_bookmaker_match_time
+ON external_bookmaker_odds(match_id, fetched_at DESC);
+
 CREATE TABLE IF NOT EXISTS historical_matches (
     id TEXT PRIMARY KEY,
     league TEXT NOT NULL,
@@ -218,4 +233,27 @@ CREATE TABLE IF NOT EXISTS llm_match_analyses (
     created_at TEXT NOT NULL,
     UNIQUE(match_id, provider, model, input_hash)
 );
+
+CREATE TABLE IF NOT EXISTS agent_runs (
+    id TEXT PRIMARY KEY,
+    status TEXT NOT NULL,
+    trigger_name TEXT NOT NULL,
+    summary_json TEXT NOT NULL DEFAULT '{}',
+    started_at TEXT NOT NULL,
+    finished_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS agent_run_steps (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_id TEXT NOT NULL REFERENCES agent_runs(id),
+    agent_name TEXT NOT NULL,
+    status TEXT NOT NULL,
+    input_json TEXT NOT NULL DEFAULT '{}',
+    output_json TEXT NOT NULL DEFAULT '{}',
+    error_message TEXT,
+    started_at TEXT NOT NULL,
+    finished_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_agent_run_steps_run_id ON agent_run_steps(run_id, id);
 

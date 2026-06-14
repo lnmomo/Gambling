@@ -69,10 +69,19 @@ class DecisionWorkflow:
         ensemble_prediction = self.ensemble.predict(component_predictions)
         disagreement = self.ensemble.disagreement(component_predictions)
         self.repository.add_prediction(match_id, "market", market_prediction)
+        llm_analysis = self.repository.latest_llm_analysis(match_id)
+        contextual_prediction, context_metadata = self._apply_llm_context(ensemble_prediction, llm_analysis)
         self.repository.add_prediction(match_id, "ensemble", ensemble_prediction, {
             "weights": self.ensemble.weights, "disagreement": disagreement,
             "fair_odds": {option: 1 / probability for option, probability in ensemble_prediction.items()},
         })
+        if context_metadata["applied"]:
+            ensemble_prediction = contextual_prediction
+            self.repository.add_prediction(match_id, "contextual_ensemble", ensemble_prediction, {
+                "weights": self.ensemble.weights, "disagreement": disagreement,
+                "fair_odds": {option: 1 / probability for option, probability in ensemble_prediction.items()},
+                "qwen_context": context_metadata,
+            })
 
         candidates = []
         for option, probability in ensemble_prediction.items():
@@ -125,7 +134,33 @@ class DecisionWorkflow:
             "critic": critic,
             "signal": signal,
             "risk_limits": asdict(limits),
+            "qwen_context": context_metadata,
         }
+
+    @staticmethod
+    def _apply_llm_context(probabilities: dict[str, float], llm_analysis: dict[str, Any] | None
+                           ) -> tuple[dict[str, float], dict[str, Any]]:
+        if not llm_analysis:
+            return probabilities, {"applied": False, "reason": "no_analysis"}
+        analysis = llm_analysis.get("analysis", {})
+        confidence = float(analysis.get("news_confidence", 0))
+        evidence = analysis.get("evidence") or []
+        if confidence < 0.4 or not evidence:
+            return probabilities, {"applied": False, "reason": "insufficient_evidence",
+                                   "confidence": confidence}
+        home_delta = max(-0.08, min(0.08, float(analysis.get("home_team_impact", 0)))) * confidence
+        away_delta = max(-0.08, min(0.08, float(analysis.get("away_team_impact", 0)))) * confidence
+        adjusted = {
+            "home": max(0.01, probabilities["home"] + home_delta),
+            "draw": max(0.01, probabilities["draw"]),
+            "away": max(0.01, probabilities["away"] + away_delta),
+        }
+        total = sum(adjusted.values())
+        normalized = {key: value / total for key, value in adjusted.items()}
+        return normalized, {"applied": True, "provider": llm_analysis.get("provider"),
+                            "model": llm_analysis.get("model"), "confidence": confidence,
+                            "home_delta": home_delta, "away_delta": away_delta,
+                            "analysis_id": llm_analysis.get("id")}
 
     def _current_limits(self) -> RiskLimits:
         saved = self.repository.get_settings().get("rules", {})

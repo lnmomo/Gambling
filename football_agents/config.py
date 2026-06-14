@@ -33,10 +33,11 @@ class Settings:
     )
     official_fetch_timeout_seconds: int = int(os.getenv("OFFICIAL_FETCH_TIMEOUT_SECONDS", "25"))
     official_min_sync_interval_seconds: int = int(os.getenv("OFFICIAL_MIN_SYNC_INTERVAL_SECONDS", "60"))
+    official_auto_sync_interval_seconds: int = int(os.getenv("OFFICIAL_AUTO_SYNC_INTERVAL_SECONDS", "3600"))
     odds_api_key: str = os.getenv("THE_ODDS_API_KEY", "")
     odds_api_base_url: str = os.getenv("ODDS_API_BASE_URL", "https://api.the-odds-api.com/v4")
     odds_api_sport_keys: tuple[str, ...] = tuple(filter(None, os.getenv(
-        "ODDS_API_SPORT_KEYS", "soccer_fifa_world_cup,soccer_international_friendlies"
+        "ODDS_API_SPORT_KEYS", "soccer_fifa_world_cup,soccer_finland_veikkausliiga"
     ).split(",")))
     gdelt_api_url: str = os.getenv("GDELT_API_URL", "https://api.gdeltproject.org/api/v2/doc/doc")
     open_meteo_geocoding_url: str = os.getenv(
@@ -52,6 +53,7 @@ class Settings:
     llm_model: str = os.getenv("LLM_MODEL", "")
     llm_timeout_seconds: int = int(os.getenv("LLM_TIMEOUT_SECONDS", "45"))
     llm_max_news_items: int = int(os.getenv("LLM_MAX_NEWS_ITEMS", "5"))
+    agent_match_limit: int = int(os.getenv("AGENT_MATCH_LIMIT", "20"))
     historical_data_base_url: str = os.getenv(
         "HISTORICAL_DATA_BASE_URL", "https://www.football-data.co.uk/mmz4281"
     ).rstrip("/")
@@ -61,6 +63,13 @@ class Settings:
     ).split(",")))
     historical_data_timeout_seconds: int = int(os.getenv("HISTORICAL_DATA_TIMEOUT_SECONDS", "12"))
     historical_data_workers: int = int(os.getenv("HISTORICAL_DATA_WORKERS", "8"))
+    historical_data_retries: int = int(os.getenv("HISTORICAL_DATA_RETRIES", "3"))
+    historical_data_retry_backoff_seconds: float = float(os.getenv("HISTORICAL_DATA_RETRY_BACKOFF_SECONDS", "1"))
+    international_data_url: str = os.getenv(
+        "INTERNATIONAL_DATA_URL",
+        "https://raw.githubusercontent.com/martj42/international_results/master/results.csv",
+    )
+    international_data_timeout_seconds: int = int(os.getenv("INTERNATIONAL_DATA_TIMEOUT_SECONDS", "30"))
 
 
 settings = Settings()

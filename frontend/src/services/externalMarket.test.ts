@@ -1,0 +1,23 @@
+import {describe, expect, it} from "vitest";
+import {calculateExternalMarketConsensus, calculateExternalMarketQuality, calculateProbabilityDeviation, calculateWeightedConsensusProbability, convertBookmakerOddsToProbability, detectOutlierBookmakers, isOddsStale, isValidThreeWayOdds} from "../algorithm/externalMarket";
+import type {ExternalBookmakerOdds, ThreeWayProbability} from "../types";
+
+const now = Date.parse("2026-06-14T12:00:00Z");
+const official: ThreeWayProbability = {home: .45, draw: .28, away: .27};
+const book = (bookmaker: string, odds = {home: 2, draw: 3.5, away: 4}, weight?: number): ExternalBookmakerOdds => ({bookmaker, bookmakerKey: bookmaker.toLowerCase(), market: "H2H", odds, lastUpdate: "2026-06-14T11:50:00Z", weight});
+
+describe("external market consensus", () => {
+  it("validates three-way odds", () => { expect(isValidThreeWayOdds({home: 2, draw: 3, away: 4})).toBe(true); expect(isValidThreeWayOdds({home: 1, draw: 3, away: 4})).toBe(false); });
+  it("converts one bookmaker to devigged probability", () => { const row = convertBookmakerOddsToProbability(book("pinnacle"), {now}); expect(row.included).toBe(true); expect(Object.values(row.normalizedProbability).reduce((a, b) => a + b, 0)).toBeCloseTo(1); expect(row.overround).toBeGreaterThan(0); });
+  it("calculates equal-weight consensus", () => { const rows = [convertBookmakerOddsToProbability(book("A"), {now}), convertBookmakerOddsToProbability(book("B", {home: 2.2, draw: 3.3, away: 3.8}), {now})].map(row => ({...row, weight: 1})); const result = calculateWeightedConsensusProbability(rows, official); expect(result.fallbackUsed).toBe(false); expect(Object.values(result.probability).reduce((a, b) => a + b, 0)).toBeCloseTo(1); });
+  it("applies bookmaker weights", () => { const a = convertBookmakerOddsToProbability(book("A", {home: 1.7, draw: 4, away: 5}, 3), {now}), b = convertBookmakerOddsToProbability(book("B", {home: 2.8, draw: 3, away: 2.8}, 1), {now}); const result = calculateWeightedConsensusProbability([a, b], official); expect(result.probability.home).toBeGreaterThan((a.normalizedProbability.home + b.normalizedProbability.home) / 2); });
+  it("excludes invalid odds", () => expect(convertBookmakerOddsToProbability(book("bad", {home: 1, draw: 3, away: 4}), {now}).exclusionReason).toBe("Invalid odds"));
+  it("excludes excessive overround", () => expect(convertBookmakerOddsToProbability(book("bad", {home: 1.2, draw: 1.2, away: 1.2}), {now}).exclusionReason).toBe("Overround too high"));
+  it("excludes stale odds", () => { const stale = {...book("old"), lastUpdate: "2026-06-14T10:00:00Z"}; expect(isOddsStale(stale.lastUpdate, 30, now)).toBe(true); expect(convertBookmakerOddsToProbability(stale, {now}).exclusionReason).toBe("Stale odds"); });
+  it("excludes an outlier bookmaker", () => { const rows = [book("A"), book("B", {home: 2.05, draw: 3.45, away: 4}), book("C", {home: 1.95, draw: 3.55, away: 4.1}), book("outlier", {home: 8, draw: 4, away: 1.45})].map(item => convertBookmakerOddsToProbability(item, {now})); const filtered = detectOutlierBookmakers(rows); expect(filtered.find(row => row.bookmaker === "outlier")?.exclusionReason).toBe("Outlier odds"); });
+  it("falls back when external market is missing", () => { const result = calculateExternalMarketConsensus(undefined, official, {now}); expect(result.fallbackUsed).toBe(true); expect(result.probability).toBe(official); expect(result.quality.qualityLevel).toBe("UNAVAILABLE"); });
+  it("calculates a bounded quality score", () => { const consensus = calculateExternalMarketConsensus([book("pinnacle"), book("betfair"), book("bet365"), book("unibet")], official, {now}); expect(consensus.quality.qualityScore).toBeGreaterThan(0); expect(consensus.quality.qualityScore).toBeLessThanOrEqual(100); expect(consensus.quality.includedBookmakerCount).toBe(4); });
+  it("warns when official market deviation is large", () => { const rows = [convertBookmakerOddsToProbability(book("A", {home: 6, draw: 4, away: 1.5}), {now})]; const consensus = rows[0].normalizedProbability, quality = calculateExternalMarketQuality(rows, consensus, official, false); expect(quality.officialMarketDeviation.maxDeviation).toBeGreaterThan(.08); expect(quality.warnings).toContain("外部市场与官方SP去水概率偏离较大"); });
+  it("returns fair odds as inverse consensus probability", () => { const result = calculateExternalMarketConsensus([book("pinnacle"), book("betfair")], official, {now}); expect(result.fairOdds.home).toBeCloseTo(1 / result.probability.home); expect(Object.values(result.probability).reduce((a, b) => a + b, 0)).toBeCloseTo(1); });
+  it("calculates probability deviation", () => expect(calculateProbabilityDeviation({home:.6,draw:.2,away:.2}, official).maxDeviation).toBeCloseTo(.15));
+});

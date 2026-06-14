@@ -1,4 +1,4 @@
-import type {CriticReport, MarketDeviation, MatchContext, MatchPrediction, MatchStatus, ModelDisagreement, OfficialMatch, RecommendationType, RiskLevel, ThreeWayEv, ThreeWayProbability} from "../types";
+import type {CriticReport, ExternalMarketQuality, MarketDeviation, MatchContext, MatchPrediction, MatchStatus, ModelDisagreement, OfficialMatch, RecommendationType, RiskLevel, ThreeWayEv, ThreeWayProbability} from "../types";
 import {AlgorithmConfig} from "./config";
 
 export interface DynamicThresholdInput {baseThreshold?: number; riskLevel: RiskLevel; dataFreshness: "FRESH" | "STALE"; modelDisagreement: ModelDisagreement; lineupKnown: boolean; minutesToKickoff?: number; homeMatchCount?: number; awayMatchCount?: number; marketDeviation?: MarketDeviation; selectedOdds?: number; competitionType?: "LEAGUE" | "CUP" | "FRIENDLY" | "UNKNOWN"; matchStatus?: MatchStatus}
@@ -17,10 +17,19 @@ export function calculateDynamicEvThreshold(input: DynamicThresholdInput) {
   threshold += input.competitionType === "FRIENDLY" ? .035 : input.competitionType === "CUP" ? .015 : input.competitionType === "UNKNOWN" ? .025 : 0;
   return Math.max(.04, threshold);
 }
+export function externalMarketThresholdAdjustment(quality?: ExternalMarketQuality) {
+  if (!quality) return 0;
+  let adjustment = quality.qualityLevel === "LOW" || quality.qualityLevel === "UNAVAILABLE" ? .015 : 0;
+  const deviation = quality.officialMarketDeviation.maxDeviation;
+  if (deviation > .12 && deviation <= .18) adjustment += .025;
+  if (quality.includedBookmakerCount < 2) adjustment += .01;
+  if (quality.excludedBookmakerCount >= Math.max(1, quality.includedBookmakerCount)) adjustment += .015;
+  return adjustment;
+}
 const actionRows = (p: ThreeWayProbability, ev: ThreeWayEv, sp: OfficialMatch["officialSp"]) => [
   {action: "HOME" as const, probability: p.home, ev: ev.home, odds: sp.home}, {action: "DRAW" as const, probability: p.draw, ev: ev.draw, odds: sp.draw}, {action: "AWAY" as const, probability: p.away, ev: ev.away, odds: sp.away},
 ].sort((a, b) => b.ev - a.ev);
-export function runCriticCheck(match: Pick<OfficialMatch, "officialMatchId" | "status" | "officialSp">, draft: {finalProbability: ThreeWayProbability; ev: ThreeWayEv; modelDisagreement: ModelDisagreement; marketDeviation?: MarketDeviation; homeMatchCount?: number; awayMatchCount?: number}, context: MatchContext, dynamicEvThreshold: number): CriticReport {
+export function runCriticCheck(match: Pick<OfficialMatch, "officialMatchId" | "status" | "officialSp">, draft: {finalProbability: ThreeWayProbability; marketProbability?: ThreeWayProbability; pureModelProbability?: ThreeWayProbability; externalMarketQuality?: ExternalMarketQuality; ev: ThreeWayEv; modelDisagreement: ModelDisagreement; marketDeviation?: MarketDeviation; homeMatchCount?: number; awayMatchCount?: number}, context: MatchContext, dynamicEvThreshold: number): CriticReport {
   const reasons: string[] = [], warnings: string[] = [], best = actionRows(draft.finalProbability, draft.ev, match.officialSp)[0];
   if (!match.officialMatchId) reasons.push("缺少官方比赛 ID，不进入模型推荐。");
   if (["CANCELLED", "POSTPONED", "CLOSED", "FINISHED"].includes(match.status)) reasons.push("比赛已取消、延期、停售或结束。");
@@ -35,6 +44,16 @@ export function runCriticCheck(match: Pick<OfficialMatch, "officialMatchId" | "s
   if (maxProbability > AlgorithmConfig.critic.maxAllowedProbability) reasons.push("最终概率异常过高。"); else if (maxProbability > AlgorithmConfig.critic.highProbabilityWarning) warnings.push("最终概率过高，可能存在过度自信。");
   if (best.odds < AlgorithmConfig.critic.minRecommendedOdds) reasons.push("赔率过低，风险收益比不足。");
   if (!Number.isFinite(dynamicEvThreshold) || best.ev < dynamicEvThreshold) reasons.push(`最高 EV ${(best.ev * 100).toFixed(2)}% 未超过动态阈值 ${Number.isFinite(dynamicEvThreshold) ? `${(dynamicEvThreshold * 100).toFixed(2)}%` : "（禁止推荐）"}。`);
+  const selected = best.action === "HOME" ? "home" : best.action === "DRAW" ? "draw" : "away";
+  if (draft.marketProbability && draft.finalProbability[selected] <= draft.marketProbability[selected]) reasons.push("最终决策概率未高于官方市场去水概率。");
+  if (draft.marketProbability && draft.pureModelProbability && draft.pureModelProbability[selected] < draft.marketProbability[selected] - .03) reasons.push("纯模型概率不支持该方向，疑似市场锚定造成的假价值。");
+  const externalQuality = draft.externalMarketQuality;
+  if (externalQuality?.qualityLevel === "UNAVAILABLE") warnings.push("外部市场不可用，推荐可信度降低。");
+  if (externalQuality?.qualityLevel === "LOW") warnings.push("外部市场质量较低，已提高推荐门槛。");
+  if ((externalQuality?.officialMarketDeviation.maxDeviation ?? 0) > .18) reasons.push("外部市场与官方SP去水概率偏离过大，疑似数据异常或市场分歧过高。");
+  else if ((externalQuality?.officialMarketDeviation.maxDeviation ?? 0) > .12) warnings.push("外部市场与官方SP存在明显偏离，已提高EV阈值。");
+  if (externalQuality && externalQuality.includedBookmakerCount < 2) warnings.push("有效外部博彩公司数量不足。");
+  if (externalQuality && externalQuality.excludedBookmakerCount >= Math.max(1, externalQuality.includedBookmakerCount)) warnings.push("外部市场异常赔率占比较高。");
   if (best.action === "DRAW" && (best.ev < dynamicEvThreshold + .02 || draft.modelDisagreement.level === "HIGH" || (draft.marketDeviation?.drawDeviation ?? 0) > .12)) reasons.push("平局推荐未满足额外安全边际。");
   if (context.dataFreshness === "STALE") reasons.push("数据已过期。");
   if (context.newsReliability === "LOW") warnings.push("新闻可信度偏低。");
