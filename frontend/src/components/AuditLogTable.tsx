@@ -1,0 +1,2 @@
+import type {AuditLogEntry} from "../types";
+export default function AuditLogTable({rows}: {rows: AuditLogEntry[]}) { return <div className="table-scroll"><table className="data-table"><thead><tr><th>时间</th><th>动作</th><th>摘要</th><th>主体</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td>{new Date(row.createdAt).toLocaleString("zh-CN")}</td><td>{row.action}</td><td>{row.summary}</td><td>{row.actor}</td></tr>)}</tbody></table></div>; }

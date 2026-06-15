@@ -26,7 +26,7 @@ export function buildEloRatings(matches: HistoricalMatch[], options: {initialElo
   const initial = options.initialElo ?? AlgorithmConfig.elo.initialElo, ratings: Record<string, number> = {}, history: Array<Record<string, string | number>> = [];
   for (const match of [...matches].sort((a, b) => new Date(a.playedAt).getTime() - new Date(b.playedAt).getTime())) {
     const homeTeam = normalizeTeamName(match.homeTeam), awayTeam = normalizeTeamName(match.awayTeam), oldHomeElo = ratings[homeTeam] ?? initial, oldAwayElo = ratings[awayTeam] ?? initial;
-    const result = updateElo(oldHomeElo, oldAwayElo, match.homeGoals, match.awayGoals, {matchType: match.matchType, homeAdvantage: options.homeAdvantage}); ratings[homeTeam] = result.newHomeElo; ratings[awayTeam] = result.newAwayElo;
+    const matchType=match.matchType==="INTERNATIONAL"||match.matchType==="UNKNOWN"?"LEAGUE":match.matchType;const result = updateElo(oldHomeElo, oldAwayElo, match.homeGoals, match.awayGoals, {matchType, homeAdvantage: options.homeAdvantage}); ratings[homeTeam] = result.newHomeElo; ratings[awayTeam] = result.newAwayElo;
     history.push({matchId: match.id, date: match.playedAt, homeTeam, awayTeam, oldHomeElo, oldAwayElo, newHomeElo: result.newHomeElo, newAwayElo: result.newAwayElo, eloChange: result.eloChange});
   }
   return {ratings, history};

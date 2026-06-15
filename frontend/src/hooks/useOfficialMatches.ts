@@ -27,11 +27,14 @@ export default function useOfficialMatches() {
   useEffect(() => {
     const controller = new AbortController();
     let timer: number | undefined;
+    let warmupTimer: number | undefined;
     const refreshWhenVisible = () => {
       if (document.visibilityState === "visible") void load(controller.signal);
     };
 
     void load(controller.signal);
+    // The backend starts the official-data agent immediately; re-read once after its first browser sync.
+    warmupTimer = window.setTimeout(refreshWhenVisible, 10_000);
     apiGet<{refresh_seconds: number}>("/api/settings", controller.signal)
       .then(settings => {
         timer = window.setInterval(refreshWhenVisible, Math.max(30, settings.refresh_seconds || 60) * 1000);
@@ -43,6 +46,7 @@ export default function useOfficialMatches() {
     return () => {
       controller.abort();
       if (timer) window.clearInterval(timer);
+      if (warmupTimer) window.clearTimeout(warmupTimer);
       document.removeEventListener("visibilitychange", refreshWhenVisible);
       window.removeEventListener("focus", refreshWhenVisible);
     };

@@ -1,0 +1,11 @@
+import type {BacktestInputMatch, BacktestRecord, HistoricalMatch, RecommendationType, StackingEvaluationResult, StackingModelCoefficients} from "../types";
+import {runWalkForwardBacktest} from "./backtestEngine";
+
+const grouped = (baseline: BacktestRecord[], stacking: BacktestRecord[], selector: (record: BacktestRecord) => string) => [...new Set(baseline.map(selector))].map(group => { const a = baseline.filter(row => selector(row) === group), b = stacking.filter(row => selector(row) === group), avg = (rows: BacktestRecord[]) => rows.length ? rows.reduce((sum, row) => sum + row.logLoss, 0) / rows.length : 0, baselineLogLoss = avg(a), stackingLogLoss = avg(b); return {group, baselineLogLoss, stackingLogLoss, improvement: baselineLogLoss - stackingLogLoss, count: Math.min(a.length, b.length)}; });
+export function evaluateStackingAgainstBaseline(testMatches: BacktestInputMatch[], historicalMatches: HistoricalMatch[], coefficients: StackingModelCoefficients): StackingEvaluationResult {
+  const baseline = runWalkForwardBacktest(testMatches, historicalMatches, {useStacking: false}), stacking = runWalkForwardBacktest(testMatches, historicalMatches, {useStacking: true, stackingCoefficients: coefficients});
+  const byLeague = grouped(baseline.records, stacking.records, row => row.league).map(row => ({league: row.group, ...row}));
+  const byRecommendationType = grouped(baseline.records, stacking.records, row => row.recommendation).map(row => ({recommendation: row.group as RecommendationType, ...row}));
+  const logLossImprovement = baseline.metrics.logLoss - stacking.metrics.logLoss, brierScoreImprovement = baseline.metrics.brierScore - stacking.metrics.brierScore, calibrationImprovement = baseline.metrics.calibrationError - stacking.metrics.calibrationError;
+  return {baselineMetrics: baseline.metrics, stackingMetrics: stacking.metrics, logLossImprovement, brierScoreImprovement, calibrationImprovement, roiDifference: stacking.metrics.roi - baseline.metrics.roi, clvDifference: stacking.metrics.averageClv - baseline.metrics.averageClv, byLeague, byRecommendationType, summary: [logLossImprovement > 0 && brierScoreImprovement > 0 && calibrationImprovement > 0 ? "Stacking 在测试集概率指标上优于规则融合，可继续作为候选模型观察。" : "当前 Stacking 模型未显著优于规则融合，不建议启用。", "评估采用按时间推进的相同比赛集，ROI 与 CLV 只作辅助诊断。"]};
+}

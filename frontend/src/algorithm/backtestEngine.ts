@@ -1,0 +1,24 @@
+import type {BacktestInputMatch, BacktestRecord, HistoricalMatch, RecommendationType, StackingModelCoefficients, WalkForwardBacktestResult} from "../types";
+import {calculateMatchPrediction} from "./probabilityEngine";
+import {calculateBacktestMetrics, calculateBrierScore, calculateLogLoss} from "./backtestMetrics";
+import {buildCalibrationTable} from "./calibrationAnalysis";
+import {calculateClv} from "./clvAnalysis";
+import {analyzePredictionErrors} from "./errorAnalysis";
+import {assertNoFutureLeakage, getPastMatchesOnly, sortMatchesByTime} from "./timeSplit";
+
+const key = (action: Exclude<RecommendationType, "NO_BET">) => action === "HOME" ? "home" : action === "DRAW" ? "draw" : "away";
+export function runWalkForwardBacktest(inputMatches: BacktestInputMatch[], historicalMatches: HistoricalMatch[], options: {bankroll?: number; temperature?: number; includeNoBet?: boolean; startDate?: string; endDate?: string; useStacking?: boolean; stackingCoefficients?: StackingModelCoefficients} = {}): WalkForwardBacktestResult {
+  const bankroll = options.bankroll ?? 10_000, start = options.startDate ? Date.parse(options.startDate) : -Infinity, end = options.endDate ? Date.parse(options.endDate) : Infinity;
+  const records = sortMatchesByTime(inputMatches).filter(match => { const time = Date.parse(match.kickoffTime); return Number.isFinite(time) && time >= start && time <= end; }).map((match): BacktestRecord => {
+    const pastMatches = getPastMatchesOnly(historicalMatches, match.kickoffTime), leakage = assertNoFutureLeakage(pastMatches, match.kickoffTime);
+    if (!leakage.valid) throw new Error(leakage.warnings.join(" "));
+    const prediction = calculateMatchPrediction({...match, status: "NOT_STARTED", marketOdds: {home: 0, draw: 0, away: 0}, updatedAt: match.kickoffTime}, pastMatches, match.context ?? {}, bankroll, {temperature: options.temperature, useStacking: options.useStacking, stackingCoefficients: options.stackingCoefficients});
+    const recommendation = prediction.recommendation, actualResult = match.result?.result, isBet = recommendation !== "NO_BET", selectedKey = isBet ? key(recommendation) : undefined;
+    const selectedProbability = selectedKey ? prediction.finalProbability[selectedKey] : undefined, selectedOfficialSp = selectedKey ? match.officialSp[selectedKey] : undefined, selectedClosingSp = selectedKey ? match.closingSp?.[selectedKey] : undefined;
+    const stake = isBet ? (prediction.suggestedStake > 0 ? prediction.suggestedStake : 1) : 0, hit = isBet && actualResult ? recommendation === actualResult : null;
+    const profit = hit === null ? 0 : hit ? stake * ((selectedOfficialSp ?? 1) - 1) : -stake, clv = selectedOfficialSp && selectedClosingSp ? calculateClv(selectedOfficialSp, selectedClosingSp) : undefined;
+    const pure=prediction.pureModelBreakdown;return {matchId: match.id, officialMatchId: match.officialMatchId, league: match.league, homeTeam: match.homeTeam, awayTeam: match.awayTeam, kickoffTime: match.kickoffTime, prediction, actualResult, recommendation, selectedProbability, selectedOfficialSp, selectedClosingSp, ev: selectedKey ? prediction.ev[selectedKey] : undefined, stake, profit, hit, clv, clvPositive: clv === undefined ? null : clv > 0, brierScore: actualResult ? calculateBrierScore(prediction.finalProbability, actualResult) : 0, logLoss: actualResult ? calculateLogLoss(prediction.finalProbability, actualResult) : 0, riskLevel: prediction.riskLevel, externalMarketQualityLevel: prediction.externalMarketQuality.qualityLevel, modelDisagreementLevel: prediction.modelDisagreement.level,pureModelReliability:pure?.reliability,leagueReliability:pure?.leagueParameters.reliability,homeStrengthReliability:pure?.homeStrength.overallReliability,awayStrengthReliability:pure?.awayStrength.overallReliability,lineupRiskLevel:pure?.lineupImpact.riskLevel,fatigueRiskLevel:pure?.fatigue.riskLevel,xgUsed:Boolean(pure?.xgPoissonProbability),fittedRho:pure?.leagueParameters.fittedRho, probabilitySource:prediction.probabilitySource,modelVersion:prediction.modelVersion,stackingConfidence:prediction.stackingPrediction?.confidence,stackingFallbackUsed:prediction.stackingPrediction?.fallbackUsed,stackingTopFeatures:prediction.stackingPrediction?.topFeatures, pureModelEdge: selectedKey ? prediction.pureModelEdge[selectedKey] : undefined, finalEdge: selectedKey ? prediction.finalEdge[selectedKey] : undefined, noBetReason: prediction.criticReport.reasons, warnings: [...prediction.criticReport.warnings, ...prediction.diagnostics.warnings]};
+  }).filter(record => options.includeNoBet !== false || record.recommendation !== "NO_BET");
+  const metrics = calculateBacktestMetrics(records), calibrationTable = buildCalibrationTable(records, {useSelectedOnly: true}), errorAnalysis = analyzePredictionErrors(records);
+  return {records, metrics, calibrationTable, errorAnalysis};
+}

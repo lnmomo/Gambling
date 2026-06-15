@@ -1,4 +1,4 @@
-import type {CriticReport, ExternalMarketQuality, MarketDeviation, MatchContext, MatchPrediction, MatchStatus, ModelDisagreement, OfficialMatch, RecommendationType, RiskLevel, ThreeWayEv, ThreeWayProbability} from "../types";
+import type {CriticReport, ExternalMarketQuality, MarketDeviation, MatchContext, MatchPrediction, MatchStatus, ModelDisagreement, OfficialMatch, PureModelBreakdown, RecommendationType, RiskLevel, ThreeWayEv, ThreeWayProbability} from "../types";
 import {AlgorithmConfig} from "./config";
 
 export interface DynamicThresholdInput {baseThreshold?: number; riskLevel: RiskLevel; dataFreshness: "FRESH" | "STALE"; modelDisagreement: ModelDisagreement; lineupKnown: boolean; minutesToKickoff?: number; homeMatchCount?: number; awayMatchCount?: number; marketDeviation?: MarketDeviation; selectedOdds?: number; competitionType?: "LEAGUE" | "CUP" | "FRIENDLY" | "UNKNOWN"; matchStatus?: MatchStatus}
@@ -29,10 +29,13 @@ export function externalMarketThresholdAdjustment(quality?: ExternalMarketQualit
 const actionRows = (p: ThreeWayProbability, ev: ThreeWayEv, sp: OfficialMatch["officialSp"]) => [
   {action: "HOME" as const, probability: p.home, ev: ev.home, odds: sp.home}, {action: "DRAW" as const, probability: p.draw, ev: ev.draw, odds: sp.draw}, {action: "AWAY" as const, probability: p.away, ev: ev.away, odds: sp.away},
 ].sort((a, b) => b.ev - a.ev);
-export function runCriticCheck(match: Pick<OfficialMatch, "officialMatchId" | "status" | "officialSp">, draft: {finalProbability: ThreeWayProbability; marketProbability?: ThreeWayProbability; pureModelProbability?: ThreeWayProbability; externalMarketQuality?: ExternalMarketQuality; ev: ThreeWayEv; modelDisagreement: ModelDisagreement; marketDeviation?: MarketDeviation; homeMatchCount?: number; awayMatchCount?: number}, context: MatchContext, dynamicEvThreshold: number): CriticReport {
+export function runCriticCheck(match: Pick<OfficialMatch, "officialMatchId" | "status" | "officialSp">, draft: {finalProbability: ThreeWayProbability; marketProbability?: ThreeWayProbability; pureModelProbability?: ThreeWayProbability; pureModelBreakdown?:PureModelBreakdown; externalMarketQuality?: ExternalMarketQuality; ev: ThreeWayEv; modelDisagreement: ModelDisagreement; marketDeviation?: MarketDeviation; homeMatchCount?: number; awayMatchCount?: number; probabilitySource?: MatchPrediction["probabilitySource"]; stackingPrediction?: MatchPrediction["stackingPrediction"]; stackedProbability?: ThreeWayProbability}, context: MatchContext, dynamicEvThreshold: number): CriticReport {
   const reasons: string[] = [], warnings: string[] = [], best = actionRows(draft.finalProbability, draft.ev, match.officialSp)[0];
   if (!match.officialMatchId) reasons.push("缺少官方比赛 ID，不进入模型推荐。");
-  if (["CANCELLED", "POSTPONED", "CLOSED", "FINISHED"].includes(match.status)) reasons.push("比赛已取消、延期、停售或结束。");
+  if (match.status === "CANCELLED") reasons.push("比赛已取消。");
+  if (match.status === "POSTPONED") reasons.push("比赛已延期。");
+  if (match.status === "CLOSED") reasons.push("官方当前停售。");
+  if (match.status === "FINISHED") reasons.push("比赛已结束。");
   if (Object.values(match.officialSp).some(value => !Number.isFinite(value) || value <= 1)) reasons.push("官方胜平负 SP 无效。");
   if (Math.abs(Object.values(draft.finalProbability).reduce((a, b) => a + b, 0) - 1) > .001) reasons.push("最终概率未归一化。");
   if (draft.modelDisagreement.level === "HIGH") reasons.push("模型分歧过高，禁止推荐。");
@@ -45,9 +48,13 @@ export function runCriticCheck(match: Pick<OfficialMatch, "officialMatchId" | "s
   if (best.odds < AlgorithmConfig.critic.minRecommendedOdds) reasons.push("赔率过低，风险收益比不足。");
   if (!Number.isFinite(dynamicEvThreshold) || best.ev < dynamicEvThreshold) reasons.push(`最高 EV ${(best.ev * 100).toFixed(2)}% 未超过动态阈值 ${Number.isFinite(dynamicEvThreshold) ? `${(dynamicEvThreshold * 100).toFixed(2)}%` : "（禁止推荐）"}。`);
   const selected = best.action === "HOME" ? "home" : best.action === "DRAW" ? "draw" : "away";
+  if (draft.probabilitySource === "STACKING_MODEL" && (draft.stackingPrediction?.confidence ?? 1) < .05) warnings.push("Stacking 模型区分度较低，已提高推荐门槛。");
+  if (draft.stackingPrediction?.fallbackUsed) warnings.push("Stacking 模型不可用，已回退到规则融合。");
+  if (draft.probabilitySource === "STACKING_MODEL" && draft.stackedProbability && draft.marketProbability && Math.max(Math.abs(draft.stackedProbability.home-draft.marketProbability.home),Math.abs(draft.stackedProbability.draw-draft.marketProbability.draw),Math.abs(draft.stackedProbability.away-draft.marketProbability.away)) > .18) warnings.push("Stacking 概率与市场概率偏离过大。");
+  if (draft.probabilitySource === "STACKING_MODEL" && draft.stackedProbability && draft.marketProbability && draft.pureModelProbability && draft.stackedProbability[selected] > draft.marketProbability[selected] && draft.pureModelProbability[selected] - draft.marketProbability[selected] < -.03) reasons.push("Stacking 推荐方向缺少纯模型支持。");
   if (draft.marketProbability && draft.finalProbability[selected] <= draft.marketProbability[selected]) reasons.push("最终决策概率未高于官方市场去水概率。");
   if (draft.marketProbability && draft.pureModelProbability && draft.pureModelProbability[selected] < draft.marketProbability[selected] - .03) reasons.push("纯模型概率不支持该方向，疑似市场锚定造成的假价值。");
-  const externalQuality = draft.externalMarketQuality;
+  const externalQuality = draft.externalMarketQuality,pure=draft.pureModelBreakdown;if(pure?.reliability==="LOW")warnings.push("纯模型可靠性较低，已提高推荐门槛。");if(pure?.lineupImpact.riskLevel==="HIGH")warnings.push("阵容/伤停影响较高。");if(pure?.fatigue.riskLevel==="HIGH")warnings.push("赛程疲劳风险较高。");if(pure?.leagueParameters.reliability==="LOW")warnings.push("联赛历史样本不足。");if(pure&&Math.min(pure.homeStrength.overallReliability,pure.awayStrength.overallReliability)<.5)warnings.push("球队历史样本可靠性不足。");if(pure?.lambdaClamped)warnings.push("预期进球被限制到合理范围，模型存在异常输入。");
   if (externalQuality?.qualityLevel === "UNAVAILABLE") warnings.push("外部市场不可用，推荐可信度降低。");
   if (externalQuality?.qualityLevel === "LOW") warnings.push("外部市场质量较低，已提高推荐门槛。");
   if ((externalQuality?.officialMarketDeviation.maxDeviation ?? 0) > .18) reasons.push("外部市场与官方SP去水概率偏离过大，疑似数据异常或市场分歧过高。");
@@ -55,7 +62,7 @@ export function runCriticCheck(match: Pick<OfficialMatch, "officialMatchId" | "s
   if (externalQuality && externalQuality.includedBookmakerCount < 2) warnings.push("有效外部博彩公司数量不足。");
   if (externalQuality && externalQuality.excludedBookmakerCount >= Math.max(1, externalQuality.includedBookmakerCount)) warnings.push("外部市场异常赔率占比较高。");
   if (best.action === "DRAW" && (best.ev < dynamicEvThreshold + .02 || draft.modelDisagreement.level === "HIGH" || (draft.marketDeviation?.drawDeviation ?? 0) > .12)) reasons.push("平局推荐未满足额外安全边际。");
-  if (context.dataFreshness === "STALE") reasons.push("数据已过期。");
+  if (context.dataFreshness === "STALE") reasons.push("官方赔率快照已超过允许时效，请等待赔率 Agent 刷新。");
   if (context.newsReliability === "LOW") warnings.push("新闻可信度偏低。");
   if (context.lineupKnown === false) warnings.push("首发阵容未知，已提高 EV 门槛。");
   if (context.riskLimitTriggered) reasons.push("已触发风险额度上限。");

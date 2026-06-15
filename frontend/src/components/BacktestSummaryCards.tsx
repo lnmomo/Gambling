@@ -1,0 +1,3 @@
+import type {BacktestMetrics} from "../types";
+const pct = (value: number) => `${(value * 100).toFixed(2)}%`;
+export default function BacktestSummaryCards({metrics}: {metrics: BacktestMetrics}) { const cards = [["总比赛", metrics.totalMatches], ["总下注", metrics.totalBets], ["No Bet 比例", pct(metrics.noBetRatio)], ["命中率", pct(metrics.hitRate)], ["ROI", pct(metrics.roi)], ["最大回撤", metrics.maxDrawdown.toFixed(2)], ["Brier", metrics.brierScore.toFixed(4)], ["Log Loss", metrics.logLoss.toFixed(4)], ["校准误差", pct(metrics.calibrationError)], ["平均 CLV", pct(metrics.averageClv)], ["Positive CLV", pct(metrics.positiveClvRate)]]; return <section className="summary-strip">{cards.map(([label, value]) => <span key={String(label)}>{label}<b>{value}</b></span>)}</section>; }

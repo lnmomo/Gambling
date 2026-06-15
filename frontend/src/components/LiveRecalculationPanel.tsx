@@ -1,0 +1,3 @@
+import type {LiveRecalculationResult} from "../types";
+import RecommendationStatusBadge from "./RecommendationStatusBadge";
+export default function LiveRecalculationPanel({rows}: {rows: LiveRecalculationResult[]}) { const latest = rows.length ? rows[rows.length - 1] : undefined; return latest ? <div><RecommendationStatusBadge status={latest.lifecycleStatus}/><p>触发：{latest.trigger.type} · {new Date(latest.recalculatedAt).toLocaleString("zh-CN")}</p><p>最大概率变化：{(latest.probabilityDelta.maxDelta * 100).toFixed(2)}%，最大 EV 变化：{(latest.evDelta.maxDelta * 100).toFixed(2)}%</p></div> : <p>尚未发生实时重算。</p>; }

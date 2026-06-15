@@ -1,0 +1,5 @@
+import {describe, expect, it} from "vitest";
+import {detectOfficialExternalDivergence, detectOfficialSpMovement} from "../algorithm/oddsMovement";
+import {createExternalOddsSnapshot, createOfficialSpSnapshot} from "../algorithm/snapshotEngine";
+const match = {id:"m1", officialMatchId:"J001", kickoffTime:"2027-01-01T12:00:00Z", status:"NOT_STARTED" as const};
+describe("odds movement", () => { it("detects material official probability movement", () => { const before=createOfficialSpSnapshot(match,{home:2.4,draw:3.3,away:3},"2026-12-31T10:00:00Z"),after=createOfficialSpSnapshot(match,{home:1.7,draw:3.8,away:5},"2026-12-31T11:00:00Z"); expect(detectOfficialSpMovement(before,after).some(row=>row.outcome==="HOME")).toBe(true); }); it("raises official/external divergence", () => { const official=createOfficialSpSnapshot(match,{home:2,draw:3.5,away:4},"2026-12-31T10:00:00Z"),external=createExternalOddsSnapshot(match,[{bookmaker:"A",market:"H2H",odds:{home:4.5,draw:3.5,away:1.7},lastUpdate:"2026-12-31T10:00:00Z"}],official.marketProbability,"2026-12-31T10:00:00Z"); expect(detectOfficialExternalDivergence(official,external).length).toBeGreaterThan(0); }); });

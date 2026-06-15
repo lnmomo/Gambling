@@ -1,0 +1,2 @@
+import type {ExternalOddsSnapshot, OfficialSpSnapshot} from "../types";
+export default function SnapshotTimeline({official, external}: {official: OfficialSpSnapshot[]; external: ExternalOddsSnapshot[]}) { const all = [...official.map(row => ({...row, kind: "官方 SP"})), ...external.map(row => ({...row, kind: "外部市场"}))].sort((a, b) => a.capturedAt.localeCompare(b.capturedAt)); return <div>{all.map(row => <p key={`${row.kind}-${row.id}`}><b>{row.snapshotType}</b> · {row.kind} · {new Date(row.capturedAt).toLocaleString("zh-CN")} · {row.isValid ? "有效" : "无效"}</p>)}</div>; }

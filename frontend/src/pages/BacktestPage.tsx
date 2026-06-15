@@ -1,12 +1,23 @@
-import {useState} from "react";
-import {Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis} from "recharts";
-import EmptyState from "../components/EmptyState";
+import {useMemo, useState} from "react";
 import PageHeader from "../components/PageHeader";
-import useApi from "../hooks/useApi";
-type CalibrationRow = {bucket: string; count: number; avgPredictedProbability: number; actualHitRate: number; calibrationError: number};
-type Report = {id: string; name: string; created_at: string; metrics: Record<string, number>; equity: number[]; parameters: Record<string, number>; error_analysis?: {byLeague?: Record<string, Record<string, number>>; byEvBucket?: Record<string, Record<string, number>>; calibrationTable?: CalibrationRow[]; commonFailureReasons?: Array<{reason: string; count: number}>}};
+import BacktestSummaryCards from "../components/BacktestSummaryCards";
+import CalibrationTable from "../components/CalibrationTable";
+import ClvPanel from "../components/ClvPanel";
+import ErrorAnalysisPanel from "../components/ErrorAnalysisPanel";
+import BacktestRecordsTable from "../components/BacktestRecordsTable";
+import StackingComparisonPanel from "../components/StackingComparisonPanel";
+import {calculateBacktestMetrics} from "../algorithm/backtestMetrics";
+import {buildCalibrationTable} from "../algorithm/calibrationAnalysis";
+import {analyzePredictionErrors} from "../algorithm/errorAnalysis";
+import {demoBacktestResult, demoStackingEvaluation} from "../data/backtestData";
+import {stackingMockModel} from "../data/stackingMockModel";
+
 export default function BacktestPage() {
-  const {data, loading, error, reload} = useApi<Report[]>("/api/backtest/reports", []), [file, setFile] = useState<File | null>(null), [message, setMessage] = useState(""), report = data[0], metrics = report?.metrics ?? {}, analysis = report?.error_analysis;
-  const upload = async () => { if (!file) { setMessage("请先选择历史 CSV 文件"); return; } const form = new FormData(); form.append("file", file); setMessage("正在运行无泄漏回测..."); const response = await fetch("/api/backtest/upload-csv", {method: "POST", body: form}); if (!response.ok) { setMessage(`回测失败：${await response.text()}`); return; } setMessage("回测完成并已保存"); reload(); };
-  return <div className="page"><PageHeader title="回测与错误分析" subtitle="按时间 walk-forward，检查 ROI、校准、EV 分桶、联赛差异与常见失败原因" /><div className="filter-bar"><input type="file" accept=".csv" onChange={event => setFile(event.target.files?.[0] ?? null)} /><button onClick={upload}>运行 CSV 回测</button>{message && <span>{message}</span>}</div>{loading ? <p className="empty-state">加载中...</p> : error ? <p className="empty-state">{error}</p> : !report ? <section className="panel"><EmptyState title="暂无回测报告" description="选择历史 CSV 后运行回测" /></section> : <><div className="summary-strip"><span>投注数<b>{metrics.bets ?? metrics.total_bets ?? 0}</b></span><span>命中率<b>{((metrics.win_rate ?? metrics.hit_rate ?? 0) * 100).toFixed(1)}%</b></span><span>ROI<b>{((metrics.roi ?? 0) * 100).toFixed(2)}%</b></span><span>最大回撤<b>{((metrics.max_drawdown ?? 0) * 100).toFixed(2)}%</b></span><span>Brier<b>{(metrics.brier_score ?? 0).toFixed(4)}</b></span><span>Log Loss<b>{(metrics.log_loss ?? 0).toFixed(4)}</b></span><span>平均 CLV<b>{((metrics.average_closing_line_value ?? metrics.clv ?? 0) * 100).toFixed(2)}%</b></span><span>NO_BET 比例<b>{((metrics.no_bet_ratio ?? 0) * 100).toFixed(1)}%</b></span></div><section className="panel chart-panel"><h2>{report.name}</h2><ResponsiveContainer width="100%" height={260}><AreaChart data={report.equity.map((value, index) => ({index, value}))}><CartesianGrid stroke="#eee" /><XAxis dataKey="index" /><YAxis /><Tooltip /><Area dataKey="value" stroke="#16a34a" fill="#dcfce7" /></AreaChart></ResponsiveContainer></section>{analysis?.calibrationTable?.length ? <section className="panel"><div className="panel-heading"><div><h2>概率校准表</h2><p>预测概率应接近真实命中率</p></div></div><div className="table-scroll"><table className="data-table"><thead><tr><th>概率桶</th><th>样本</th><th>平均预测概率</th><th>真实命中率</th><th>校准误差</th></tr></thead><tbody>{analysis.calibrationTable.map(row => <tr key={row.bucket}><td>{row.bucket}</td><td>{row.count}</td><td>{(row.avgPredictedProbability * 100).toFixed(1)}%</td><td>{(row.actualHitRate * 100).toFixed(1)}%</td><td>{(row.calibrationError * 100).toFixed(1)}%</td></tr>)}</tbody></table></div></section> : <section className="panel"><EmptyState title="当前后端报告尚未包含 V4 错误分析" description="V4 walk-forward 接口已在算法层实现，重新生成报告后显示校准与分桶结果" /></section>}{analysis?.commonFailureReasons?.length ? <section className="panel"><div className="panel-heading"><h2>常见失败原因</h2></div><div className="critic-list tab-content">{analysis.commonFailureReasons.map(item => <div key={item.reason}>{item.reason}：{item.count}</div>)}</div></section> : null}</>}</div>;
+  const records = demoBacktestResult.records;
+  const [league, setLeague] = useState("ALL"), [includeNoBet, setIncludeNoBet] = useState(true);
+  const filtered = useMemo(() => records.filter(record => (league === "ALL" || record.league === league) && (includeNoBet || record.recommendation !== "NO_BET")), [records, league, includeNoBet]);
+  const metrics = useMemo(() => calculateBacktestMetrics(filtered), [filtered]);
+  const calibration = useMemo(() => buildCalibrationTable(filtered, {useSelectedOnly: true}), [filtered]);
+  const analysis = useMemo(() => analyzePredictionErrors(filtered), [filtered]);
+  return <div className="page"><PageHeader title="回测与校准诊断" subtitle="严格按时间 walk-forward，联合评估概率质量、ROI、CLV 与 Stacking 候选模型"/><section className="panel"><div className="filter-bar"><select value={league} onChange={event => setLeague(event.target.value)}><option value="ALL">全部联赛</option>{[...new Set(records.map(record => record.league))].map(value => <option key={value}>{value}</option>)}</select><label><input type="checkbox" checked={includeNoBet} onChange={event => setIncludeNoBet(event.target.checked)}/> 包含 NO_BET</label></div></section><BacktestSummaryCards metrics={metrics}/><StackingComparisonPanel evaluation={demoStackingEvaluation} model={stackingMockModel}/><CalibrationTable rows={calibration}/><ClvPanel records={filtered}/><ErrorAnalysisPanel report={analysis}/><BacktestRecordsTable records={filtered}/></div>;
 }

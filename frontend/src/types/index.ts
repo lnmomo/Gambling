@@ -5,6 +5,10 @@ export type RiskLevel = "LOW" | "MEDIUM" | "HIGH";
 export type ConfidenceLevel = "A" | "B" | "C" | "D";
 export type ConfidenceGrade = ConfidenceLevel | "NO_BET";
 export type AgentState = "RUNNING" | "DELAYED" | "WARNING";
+export type RecommendationDecision = RecommendationType;
+export type OddsSnapshotType = "OPENING" | "REGULAR" | "PRE_MATCH" | "CLOSING" | "POSTPONED" | "CANCELLED";
+export type RecommendationLifecycleStatus = "ACTIVE" | "STALE" | "DOWNGRADED" | "WITHDRAWN" | "CLOSED" | "NO_BET";
+export type ModelRole = "CHAMPION" | "CHALLENGER" | "ARCHIVED";
 
 export interface ThreeWayProbability { home: number; draw: number; away: number }
 export type ProbabilityTriple = ThreeWayProbability;
@@ -17,6 +21,15 @@ export interface NormalizedBookmakerProbability { bookmaker: string; bookmakerKe
 export interface ExternalMarketDeviation { homeDeviation: number; drawDeviation: number; awayDeviation: number; maxDeviation: number }
 export interface ExternalMarketQuality { available: boolean; bookmakerCount: number; includedBookmakerCount: number; excludedBookmakerCount: number; averageOverround: number; maxBookmakerDeviation: number; officialMarketDeviation: ExternalMarketDeviation; staleCount: number; qualityScore: number; qualityLevel: "HIGH" | "MEDIUM" | "LOW" | "UNAVAILABLE"; warnings: string[] }
 export interface ExternalMarketConsensus { probability: ThreeWayProbability; fairOdds: ThreeWayOdds; normalizedBookmakers: NormalizedBookmakerProbability[]; quality: ExternalMarketQuality; warnings: string[]; fallbackUsed: boolean; fallbackReason?: string }
+export interface OfficialSpSnapshot { id:string; matchId:string; officialMatchId:string; capturedAt:string; snapshotType:OddsSnapshotType; sp:ThreeWayOdds; marketProbability:ThreeWayProbability; marketFairOdds:ThreeWayOdds; source:"CHINA_LOTTERY_OFFICIAL"; rawPayloadHash?:string; isValid:boolean; warnings:string[] }
+export interface ExternalOddsSnapshot { id:string; matchId:string; officialMatchId:string; capturedAt:string; snapshotType:OddsSnapshotType; bookmakerOdds:ExternalBookmakerOdds[]; externalMarketProbability:ThreeWayProbability; externalMarketFairOdds:ThreeWayOdds; externalMarketQuality:ExternalMarketQuality; normalizedBookmakers:NormalizedBookmakerProbability[]; source:"THE_ODDS_API"; rawPayloadHash?:string; isValid:boolean; warnings:string[] }
+export interface MarketMovementSignal { matchId:string; officialMatchId:string; detectedAt:string; type:"OFFICIAL_SP_DROP"|"OFFICIAL_SP_RISE"|"EXTERNAL_ODDS_DROP"|"EXTERNAL_ODDS_RISE"|"OFFICIAL_EXTERNAL_DIVERGENCE"|"MARKET_CONSENSUS_SHIFT"|"LATE_STEAM_MOVE"|"DATA_STALE"|"SUSPICIOUS_SPIKE"; outcome?:"HOME"|"DRAW"|"AWAY"; severity:RiskLevel; beforeProbability?:number; afterProbability?:number; probabilityDelta?:number; beforeOdds?:number; afterOdds?:number; oddsDelta?:number; description:string; recommendedAction:"KEEP"|"RECALCULATE"|"RAISE_THRESHOLD"|"WITHDRAW_RECOMMENDATION"|"NO_BET"; warnings:string[] }
+export interface LiveRecalculationTrigger { id:string; matchId:string; officialMatchId:string; triggeredAt:string; type:"OFFICIAL_SP_CHANGED"|"EXTERNAL_MARKET_CHANGED"|"NEWS_CHANGED"|"LINEUP_CHANGED"|"WEATHER_CHANGED"|"MATCH_STATUS_CHANGED"|"SCHEDULED_REFRESH"|"MANUAL_REFRESH"; severity:RiskLevel; description:string; previousSnapshotId?:string; newSnapshotId?:string }
+export interface RecommendationLifecycleEvent { id:string; matchId:string; officialMatchId:string; occurredAt:string; previousStatus?:RecommendationLifecycleStatus; newStatus:RecommendationLifecycleStatus; previousRecommendation?:RecommendationDecision; newRecommendation?:RecommendationDecision; reason:string; triggerType?:LiveRecalculationTrigger["type"]; previousEv?:number; newEv?:number; previousFinalProbability?:number; newFinalProbability?:number; auditLogId?:string }
+export interface LiveRecalculationResult { id:string; matchId:string; officialMatchId:string; recalculatedAt:string; trigger:LiveRecalculationTrigger; previousPrediction?:MatchPrediction; newPrediction:MatchPrediction; probabilityDelta:{home:number;draw:number;away:number;maxDelta:number}; evDelta:{home:number;draw:number;away:number;maxDelta:number}; recommendationChanged:boolean; previousRecommendation?:RecommendationDecision; newRecommendation:RecommendationDecision; lifecycleStatus:RecommendationLifecycleStatus; warnings:string[] }
+export interface ModelGovernanceRecord { modelId:string; modelName:string; modelType:"RULE_BASED_ENSEMBLE"|"STACKING_MODEL"|"ENHANCED_PURE_MODEL"|"EXTERNAL_MARKET_MODEL"; version:string; role:ModelRole; createdAt:string; activatedAt?:string; archivedAt?:string; trainingMatchCount?:number; validationMatchCount?:number; testMatchCount?:number; metrics:{logLoss:number;brierScore:number;calibrationError:number;roi?:number;averageClv?:number;positiveClvRate?:number}; baselineModelId?:string; promotionStatus:"NOT_EVALUATED"|"CANDIDATE"|"APPROVED"|"REJECTED"|"PROMOTED"|"ROLLED_BACK"; promotionReason?:string; warnings:string[] }
+export interface ModelPromotionDecision { challengerModelId:string; championModelId:string; allowed:boolean; decision:"PROMOTE"|"KEEP_CHAMPION"|"NEED_MORE_DATA"|"REJECT_CHALLENGER"; reasons:string[]; requiredConditions:Array<{name:string;passed:boolean;value:number|string;threshold:number|string}> }
+export interface AuditLogEntry { id:string; createdAt:string; entityType:"MATCH"|"PREDICTION"|"RECOMMENDATION"|"ODDS_SNAPSHOT"|"MODEL"|"SYSTEM"; entityId:string; action:"SNAPSHOT_CREATED"|"PREDICTION_RECALCULATED"|"RECOMMENDATION_CREATED"|"RECOMMENDATION_UPDATED"|"RECOMMENDATION_WITHDRAWN"|"MODEL_EVALUATED"|"MODEL_PROMOTION_CHECKED"|"WARNING_RAISED"|"ERROR_HANDLED"; summary:string; before?:unknown; after?:unknown; trigger?:LiveRecalculationTrigger; severity:"INFO"|"WARNING"|"ERROR"; actor:"SYSTEM"|"USER"|"SCHEDULER" }
 export type ThreeWayEv = ThreeWayProbability;
 export type EvTriple = ThreeWayEv;
 export type FairOddsTriple = OfficialSp;
@@ -24,8 +37,11 @@ export type FairOddsTriple = OfficialSp;
 export interface HistoricalMatch {
   id: string; league: string; homeTeam: string; awayTeam: string;
   homeGoals: number; awayGoals: number; playedAt: string;
-  matchType?: "LEAGUE" | "CUP" | "FRIENDLY";
+  matchType?: "LEAGUE" | "CUP" | "FRIENDLY" | "INTERNATIONAL" | "UNKNOWN";
+  homeXg?: number; awayXg?: number; homeRedCards?: number; awayRedCards?: number;
+  homeEloBefore?: number; awayEloBefore?: number; venue?: string; neutralVenue?: boolean;
 }
+export type EnhancedHistoricalMatch = HistoricalMatch;
 
 export interface NewsEvent {
   id: string; team: "HOME" | "AWAY";
@@ -43,6 +59,7 @@ export interface WeatherContext {
 
 export interface MatchContext {
   newsEvents?: NewsEvent[]; weather?: WeatherContext;
+  playerEvents?: PlayerImpactEvent[];
   homeRestDays?: number; awayRestDays?: number;
   homeTravelDistance?: number; awayTravelDistance?: number;
   lineupKnown?: boolean; dataFreshness?: "FRESH" | "STALE";
@@ -69,12 +86,67 @@ export interface ModelDisagreement {
   homeDisagreement: number; drawDisagreement: number; awayDisagreement: number;
   maxDisagreement: number; level: RiskLevel;
 }
-export interface LeagueParameters { league: string; matchCount: number; avgHomeGoals: number; avgAwayGoals: number; avgTotalGoals: number; homeWinRate: number; drawRate: number; awayWinRate: number; baseDrawRate: number; homeAdvantageFactor: number; defaultRho: number; reliability: "LOW" | "MEDIUM" | "HIGH" }
+export interface TeamHomeAwayStrength { team: string; homeAttackStrength: number; homeDefenseWeakness: number; awayAttackStrength: number; awayDefenseWeakness: number; overallAttackStrength: number; overallDefenseWeakness: number; homeWeightedMatches: number; awayWeightedMatches: number; totalWeightedMatches: number; homeReliability: number; awayReliability: number; overallReliability: number; warnings: string[] }
+export interface LeagueAdvancedParameters { league: string; matchCount: number; avgHomeGoals: number; avgAwayGoals: number; avgTotalGoals: number; avgHomeXg?: number; avgAwayXg?: number; homeWinRate: number; drawRate: number; awayWinRate: number; baseDrawRate: number; fittedRho: number; rhoReliability: "HIGH" | "MEDIUM" | "LOW"; tempoFactor: number; goalVariance: number; reliability: "HIGH" | "MEDIUM" | "LOW"; warnings: string[] }
+export interface LeagueParameters { league: string; matchCount: number; avgHomeGoals: number; avgAwayGoals: number; avgTotalGoals: number; homeWinRate: number; drawRate: number; awayWinRate: number; baseDrawRate: number; homeAdvantageFactor: number; defaultRho: number; reliability: "HIGH" | "MEDIUM" | "LOW"; fittedRho?:number; rhoReliability?:"HIGH"|"MEDIUM"|"LOW"; tempoFactor?:number; goalVariance?:number; warnings?:string[] }
+export interface XgExpectedGoalsOutput { useXg: boolean; lambdaHomeFromXg?: number; lambdaAwayFromXg?: number; lambdaHomeFromGoals: number; lambdaAwayFromGoals: number; lambdaHome: number; lambdaAway: number; xgReliability: number; fallbackReason?: string; warnings: string[] }
+export interface FormRating { team: string; attackForm: number; defenseForm: number; resultForm: number; xgForm?: number; opponentAdjustedForm: number; formReliability: number; recentMatches: number; warnings: string[] }
+export interface FixtureFatigueOutput { homeFatigueFactor: number; awayFatigueFactor: number; homeRestDays?: number; awayRestDays?: number; homeMatchesLast7Days: number; awayMatchesLast7Days: number; homeMatchesLast14Days: number; awayMatchesLast14Days: number; homeConsecutiveAwayMatches: number; awayConsecutiveAwayMatches: number; homeTravelPenalty: number; awayTravelPenalty: number; riskLevel: RiskLevel; warnings: string[] }
+export interface PlayerImpactEvent { id: string; team: "HOME" | "AWAY"; type: "INJURY" | "SUSPENSION" | "RETURN" | "DOUBTFUL" | "ROTATION"; playerName?: string; position?: "GK" | "DEF" | "MID" | "FWD"; importance?: "CORE" | "STARTER" | "ROTATION" | "BACKUP"; confidence: number; source?: string; publishedAt?: string }
+export interface LineupImpactOutput { homeAttackFactor: number; homeDefenseFactor: number; awayAttackFactor: number; awayDefenseFactor: number; homeGoalkeeperRisk: number; awayGoalkeeperRisk: number; totalImpactMagnitude: number; riskLevel: RiskLevel; appliedEvents: Array<{eventId: string; description: string; factorType: string; factorChange: number}>; warnings: string[] }
+export interface GlickoLikeRating { team: string; rating: number; ratingDeviation: number; reliability: "HIGH" | "MEDIUM" | "LOW"; recentTrend: number; matchCount: number }
+export interface PureModelBreakdown { dixonColesProbability: ThreeWayProbability; eloProbability: ThreeWayProbability; glickoLikeProbability?: ThreeWayProbability; xgPoissonProbability?: ThreeWayProbability; pureModelProbability: ThreeWayProbability; lambdaHome: number; lambdaAway: number; homeStrength: TeamHomeAwayStrength; awayStrength: TeamHomeAwayStrength; leagueParameters: LeagueAdvancedParameters; form: {home: FormRating; away: FormRating}; fatigue: FixtureFatigueOutput; lineupImpact: LineupImpactOutput; modelWeights: {dixonColes: number; elo: number; glickoLike?: number; xgPoisson?: number}; reliability: "HIGH" | "MEDIUM" | "LOW"; lambdaClamped?: boolean; warnings: string[] }
 export interface MarketDeviation { homeDeviation: number; drawDeviation: number; awayDeviation: number; maxDeviation: number }
 export interface PredictionDiagnostics { homeMatchCount: number; awayMatchCount: number; leagueMatchCount: number; teamStatsReliability: "LOW" | "MEDIUM" | "HIGH"; eloReliability: "LOW" | "MEDIUM" | "HIGH"; leagueReliability: "LOW" | "MEDIUM" | "HIGH"; marketDeviation: MarketDeviation; deviationAfterAnchor: MarketDeviation; marketAnchored: boolean; ensembleWeights: {market: number; externalMarket?: number; pureModel?: number; dixonColes?: number; elo?: number; ml?: number}; warnings: string[] }
 export interface CriticReport {
   passed: boolean; finalAction: RecommendationType; reasons: string[]; warnings: string[];
   dynamicEvThreshold: number; confidenceLevel: ConfidenceLevel; riskLevel: RiskLevel;
+}
+
+export interface StackingFeatureVector {
+  matchId: string; officialMatchId: string; kickoffTime: string; league: string;
+  marketHomeProb: number; marketDrawProb: number; marketAwayProb: number;
+  externalHomeProb: number; externalDrawProb: number; externalAwayProb: number;
+  pureHomeProb: number; pureDrawProb: number; pureAwayProb: number;
+  dixonHomeProb?: number; dixonDrawProb?: number; dixonAwayProb?: number;
+  eloHomeProb?: number; eloDrawProb?: number; eloAwayProb?: number;
+  glickoHomeProb?: number; glickoDrawProb?: number; glickoAwayProb?: number;
+  xgHomeProb?: number; xgDrawProb?: number; xgAwayProb?: number;
+  officialSpHome: number; officialSpDraw: number; officialSpAway: number;
+  marketFairOddsHome: number; marketFairOddsDraw: number; marketFairOddsAway: number;
+  externalFairOddsHome: number; externalFairOddsDraw: number; externalFairOddsAway: number;
+  pureFairOddsHome: number; pureFairOddsDraw: number; pureFairOddsAway: number;
+  pureEdgeHome: number; pureEdgeDraw: number; pureEdgeAway: number;
+  finalEdgeHome?: number; finalEdgeDraw?: number; finalEdgeAway?: number;
+  maxMarketPureDeviation: number; maxExternalOfficialDeviation: number; maxSubModelDeviation: number;
+  externalMarketQualityScore: number; externalMarketQualityLevelEncoded: number;
+  pureModelReliabilityEncoded: number; leagueReliabilityEncoded: number; lineupRiskEncoded: number; fatigueRiskEncoded: number;
+  homeStrengthReliability: number; awayStrengthReliability: number; xgUsed: number; fittedRho: number;
+  lambdaHome: number; lambdaAway: number; lambdaDiff: number; lambdaTotal: number;
+  isCup: number; isFriendly: number; isInternational: number; neutralVenue: number;
+  actualResult?: "HOME" | "DRAW" | "AWAY";
+}
+export interface StackingTrainingExample { features: StackingFeatureVector; label: "HOME" | "DRAW" | "AWAY"; sampleWeight: number }
+export interface StackingModelCoefficients {
+  modelType: "MULTINOMIAL_LOGISTIC_REGRESSION"; featureNames: string[];
+  homeWeights: number[]; drawWeights: number[]; awayWeights: number[];
+  homeBias: number; drawBias: number; awayBias: number;
+  featureMeans?: number[]; featureStds?: number[];
+  trainedAt: string; trainingMatchCount: number; validationMatchCount: number;
+  metrics: {trainLogLoss: number; validationLogLoss: number; validationBrierScore: number; validationCalibrationError: number};
+  version: string;
+}
+export interface StackingPredictionOutput {
+  available: boolean; probability: ThreeWayProbability; rawScores: ThreeWayProbability; confidence: number;
+  modelVersion?: string; fallbackUsed: boolean; fallbackReason?: string;
+  topFeatures?: Array<{feature: string; contribution: number}>; warnings: string[];
+}
+export interface StackingEvaluationResult {
+  baselineMetrics: BacktestMetrics; stackingMetrics: BacktestMetrics;
+  logLossImprovement: number; brierScoreImprovement: number; calibrationImprovement: number; roiDifference: number; clvDifference: number;
+  byLeague: Array<{league: string; baselineLogLoss: number; stackingLogLoss: number; improvement: number; count: number}>;
+  byRecommendationType: Array<{recommendation: RecommendationType; baselineLogLoss: number; stackingLogLoss: number; improvement: number; count: number}>;
+  summary: string[];
 }
 
 export interface MatchPrediction {
@@ -86,6 +158,11 @@ export interface MatchPrediction {
   pureModelProbability: ThreeWayProbability; dixonColesProbability: ThreeWayProbability;
   poissonProbability: ThreeWayProbability; eloProbability: ThreeWayProbability;
   mlProbability?: ThreeWayProbability; finalProbability: ThreeWayProbability;
+  pureModelBreakdown?: PureModelBreakdown;
+  stackingPrediction?: StackingPredictionOutput; stackedProbability?: ThreeWayProbability;
+  modelVersion?: string; probabilitySource?: "RULE_BASED_ENSEMBLE" | "STACKING_MODEL" | "STACKING_FALLBACK";
+  officialSpSnapshotId?:string; externalOddsSnapshotId?:string; recalculationId?:string;
+  lifecycleStatus?:RecommendationLifecycleStatus; marketMovementSignals?:MarketMovementSignal[]; auditLogIds?:string[];
   expectedGoals: ExpectedGoalsOutput; lambdaHome: number; lambdaAway: number;
   marketFairOdds: ThreeWayOdds; externalMarketFairOdds: ThreeWayOdds;
   externalMarketQuality: ExternalMarketQuality; externalMarketWarnings: string[];
@@ -125,7 +202,46 @@ export interface OfficialMatch {
 
 export interface AgentStatus { id: string; name: string; state: AgentState; successRate: number; latency: string; taskCount: number; lastUpdated: string }
 export interface OddsSnapshot { matchId: string; time: string; home: number; draw: number; away: number }
-export interface BacktestRecord { id: string; date: string; match: string; recommendation: RecommendationType; sp: number; probability: number; ev: number; result: string; profit: number; strategy: string }
+export interface MatchResult { matchId: string; officialMatchId: string; homeGoals: number; awayGoals: number; result: "HOME" | "DRAW" | "AWAY"; settledAt: string }
+export interface ClosingSp { matchId: string; officialMatchId: string; home: number; draw: number; away: number; capturedAt: string }
+export interface BacktestInputMatch {
+  id: string; officialMatchId: string; league: string; homeTeam: string; awayTeam: string; kickoffTime: string;
+  officialSp: ThreeWayOdds; closingSp?: ThreeWayOdds; result?: MatchResult;
+  externalBookmakerOdds?: ExternalBookmakerOdds[]; context?: MatchContext;
+}
+export interface BacktestRecord {
+  matchId: string; officialMatchId: string; league: string; homeTeam: string; awayTeam: string; kickoffTime: string;
+  prediction: MatchPrediction; actualResult?: "HOME" | "DRAW" | "AWAY"; recommendation: RecommendationType;
+  selectedProbability?: number; selectedOfficialSp?: number; selectedClosingSp?: number; ev?: number;
+  stake: number; profit: number; hit: boolean | null; clv?: number; clvPositive?: boolean | null;
+  brierScore: number; logLoss: number; riskLevel: RiskLevel;
+  externalMarketQualityLevel?: "HIGH" | "MEDIUM" | "LOW" | "UNAVAILABLE"; modelDisagreementLevel?: RiskLevel;
+  pureModelEdge?: number; finalEdge?: number; noBetReason?: string[]; warnings?: string[];
+  pureModelReliability?: "HIGH" | "MEDIUM" | "LOW"; leagueReliability?: "HIGH" | "MEDIUM" | "LOW";
+  homeStrengthReliability?: number; awayStrengthReliability?: number; lineupRiskLevel?: RiskLevel; fatigueRiskLevel?: RiskLevel;
+  xgUsed?: boolean; fittedRho?: number;
+  probabilitySource?: MatchPrediction["probabilitySource"]; modelVersion?: string; stackingConfidence?: number;
+  stackingFallbackUsed?: boolean; stackingTopFeatures?: Array<{feature: string; contribution: number}>;
+  openingSp?:ThreeWayOdds; recommendationSp?:ThreeWayOdds; recommendationCreatedAt?:string; recommendationAgeMinutes?:number; recalculationCount?:number; marketMovementBeforeRecommendation?:boolean;
+}
+export interface BacktestMetrics {
+  totalMatches: number; totalBets: number; noBetCount: number; noBetRatio: number; hitCount: number; hitRate: number;
+  totalStake: number; totalProfit: number; roi: number; maxDrawdown: number; averageEv: number; averageClv: number;
+  positiveClvRate: number; brierScore: number; logLoss: number; averagePredictedProbability: number;
+  averageActualHitRate: number; calibrationError: number;
+}
+export interface CalibrationBucket { bucket: string; lowerBound: number; upperBound: number; count: number; avgPredictedProbability: number; actualHitRate: number; calibrationError: number }
+export interface GroupedBacktestMetrics { groupName: string; count: number; metrics: BacktestMetrics }
+export interface ErrorAnalysisReport {
+  byLeague: GroupedBacktestMetrics[]; byRecommendationType: GroupedBacktestMetrics[]; byEvBucket: GroupedBacktestMetrics[];
+  byProbabilityBucket: GroupedBacktestMetrics[]; byOfficialSpBucket: GroupedBacktestMetrics[]; byRiskLevel: GroupedBacktestMetrics[];
+  byExternalMarketQuality: GroupedBacktestMetrics[]; byDisagreementLevel: GroupedBacktestMetrics[];
+  byPureModelEdgeBucket: GroupedBacktestMetrics[]; byFinalEdgeBucket: GroupedBacktestMetrics[]; calibrationTable: CalibrationBucket[];
+  byPureModelReliability: GroupedBacktestMetrics[]; byLeagueReliability: GroupedBacktestMetrics[]; byLineupRisk: GroupedBacktestMetrics[]; byFatigueRisk: GroupedBacktestMetrics[]; byXgUsed: GroupedBacktestMetrics[]; byRhoBucket: GroupedBacktestMetrics[];
+  commonNoBetReasons: Array<{reason: string; count: number}>; commonWarnings: Array<{warning: string; count: number}>; summary: string[];
+}
+export interface TemperatureOptimizationResult { candidates: Array<{temperature: number; logLoss: number; brierScore: number; calibrationError: number}>; bestTemperature: number; bestLogLoss: number; previousTemperature: number; improvement: number }
+export interface WalkForwardBacktestResult { records: BacktestRecord[]; metrics: BacktestMetrics; calibrationTable: CalibrationBucket[]; errorAnalysis: ErrorAnalysisReport; temperatureOptimization?: TemperatureOptimizationResult }
 export interface BankrollRecord { id: string; date: string; match: string; stake: number; result: string; profit: number; balance: number }
 export interface Recommendation { matchId: string; type: RecommendationType; confidence: string; stake: string; riskReason: string }
 export interface RiskAlert { id: string; matchId: string; level: RiskLevel; title: string; detail: string; createdAt: string }

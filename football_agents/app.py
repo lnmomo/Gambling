@@ -48,12 +48,14 @@ official_sync_stop = threading.Event()
 
 def _official_sync_loop() -> None:
     interval = max(60, settings.official_auto_sync_interval_seconds)
-    while not official_sync_stop.wait(interval):
+    while not official_sync_stop.is_set():
         try:
             official_data.sync()
         except Exception:
             # The service persists failures; keep the scheduler alive for the next retry.
             pass
+        if official_sync_stop.wait(interval):
+            break
 
 
 @app.on_event("startup")

@@ -1,0 +1,4 @@
+import {describe, expect, it} from "vitest";
+import {evaluateModelPromotion, rollbackModel} from "../algorithm/modelGovernance";
+import {challengerModel, championModel} from "../data/mockModelRegistry";
+describe("model governance",()=>{it("does not promote a challenger with insufficient test data",()=>expect(evaluateModelPromotion(challengerModel,championModel).decision).toBe("NEED_MORE_DATA"));it("requires every condition before promotion",()=>{const strong={...challengerModel,testMatchCount:1000,metrics:{...challengerModel.metrics,logLoss:1,brierScore:.2,calibrationError:.04,averageClv:.01}};expect(evaluateModelPromotion(strong,championModel).allowed).toBe(true)});it("supports explicit rollback",()=>expect(rollbackModel(challengerModel,championModel,"drift").promotionStatus).toBe("ROLLED_BACK"));});

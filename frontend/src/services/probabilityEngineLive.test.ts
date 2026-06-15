@@ -1,0 +1,6 @@
+import {describe, expect, it} from "vitest";
+import {calculateMatchPrediction} from "../algorithm/probabilityEngine";
+import {createOfficialSpSnapshot} from "../algorithm/snapshotEngine";
+import {demoBacktestMatches, demoWalkForwardHistory} from "../data/backtestData";
+const match={...demoBacktestMatches[0],kickoffTime:"2027-01-01T12:00:00Z",status:"NOT_STARTED" as const,marketOdds:{home:0,draw:0,away:0},updatedAt:new Date().toISOString()};
+describe("probability engine live snapshots",()=>{it("uses snapshot SP for final probability and EV",()=>{const snapshot=createOfficialSpSnapshot(match,{home:1.55,draw:4.2,away:6},new Date().toISOString()),result=calculateMatchPrediction(match,demoWalkForwardHistory,match.context??{},10_000,{officialSpSnapshot:snapshot});expect(result.officialSp).toEqual(snapshot.sp);expect(result.ev.home).toBeCloseTo(result.finalProbability.home*snapshot.sp.home-1)});it("marks predictions stale when a supplied snapshot is old",()=>{const snapshot=createOfficialSpSnapshot(match,{home:2,draw:3.5,away:4},"2020-01-01T00:00:00Z"),result=calculateMatchPrediction(match,demoWalkForwardHistory,match.context??{},10_000,{officialSpSnapshot:snapshot});expect(result.lifecycleStatus).toBe("STALE")});});

@@ -36,8 +36,8 @@ function leagueStats(row: ApiMatch): LeagueStats | undefined {
   return {league: row.league, avgHomeGoals: num(f.league_avg_home_goals, 1.45), avgAwayGoals: num(f.league_avg_away_goals, 1.15), avgTeamGoals: num(f.league_avg_team_goals, 1.3)};
 }
 
-interface ApiHistoricalMatch {id: string; league: string; home_team: string; away_team: string; home_goals: number; away_goals: number; played_at: string; match_type: "LEAGUE" | "CUP" | "FRIENDLY"}
-const mapHistoricalMatch = (row: ApiHistoricalMatch): HistoricalMatch => ({id: row.id, league: row.league, homeTeam: row.home_team, awayTeam: row.away_team, homeGoals: row.home_goals, awayGoals: row.away_goals, playedAt: row.played_at, matchType: row.match_type});
+interface ApiHistoricalMatch {id: string; league: string; home_team: string; away_team: string; home_goals: number; away_goals: number; played_at: string; match_type: "LEAGUE" | "CUP" | "FRIENDLY"|"INTERNATIONAL"|"UNKNOWN";home_xg?:number;away_xg?:number;home_red_cards?:number;away_red_cards?:number;home_elo_before?:number;away_elo_before?:number;venue?:string;neutral_venue?:boolean}
+const mapHistoricalMatch = (row: ApiHistoricalMatch): HistoricalMatch => ({id: row.id, league: row.league, homeTeam: row.home_team, awayTeam: row.away_team, homeGoals: row.home_goals, awayGoals: row.away_goals, playedAt: row.played_at, matchType: row.match_type,homeXg:row.home_xg,awayXg:row.away_xg,homeRedCards:row.home_red_cards,awayRedCards:row.away_red_cards,homeEloBefore:row.home_elo_before,awayEloBefore:row.away_elo_before,venue:row.venue,neutralVenue:row.neutral_venue});
 
 export function mapOfficialMatch(row: ApiMatch, historicalMatches: HistoricalMatch[] = []): OfficialMatch {
   const officialSp = {home: num(row.official_odds.home), draw: num(row.official_odds.draw), away: num(row.official_odds.away)};
