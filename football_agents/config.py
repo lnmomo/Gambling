@@ -4,7 +4,11 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ModuleNotFoundError:
+    def load_dotenv(*_args: object, **_kwargs: object) -> bool:
+        return False
 
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
@@ -17,10 +21,40 @@ def _float(name: str, default: float) -> float:
     return float(os.getenv(name, default))
 
 
+def _bool(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _database_path_from_url(database_url: str) -> Path:
+    prefix = "sqlite:///"
+    if database_url.startswith(prefix):
+        raw_path = database_url[len(prefix):]
+        return Path(raw_path)
+    if database_url.startswith("sqlite://"):
+        raw_path = database_url[len("sqlite://"):]
+        return Path(raw_path)
+    return Path(database_url)
+
+
 @dataclass(frozen=True)
 class Settings:
     app_env: str = os.getenv("APP_ENV", "development")
-    database_path: Path = Path(os.getenv("DATABASE_PATH", "./data/football_agents.db"))
+    app_host: str = os.getenv("APP_HOST", "127.0.0.1")
+    app_port: int = int(os.getenv("APP_PORT", "8000"))
+    database_url: str = os.getenv("DATABASE_URL", os.getenv("DATABASE_PATH", "sqlite:///./data/runtime/football_agents.db"))
+    database_path: Path = _database_path_from_url(database_url)
+    enable_real_sync: bool = _bool("ENABLE_REAL_SYNC", False)
+    enable_stacking_model: bool = _bool("ENABLE_STACKING_MODEL", False)
+    enable_auto_betting: bool = _bool("ENABLE_AUTO_BETTING", False)
+    log_level: str = os.getenv("LOG_LEVEL", "INFO")
+    snapshot_stale_minutes: int = int(os.getenv("SNAPSHOT_STALE_MINUTES", "30"))
+    pre_match_close_minutes: int = int(os.getenv("PRE_MATCH_CLOSE_MINUTES", "5"))
+    official_sp_refresh_minutes: int = int(os.getenv("OFFICIAL_SP_REFRESH_MINUTES", "15"))
+    external_odds_refresh_minutes: int = int(os.getenv("EXTERNAL_ODDS_REFRESH_MINUTES", "15"))
+    live_fast_refresh_minutes: int = int(os.getenv("LIVE_FAST_REFRESH_MINUTES", "5"))
     bankroll: float = _float("BANKROLL", 10_000.0)
     min_ev: float = _float("MIN_EV", 0.05)
     max_single_stake: float = _float("MAX_SINGLE_STAKE", 0.01)

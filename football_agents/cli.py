@@ -25,6 +25,11 @@ def main() -> None:
     sync.add_argument("--force", action="store_true", help="忽略最小同步间隔")
     data_sync = sub.add_parser("sync-data", help="同步外部赔率、新闻、天气并运行模型")
     data_sync.add_argument("--limit", type=int, default=40)
+    build_features = sub.add_parser("build-features", help="Build real historical team features for official matches")
+    build_features.add_argument("--limit", type=int, default=100)
+    build_features.add_argument("--include-finished", action="store_true")
+    build_features.add_argument("--min-matches", type=int, default=10)
+    build_features.add_argument("--league", default="", help="Only build features for official matches whose league contains this text")
     llm = sub.add_parser("analyze-news", help="使用大模型分析指定比赛新闻")
     llm.add_argument("match_id", type=int)
     llm.add_argument("--force", action="store_true")
@@ -63,6 +68,12 @@ def main() -> None:
         db.initialize()
         report = DataEnrichmentService().sync(limit=args.limit)
         print(json.dumps(QwenOpsAgent().attach("market-news-weather-agent", report), ensure_ascii=False, indent=2))
+    elif args.command == "build-features":
+        from .features import build_features_for_official_matches
+        db.initialize()
+        report = build_features_for_official_matches(limit=args.limit, include_finished=args.include_finished,
+                                                     min_matches=args.min_matches, league=args.league or None)
+        print(json.dumps(report, ensure_ascii=False, indent=2))
     elif args.command == "analyze-news":
         from .llm import LLMNewsAgent
         db.initialize()

@@ -29,6 +29,8 @@ class HistoricalDataTests(unittest.TestCase):
         first = self.service.import_csv_text(CSV, "test")
         second = self.service.import_csv_text(CSV, "test")
         self.assertEqual(first["imported"], 2)
+        self.assertEqual(first["pandas_rows"], 2)
+        self.assertEqual(first["pandas_dropped"], 0)
         self.assertEqual(second["updated"], 2)
         rows = self.repository.list_historical_matches("2025-01-05")
         self.assertEqual(len(rows), 1)
@@ -73,6 +75,19 @@ class HistoricalDataTests(unittest.TestCase):
         self.assertEqual(result["failed"], 0)
         self.assertEqual(result["database_matches"], 1)
         self.assertEqual(result["sources"][0]["status"], "cached")
+
+    def test_pandas_parser_accepts_aliases_and_drops_dirty_rows(self):
+        text = """playedAt,league,homeTeam,awayTeam,homeGoals,awayGoals,matchType
+2025-02-01,Alias League,Home,Away,3,1,CUP
+2025-02-02,Alias League,Same,Same,1,0,CUP
+2025-02-03,Alias League,Home2,Away2,,0,CUP
+"""
+        result = self.service.import_csv_text(text, "alias")
+        self.assertEqual(result["imported"], 1)
+        self.assertEqual(result["pandas_rows"], 1)
+        self.assertEqual(result["pandas_dropped"], 2)
+        rows = self.repository.list_historical_matches(league="Alias League")
+        self.assertEqual(rows[0]["match_type"], "CUP")
 
 
 if __name__ == "__main__":

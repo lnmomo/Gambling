@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import csv
 import io
@@ -21,9 +21,12 @@ from .integrations import DataEnrichmentService
 from .llm import LLMNewsAgent, QwenOpsAgent
 from .historical_data import HistoricalDataService
 from .historical_agent import HistoricalCollectionAgent
+from .health import build_health_report
 from .international_history_agent import InternationalHistoryAgent
+from .features import build_features_for_official_matches
 from .repository import Repository
 from .schemas import BacktestRequest, EvaluateRequest, FeatureCreate, MatchCreate, MatchMetadataCreate, OddsCreate, SettingsUpdate
+from .services.task_runner_service import TaskRunnerService
 
 
 WEB_DIR = Path(__file__).with_name("web")
@@ -43,6 +46,7 @@ historical_data = HistoricalDataService(repository)
 historical_agent = HistoricalCollectionAgent(repository)
 international_history_agent = InternationalHistoryAgent(repository)
 agent_orchestrator = AgentOrchestrator(repository)
+task_runner = TaskRunnerService()
 official_sync_stop = threading.Event()
 
 
@@ -77,7 +81,7 @@ def dashboard() -> FileResponse:
 
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ok", "environment": settings.app_env, "disclaimer": "仅供概率研究与理性决策参考"}
+    return build_health_report()
 
 
 @app.post("/api/matches", status_code=201)
@@ -142,7 +146,7 @@ def prediction(match_id: int) -> dict:
     _require_match(match_id)
     result = repository.latest_prediction(match_id)
     if not result:
-        raise HTTPException(404, "尚无预测，请先执行 evaluate")
+        raise HTTPException(404, "灏氭棤棰勬祴锛岃鍏堟墽琛?evaluate")
     return result
 
 
@@ -158,16 +162,22 @@ def bankroll_status() -> dict:
         "single_limit": settings.bankroll * settings.max_single_stake,
         "daily_limit": settings.bankroll * settings.max_daily_exposure,
         "weekly_limit": settings.bankroll * settings.max_weekly_exposure,
-        "rules": ["四分之一凯利", "连续亏损 3 单暂停", "禁止倍投和追损", "系统不执行自动下单"],
+        "rules": ["四分之一 Kelly", "连续亏损 3 单暂停", "禁止倍投和追损", "系统不执行自动下单"],
     }
 
 
 @app.post("/api/official/sync")
 def sync_official_data(force: bool = False) -> dict:
+    task = task_runner.start_task_run("official_sp_sync")
     try:
-        return qwen_ops.attach("official-data-agent", official_data.sync(force=force))
+        report = qwen_ops.attach("official-data-agent", official_data.sync(force=force))
+        task_runner.finish_task_run_success(task["id"], affected_matches=report.get("matches", report.get("upserted", 0)),
+                                            created_snapshots=report.get("odds_snapshots", report.get("snapshots", 0)),
+                                            warnings=report.get("warnings", []))
+        return report
     except Exception as exc:
-        raise HTTPException(502, f"官方数据同步失败: {exc}") from exc
+        task_runner.finish_task_run_failed(task["id"], str(exc))
+        raise HTTPException(502, f"瀹樻柟鏁版嵁鍚屾澶辫触: {exc}") from exc
 
 
 @app.get("/api/official/status")
@@ -214,13 +224,20 @@ def historical_matches_status() -> dict:
             "last_match": rows[-1]["played_at"] if rows else None}
 
 
+@app.post("/api/features/build")
+def build_historical_features(limit: int = 100, include_finished: bool = False,
+                              min_matches: int = 10, league: str | None = None) -> dict:
+    return build_features_for_official_matches(repository, max(1, min(limit, 200)),
+                                               include_finished, max(1, min_matches), league)
+
+
 @app.post("/api/historical-matches/upload-csv")
 async def upload_historical_matches(file: UploadFile = File(...)) -> dict:
     try:
         text = (await file.read()).decode("utf-8-sig")
         report = historical_data.import_csv_text(text, file.filename or "uploaded-csv")
     except (UnicodeDecodeError, ValueError) as exc:
-        raise HTTPException(400, f"历史 CSV 格式错误: {exc}") from exc
+        raise HTTPException(400, f"鍘嗗彶 CSV 鏍煎紡閿欒: {exc}") from exc
     return {**report, **historical_matches_status()}
 
 
@@ -232,7 +249,7 @@ def sync_historical_matches(years_back: int = settings.historical_data_years_bac
         return qwen_ops.attach("historical-data-agent",
                                historical_agent.sync(max(1, min(years_back, 10)), selected or None))
     except Exception as exc:
-        raise HTTPException(502, f"历史数据同步失败: {exc}") from exc
+        raise HTTPException(502, f"鍘嗗彶鏁版嵁鍚屾澶辫触: {exc}") from exc
 
 
 @app.post("/api/historical-matches/sync-international")
@@ -240,12 +257,22 @@ def sync_international_historical_matches() -> dict:
     try:
         return qwen_ops.attach("international-history-agent", international_history_agent.sync())
     except Exception as exc:
-        raise HTTPException(502, f"国家队历史数据同步失败: {exc}") from exc
+        raise HTTPException(502, f"鍥藉闃熷巻鍙叉暟鎹悓姝ュけ璐? {exc}") from exc
 
 
 @app.post("/api/data/sync")
 def sync_external_data(limit: int = 40) -> dict:
-    return qwen_ops.attach("market-news-weather-agent", enrichment.sync(max(1, min(limit, 100))))
+    task = task_runner.start_task_run("external_odds_sync")
+    try:
+        report = qwen_ops.attach("market-news-weather-agent", enrichment.sync(max(1, min(limit, 100))))
+        task_runner.finish_task_run_success(task["id"], affected_matches=report.get("matches", 0),
+                                            created_snapshots=report.get("market_odds", 0),
+                                            created_predictions=report.get("predictions", 0),
+                                            warnings=report.get("odds_warnings", []))
+        return report
+    except Exception as exc:
+        task_runner.finish_task_run_failed(task["id"], str(exc))
+        raise
 
 
 @app.get("/api/data/status")
@@ -275,7 +302,7 @@ def analyze_match_news(match_id: int, force: bool = False) -> dict:
     try:
         return llm_news.analyze(match_id, force=force)
     except Exception as exc:
-        raise HTTPException(502, f"大模型新闻分析失败: {exc}") from exc
+        raise HTTPException(502, f"澶фā鍨嬫柊闂诲垎鏋愬け璐? {exc}") from exc
 
 
 @app.get("/api/system/overview")
@@ -284,11 +311,11 @@ def system_overview() -> dict:
     providers = repository.provider_status()
     official = repository.latest_fetch_log()
     agents = [
-        {"id": "official", "name": "官方赛程Agent", "state": "RUNNING" if official and official["success"] else "WARNING",
-         "success_rate": 100 if official and official["success"] else 0, "latency": "按需同步",
+        {"id": "official", "name": "瀹樻柟璧涚▼Agent", "state": "RUNNING" if official and official["success"] else "WARNING",
+         "success_rate": 100 if official and official["success"] else 0, "latency": "鎸夐渶鍚屾",
          "task_count": official["record_count"] if official else 0, "last_updated": official["fetched_at"] if official else None},
     ]
-    provider_names = {"the_odds_api":"赔率采集Agent", "news_aggregator":"新闻Agent", "gdelt":"新闻Agent", "open_meteo":"天气Agent"}
+    provider_names = {"the_odds_api":"璧旂巼閲囬泦Agent", "news_aggregator":"鏂伴椈Agent", "gdelt":"鏂伴椈Agent", "open_meteo":"澶╂皵Agent"}
     for item in providers:
         state = "RUNNING" if item["status"] == "success" else "DELAYED" if item["status"] in {"waiting_metadata", "not_configured"} else "WARNING"
         agents.append({"id": item["provider"], "name": provider_names.get(item["provider"], item["provider"]),
@@ -302,7 +329,7 @@ def system_overview() -> dict:
                            "success_rate": 100 if state == "RUNNING" else 0, "latency": step["status"],
                            "task_count": len(step["output"]), "last_updated": step["finished_at"]})
     return {"counts": counts, "agents": agents, "logs": repository.list_audit_events(100),
-            "alerts": [log for log in repository.list_audit_events(100) if str(log["result"]).lower() not in {"成功","success"}][:20]}
+            "alerts": [log for log in repository.list_audit_events(100) if str(log["result"]).lower() not in {"鎴愬姛","success"}][:20]}
 
 
 @app.get("/api/audit-logs")
@@ -314,7 +341,7 @@ def audit_logs(limit: int = 200) -> list[dict]:
 def notifications() -> list[dict]:
     items = []
     for log in repository.list_audit_events(100):
-        if str(log["result"]).lower() not in {"成功", "success"}:
+        if str(log["result"]).lower() not in {"鎴愬姛", "success"}:
             items.append({"id": str(log["id"]), "type": "数据源状态", "title": log["action"],
                           "content": log["detail"], "created_at": log["time"], "read": False})
     return items
@@ -366,8 +393,10 @@ def update_match_metadata(match_id: int, payload: MatchMetadataCreate) -> dict:
 
 @app.post("/api/backtest/run")
 def run_backtest(payload: BacktestRequest) -> dict:
+    task = task_runner.start_task_run("backtest_run")
     report = BacktestEngine(payload.min_ev).run([row.model_dump(mode="json") for row in payload.rows], payload.bankroll)
     repository.save_backtest(report["id"], payload.name, report["parameters"], report["metrics"], report["equity"])
+    task_runner.finish_task_run_success(task["id"], affected_matches=len(payload.rows))
     return report
 
 
@@ -385,7 +414,7 @@ async def upload_backtest(file: UploadFile = File(...), bankroll: float = 10_000
                     row[key] = float(row[key])
         report = BacktestEngine(min_ev).run(rows, bankroll)
     except (KeyError, ValueError, UnicodeDecodeError) as exc:
-        raise HTTPException(400, f"CSV 格式错误: {exc}") from exc
+        raise HTTPException(400, f"CSV 鏍煎紡閿欒: {exc}") from exc
     repository.save_backtest(report["id"], file.filename or "CSV backtest", report["parameters"], report["metrics"], report["equity"])
     return report
 
@@ -407,4 +436,5 @@ def frontend_routes(frontend_path: str) -> FileResponse:
 def _require_match(match_id: int) -> None:
     if not repository.get_match(match_id):
         raise HTTPException(404, "比赛不存在")
+
 

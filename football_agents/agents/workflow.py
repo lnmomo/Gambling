@@ -100,6 +100,7 @@ class DecisionWorkflow:
             disagreement=disagreement,
             ev=best["ev"],
             match_status=match["status"],
+            kickoff_time=match["kickoff_time"],
             backtest_roi=features.get("backtest_roi"),
             daily_exposure_fraction=features.get("daily_exposure_fraction", 0),
             weekly_exposure_fraction=features.get("weekly_exposure_fraction", 0),

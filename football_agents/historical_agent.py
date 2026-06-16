@@ -13,6 +13,7 @@ from urllib.request import Request, urlopen
 
 from .repository import Repository
 from .config import settings
+from .pandas_pipeline import normalize_historical_matches, read_csv_text
 
 
 DIVISIONS = {
@@ -64,21 +65,7 @@ class HistoricalCollectionAgent:
         raise ValueError(f"unsupported date: {value}")
 
     def normalize_csv(self, text: str, source: HistoricalSource) -> list[dict[str, Any]]:
-        rows: list[dict[str, Any]] = []
-        for item in csv.DictReader(io.StringIO(text.lstrip("\ufeff"))):
-            if not item.get("Date") or not item.get("HomeTeam") or not item.get("AwayTeam"):
-                continue
-            if item.get("FTHG") in (None, "") or item.get("FTAG") in (None, ""):
-                continue
-            try:
-                rows.append({
-                    "league": DIVISIONS.get(item.get("Div") or source.division, source.division),
-                    "home_team": item["HomeTeam"].strip(), "away_team": item["AwayTeam"].strip(),
-                    "home_goals": int(item["FTHG"]), "away_goals": int(item["FTAG"]),
-                    "played_at": self._parse_date(item["Date"]), "match_type": "LEAGUE",
-                })
-            except (KeyError, TypeError, ValueError):
-                continue
+        rows, _report = normalize_historical_matches(read_csv_text(text), source=source.url, division_names=DIVISIONS)
         return rows
 
     def fetch(self, source: HistoricalSource, timeout: int | None = None) -> str:

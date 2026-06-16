@@ -1,0 +1,4 @@
+import {describe,expect,it} from "vitest";
+import {createDefaultBankrollConfig} from "../algorithm/bankrollManager";
+import {calculateDrawdownState} from "../algorithm/drawdownControl";
+describe("drawdown control",()=>{it("handles empty transactions",()=>expect(calculateDrawdownState([],createDefaultBankrollConfig()).riskMode).toBe("NORMAL"));it("enters defensive and paused modes",()=>{const config=createDefaultBankrollConfig();const losses=Array.from({length:5},(_,i)=>({id:String(i),bankrollId:"b",type:"BET_LOST" as const,amount:-3,bankrollBefore:100-i*3,bankrollAfter:97-i*3,createdAt:`2026-01-0${i+1}`}));expect(calculateDrawdownState(losses,config).riskMode).toBe("DEFENSIVE");expect(calculateDrawdownState([...losses,...losses.map((x,i)=>({...x,id:`p${i}`,createdAt:`2026-02-0${i+1}`}))],config).riskMode).toBe("PAUSED")});});

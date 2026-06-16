@@ -18,6 +18,38 @@ class Database:
         with self.connect() as connection:
             connection.executescript(schema)
             self._migrate(connection)
+            self.run_migrations(connection)
+
+    def run_migrations(self, connection: sqlite3.Connection | None = None) -> None:
+        migrations_dir = Path(__file__).with_name("migrations")
+        if not migrations_dir.exists():
+            return
+        owns_connection = connection is None
+        if owns_connection:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            connection = sqlite3.connect(self.path, timeout=30)
+            connection.row_factory = sqlite3.Row
+        assert connection is not None
+        try:
+            connection.execute("""CREATE TABLE IF NOT EXISTS schema_migrations (
+                filename TEXT PRIMARY KEY,
+                applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )""")
+            applied = {row["filename"] for row in connection.execute("SELECT filename FROM schema_migrations")}
+            for migration in sorted(migrations_dir.glob("*.sql")):
+                if migration.name in applied:
+                    continue
+                connection.executescript(migration.read_text(encoding="utf-8"))
+                connection.execute("INSERT INTO schema_migrations(filename) VALUES(?)", (migration.name,))
+            if owns_connection:
+                connection.commit()
+        except Exception:
+            if owns_connection:
+                connection.rollback()
+            raise
+        finally:
+            if owns_connection:
+                connection.close()
 
     @staticmethod
     def _migrate(connection: sqlite3.Connection) -> None:

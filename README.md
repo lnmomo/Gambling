@@ -101,3 +101,40 @@ python -m unittest discover -s tests -v
 ```
 
 覆盖概率归一化、赔率去水、数据过期 veto、连续亏损暂停、仓位硬上限、缺失数据 `NO_BET`、持久化审计链及样例回测。
+## Phase 8: Data Governance And Production Hardening
+
+This project is a probability modeling, positive-EV discovery, and risk-control decision support system. It does not guarantee profit and it does not place bets automatically.
+
+Local setup:
+
+```powershell
+Copy-Item .env.example .env
+python -m football_agents.cli init-db
+python -m football_agents.cli serve
+```
+
+Configure real integrations only in `.env` or `api.env`. `THE_ODDS_API_KEY`, Qwen keys, database paths, and runtime switches must not be committed. `ENABLE_AUTO_BETTING` must remain `false`; the backend health check reports any attempt to enable it as a policy violation.
+
+Runtime data policy:
+
+- Do not commit `.env`, `api.env`, real SQLite databases, real historical CSV archives, API keys, cookies, task logs, or local cache files.
+- `data/README.md` documents which `data/` folders are safe to commit.
+- `football_agents/migrations/` contains repeatable SQLite migrations and should be committed.
+
+Database and health:
+
+- The backend reads `DATABASE_URL`, defaulting to `sqlite:///./data/runtime/football_agents.db`.
+- `python -m football_agents.cli init-db` creates base tables and applies migrations.
+- `GET /health` returns database, sync, model, task, and environment health without exposing secrets.
+- The frontend `/system-health` page displays the same health report and recent task-run status.
+
+Model governance:
+
+- Champion and Challenger records are persisted in `model_governance_records`.
+- Challenger stacking is never enabled by default. Promotion decisions are audit records, not automatic replacements.
+
+Safety:
+
+- No automatic betting is implemented.
+- EV remains `finalProbability * officialSp - 1`.
+- Invalid, stale, or duplicate snapshots are recorded and must not create fake ACTIVE recommendations.

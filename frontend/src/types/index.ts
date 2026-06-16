@@ -29,7 +29,16 @@ export interface RecommendationLifecycleEvent { id:string; matchId:string; offic
 export interface LiveRecalculationResult { id:string; matchId:string; officialMatchId:string; recalculatedAt:string; trigger:LiveRecalculationTrigger; previousPrediction?:MatchPrediction; newPrediction:MatchPrediction; probabilityDelta:{home:number;draw:number;away:number;maxDelta:number}; evDelta:{home:number;draw:number;away:number;maxDelta:number}; recommendationChanged:boolean; previousRecommendation?:RecommendationDecision; newRecommendation:RecommendationDecision; lifecycleStatus:RecommendationLifecycleStatus; warnings:string[] }
 export interface ModelGovernanceRecord { modelId:string; modelName:string; modelType:"RULE_BASED_ENSEMBLE"|"STACKING_MODEL"|"ENHANCED_PURE_MODEL"|"EXTERNAL_MARKET_MODEL"; version:string; role:ModelRole; createdAt:string; activatedAt?:string; archivedAt?:string; trainingMatchCount?:number; validationMatchCount?:number; testMatchCount?:number; metrics:{logLoss:number;brierScore:number;calibrationError:number;roi?:number;averageClv?:number;positiveClvRate?:number}; baselineModelId?:string; promotionStatus:"NOT_EVALUATED"|"CANDIDATE"|"APPROVED"|"REJECTED"|"PROMOTED"|"ROLLED_BACK"; promotionReason?:string; warnings:string[] }
 export interface ModelPromotionDecision { challengerModelId:string; championModelId:string; allowed:boolean; decision:"PROMOTE"|"KEEP_CHAMPION"|"NEED_MORE_DATA"|"REJECT_CHALLENGER"; reasons:string[]; requiredConditions:Array<{name:string;passed:boolean;value:number|string;threshold:number|string}> }
-export interface AuditLogEntry { id:string; createdAt:string; entityType:"MATCH"|"PREDICTION"|"RECOMMENDATION"|"ODDS_SNAPSHOT"|"MODEL"|"SYSTEM"; entityId:string; action:"SNAPSHOT_CREATED"|"PREDICTION_RECALCULATED"|"RECOMMENDATION_CREATED"|"RECOMMENDATION_UPDATED"|"RECOMMENDATION_WITHDRAWN"|"MODEL_EVALUATED"|"MODEL_PROMOTION_CHECKED"|"WARNING_RAISED"|"ERROR_HANDLED"; summary:string; before?:unknown; after?:unknown; trigger?:LiveRecalculationTrigger; severity:"INFO"|"WARNING"|"ERROR"; actor:"SYSTEM"|"USER"|"SCHEDULER" }
+export interface AuditLogEntry { id:string; createdAt:string; entityType:"MATCH"|"PREDICTION"|"RECOMMENDATION"|"ODDS_SNAPSHOT"|"MODEL"|"SYSTEM"; entityId:string; action:"SNAPSHOT_CREATED"|"PREDICTION_RECALCULATED"|"RECOMMENDATION_CREATED"|"RECOMMENDATION_UPDATED"|"RECOMMENDATION_WITHDRAWN"|"MODEL_EVALUATED"|"MODEL_PROMOTION_CHECKED"|"WARNING_RAISED"|"ERROR_HANDLED"|"STAKE_CALCULATED"|"STAKE_REDUCED"|"STAKE_BLOCKED"|"BANKROLL_UPDATED"|"EXPOSURE_LIMIT_TRIGGERED"|"DRAWDOWN_MODE_CHANGED"|"CORRELATION_WARNING_RAISED"; summary:string; before?:unknown; after?:unknown; trigger?:LiveRecalculationTrigger; severity:"INFO"|"WARNING"|"ERROR"; actor:"SYSTEM"|"USER"|"SCHEDULER" }
+export interface BankrollConfig { bankrollId:string; name:string; initialBankroll:number; currentBankroll:number; baseUnit:number; currency?:string; stakingMode:"FLAT_UNIT"|"FIXED_PERCENT"|"FRACTIONAL_KELLY"|"RISK_ADJUSTED_KELLY"; kellyFraction:number; maxStakePerBetPct:number; maxDailyExposurePct:number; maxLeagueExposurePct:number; maxSingleOutcomeTypeExposurePct:number; minStakeUnit:number; maxStakeUnit:number; drawdownControlEnabled:boolean; correlationControlEnabled:boolean; createdAt:string; updatedAt:string }
+export interface KellyStakeOutput { probability:number; odds:number; edge:number; fullKellyFraction:number; fractionalKellyFraction:number; rawStake:number; cappedStake:number; positiveKelly:boolean; warnings:string[] }
+export interface StakeAdjustmentFactor { name:string; factor:number; reason:string }
+export interface StakeRecommendation { matchId:string; officialMatchId:string; recommendation:RecommendationType; finalProbability:number; officialSp:number; ev:number; bankroll:number; baseUnit:number; kelly:KellyStakeOutput; rawStake:number; adjustedStake:number; finalStake:number; stakePctOfBankroll:number; stakeUnits:number; riskLevel:RiskLevel; confidenceLevel:"LOW"|"MEDIUM"|"HIGH"; adjustmentFactors:StakeAdjustmentFactor[]; cappedBy:"NONE"|"MAX_SINGLE_BET"|"DAILY_EXPOSURE"|"LEAGUE_EXPOSURE"|"CORRELATION_RISK"|"DRAWDOWN_CONTROL"|"MIN_STAKE"|"NO_BET"; status:"STAKE_ALLOWED"|"STAKE_REDUCED"|"STAKE_BLOCKED"|"NO_BET"; warnings:string[]; reasons:string[] }
+export interface PortfolioExposure { date:string; bankroll:number; activeRecommendationCount:number; totalStake:number; totalStakePct:number; exposureByLeague:Array<{league:string; stake:number; stakePct:number; recommendationCount:number}>; exposureByOutcomeType:Array<{outcome:"HOME"|"DRAW"|"AWAY"; stake:number; stakePct:number; recommendationCount:number}>; exposureByRiskLevel:Array<{riskLevel:RiskLevel; stake:number; stakePct:number; recommendationCount:number}>; maxSingleBetStake:number; maxSingleBetStakePct:number; dailyLimitUsedPct:number; warnings:string[] }
+export interface ExposureLimitCheck { allowed:boolean; limitType:"MAX_SINGLE_BET"|"MAX_DAILY_EXPOSURE"|"MAX_LEAGUE_EXPOSURE"|"MAX_OUTCOME_TYPE_EXPOSURE"|"CORRELATION_LIMIT"; currentExposure:number; proposedStake:number; limit:number; remainingCapacity:number; adjustedStake:number; reason:string }
+export interface CorrelationRiskOutput { correlationRiskLevel:"LOW"|"MEDIUM"|"HIGH"; correlatedRecommendationIds:string[]; correlationFactors:Array<{factor:"SAME_LEAGUE"|"SAME_KICKOFF_WINDOW"|"SAME_OUTCOME_TYPE"|"LOW_ODDS_FAVORITES"|"SAME_MARKET_SIGNAL"|"SAME_EXTERNAL_MARKET_QUALITY"|"SAME_MODEL_WEAKNESS"; severity:"LOW"|"MEDIUM"|"HIGH"; description:string}>; stakeReductionFactor:number; warnings:string[] }
+export interface DrawdownState { currentEquity:number; peakEquity:number; currentDrawdown:number; currentDrawdownPct:number; maxDrawdown:number; maxDrawdownPct:number; consecutiveLosses:number; riskMode:"NORMAL"|"CAUTION"|"DEFENSIVE"|"PAUSED"; stakeMultiplier:number; warnings:string[] }
+export interface BankrollTransaction { id:string; bankrollId:string; matchId?:string; officialMatchId?:string; type:"STAKE_PLACED"|"BET_WON"|"BET_LOST"|"BET_VOID"|"MANUAL_ADJUSTMENT"|"BANKROLL_RESET"; amount:number; bankrollBefore:number; bankrollAfter:number; createdAt:string; note?:string }
 export type ThreeWayEv = ThreeWayProbability;
 export type EvTriple = ThreeWayEv;
 export type FairOddsTriple = OfficialSp;
@@ -176,7 +185,7 @@ export interface MatchPrediction {
   anchoredProbability: ThreeWayProbability; diagnostics: PredictionDiagnostics;
   criticPassed: boolean; criticReasons: string[];
   recommendation: RecommendationType; confidence: ConfidenceLevel; confidenceGrade: ConfidenceGrade; confidenceScore: number;
-  riskLevel: RiskLevel; suggestedStake: number; stakeFraction: number;
+  riskLevel: RiskLevel; suggestedStake: number; stakeFraction: number; stakeRecommendation?:StakeRecommendation;
   recommendedProbability: number | null; recommendedSp: number | null; recommendedEv: number | null;
   createdAt: string;
 }
@@ -223,12 +232,13 @@ export interface BacktestRecord {
   probabilitySource?: MatchPrediction["probabilitySource"]; modelVersion?: string; stackingConfidence?: number;
   stackingFallbackUsed?: boolean; stackingTopFeatures?: Array<{feature: string; contribution: number}>;
   openingSp?:ThreeWayOdds; recommendationSp?:ThreeWayOdds; recommendationCreatedAt?:string; recommendationAgeMinutes?:number; recalculationCount?:number; marketMovementBeforeRecommendation?:boolean;
+  bankrollBefore?:number; bankrollAfter?:number; suggestedStake?:number; stakePctOfBankroll?:number; stakeCappedBy?:StakeRecommendation["cappedBy"]; stakeStatus?:StakeRecommendation["status"]; drawdownState?:DrawdownState; portfolioExposureAtBet?:PortfolioExposure;
 }
 export interface BacktestMetrics {
   totalMatches: number; totalBets: number; noBetCount: number; noBetRatio: number; hitCount: number; hitRate: number;
   totalStake: number; totalProfit: number; roi: number; maxDrawdown: number; averageEv: number; averageClv: number;
   positiveClvRate: number; brierScore: number; logLoss: number; averagePredictedProbability: number;
-  averageActualHitRate: number; calibrationError: number;
+  averageActualHitRate: number; calibrationError: number; finalBankroll?:number; bankrollGrowth?:number; bankrollGrowthPct?:number; averageStake?:number; medianStake?:number; maxStake?:number; stakeVolatility?:number; longestLosingStreak?:number; riskAdjustedRoi?:number; averageDailyExposure?:number; maxDailyExposure?:number; averageLeagueConcentration?:number; stakeBlockedCount?:number; stakeReducedCount?:number;
 }
 export interface CalibrationBucket { bucket: string; lowerBound: number; upperBound: number; count: number; avgPredictedProbability: number; actualHitRate: number; calibrationError: number }
 export interface GroupedBacktestMetrics { groupName: string; count: number; metrics: BacktestMetrics }
@@ -238,6 +248,7 @@ export interface ErrorAnalysisReport {
   byExternalMarketQuality: GroupedBacktestMetrics[]; byDisagreementLevel: GroupedBacktestMetrics[];
   byPureModelEdgeBucket: GroupedBacktestMetrics[]; byFinalEdgeBucket: GroupedBacktestMetrics[]; calibrationTable: CalibrationBucket[];
   byPureModelReliability: GroupedBacktestMetrics[]; byLeagueReliability: GroupedBacktestMetrics[]; byLineupRisk: GroupedBacktestMetrics[]; byFatigueRisk: GroupedBacktestMetrics[]; byXgUsed: GroupedBacktestMetrics[]; byRhoBucket: GroupedBacktestMetrics[];
+  byStakeBucket?:GroupedBacktestMetrics[]; byStakeStatus?:GroupedBacktestMetrics[]; byCappedBy?:GroupedBacktestMetrics[]; byDrawdownRiskMode?:GroupedBacktestMetrics[]; byCorrelationRisk?:GroupedBacktestMetrics[];
   commonNoBetReasons: Array<{reason: string; count: number}>; commonWarnings: Array<{warning: string; count: number}>; summary: string[];
 }
 export interface TemperatureOptimizationResult { candidates: Array<{temperature: number; logLoss: number; brierScore: number; calibrationError: number}>; bestTemperature: number; bestLogLoss: number; previousTemperature: number; improvement: number }

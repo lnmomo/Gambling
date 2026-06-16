@@ -2,6 +2,7 @@ import type {ExternalOddsSnapshot, LiveRecalculationResult, LiveRecalculationTri
 import {appendAuditLog} from "../algorithm/auditLog";
 import {buildLiveRecalculationResult} from "../algorithm/liveRecalculation";
 import {detectExternalMarketMovement, detectOfficialExternalDivergence, detectOfficialSpMovement} from "../algorithm/oddsMovement";
+import {calculatePredictionForMatch} from "../algorithm/probabilityEngine";
 import {getLatestExternalOddsSnapshot, listExternalOddsSnapshots, saveExternalOddsSnapshot} from "./externalOddsSnapshotService";
 import {getLatestOfficialSpSnapshot, listOfficialSpSnapshots, saveOfficialSpSnapshot} from "./officialSpSnapshotService";
 
@@ -22,7 +23,9 @@ export function captureLiveSnapshots(match: OfficialMatch, capturedAt = new Date
 
 export function runLiveRecalculation(match: OfficialMatch, trigger: LiveRecalculationTrigger): LiveRecalculationResult {
   const rows = recalculationStore.get(match.id) ?? [], previous = rows.length ? rows[rows.length - 1].newPrediction : match.prediction;
-  const result = buildLiveRecalculationResult(match, trigger, {...match.prediction, recalculationId: trigger.id}, previous);
+  const officialSnapshot=getLatestOfficialSpSnapshot(match.id),externalSnapshot=getLatestExternalOddsSnapshot(match.id),liveMatch={...match,officialSp:officialSnapshot?.sp??match.officialSp,externalBookmakerOdds:externalSnapshot?.bookmakerOdds??match.externalBookmakerOdds,updatedAt:officialSnapshot?.capturedAt??match.updatedAt};
+  const recalculated=calculatePredictionForMatch(liveMatch,{}, {}, {[match.id]:match.context??{}});
+  const result = buildLiveRecalculationResult(match, trigger, {...recalculated, officialSpSnapshotId:officialSnapshot?.id, externalOddsSnapshotId:externalSnapshot?.id, recalculationId: trigger.id}, previous);
   rows.push(result); recalculationStore.set(match.id, rows);
   appendAuditLog({entityType: "PREDICTION", entityId: match.id, action: "PREDICTION_RECALCULATED", summary: `Prediction recalculated: ${result.lifecycleStatus}.`, before: previous, after: result.newPrediction, trigger, severity: result.lifecycleStatus === "ACTIVE" ? "INFO" : "WARNING", actor: trigger.type === "MANUAL_REFRESH" ? "USER" : "SCHEDULER"});
   return result;

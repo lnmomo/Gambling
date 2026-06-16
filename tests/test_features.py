@@ -39,6 +39,9 @@ class HistoricalFeatureBuilderTests(unittest.TestCase):
         self.assertGreater(features["lambda_home"], 0)
         self.assertGreater(features["lambda_away"], 0)
         self.assertEqual(features["historical_home_team"], "United States")
+        self.assertEqual(features["feature_engine"], "pandas-historical-v1")
+        self.assertIn("home_weighted_points_per_match", features)
+        self.assertIn("away_weighted_win_rate", features)
 
     def test_insufficient_history_is_not_fabricated(self):
         match_id = self.repo.create_match({

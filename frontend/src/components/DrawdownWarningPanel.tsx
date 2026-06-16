@@ -1,0 +1,3 @@
+import type {DrawdownState} from "../types";
+const pct=(v:number)=>`${(v*100).toFixed(2)}%`;
+export default function DrawdownWarningPanel({drawdown}:{drawdown?:DrawdownState}){return <section className="panel"><h2>Drawdown Control</h2>{drawdown?<><div className="summary-strip" style={{padding:16,margin:0}}><span>Risk Mode<b>{drawdown.riskMode}</b></span><span>当前回撤<b>{pct(drawdown.currentDrawdownPct)}</b></span><span>最大回撤<b>{pct(drawdown.maxDrawdownPct)}</b></span><span>连续亏损<b>{drawdown.consecutiveLosses}</b></span><span>Stake Multiplier<b>{drawdown.stakeMultiplier.toFixed(2)}</b></span></div>{drawdown.warnings.map(text=><p key={text}>{text}</p>)}</>:<p>暂无回撤状态。</p>}</section>}

@@ -1,0 +1,6 @@
+import {beforeEach,describe,expect,it} from "vitest";
+import {clearAuditLogs,listAuditLogs} from "../algorithm/auditLog";
+import {createDefaultBankrollConfig} from "../algorithm/bankrollManager";
+import {attachStakeRecommendationToPrediction} from "../algorithm/riskAdjustedRecommendation";
+const base=()=>({matchId:"m",officialMatchId:"o",recommendation:"HOME",officialSp:{home:2,draw:3,away:4},finalProbability:{home:.6,draw:.2,away:.2},ev:{home:.2,draw:-.4,away:-.2},externalMarketQuality:{qualityLevel:"HIGH"} as any,riskLevel:"LOW",confidence:"A",modelDisagreement:{level:"LOW",homeDisagreement:0,drawDisagreement:0,awayDisagreement:0,maxDisagreement:0},criticReport:{passed:true,finalAction:"HOME",reasons:[],warnings:[],dynamicEvThreshold:.05,confidenceLevel:"A",riskLevel:"LOW"}} as any);
+describe("risk adjusted recommendation",()=>{beforeEach(clearAuditLogs);it("attaches stake recommendation and audit log",()=>{const result=attachStakeRecommendationToPrediction(base(),createDefaultBankrollConfig(),[],[]);expect(result.stakeRecommendation?.finalStake).toBeGreaterThan(0);expect(listAuditLogs({entityId:"m"}).length).toBeGreaterThan(0)});it("blocks NO_BET stake",()=>{const result=attachStakeRecommendationToPrediction({...base(),recommendation:"NO_BET"},createDefaultBankrollConfig(),[],[]);expect(result.stakeRecommendation?.finalStake).toBe(0)});});

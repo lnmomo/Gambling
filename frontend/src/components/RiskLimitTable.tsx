@@ -1,0 +1,3 @@
+import type {BankrollConfig} from "../types";
+const pct=(value:number)=>`${(value*100).toFixed(2)}%`;
+export default function RiskLimitTable({config}:{config:BankrollConfig}){const rows=[["单场上限",config.maxStakePerBetPct],["单日上限",config.maxDailyExposurePct],["联赛上限",config.maxLeagueExposurePct],["同方向上限",config.maxSingleOutcomeTypeExposurePct]];return <section className="panel"><h2>风险限额</h2><div className="table-scroll"><table className="data-table"><tbody>{rows.map(([label,value])=><tr key={String(label)}><td>{label}</td><td>{pct(Number(value))}</td><td>{(config.currentBankroll*Number(value)).toFixed(2)}</td></tr>)}</tbody></table></div></section>}

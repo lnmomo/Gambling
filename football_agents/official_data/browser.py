@@ -8,7 +8,10 @@ import time
 from pathlib import Path
 from typing import Any
 
-from websockets.sync.client import connect
+try:
+    from websockets.sync.client import connect
+except ModuleNotFoundError:
+    connect = None
 
 EXTRACT_EXPRESSION = r"""
 JSON.stringify({html: document.querySelector('.m-main')?.innerHTML || '', matches:
@@ -30,6 +33,8 @@ Array.from(document.querySelectorAll('.m-cardList')).map(el => {
 
 class CdpConnection:
     def __init__(self, url: str) -> None:
+        if connect is None:
+            raise RuntimeError("websockets package is required for official browser sync")
         self.websocket=connect(url,open_timeout=5); self.sequence=0
     def command(self, method: str, params: dict[str,Any]|None=None, session_id: str|None=None) -> dict[str,Any]:
         self.sequence+=1; mid=self.sequence; message={"id":mid,"method":method,"params":params or {}}

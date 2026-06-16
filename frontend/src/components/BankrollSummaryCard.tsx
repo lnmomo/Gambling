@@ -1,0 +1,3 @@
+import type {BankrollConfig,PortfolioExposure,DrawdownState} from "../types";
+const pct=(value:number)=>Number.isFinite(value)?`${(value*100).toFixed(2)}%`:"-";
+export default function BankrollSummaryCard({config,exposure,drawdown}:{config:BankrollConfig;exposure?:PortfolioExposure;drawdown?:DrawdownState}){return <section className="summary-strip"><span>当前 Bankroll<b>{config.currentBankroll.toFixed(2)}</b></span><span>基础单位<b>{config.baseUnit}</b></span><span>Kelly Fraction<b>{pct(config.kellyFraction)}</b></span><span>今日暴露<b>{pct(exposure?.totalStakePct??0)}</b></span><span>剩余额度<b>{pct(Math.max(0,config.maxDailyExposurePct-(exposure?.totalStakePct??0)))}</b></span><span>回撤模式<b>{drawdown?.riskMode??"NORMAL"}</b></span></section>}

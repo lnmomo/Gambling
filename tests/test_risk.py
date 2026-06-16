@@ -9,9 +9,19 @@ class RiskTests(unittest.TestCase):
         report = CriticPolicy().evaluate(
             odds_fetched_at=(datetime.now(timezone.utc) - timedelta(minutes=30)).isoformat(),
             source_confidence=.95, disagreement=.02, ev=.12, match_status="scheduled",
+            kickoff_time=(datetime.now(timezone.utc) + timedelta(minutes=60)).isoformat(),
         )
         self.assertFalse(report["passed"])
         self.assertFalse(report["checks"]["data_fresh"])
+
+    def test_prematch_odds_age_threshold_relaxes_before_matchday(self):
+        report = CriticPolicy().evaluate(
+            odds_fetched_at=(datetime.now(timezone.utc) - timedelta(minutes=30)).isoformat(),
+            source_confidence=.95, disagreement=.02, ev=.12, match_status="scheduled",
+            kickoff_time=(datetime.now(timezone.utc) + timedelta(hours=8)).isoformat(),
+        )
+        self.assertTrue(report["checks"]["data_fresh"])
+        self.assertEqual(report["data_freshness"]["allowed_minutes"], 120)
 
     def test_stake_respects_hard_cap(self):
         stake = calculate_stake(10_000, .70, 2.2, RiskLimits(max_single_fraction=.01))

@@ -1,7 +1,9 @@
 import {calculateMatchPrediction, calculatePredictionForMatch, clamp} from "../services/probabilityEngine";
 import {limitDailyRecommendations} from "../algorithm/criticRules";
 import {normalizeTeamName} from "../algorithm/teamNameNormalizer";
-import type {ExternalBookmakerOdds, HistoricalMatch, LeagueStats, MatchContext, MatchStatus, OfficialMatch, OfficialSp, TeamStats} from "../types";
+import {attachStakeRecommendationToPrediction} from "../algorithm/riskAdjustedRecommendation";
+import {getBankrollConfig, listBankrollTransactions} from "../services/bankrollService";
+import type {ExternalBookmakerOdds, HistoricalMatch, LeagueStats, MatchContext, MatchPrediction, MatchStatus, OfficialMatch, OfficialSp, TeamStats} from "../types";
 
 interface ApiMatch {id: number; official_match_id: string; league: string; home_team: string; away_team: string; kickoff_time: string; status: string; last_seen_at: string | null; official_odds: Partial<OfficialSp>; odds_fetched_at: string | null; market_odds: Partial<OfficialSp>; external_bookmaker_odds?: Array<{bookmaker: string; bookmaker_key?: string; market: string; odds: OfficialSp; last_update: string; source?: string}>; news: Array<{raw_text: string; source_url: string; published_at: string; confidence: number}>; weather: {temperature: number | null; humidity: number | null; rainfall: number | null; wind_speed: number | null; fetched_at: string} | null; metadata: {venue: string | null; city: string | null} | null; llm_analysis: {model: string; created_at: string; analysis: {summary: string; home_team_impact: number; away_team_impact: number; lineup_confidence: number; news_confidence: number; injuries: string[]; risks: string[]; evidence: string[]}} | null; features: Record<string, unknown>}
 const statusMap: Record<string, MatchStatus> = {scheduled: "NOT_STARTED", live: "LIVE", finished: "FINISHED", cancelled: "CANCELLED", postponed: "POSTPONED", closed: "CLOSED", unknown: "CLOSED"};
@@ -12,6 +14,8 @@ function contextFor(row: ApiMatch): MatchContext {
   const rainfall = num(weather?.rainfall), wind = num(weather?.wind_speed);
   const condition = rainfall >= 8 ? "HEAVY_RAIN" : rainfall >= 1 ? "RAIN" : wind >= 20 ? "WINDY" : "CLEAR";
   const fetchedAt = row.odds_fetched_at ? new Date(row.odds_fetched_at).getTime() : 0;
+  const kickoffAt = new Date(row.kickoff_time).getTime(), minutesToKickoff = (kickoffAt - Date.now()) / 60_000;
+  const allowedAgeMinutes = minutesToKickoff <= 120 ? 15 : minutesToKickoff <= 720 ? 120 : 360;
   return {
     newsEvents: llm && confidence >= .4 ? [
       {id: `${row.id}-home`, team: "HOME", type: "TACTICAL", impact: clamp(llm.home_team_impact, -.08, .08), confidence, source: "LLM news extraction", publishedAt: row.llm_analysis?.created_at ?? ""},
@@ -20,7 +24,7 @@ function contextFor(row: ApiMatch): MatchContext {
     weather: weather ? {condition, temperature: num(weather.temperature, 18), humidity: num(weather.humidity), windSpeed: wind, pitchCondition: rainfall >= 8 ? "POOR" : "NORMAL"} : undefined,
     newsReliability: llm ? confidence >= .75 ? "HIGH" : confidence >= .4 ? "MEDIUM" : "LOW" : undefined,
     lineupKnown: llm ? llm.lineup_confidence >= .6 : true,
-    dataFreshness: fetchedAt && Date.now() - fetchedAt <= 10 * 60_000 ? "FRESH" : "STALE",
+    dataFreshness: fetchedAt && Date.now() - fetchedAt <= allowedAgeMinutes * 60_000 ? "FRESH" : "STALE",
     isCupOrFriendly: /杯|友谊|国际赛/i.test(row.league),
   };
 }
@@ -66,5 +70,6 @@ export async function fetchOfficialMatches(signal?: AbortSignal): Promise<Offici
   const history = ((await historyResponse.json()) as ApiHistoricalMatch[]).map(mapHistoricalMatch);
   const matches = officialRows.map(row => mapOfficialMatch(row, history));
   const limited = new Map(limitDailyRecommendations(matches.map(match => match.prediction)).map(prediction => [prediction.matchId, prediction]));
-  return matches.map(match => { const prediction = limited.get(match.id) ?? match.prediction; return {...match, prediction, recommendation: prediction.recommendation, ev: prediction.ev, riskLevel: prediction.riskLevel, confidence: prediction.confidenceGrade}; });
+  const active: MatchPrediction[] = [], config = getBankrollConfig(), transactions = listBankrollTransactions();
+  return matches.map(match => { const limitedPrediction = limited.get(match.id) ?? match.prediction; const prediction = attachStakeRecommendationToPrediction({...limitedPrediction, league: match.league, kickoffTime: match.kickoffTime} as MatchPrediction, config, active, transactions, new Date(match.kickoffTime).toISOString().slice(0,10)); if (prediction.recommendation !== "NO_BET") active.push(prediction); return {...match, prediction, recommendation: prediction.recommendation, ev: prediction.ev, riskLevel: prediction.riskLevel, confidence: prediction.confidenceGrade}; });
 }

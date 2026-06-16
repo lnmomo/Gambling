@@ -7,6 +7,8 @@ import type {ThreeWayProbability} from "../types";
 import {demoBacktestResult} from "../data/backtestData";
 import PureModelBreakdownPanel from "../components/PureModelBreakdownPanel";
 import StackingModelPanel from "../components/StackingModelPanel";
+import LiveMatchDetailSection from "../components/LiveMatchDetailSection";
+import StakeRecommendationPanel from "../components/StakeRecommendationPanel";
 
 const keys = ["home", "draw", "away"] as const;
 const labels = {home: "主胜", draw: "平局", away: "客胜"} as const;
@@ -51,6 +53,8 @@ export default function MatchDetailPage() {
       <section className="panel tabs-panel"><div className="panel-heading"><div><h2>模型组成</h2><p>纯模型由 Dixon-Coles、Elo、Glicko-like 与可用时的 xG Poisson 动态融合。</p></div></div><div className="table-scroll"><table className="data-table"><thead><tr><th>模型</th><th>主胜</th><th>平局</th><th>客胜</th></tr></thead><tbody>{tripleRow("Dixon-Coles", prediction.dixonColesProbability, pct)}{tripleRow("Elo", prediction.eloProbability, pct)}{tripleRow("纯模型", prediction.pureModelProbability, pct)}{tripleRow("市场锚定后", prediction.anchoredProbability, pct)}</tbody></table></div></section>
       {prediction.pureModelBreakdown&&<PureModelBreakdownPanel model={prediction.pureModelBreakdown}/>} 
       <StackingModelPanel prediction={prediction}/>
+      <LiveMatchDetailSection match={match}/>
+      <StakeRecommendationPanel stake={prediction.stakeRecommendation}/>
 
       <section className="panel tabs-panel"><div className="panel-heading"><div><h2>外部市场共识</h2><p>外部市场概率先将每家公司赔率转换为隐含概率并去水，再剔除异常值并按博彩公司权重加权平均。</p></div></div><div className="summary-strip" style={{padding: 16, margin: 0}}><span>质量评分<b>{prediction.externalMarketQuality.qualityScore}</b></span><span>质量等级<b>{prediction.externalMarketQuality.qualityLevel}</b></span><span>博彩公司<b>{prediction.externalMarketQuality.bookmakerCount}</b></span><span>有效 / 剔除<b>{prediction.externalMarketQuality.includedBookmakerCount} / {prediction.externalMarketQuality.excludedBookmakerCount}</b></span><span>平均水位<b>{pct(prediction.externalMarketQuality.averageOverround)}</b></span><span>公司最大分歧<b>{pct(prediction.externalMarketQuality.maxBookmakerDeviation)}</b></span><span>官方市场偏离<b>{pct(prediction.externalMarketQuality.officialMarketDeviation.maxDeviation)}</b></span></div><div className="table-scroll"><table className="data-table"><thead><tr><th>博彩公司</th><th>原始主胜</th><th>原始平局</th><th>原始客胜</th><th>去水主胜</th><th>去水平局</th><th>去水客胜</th><th>Overround</th><th>权重</th><th>纳入</th><th>剔除原因</th></tr></thead><tbody>{prediction.normalizedBookmakers.map(book => <tr key={`${book.bookmakerKey ?? book.bookmaker}-${book.lastUpdate}`}><td>{book.bookmaker}</td><td>{odds(book.rawOdds.home)}</td><td>{odds(book.rawOdds.draw)}</td><td>{odds(book.rawOdds.away)}</td><td>{pct(book.normalizedProbability.home)}</td><td>{pct(book.normalizedProbability.draw)}</td><td>{pct(book.normalizedProbability.away)}</td><td>{pct(book.overround)}</td><td>{book.weight.toFixed(2)}</td><td>{book.included ? "是" : "否"}</td><td>{book.exclusionReason ?? "-"}</td></tr>)}</tbody></table></div><div className="critic-list tab-content">{prediction.externalMarketWarnings.map(warning => <div key={warning}>{warning}</div>)}</div></section>
 

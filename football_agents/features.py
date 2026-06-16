@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from .models import EloModel
+from .pandas_pipeline import team_weighted_goal_stats
 from .repository import Repository
 
 
@@ -30,6 +31,13 @@ TEAM_ALIASES = {
     "\u745e\u5178": "Sweden", "\u7a81\u5c3c\u65af": "Tunisia", "\u4f5b\u5f97\u89d2": "Cape Verde", "\u6bd4\u5229\u65f6": "Belgium",
     "\u6c99\u7279": "Saudi Arabia", "\u6c99\u7279\u963f\u62c9\u4f2f": "Saudi Arabia", "\u4e4c\u62c9\u572d": "Uruguay",
     "\u4f0a\u6717": "Iran", "\u585e\u5185\u52a0\u5c14": "Senegal", "\u4f0a\u62c9\u514b": "Iraq",
+    "\u52a0\u7eb3": "Ghana", "\u521a\u679c\u91d1": "DR Congo", "\u521a\u679c\u6c11\u4e3b": "DR Congo",
+    "\u5965\u5730\u5229": "Austria", "\u963f\u5c14\u53ca\u5229": "Algeria", "\u963f\u5c14\u53ca\u5229\u4e9a": "Algeria",
+    "\u6ce2\u9ed1\u961f": "Bosnia and Herzegovina",
+    "AC\u5965\u5362": "AC Oulu", "\u739b\u4e3d\u6e2f": "Mariehamn", "\u8d6b\u5c14\u8f9b\u57fa": "HJK Helsinki",
+    "\u56fd\u9645\u56fe\u5c14": "Inter Turku", "\u5766\u5c71\u732b": "Ilves", "\u96c5\u7f57": "FF Jaro",
+    "TPS\u56fe\u5c14": "TPS", "\u5e93\u5965\u76ae\u5965": "KuPS", "\u62c9\u8d6b\u8482": "Lahti",
+    "\u585e\u4f0a\u5948": "SJK", "\u74e6\u8428": "VPS", "\u8d6b\u5c14\u706b\u82b1": "Haka",
 }
 
 
@@ -72,8 +80,8 @@ class HistoricalFeatureBuilder:
             0.5, sum(row["home_goals"] + row["away_goals"] for row in rows) / max(1, 2 * len(rows))
         )
         kickoff = _parse_time(match["kickoff_time"])
-        home_stats = self._team_stats(home, home_rows, kickoff)
-        away_stats = self._team_stats(away, away_rows, kickoff)
+        home_stats = team_weighted_goal_stats(home_rows, home, kickoff, self.half_life_days)
+        away_stats = team_weighted_goal_stats(away_rows, away, kickoff, self.half_life_days)
         home_reliability = min(1.0, home_stats["effective_matches"] / 20)
         away_reliability = min(1.0, away_stats["effective_matches"] / 20)
         home_attack = self._shrunk_ratio(home_stats["goals_for"], average_team_goals, home_reliability)
@@ -90,28 +98,49 @@ class HistoricalFeatureBuilder:
             "home_weighted_goals_against": round(home_stats["goals_against"], 4),
             "away_weighted_goals_for": round(away_stats["goals_for"], 4),
             "away_weighted_goals_against": round(away_stats["goals_against"], 4),
+            "home_weighted_points_per_match": round(home_stats["points_per_match"], 4),
+            "away_weighted_points_per_match": round(away_stats["points_per_match"], 4),
+            "home_weighted_win_rate": round(home_stats["win_rate"], 4),
+            "away_weighted_win_rate": round(away_stats["win_rate"], 4),
+            "home_weighted_goal_difference": round(home_stats["goal_difference"], 4),
+            "away_weighted_goal_difference": round(away_stats["goal_difference"], 4),
+            "feature_engine": "pandas-historical-v1",
             "historical_home_team": home, "historical_away_team": away,
             "history_cutoff": match["kickoff_time"],
             "source_confidence": round(0.45 + 0.5 * min(home_reliability, away_reliability), 3),
         }
-        self.repository.add_features(match["id"], features, version="historical-v1")
+        self.repository.add_features(match["id"], features, version="historical-pandas-v1")
         return {"built": True, "features": features}
-
-    def _team_stats(self, team: str, rows: list[dict[str, Any]], kickoff: datetime) -> dict[str, float]:
-        weighted_for = weighted_against = total_weight = 0.0
-        for row in rows:
-            days = max(0.0, (kickoff - _parse_time(row["played_at"])).total_seconds() / 86400)
-            weight = math.exp(-math.log(2) * days / self.half_life_days)
-            if row["home_team"] == team:
-                goals_for, goals_against = row["home_goals"], row["away_goals"]
-            else:
-                goals_for, goals_against = row["away_goals"], row["home_goals"]
-            weighted_for += goals_for * weight
-            weighted_against += goals_against * weight
-            total_weight += weight
-        return {"goals_for": weighted_for / total_weight, "goals_against": weighted_against / total_weight,
-                "effective_matches": total_weight}
 
     @staticmethod
     def _shrunk_ratio(value: float, baseline: float, reliability: float) -> float:
         return 1 + reliability * (value / baseline - 1)
+
+
+def build_features_for_official_matches(repository: Repository | None = None, limit: int = 100,
+                                        include_finished: bool = False,
+                                        min_matches: int = 10,
+                                        league: str | None = None) -> dict[str, Any]:
+    repository = repository or Repository()
+    builder = HistoricalFeatureBuilder(repository, min_matches=min_matches)
+    statuses = {"scheduled", "live"} if not include_finished else {"scheduled", "live", "finished"}
+    matches = [row for row in repository.list_official_matches() if row["status"] in statuses]
+    if league:
+        target = league.strip().casefold()
+        matches = [row for row in matches if target in str(row.get("league") or "").casefold()]
+    matches = sorted(matches, key=lambda row: (row["status"] not in {"scheduled", "live"}, row["kickoff_time"]))[:limit]
+    report: dict[str, Any] = {"matches": len(matches), "built": 0, "skipped": 0, "league": league, "sources": []}
+    for match in matches:
+        result = builder.build(match)
+        report["built"] += int(result["built"])
+        report["skipped"] += int(not result["built"])
+        report["sources"].append({
+            "match_id": match["id"],
+            "official_match_id": match["official_match_id"],
+            "home_team": match["home_team"],
+            "away_team": match["away_team"],
+            **result,
+        })
+    repository.add_audit_event("feature-agent", "历史特征", "构建官方比赛特征",
+                               f'built={report["built"]}, skipped={report["skipped"]}', "success")
+    return report

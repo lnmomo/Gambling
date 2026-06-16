@@ -1,0 +1,3 @@
+import {describe,expect,it} from "vitest";
+import {calculateKellyStake} from "../algorithm/kellyCriterion";
+describe("kelly criterion",()=>{it("returns positive fractional Kelly for positive EV",()=>{const row=calculateKellyStake(.55,2,100);expect(row.fullKellyFraction).toBeGreaterThan(0);expect(row.fractionalKellyFraction).toBeCloseTo(row.fullKellyFraction*.25);expect(row.cappedStake).toBeLessThanOrEqual(1)});it("returns zero for negative EV and invalid odds",()=>{expect(calculateKellyStake(.4,2,100).cappedStake).toBe(0);expect(calculateKellyStake(.5,1,100).cappedStake).toBe(0)});it("never returns NaN or Infinity",()=>expect(Object.values(calculateKellyStake(Number.NaN,Infinity,100)).filter(v=>typeof v==="number").every(Number.isFinite)).toBe(true));});

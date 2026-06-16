@@ -1,0 +1,2 @@
+import type {CorrelationRiskOutput} from "../types";
+export default function CorrelationRiskPanel({risk}:{risk?:CorrelationRiskOutput}){return <section className="panel"><h2>Correlation Risk</h2>{risk?<><span className={`recommend-badge ${risk.correlationRiskLevel==="LOW"?"":"no-bet"}`}>{risk.correlationRiskLevel}</span><p>Stake reduction factor: {risk.stakeReductionFactor.toFixed(2)}</p>{risk.correlationFactors.map(row=><p key={`${row.factor}-${row.description}`}><b>{row.severity}</b> {row.factor}: {row.description}</p>)}</>:<p>暂无相关性风险。</p>}</section>}

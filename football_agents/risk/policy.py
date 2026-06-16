@@ -17,6 +17,25 @@ class RiskLimits:
     stop_after_losses: int = 3
 
 
+def allowed_odds_age_minutes(kickoff_time: str | None = None, default_minutes: int = 10,
+                             now: datetime | None = None) -> int:
+    if not kickoff_time:
+        return default_minutes
+    now = now or datetime.now(timezone.utc)
+    try:
+        kickoff = datetime.fromisoformat(kickoff_time.replace("Z", "+00:00"))
+        if kickoff.tzinfo is None:
+            kickoff = kickoff.replace(tzinfo=timezone.utc)
+    except ValueError:
+        return default_minutes
+    minutes_to_kickoff = (kickoff - now).total_seconds() / 60
+    if minutes_to_kickoff <= 120:
+        return 15
+    if minutes_to_kickoff <= 720:
+        return 120
+    return 360
+
+
 def fractional_kelly(probability: float, odds: float, fraction: float = 0.25) -> float:
     if odds <= 1:
         return 0.0
@@ -40,8 +59,9 @@ class CriticPolicy:
     def evaluate(self, *, odds_fetched_at: str | None, source_confidence: float, disagreement: float,
                  ev: float, match_status: str, backtest_roi: float | None = None,
                  daily_exposure_fraction: float = 0, weekly_exposure_fraction: float = 0,
-                 consecutive_losses: int = 0) -> dict[str, Any]:
+                 consecutive_losses: int = 0, kickoff_time: str | None = None) -> dict[str, Any]:
         now = datetime.now(timezone.utc)
+        max_age = allowed_odds_age_minutes(kickoff_time, self.limits.max_odds_age_minutes, now)
         try:
             fetched = datetime.fromisoformat(odds_fetched_at) if odds_fetched_at else None
             if fetched and fetched.tzinfo is None:
@@ -50,7 +70,7 @@ class CriticPolicy:
         except ValueError:
             age = float("inf")
         checks = {
-            "data_fresh": age <= self.limits.max_odds_age_minutes,
+            "data_fresh": age <= max_age,
             "source_reliable": source_confidence >= self.limits.min_source_confidence,
             "models_agree": disagreement <= self.limits.max_model_disagreement,
             "ev_sufficient": ev >= self.limits.min_ev,
@@ -75,4 +95,5 @@ class CriticPolicy:
         passed = all(checks.values())
         failures = len(reasons)
         risk_level = "LOW" if passed else "MEDIUM" if failures <= 2 else "HIGH"
-        return {"passed": passed, "risk_level": risk_level, "checks": checks, "reasons": reasons}
+        return {"passed": passed, "risk_level": risk_level, "checks": checks, "reasons": reasons,
+                "data_freshness": {"age_minutes": age, "allowed_minutes": max_age}}

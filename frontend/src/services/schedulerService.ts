@@ -1,18 +1,6 @@
 import type {LiveRecalculationTrigger, OfficialMatch, RiskLevel} from "../types";
-
-export const createScheduledTrigger = (match: Pick<OfficialMatch, "id" | "officialMatchId">, description = "Scheduled live refresh", severity: RiskLevel = "LOW"): LiveRecalculationTrigger => ({
-  id: `trigger-${match.id}-${Date.now()}`,
-  matchId: match.id,
-  officialMatchId: match.officialMatchId,
-  triggeredAt: new Date().toISOString(),
-  type: "SCHEDULED_REFRESH",
-  severity,
-  description,
-});
-
-export const getRefreshIntervalMs = (kickoffTime: string, now = Date.now()) => {
-  const minutes = (Date.parse(kickoffTime) - now) / 60_000;
-  if (minutes <= 30) return 60_000;
-  if (minutes <= 180) return 5 * 60_000;
-  return 60 * 60_000;
-};
+import {captureLiveSnapshots, runLiveRecalculation} from "./liveMonitorService";
+export const createScheduledTrigger=(match:Pick<OfficialMatch,"id"|"officialMatchId">,description="Scheduled live refresh",severity:RiskLevel="LOW"):LiveRecalculationTrigger=>({id:`trigger-${match.id}-${Date.now()}`,matchId:match.id,officialMatchId:match.officialMatchId,triggeredAt:new Date().toISOString(),type:"SCHEDULED_REFRESH",severity,description});
+export const getRefreshIntervalMs=(kickoffTime:string,now=Date.now())=>{const minutes=(Date.parse(kickoffTime)-now)/60_000;if(minutes<=0)return Infinity;if(minutes<=30)return 2*60_000;if(minutes<=120)return 5*60_000;if(minutes<=24*60)return 15*60_000;return 60*60_000};
+export function createLiveMonitorSchedule(matches:OfficialMatch[],options:{refreshIntervalMinutes?:number;preMatchFastRefreshMinutes?:number}={}){return matches.map(match=>({matchId:match.id,intervalMs:(Date.parse(match.kickoffTime)-Date.now())/60_000<=120?(options.preMatchFastRefreshMinutes??5)*60_000:options.refreshIntervalMinutes?options.refreshIntervalMinutes*60_000:getRefreshIntervalMs(match.kickoffTime),enabled:!["FINISHED","CANCELLED","POSTPONED","CLOSED"].includes(match.status)}));}
+export function runScheduledRefresh(match:OfficialMatch){if(["FINISHED","CANCELLED","POSTPONED","CLOSED"].includes(match.status))return undefined;const captured=captureLiveSnapshots(match),trigger=createScheduledTrigger(match,"Scheduled snapshot refresh",captured.signals.some(signal=>signal.severity==="HIGH")?"HIGH":"LOW");return runLiveRecalculation(match,{...trigger,previousSnapshotId:undefined,newSnapshotId:captured.official.id});}

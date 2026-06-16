@@ -5,7 +5,7 @@ export const AlgorithmConfig = {
   ensemble: {noMl: {market: .45, dixonColes: .35, elo: .20}, withMl: {market: .35, dixonColes: .30, elo: .15, ml: .20}},
   calibration: {method: "temperature" as const, defaultTemperature: 1.08},
   marketGuard: {anchorDeviation: .12, noBetDeviation: .18, anchorStrength: .50},
-  critic: {baseEvThreshold: .045, maxDailyRecommendations: 5, minRecommendedOdds: 1.25, maxAllowedProbability: .88, highProbabilityWarning: .82},
+  critic: {baseEvThreshold: .045, maxDailyRecommendations: 5, minRecommendedOdds: 1.25, maxAllowedProbability: .88, highProbabilityWarning: .82, oddsFreshnessMinutes: {nearKickoff: 15, sameDay: 120, early: 360}},
   bankroll: {fractionalKelly: .25, maxSingleStakeRatio: .01},
 };
 
