@@ -193,6 +193,16 @@ export type ModelPrediction = MatchPrediction;
 
 export interface TeamStats { team: string; league: string; elo: number; recentGoalsFor: number; recentGoalsAgainst: number; recentMatches: number }
 export interface LeagueStats { league: string; avgHomeGoals: number; avgAwayGoals: number; avgTeamGoals: number }
+export interface OfficialMatchFeatures {
+  home_rating?: number; away_rating?: number; lambda_home?: number; lambda_away?: number;
+  home_recent_matches?: number; away_recent_matches?: number;
+  home_recent_goals_for?: number; home_recent_goals_against?: number;
+  away_recent_goals_for?: number; away_recent_goals_against?: number;
+  league_avg_home_goals?: number; league_avg_away_goals?: number; league_avg_team_goals?: number;
+  source_confidence?: number;
+  source_confidence_components?: {min_raw_matches?: number; raw_sample_reliability?: number; recent_sample_reliability?: number};
+  [key: string]: unknown;
+}
 export interface NewsItem { title: string; url: string; publishedAt: string; confidence: number }
 export interface WeatherData { temperature: number | null; humidity: number | null; rainfall: number | null; windSpeed: number | null; fetchedAt: string }
 export interface LlmAnalysis { summary: string; homeTeamImpact: number; awayTeamImpact: number; lineupConfidence: number; newsConfidence: number; injuries: string[]; risks: string[]; evidence: string[]; model: string; createdAt: string }
@@ -204,6 +214,7 @@ export interface OfficialMatch {
   homeElo?: number; awayElo?: number; updatedAt: string;
   marketOdds: ThreeWayProbability; news: NewsItem[]; weather: WeatherData | null;
   venue: string | null; llmAnalysis: LlmAnalysis | null; context?: MatchContext;
+  features?: OfficialMatchFeatures;
   prediction: MatchPrediction; modelProbability: ThreeWayProbability; modelFairOdds: OfficialSp;
   ev: ThreeWayEv; recommendation: RecommendationType; confidence: string;
   riskLevel: RiskLevel; predictionType: string; marketCalibrated: boolean;

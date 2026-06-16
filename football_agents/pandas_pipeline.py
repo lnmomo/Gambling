@@ -11,11 +11,11 @@ import pandas as pd
 
 REQUIRED_GROUPS = {
     "played_at": ("date", "played_at", "playedAt", "Date"),
-    "league": ("league", "Div"),
-    "home_team": ("home_team", "homeTeam", "HomeTeam"),
-    "away_team": ("away_team", "awayTeam", "AwayTeam"),
-    "home_goals": ("home_score", "home_goals", "homeGoals", "FTHG"),
-    "away_goals": ("away_score", "away_goals", "awayGoals", "FTAG"),
+    "league": ("league", "League", "Div"),
+    "home_team": ("home_team", "homeTeam", "HomeTeam", "Home"),
+    "away_team": ("away_team", "awayTeam", "AwayTeam", "Away"),
+    "home_goals": ("home_score", "home_goals", "homeGoals", "FTHG", "HG"),
+    "away_goals": ("away_score", "away_goals", "awayGoals", "FTAG", "AG"),
 }
 
 

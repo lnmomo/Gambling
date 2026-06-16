@@ -34,8 +34,9 @@ TEAM_ALIASES = {
     "\u52a0\u7eb3": "Ghana", "\u521a\u679c\u91d1": "DR Congo", "\u521a\u679c\u6c11\u4e3b": "DR Congo",
     "\u5965\u5730\u5229": "Austria", "\u963f\u5c14\u53ca\u5229": "Algeria", "\u963f\u5c14\u53ca\u5229\u4e9a": "Algeria",
     "\u6ce2\u9ed1\u961f": "Bosnia and Herzegovina",
-    "AC\u5965\u5362": "AC Oulu", "\u739b\u4e3d\u6e2f": "Mariehamn", "\u8d6b\u5c14\u8f9b\u57fa": "HJK Helsinki",
-    "\u56fd\u9645\u56fe\u5c14": "Inter Turku", "\u5766\u5c71\u732b": "Ilves", "\u96c5\u7f57": "FF Jaro",
+    "AC\u5965\u5362": "AC Oulu", "\u739b\u4e3d\u6e2f": "Mariehamn", "\u8d6b\u5c14\u8f9b\u57fa": "HJK",
+    "\u56fd\u9645\u56fe\u5c14": "Inter Turku", "\u5766\u5c71\u732b": "Ilves", "\u96c5\u7f57": "Jaro",
+    "HJK Helsinki": "HJK", "FF Jaro": "Jaro",
     "TPS\u56fe\u5c14": "TPS", "\u5e93\u5965\u76ae\u5965": "KuPS", "\u62c9\u8d6b\u8482": "Lahti",
     "\u585e\u4f0a\u5948": "SJK", "\u74e6\u8428": "VPS", "\u8d6b\u5c14\u706b\u82b1": "Haka",
 }
@@ -84,6 +85,8 @@ class HistoricalFeatureBuilder:
         away_stats = team_weighted_goal_stats(away_rows, away, kickoff, self.half_life_days)
         home_reliability = min(1.0, home_stats["effective_matches"] / 20)
         away_reliability = min(1.0, away_stats["effective_matches"] / 20)
+        raw_sample_reliability = min(1.0, min(len(home_rows), len(away_rows)) / 100)
+        recent_sample_reliability = min(home_reliability, away_reliability)
         home_attack = self._shrunk_ratio(home_stats["goals_for"], average_team_goals, home_reliability)
         home_defence = self._shrunk_ratio(home_stats["goals_against"], average_team_goals, home_reliability)
         away_attack = self._shrunk_ratio(away_stats["goals_for"], average_team_goals, away_reliability)
@@ -107,7 +110,14 @@ class HistoricalFeatureBuilder:
             "feature_engine": "pandas-historical-v1",
             "historical_home_team": home, "historical_away_team": away,
             "history_cutoff": match["kickoff_time"],
-            "source_confidence": round(0.45 + 0.5 * min(home_reliability, away_reliability), 3),
+            "source_confidence": round(0.45 + 0.35 * raw_sample_reliability + 0.2 * recent_sample_reliability, 3),
+            "source_confidence_components": {
+                "raw_sample_reliability": round(raw_sample_reliability, 4),
+                "recent_sample_reliability": round(recent_sample_reliability, 4),
+                "min_raw_matches": min(len(home_rows), len(away_rows)),
+                "home_effective_matches": round(home_stats["effective_matches"], 4),
+                "away_effective_matches": round(away_stats["effective_matches"], 4),
+            },
         }
         self.repository.add_features(match["id"], features, version="historical-pandas-v1")
         return {"built": True, "features": features}
@@ -123,7 +133,7 @@ def build_features_for_official_matches(repository: Repository | None = None, li
                                         league: str | None = None) -> dict[str, Any]:
     repository = repository or Repository()
     builder = HistoricalFeatureBuilder(repository, min_matches=min_matches)
-    statuses = {"scheduled", "live"} if not include_finished else {"scheduled", "live", "finished"}
+    statuses = {"scheduled", "live"} if not include_finished else {"scheduled", "live", "finished", "closed"}
     matches = [row for row in repository.list_official_matches() if row["status"] in statuses]
     if league:
         target = league.strip().casefold()

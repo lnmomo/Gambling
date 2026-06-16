@@ -56,6 +56,29 @@ class HistoricalFeatureBuilderTests(unittest.TestCase):
     def test_alias_is_canonical(self):
         self.assertEqual(canonical_team_name("\u7f8e\u56fd"), "United States")
 
+    def test_large_raw_history_keeps_source_confidence_usable(self):
+        rows = []
+        for index in range(120):
+            rows.extend([
+                {"league": "International", "home_team": "France", "away_team": f"F{index}",
+                 "home_goals": 2, "away_goals": 1, "played_at": f"2018-{index % 12 + 1:02d}-01",
+                 "match_type": "FRIENDLY"},
+                {"league": "International", "home_team": "Senegal", "away_team": f"S{index}",
+                 "home_goals": 1, "away_goals": 0, "played_at": f"2018-{index % 12 + 1:02d}-02",
+                 "match_type": "FRIENDLY"},
+            ])
+        self.repo.upsert_historical_matches(rows, "test")
+        match_id = self.repo.create_match({
+            "official_match_id": "feature-3", "league": "International", "home_team": "\u6cd5\u56fd",
+            "away_team": "\u585e\u5185\u52a0\u5c14", "kickoff_time": "2026-01-01T12:00:00+00:00",
+            "status": "scheduled",
+        })
+        result = HistoricalFeatureBuilder(self.repo).build(self.repo.get_match(match_id))
+        self.assertTrue(result["built"])
+        features = self.repo.latest_features(match_id)
+        self.assertGreaterEqual(features["source_confidence"], 0.70)
+        self.assertEqual(features["source_confidence_components"]["min_raw_matches"], 120)
+
 
 if __name__ == "__main__":
     unittest.main()

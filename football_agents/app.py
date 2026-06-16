@@ -252,6 +252,16 @@ def sync_historical_matches(years_back: int = settings.historical_data_years_bac
         raise HTTPException(502, f"鍘嗗彶鏁版嵁鍚屾澶辫触: {exc}") from exc
 
 
+@app.post("/api/historical-matches/sync-worldwide")
+def sync_worldwide_historical_matches(divisions: str | None = None) -> dict:
+    selected = [item.strip().upper() for item in (divisions or "").split(",") if item.strip()]
+    try:
+        return qwen_ops.attach("historical-worldwide-data-agent",
+                               historical_agent.sync_worldwide(selected or None))
+    except Exception as exc:
+        raise HTTPException(502, f"Worldwide historical data sync failed: {exc}") from exc
+
+
 @app.post("/api/historical-matches/sync-international")
 def sync_international_historical_matches() -> dict:
     try:

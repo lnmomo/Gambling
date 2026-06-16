@@ -28,6 +28,27 @@ DIVISIONS = {
     "T1": "Turkish Super Lig", "G1": "Greek Super League",
 }
 
+WORLDWIDE_DIVISIONS = {
+    "ARG": "Argentina Liga Profesional",
+    "AUT": "Austrian Bundesliga",
+    "BRA": "Brazil Serie A",
+    "CHN": "Chinese Super League",
+    "DNK": "Danish Superliga",
+    "FIN": "Finnish Veikkausliiga",
+    "IRL": "Irish Premier Division",
+    "JPN": "Japanese J1 League",
+    "MEX": "Mexican Liga MX",
+    "NOR": "Norwegian Eliteserien",
+    "POL": "Polish Ekstraklasa",
+    "ROU": "Romanian Liga I",
+    "RUS": "Russian Premier League",
+    "SWE": "Swedish Allsvenskan",
+    "SWZ": "Swiss Super League",
+    "USA": "USA MLS",
+}
+
+DIVISION_NAMES = {**DIVISIONS, **WORLDWIDE_DIVISIONS}
+
 
 @dataclass(frozen=True)
 class HistoricalSource:
@@ -36,6 +57,9 @@ class HistoricalSource:
 
     @property
     def url(self) -> str:
+        if self.season == "new":
+            root_url = settings.historical_data_base_url.removesuffix("/mmz4281")
+            return f"{root_url}/new/{self.division}.csv"
         return f"{settings.historical_data_base_url}/{self.season}/{self.division}.csv"
 
 
@@ -54,6 +78,10 @@ class HistoricalCollectionAgent:
         selected = divisions or list(settings.historical_data_divisions)
         return [HistoricalSource(season, division) for season in self.season_codes(years_back) for division in selected if division in DIVISIONS]
 
+    def worldwide_sources(self, divisions: list[str] | None = None) -> list[HistoricalSource]:
+        selected = divisions or list(settings.historical_data_worldwide_divisions)
+        return [HistoricalSource("new", division) for division in selected if division in WORLDWIDE_DIVISIONS]
+
     @staticmethod
     def _parse_date(value: str) -> str:
         value = value.strip()
@@ -65,7 +93,7 @@ class HistoricalCollectionAgent:
         raise ValueError(f"unsupported date: {value}")
 
     def normalize_csv(self, text: str, source: HistoricalSource) -> list[dict[str, Any]]:
-        rows, _report = normalize_historical_matches(read_csv_text(text), source=source.url, division_names=DIVISIONS)
+        rows, _report = normalize_historical_matches(read_csv_text(text), source=source.url, division_names=DIVISION_NAMES)
         return rows
 
     def fetch(self, source: HistoricalSource, timeout: int | None = None) -> str:
@@ -95,11 +123,16 @@ class HistoricalCollectionAgent:
         return self.archive_dir / source.season / f"{source.division}.csv"
 
     def sync(self, years_back: int = 3, divisions: list[str] | None = None) -> dict[str, Any]:
+        return self._sync_sources(self.sources(years_back, divisions))
+
+    def sync_worldwide(self, divisions: list[str] | None = None) -> dict[str, Any]:
+        return self._sync_sources(self.worldwide_sources(divisions))
+
+    def _sync_sources(self, sources: list[HistoricalSource]) -> dict[str, Any]:
         self.archive_dir.mkdir(parents=True, exist_ok=True)
         totals = {"imported": 0, "updated": 0, "dropped": 0, "downloaded": 0,
                   "cached": 0, "stale": 0, "failed": 0}
         reports: list[dict[str, Any]] = []
-        sources = self.sources(years_back, divisions)
         fetched: dict[HistoricalSource, str | Exception] = {}
         with ThreadPoolExecutor(max_workers=min(settings.historical_data_workers, len(sources) or 1)) as executor:
             futures = {executor.submit(self.fetch, source): source for source in sources}

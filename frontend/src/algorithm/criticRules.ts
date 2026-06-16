@@ -46,7 +46,8 @@ export function runCriticCheck(match: Pick<OfficialMatch, "officialMatchId" | "s
   const maxProbability = Math.max(...Object.values(draft.finalProbability));
   if (maxProbability > AlgorithmConfig.critic.maxAllowedProbability) reasons.push("最终概率异常过高。"); else if (maxProbability > AlgorithmConfig.critic.highProbabilityWarning) warnings.push("最终概率过高，可能存在过度自信。");
   if (best.odds < AlgorithmConfig.critic.minRecommendedOdds) reasons.push("赔率过低，风险收益比不足。");
-  if (!Number.isFinite(dynamicEvThreshold) || best.ev < dynamicEvThreshold) reasons.push(`最高 EV ${(best.ev * 100).toFixed(2)}% 未超过动态阈值 ${Number.isFinite(dynamicEvThreshold) ? `${(dynamicEvThreshold * 100).toFixed(2)}%` : "（禁止推荐）"}。`);
+  if (!Number.isFinite(dynamicEvThreshold)) reasons.push("动态阈值不可用：基础风控条件触发禁止推荐。");
+  else if (best.ev < dynamicEvThreshold) reasons.push(`最高 EV ${(best.ev * 100).toFixed(2)}% 未超过动态阈值 ${(dynamicEvThreshold * 100).toFixed(2)}%。`);
   const selected = best.action === "HOME" ? "home" : best.action === "DRAW" ? "draw" : "away";
   if (draft.probabilitySource === "STACKING_MODEL" && (draft.stackingPrediction?.confidence ?? 1) < .05) warnings.push("Stacking 模型区分度较低，已提高推荐门槛。");
   if (draft.stackingPrediction?.fallbackUsed) warnings.push("Stacking 模型不可用，已回退到规则融合。");

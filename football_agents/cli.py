@@ -42,6 +42,8 @@ def main() -> None:
     collect = sub.add_parser("sync-history", help="从公开 CSV 来源增量同步真实历史赛果")
     collect.add_argument("--years-back", type=int, default=settings.historical_data_years_back)
     collect.add_argument("--divisions", default="", help="逗号分隔，如 E0,D1,I1,SP1")
+    worldwide = sub.add_parser("sync-worldwide-history", help="Sync Football-Data worldwide CSV history")
+    worldwide.add_argument("--divisions", default="", help="Comma-separated codes, e.g. FIN,USA,BRA,JPN")
     sub.add_parser("sync-international-history", help="同步真实国家队历史赛果")
     agent_run = sub.add_parser("run-agents", help="Run data, Qwen, model, and critic agents")
     agent_run.add_argument("--limit", type=int, default=settings.agent_match_limit)
@@ -90,6 +92,13 @@ def main() -> None:
         divisions = [item.strip().upper() for item in args.divisions.split(",") if item.strip()]
         report = HistoricalCollectionAgent().sync(args.years_back, divisions or None)
         print(json.dumps(QwenOpsAgent().attach("historical-data-agent", report), ensure_ascii=False, indent=2))
+    elif args.command == "sync-worldwide-history":
+        from .historical_agent import HistoricalCollectionAgent
+        from .llm import QwenOpsAgent
+        db.initialize()
+        divisions = [item.strip().upper() for item in args.divisions.split(",") if item.strip()]
+        report = HistoricalCollectionAgent().sync_worldwide(divisions or None)
+        print(json.dumps(QwenOpsAgent().attach("historical-worldwide-data-agent", report), ensure_ascii=False, indent=2))
     elif args.command == "sync-international-history":
         from .international_history_agent import InternationalHistoryAgent
         from .llm import QwenOpsAgent

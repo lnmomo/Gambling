@@ -56,6 +56,23 @@ class HistoricalDataTests(unittest.TestCase):
         result = self.repository.upsert_historical_matches(rows, "test-source")
         self.assertEqual(result["imported"], 1)
 
+    def test_collection_agent_normalizes_worldwide_csv(self):
+        agent = HistoricalCollectionAgent(self.repository, Path(self.temp.name) / "archive")
+        rows = agent.normalize_csv(
+            "Country,League,Season,Date,Home,Away,HG,AG\n"
+            "Finland,Veikkausliiga,2026,01/06/2026,HJK,Mariehamn,2,0\n",
+            HistoricalSource("new", "FIN"),
+        )
+        self.assertEqual(rows[0]["league"], "Veikkausliiga")
+        self.assertEqual(rows[0]["home_team"], "HJK")
+        self.assertEqual(rows[0]["played_at"], "2026-06-01")
+
+    def test_worldwide_source_uses_new_csv_url(self):
+        agent = HistoricalCollectionAgent(self.repository, Path(self.temp.name) / "archive")
+        source = agent.worldwide_sources(["FIN"])[0]
+        self.assertEqual(source.season, "new")
+        self.assertTrue(source.url.endswith("/new/FIN.csv"))
+
     def test_collection_agent_uses_archive_when_network_fails(self):
         archive = Path(self.temp.name) / "archive"
         agent = HistoricalCollectionAgent(self.repository, archive)

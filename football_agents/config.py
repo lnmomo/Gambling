@@ -95,6 +95,10 @@ class Settings:
     historical_data_divisions: tuple[str, ...] = tuple(filter(None, os.getenv(
         "HISTORICAL_DATA_DIVISIONS", "E0,E1,E2,E3,SC0,D1,D2,I1,I2,SP1,SP2,F1,F2,N1,B1,P1,T1,G1"
     ).split(",")))
+    historical_data_worldwide_divisions: tuple[str, ...] = tuple(filter(None, os.getenv(
+        "HISTORICAL_DATA_WORLDWIDE_DIVISIONS",
+        "ARG,AUT,BRA,CHN,DNK,FIN,IRL,JPN,MEX,NOR,POL,ROU,RUS,SWE,SWZ,USA"
+    ).split(",")))
     historical_data_timeout_seconds: int = int(os.getenv("HISTORICAL_DATA_TIMEOUT_SECONDS", "12"))
     historical_data_workers: int = int(os.getenv("HISTORICAL_DATA_WORKERS", "8"))
     historical_data_retries: int = int(os.getenv("HISTORICAL_DATA_RETRIES", "3"))
