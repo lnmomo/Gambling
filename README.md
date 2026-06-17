@@ -1,140 +1,229 @@
-# 竞彩足球多 Agent 概率决策辅助系统
+# Football Multi-Agent Probability Decision System
 
-一个可运行、可审计的胜平负（1X2）概率研究系统，实现策划案中的核心闭环：赔率快照、Elo、Dixon-Coles Poisson、市场去水、概率集成、EV 比较、批判者硬规则、分数凯利、回测指标、REST API 和中文看板。
+## 1. Project Overview
 
-> 重要：本项目只用于数据分析、课程研究与理性决策参考。不保证收益，不自动购买彩票，不提供追损或倍投能力，不面向未成年人。默认输出是 `NO_BET`。
+This project is a research-oriented football pre-match probability decision system. It estimates calibrated match probabilities and fair odds, compares them with official SP values, and uses backtesting, CLV, edge quality filtering, bankroll risk control, and live shadow validation to evaluate whether a recommendation is reliable. It does not place bets automatically and does not guarantee profit.
 
-## 快速开始
+中文简介：本项目是一个面向竞彩足球赛前决策的多 Agent 概率系统。系统以官方 SP 为核心锚点，融合外部市场赔率、历史比赛数据和增强足球模型，生成模型概率、市场概率、真实赔率估计和风险过滤结果。项目通过 True Odds Engine、Edge Quality Filter、Walk-forward 回测、CLV 分析、资金风控和 Live Shadow Validation 判断推荐是否具有更可靠的正期望。系统不会自动下注，也不保证盈利，定位是概率建模与决策辅助研究平台。
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -e .
-python -m football_agents.cli init-db
-python -m football_agents.cli seed-demo
-python -m football_agents.cli sync-official
-python -m football_agents.cli sync-data
-python -m football_agents.cli serve
+## 2. Core Features
+
+1. Official SP normalization
+2. External market consensus
+3. Enhanced pure football model
+4. Multi-de-vig true odds engine
+5. Probability uncertainty and lowerBoundEV
+6. Edge Quality Filter
+7. Adaptive EV threshold
+8. Walk-forward backtest
+9. CLV analysis
+10. Stacking challenger model
+11. Bankroll and portfolio risk control
+12. Live odds monitoring
+13. Model governance
+14. Live Shadow Validation
+15. Promotion Gate
+16. System health and data governance
+17. Pandas historical data pipeline
+
+## 3. System Architecture
+
+```mermaid
+flowchart TD
+    A["Official Match Schedule"] --> B["Official SP Snapshots"]
+    C["The Odds API"] --> D["External Odds Snapshots"]
+    E["Historical CSV / football-data CSV"] --> F["Pandas Historical Pipeline"]
+    F --> G["Feature Builder"]
+    B --> H["Probability Engine"]
+    D --> H
+    G --> H
+    H --> I["True Odds Engine"]
+    I --> J["Edge Quality Filter"]
+    J --> K["Critic Rules"]
+    K --> L["Bankroll Risk Control"]
+    L --> M["Recommendation / NO_BET"]
+    M --> N["Backtest Engine"]
+    N --> O["Edge Quality Optimizer"]
+    O --> P["Live Shadow Validation"]
+    P --> Q["Promotion Gate"]
 ```
 
-打开 `http://127.0.0.1:8000` 查看看板，`http://127.0.0.1:8000/docs` 查看 OpenAPI 文档。
+More details are in [docs/02_system_architecture.md](docs/02_system_architecture.md).
 
-## 官方比赛数据同步
+## 4. Algorithm Pipeline
 
-系统通过本机 Microsoft Edge 渲染中国竞彩网公开赛事页面，读取页面中已展示的官方比赛、销售状态与胜平负 SP。默认 60 秒内不会重复抓取，可用以下命令强制刷新：
-
-```powershell
-python -m football_agents.cli sync-official --force
-```
-
-对应接口为 `POST /api/official/sync`、`GET /api/official/status` 和 `GET /api/official/matches`。浏览器路径、超时和最小同步间隔可在 `.env` 中配置。SP 不完整的比赛仍会进入官方比赛池，但不会写入有效赔率快照，也不会驱动推荐。
-
-本实现只读取公开页面正常渲染的内容，不绕过验证码、登录、访问控制或网站限制。正式长期运行前，应向数据提供方确认授权、频率与使用条款。
-
-## 外部数据与模型
-
-- 外部胜平负赔率：The Odds API。需要在 `.env` 配置 `THE_ODDS_API_KEY`，系统按球队和开赛时间匹配并计算多家机构平均赔率。
-- 新闻：优先读取 Google News RSS，GDELT DOC API 作为备用；文章标题、链接、时间和来源置信度会保存到数据库。
-- 天气：使用 Open-Meteo 逐小时预报。必须先通过 `PUT /api/matches/{id}/metadata` 保存真实场地经纬度，系统不会根据主队猜测中立场地。
-- 模型：只有具备真实 Elo 实力评分及双方预期进球参数时，才生成 Elo + Poisson 基线概率和模型公平赔率（`1 / 概率`）。缺少球队特征时不使用默认参数；只有外部市场赔率匹配成功后，才生成市场校准集成预测、EV 和最终风控信号。模型公平赔率不是对未来庄家开盘值的猜测。
-
-统一同步命令和接口：
-
-```powershell
-python -m football_agents.cli sync-data --limit 40
-```
+The production EV formula remains:
 
 ```text
-POST /api/data/sync
-GET  /api/data/status
+EV = finalProbability * officialSp - 1
 ```
 
-也可以直接使用 Docker：
+The high-level pipeline is:
+
+1. Normalize official SP into implied probability.
+2. Convert external bookmaker odds into de-vigged market consensus probability.
+3. Build pure football probabilities from historical team features and model signals.
+4. Optionally evaluate a stacking challenger model when explicitly enabled.
+5. Estimate true odds with multiple de-vig methods and uncertainty bounds.
+6. Apply Edge Quality and adaptive threshold checks.
+7. Run Critic rules for stale odds, low data quality, high disagreement, and lifecycle issues.
+8. Apply bankroll and portfolio risk limits.
+9. Use Shadow Validation to evaluate new filters without mutating production recommendations.
+
+True Odds Engine is FILTER_ONLY by default. ADJUST_PROBABILITY is not enabled by default.
+
+## 5. Data Sources
+
+- Official matches and SP: official China Sports Lottery style schedule/SP integration in project logic.
+- External odds: The Odds API, configured by `THE_ODDS_API_KEY`.
+- Historical data: local CSV and football-data.co.uk CSV processed by pandas.
+- No soccerdata dependency is required.
+- News, lineup, and weather are supported as structured signals or future extensions; they should not be assumed stable real-time sources unless configured and validated.
+
+## 6. Installation
+
+Windows PowerShell:
 
 ```powershell
-docker compose up --build
+cd C:\Users\86186\Desktop\gambling\Gambling
+
+C:\Users\86186\AppData\Local\Programs\Python\Python312\python.exe -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
 ```
 
-## 系统结构
-
-```text
-football_agents/
-  agents/          确定性多 Agent 工作流与审计链
-  backtesting/     时间序列回测、Brier、Log Loss、ECE、ROI、回撤
-  database/        SQLite schema（表边界可迁移到 PostgreSQL）
-  models/          Elo、Dixon-Coles Poisson、市场概率与集成
-  risk/            批判者硬规则、四分之一凯利、额度控制
-  sample_data/     仅用于功能验证的虚构历史数据
-  web/             无构建依赖的中文响应式看板
-```
-
-## 决策逻辑
-
-1. 保存官方 SP 与外部市场赔率快照，缺少任一完整 1X2 组即 `NO_BET`。
-2. Elo 估计长期实力，Dixon-Coles Poisson 估计比分分布，市场赔率去水后形成市场概率。
-3. 默认权重为 Elo 20%、Poisson 45%、市场 35%，输出归一化集成概率。
-4. 对三个选项计算 `EV = probability * SP - 1`，选择最高 EV 候选。
-5. 批判者检查赔率新鲜度、来源置信度、模型分歧、EV、比赛状态、历史回测、日周暴露及连续亏损。
-6. 全部通过才允许 `BET`；正 EV 但未通过为 `WATCH`；其余为 `NO_BET`。
-7. 仓位为四分之一凯利，并受单场 1%、单日 3%、单周 8% 硬上限约束。
-
-所有阈值都可通过 `.env.example` 中的环境变量调整。正式使用前应基于真实、合法获得的历史数据完成 walk-forward 验证与概率校准。
-
-## 数据导入与回测
-
-CSV 字段参考 `football_agents/sample_data/historical_matches.csv`：
+Frontend:
 
 ```powershell
-python -m football_agents.cli backtest football_agents/sample_data/historical_matches.csv
+cd frontend
+npm install
 ```
 
-API 支持 `POST /api/backtest/run`（JSON）和 `POST /api/backtest/upload-csv`。回测严格按日期排序，先用赛前信息预测，再用赛果更新 Elo。
+## 7. Environment Variables
 
-## 数据源边界
-
-项目不内置绕过反爬或访问控制的采集器。生产接入应优先使用授权 API、公开下载、合规 CSV 导入或人工录入，并为每条数据保存来源与时间戳。第三方新闻、天气、xG 与赔率源可通过仓储接口增加适配器，但未经验证的数据不应驱动推荐。
-
-## 测试
-
-```powershell
-python -m unittest discover -s tests -v
-```
-
-覆盖概率归一化、赔率去水、数据过期 veto、连续亏损暂停、仓位硬上限、缺失数据 `NO_BET`、持久化审计链及样例回测。
-## Phase 8: Data Governance And Production Hardening
-
-This project is a probability modeling, positive-EV discovery, and risk-control decision support system. It does not guarantee profit and it does not place bets automatically.
-
-Local setup:
+Create a local environment file:
 
 ```powershell
 Copy-Item .env.example .env
-python -m football_agents.cli init-db
-python -m football_agents.cli serve
 ```
 
-Configure real integrations only in `.env` or `api.env`. `THE_ODDS_API_KEY`, Qwen keys, database paths, and runtime switches must not be committed. `ENABLE_AUTO_BETTING` must remain `false`; the backend health check reports any attempt to enable it as a policy violation.
+Do not commit real keys or local runtime paths. Important settings:
 
-Runtime data policy:
+- `THE_ODDS_API_KEY`: external odds API key, never committed.
+- `LLM_PROVIDER=qwen`, `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`: Qwen-compatible LLM settings.
+- `ENABLE_AUTO_BETTING=false`: must remain false.
+- `ENABLE_STACKING_MODEL=false`: challenger mode is opt-in.
+- `ENABLE_REAL_SYNC=false`: user-controlled real data sync switch.
+- `DATABASE_URL=sqlite:///./data/runtime/football_agents.db`: local runtime DB path.
 
-- Do not commit `.env`, `api.env`, real SQLite databases, real historical CSV archives, API keys, cookies, task logs, or local cache files.
-- `data/README.md` documents which `data/` folders are safe to commit.
-- `football_agents/migrations/` contains repeatable SQLite migrations and should be committed.
+## 8. Database Initialization
 
-Database and health:
+```powershell
+.\.venv\Scripts\python.exe -m football_agents.cli init-db
+```
 
-- The backend reads `DATABASE_URL`, defaulting to `sqlite:///./data/runtime/football_agents.db`.
-- `python -m football_agents.cli init-db` creates base tables and applies migrations.
-- `GET /health` returns database, sync, model, task, and environment health without exposing secrets.
-- The frontend `/system-health` page displays the same health report and recent task-run status.
+The command creates the SQLite schema and applies migrations from `football_agents/migrations/`.
 
-Model governance:
+## 9. Running the App
 
-- Champion and Challenger records are persisted in `model_governance_records`.
-- Challenger stacking is never enabled by default. Promotion decisions are audit records, not automatic replacements.
+Backend:
 
-Safety:
+```powershell
+.\.venv\Scripts\python.exe -m football_agents.cli serve
+```
 
-- No automatic betting is implemented.
-- EV remains `finalProbability * officialSp - 1`.
-- Invalid, stale, or duplicate snapshots are recorded and must not create fake ACTIVE recommendations.
+Frontend:
+
+```powershell
+cd frontend
+npm run dev
+```
+
+Common local URLs:
+
+- API and dashboard: `http://127.0.0.1:8000`
+- Dashboard route: `http://127.0.0.1:8000/dashboard`
+- OpenAPI docs: `http://127.0.0.1:8000/docs`
+- Frontend dev server: Vite will print the active local URL.
+
+## 10. Tests
+
+Backend:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q
+```
+
+Frontend:
+
+```powershell
+cd frontend
+npm test
+npm run build
+```
+
+Latest local validation during Phase 13:
+
+- Backend: 77 passed
+- Frontend: 41 files / 130 tests passed
+- Build: passed
+
+## 11. Main Pages
+
+- Dashboard: system overview and official match pool.
+- Recommendations: filtered recommendation list and NO_BET reasons.
+- Match Detail: model probability, fair odds, True Odds Analysis, Edge Quality, and critic report.
+- Backtest: historical validation, CLV, optimizer, and blocked recommendation analysis.
+- Bankroll / Portfolio Risk: stake sizing, exposure limits, drawdown mode, and risk controls.
+- Live Monitor: odds snapshots, stale checks, and recalculation workflow.
+- Agent / Workflow Monitor: automated service chain and step-level status.
+- System Health: DB, sync, model governance, data quality, and shadow validation health.
+- Settings: environment and risk configuration visibility.
+
+## 12. CLI Commands
+
+```powershell
+.\.venv\Scripts\python.exe -m football_agents.cli init-db
+.\.venv\Scripts\python.exe -m football_agents.cli serve
+.\.venv\Scripts\python.exe -m football_agents.cli import-history football_agents\sample_data\historical_matches.csv
+.\.venv\Scripts\python.exe -m football_agents.cli sync-history --years-back 3
+.\.venv\Scripts\python.exe -m football_agents.cli sync-international-history
+.\.venv\Scripts\python.exe -m football_agents.cli sync-data --limit 40
+.\.venv\Scripts\python.exe -m football_agents.cli optimize-edge-quality football_agents\sample_data\historical_matches.csv --max-configs 50 --min-samples 200 --output result.json
+.\.venv\Scripts\python.exe -m football_agents.cli create-shadow-config --from-optimization <run_id> --name "true-odds-v1"
+.\.venv\Scripts\python.exe -m football_agents.cli start-shadow-validation <config_version_id>
+.\.venv\Scripts\python.exe -m football_agents.cli run-shadow <config_version_id>
+.\.venv\Scripts\python.exe -m football_agents.cli evaluate-shadow <config_version_id>
+.\.venv\Scripts\python.exe -m football_agents.cli shadow-metrics <config_version_id>
+.\.venv\Scripts\python.exe -m football_agents.cli evaluate-promotion <config_version_id>
+.\.venv\Scripts\python.exe -m football_agents.cli activate-filter-only <config_version_id> --confirm
+```
+
+`activate-filter-only` requires explicit human confirmation. ADJUST_PROBABILITY cannot be automatically activated.
+
+## 13. Risk Disclaimer
+
+- This system does not guarantee profit.
+- It does not place bets automatically.
+- Backtest results do not guarantee future results.
+- Recommendations are probabilistic and can be wrong.
+- Betting involves financial risk.
+- The project is for research and decision-support purposes.
+- Live Shadow Validation is an observation mechanism, not production activation.
+
+## 14. Repository Hygiene
+
+Do not commit:
+
+- `.env`
+- `api.env`
+- real SQLite databases
+- `data/runtime`
+- `data/cache`
+- `data/raw`
+- `data/logs`
+- `node_modules`
+- generated build outputs
+- API keys, cookies, tokens, or local secrets
+
+Sample data and documentation can be committed. See [docs/10_github_delivery_checklist.md](docs/10_github_delivery_checklist.md) before pushing to GitHub.

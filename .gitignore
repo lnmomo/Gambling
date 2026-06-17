@@ -6,10 +6,12 @@ __pycache__/
 *.pyc
 .env
 api.env
+*.env
 
 # environment
 .env.local
 .env.*.local
+!.env.example
 
 # python
 venv/
@@ -36,15 +38,22 @@ data/private/
 *.db
 *.sqlite
 *.sqlite3
+*.db-journal
+*.sqlite-journal
 
 # secrets
 secrets/
 *.pem
 *.key
+*.pfx
+*.crt
 
 # generated reports
 reports/tmp/
 exports/tmp/
+*.log
+backend.stdout.log
+backend.stderr.log
 
 # OS / editor
 .DS_Store
