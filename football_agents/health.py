@@ -41,6 +41,14 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
     data_quality = {"invalidSnapshots": 0, "duplicateSkipped": 0, "staleSnapshots": 0}
     champion_version: str | None = None
     challenger_available = False
+    shadow_validation = {
+        "activeShadowConfigCount": 0,
+        "pendingShadowPredictions": 0,
+        "evaluatedShadowPredictions": 0,
+        "latestPromotionDecision": None,
+        "latestShadowRunAt": None,
+        "warnings": [],
+    }
 
     try:
         with database.connect() as c:
@@ -71,6 +79,13 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
                 + (SELECT COUNT(*) FROM external_odds_snapshots WHERE captured_at<?)""", (cutoff, cutoff)).fetchone()[0])
             official_status = _sync_status(official_last_success, settings.official_sp_refresh_minutes, official_failed)
             external_status = _sync_status(external_last_success, settings.external_odds_refresh_minutes, external_failed)
+            shadow_validation["activeShadowConfigCount"] = int(c.execute("SELECT COUNT(*) FROM true_odds_config_versions WHERE status='SHADOW_RUNNING'").fetchone()[0])
+            shadow_validation["pendingShadowPredictions"] = int(c.execute("SELECT COUNT(*) FROM live_shadow_predictions WHERE lifecycle_status='PENDING_RESULT'").fetchone()[0])
+            shadow_validation["evaluatedShadowPredictions"] = int(c.execute("SELECT COUNT(*) FROM shadow_post_match_results WHERE evaluation_status='EVALUATED'").fetchone()[0])
+            latest_shadow = c.execute("SELECT created_at FROM live_shadow_predictions ORDER BY created_at DESC LIMIT 1").fetchone()
+            shadow_validation["latestShadowRunAt"] = latest_shadow["created_at"] if latest_shadow else None
+            latest_gate = c.execute("SELECT decision FROM shadow_validation_runs ORDER BY created_at DESC LIMIT 1").fetchone()
+            shadow_validation["latestPromotionDecision"] = latest_gate["decision"] if latest_gate else None
         scheduler = SchedulerHealthService()
         recent_task_runs = scheduler.list_recent_task_runs(20)
         governance = ModelGovernancePersistenceService(database)
@@ -92,6 +107,12 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
         warnings.append("external odds sync is stale")
     if not champion_version:
         warnings.append("champion model metadata is not available")
+    if shadow_validation["activeShadowConfigCount"] and not shadow_validation["latestShadowRunAt"]:
+        shadow_validation["warnings"].append("active shadow config has not run yet")
+    if shadow_validation["pendingShadowPredictions"] > 200:
+        shadow_validation["warnings"].append("many shadow predictions are pending evaluation")
+    if shadow_validation["latestPromotionDecision"] == "REJECT_CONFIG":
+        shadow_validation["warnings"].append("latest shadow promotion decision rejected config")
 
     if not connected:
         status = "unhealthy"
@@ -123,4 +144,5 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
         "warnings": warnings,
         "recentTaskRuns": recent_task_runs,
         "dataQuality": data_quality,
+        "shadowValidation": shadow_validation,
     }

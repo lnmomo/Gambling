@@ -8,6 +8,7 @@ from ..models import EloModel, EnsembleModel, PoissonModel
 from ..models.ensemble import market_probabilities
 from ..repository import Repository
 from ..risk import CriticPolicy, RiskLimits, calculate_stake
+from ..true_odds_engine import calculate_true_odds_estimate, selected_outcome_passes
 
 
 class DecisionWorkflow:
@@ -106,9 +107,34 @@ class DecisionWorkflow:
             weekly_exposure_fraction=features.get("weekly_exposure_fraction", 0),
             consecutive_losses=features.get("consecutive_losses", 0),
         )
+        true_odds = calculate_true_odds_estimate(match, {
+            "officialSp": official["odds"],
+            "externalOdds": market["odds"],
+            "finalProbability": ensemble_prediction,
+            "pureModelProbability": baseline,
+            "externalMarketProbability": market_prediction,
+            "features": features,
+        }, {
+            "selected_outcome": best["option"].upper(),
+            "selected_odds": best["sp"],
+            "model_disagreement": "HIGH" if disagreement > 0.08 else "MEDIUM" if disagreement > 0.04 else "LOW",
+            "external_market_quality": "MEDIUM",
+            "pure_model_reliability": "LOW" if min(features.get("home_recent_matches", 0), features.get("away_recent_matches", 0)) < 10 else "MEDIUM",
+            "sample_size": "LOW" if min(features.get("home_recent_matches", 0), features.get("away_recent_matches", 0)) < 10 else "MEDIUM",
+        })
+        true_edge = true_odds.edge_quality_by_outcome.get(best["option"].upper())
+        if true_edge and not true_edge.passes_true_odds_filter:
+            critic = {
+                **critic,
+                "passed": False,
+                "reasons": list(dict.fromkeys([*critic.get("reasons", []), *true_edge.reasons, "True Odds 过滤未通过"])),
+                "checks": {**critic.get("checks", {}), "true_odds_filter": False},
+            }
+        else:
+            critic = {**critic, "checks": {**critic.get("checks", {}), "true_odds_filter": True}}
         self.repository.add_critic(match_id, critic)
 
-        if critic["passed"]:
+        if critic["passed"] and selected_outcome_passes(true_odds, best["option"]):
             status = "BET"
             confidence = "A" if best["ev"] >= 0.10 and disagreement <= 0.04 else "B"
             stake = calculate_stake(
@@ -121,7 +147,12 @@ class DecisionWorkflow:
         else:
             status, confidence, stake = "NO_BET", "NO_BET", 0.0
         reasons = critic["reasons"] or ["所有硬规则通过；仍需用户独立判断并理性预算"]
-        signal = {**best, "status": status, "confidence": confidence, "stake": stake, "reasons": reasons}
+        signal = {**best, "status": status, "confidence": confidence, "stake": stake, "reasons": reasons,
+                  "true_odds_estimate": true_odds.to_dict(),
+                  "edge_quality": asdict(true_edge) if true_edge else None,
+                  "lower_bound_ev": true_edge.lower_bound_ev if true_edge else None,
+                  "adaptive_ev_threshold": true_edge.adaptive_threshold if true_edge else None,
+                  "passes_true_odds_filter": bool(true_edge and true_edge.passes_true_odds_filter)}
         signal_id = self.repository.add_signal(match_id, signal)
         return {
             "signal_id": signal_id,
@@ -134,6 +165,7 @@ class DecisionWorkflow:
             "candidates": candidates,
             "critic": critic,
             "signal": signal,
+            "true_odds_estimate": true_odds.to_dict(),
             "risk_limits": asdict(limits),
             "qwen_context": context_metadata,
         }

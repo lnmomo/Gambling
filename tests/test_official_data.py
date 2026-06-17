@@ -47,6 +47,18 @@ class OfficialDataTests(unittest.TestCase):
         report = self.service.sync(force=True)
         self.assertEqual(report["odds_snapshots"], 0)
 
+    def test_latest_odds_freshness_uses_latest_official_verification(self):
+        self.service.sync(force=True)
+        match = self.repository.list_matches()[0]
+        verified_at = "2030-01-01T00:00:00+00:00"
+        with self.repository.db.connect() as connection:
+            connection.execute("UPDATE matches SET last_seen_at=? WHERE id=?", (verified_at, match["id"]))
+        latest = self.repository.latest_odds(match["id"])
+        self.assertEqual(latest["fetched_at"], verified_at)
+        with self.repository.db.connect() as connection:
+            rows = connection.execute("SELECT COUNT(*) FROM odds_snapshots WHERE match_id=?", (match["id"],)).fetchone()[0]
+        self.assertEqual(rows, 3)
+
     def test_official_pool_can_be_filtered_from_local_match_date(self):
         self.service.sync(force=True)
         june_13 = self.repository.list_official_matches("2026-06-13")

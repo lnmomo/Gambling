@@ -9,6 +9,7 @@ import PureModelBreakdownPanel from "../components/PureModelBreakdownPanel";
 import StackingModelPanel from "../components/StackingModelPanel";
 import LiveMatchDetailSection from "../components/LiveMatchDetailSection";
 import StakeRecommendationPanel from "../components/StakeRecommendationPanel";
+import TrueOddsPanel from "../components/TrueOddsPanel";
 
 const keys = ["home", "draw", "away"] as const;
 const labels = {home: "主胜", draw: "平局", away: "客胜"} as const;
@@ -53,6 +54,7 @@ export default function MatchDetailPage() {
       <section className="panel tabs-panel"><div className="panel-heading"><div><h2>模型组成</h2><p>纯模型由 Dixon-Coles、Elo、Glicko-like 与可用时的 xG Poisson 动态融合。</p></div></div><div className="table-scroll"><table className="data-table"><thead><tr><th>模型</th><th>主胜</th><th>平局</th><th>客胜</th></tr></thead><tbody>{tripleRow("Dixon-Coles", prediction.dixonColesProbability, pct)}{tripleRow("Elo", prediction.eloProbability, pct)}{tripleRow("纯模型", prediction.pureModelProbability, pct)}{tripleRow("市场锚定后", prediction.anchoredProbability, pct)}</tbody></table></div></section>
       {prediction.pureModelBreakdown&&<PureModelBreakdownPanel model={prediction.pureModelBreakdown}/>} 
       <StackingModelPanel prediction={prediction}/>
+      <TrueOddsPanel prediction={prediction}/>
       <LiveMatchDetailSection match={match}/>
       <StakeRecommendationPanel stake={prediction.stakeRecommendation}/>
 

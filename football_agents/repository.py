@@ -199,9 +199,16 @@ class Repository:
             rows = c.execute(f"""SELECT option,{value_col} value,{source_col} source,fetched_at FROM {table}
                 WHERE match_id=? AND fetched_at=(SELECT MAX(fetched_at) FROM {table} WHERE match_id=?)""",
                 (match_id, match_id)).fetchall()
+            verified_at = None
+            if rows and not external:
+                match = c.execute("SELECT last_seen_at FROM matches WHERE id=?", (match_id,)).fetchone()
+                verified_at = match["last_seen_at"] if match and match["last_seen_at"] else None
+        fetched_at = rows[0]["fetched_at"] if rows else None
+        if verified_at and (not fetched_at or verified_at > fetched_at):
+            fetched_at = verified_at
         return {"odds": {r["option"]: r["value"] for r in rows},
                 "source": rows[0]["source"] if rows else None,
-                "fetched_at": rows[0]["fetched_at"] if rows else None}
+                "fetched_at": fetched_at}
 
     def latest_features(self, match_id: int) -> dict[str, Any]:
         with self.db.connect() as c:

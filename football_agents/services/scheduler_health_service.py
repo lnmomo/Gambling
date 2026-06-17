@@ -9,6 +9,10 @@ from .task_runner_service import TaskRunnerService
 TASK_NAMES = {
     "official_sp_sync",
     "external_odds_sync",
+    "external_odds_news_weather_sync",
+    "feature_build",
+    "qwen_news_analysis",
+    "historical_data_sync",
     "live_recalculation",
     "recommendation_lifecycle_check",
     "backtest_run",

@@ -42,6 +42,16 @@ export interface BankrollTransaction { id:string; bankrollId:string; matchId?:st
 export type ThreeWayEv = ThreeWayProbability;
 export type EvTriple = ThreeWayEv;
 export type FairOddsTriple = OfficialSp;
+export type DevigMethod = "MULTIPLICATIVE"|"ADDITIVE"|"POWER"|"ODDS_RATIO"|"SHIN"|"CONSERVATIVE";
+export interface DevigProbabilitySet { method:DevigMethod; probability:ThreeWayProbability; fairOdds:ThreeWayOdds; overround:number; valid:boolean; warnings:string[] }
+export interface MultiDevigResult { source:string; odds:ThreeWayOdds; methods:Record<DevigMethod,DevigProbabilitySet>; recommendedMethod:DevigMethod; recommendedProbability:ThreeWayProbability; recommendedFairOdds:ThreeWayOdds; methodAgreementScore:number; methodSpread:ThreeWayProbability&{max:number}; warnings:string[] }
+export interface ProbabilityUncertainty { mean:ThreeWayProbability; lower:ThreeWayProbability; upper:ThreeWayProbability; std:ThreeWayProbability; confidence:ThreeWayProbability; methodSpread:ThreeWayProbability&{max?:number}; modelDisagreement:ThreeWayProbability; sampleReliability:number; overallUncertainty:number; warnings:string[] }
+export interface EdgeQualityOutput { outcome:"HOME"|"DRAW"|"AWAY"|"NO_BET"; officialSp:number; breakEvenProbability:number; estimatedProbability:number; lowerBoundProbability:number; upperBoundProbability:number; expectedEv:number; lowerBoundEv:number; upperBoundEv:number; expectedClosingEdge?:number|null; clvWinProbability?:number|null; edgeQualityScore:number; edgeQualityLevel:"HIGH"|"MEDIUM"|"LOW"|"NO_EDGE"; edgeNoiseRisk:RiskLevel; adaptiveThreshold:number; passesTrueOddsFilter:boolean; reasons:string[]; warnings:string[] }
+export interface TrueOddsEstimate { matchId:string; officialMatchId:string; createdAt:string; marketMultiDevig:MultiDevigResult; externalMultiDevig?:MultiDevigResult; baseProbability:ThreeWayProbability; biasCorrectedProbability:ThreeWayProbability; uncertainty:ProbabilityUncertainty; trueProbabilityEstimate:ThreeWayProbability; trueFairOdds:ThreeWayOdds; edgeQualityByOutcome:Record<"HOME"|"DRAW"|"AWAY",EdgeQualityOutput>; selectedEdge:EdgeQualityOutput; closingLineProxy?:unknown; marketBiasBucket?:unknown; drawCalibration?:{applied:boolean; drawDelta:number; [key:string]:unknown}; warnings:string[] }
+export interface TrueOddsFilterConfig { configId:string; name:string; lowerBoundEvMin:number; edgeQualityMinScore:number; allowedEdgeQualityLevels:Array<EdgeQualityOutput["edgeQualityLevel"]>; uncertaintyZ:number; minMethodAgreementScore:number; baseEvThreshold:number; drawExtraThreshold:number; highOddsExtraThreshold:number; lowOddsExtraThreshold:number; requirePositiveExpectedClv:boolean; minClvWinProbability?:number|null; mode:"SHADOW"|"FILTER_ONLY"|"ADJUST_PROBABILITY"; warnings:string[] }
+export interface EdgeBucketPerformance { bucketName:string; bucketType:string; sampleCount:number; recommendationCount:number; passedCount:number; blockedCount:number; roi:number|null; averageClv:number|null; positiveClvRate:number|null; hitRate:number|null; averageEdgeQualityScore:number|null; averageLowerBoundEv:number|null; maxDrawdown:number|null; warnings:string[] }
+export interface BlockedRecommendationAnalysis { blockedCount:number; blockedRatio:number; blockedRoi:number|null; blockedAverageClv:number|null; blockedPositiveClvRate:number|null; blockedHitRate:number|null; blockedAverageExpectedEv:number|null; blockedAverageLowerBoundEv:number|null; wouldHaveLostCount:number; wouldHaveWonCount:number; estimatedLossAvoided:number|null; summary:string[]; warnings:string[] }
+export interface TrueOddsOptimizationResult { runId:string; createdAt:string; baselineMetrics:Record<string,number>; variantResults:Array<{variantId:string; name:string; config:TrueOddsFilterConfig; metrics:Record<string,number>}>; bestConfig?:TrueOddsFilterConfig; bestVariantId?:string; ranking:Array<{variantId:string; name:string; score:number; metrics:Record<string,number>; reasons:string[]; config:TrueOddsFilterConfig}>; blockedAnalysis:BlockedRecommendationAnalysis; bucketPerformance:EdgeBucketPerformance[]; recommendedForProduction:boolean; promotionDecision:"KEEP_CURRENT"|"ENABLE_FILTER_ONLY"|"NEED_MORE_DATA"|"REJECT_TRUE_ODDS_FILTER"|"SHADOW_ONLY"; promotionReasons:string[]; warnings:string[] }
 
 export interface HistoricalMatch {
   id: string; league: string; homeTeam: string; awayTeam: string;
@@ -182,6 +192,7 @@ export interface MatchPrediction {
   fairOdds: ThreeWayOdds;
   ev: ThreeWayEv; topScores: ScoreProbability[];
   modelDisagreement: ModelDisagreement; dynamicEvThreshold: number; criticReport: CriticReport;
+  trueOddsEstimate?: TrueOddsEstimate; edgeQuality?: EdgeQualityOutput; lowerBoundEv?: number; adaptiveEvThreshold?: number; passesTrueOddsFilter?: boolean; noBetReason?: string[];
   anchoredProbability: ThreeWayProbability; diagnostics: PredictionDiagnostics;
   criticPassed: boolean; criticReasons: string[];
   recommendation: RecommendationType; confidence: ConfidenceLevel; confidenceGrade: ConfidenceGrade; confidenceScore: number;
@@ -243,6 +254,7 @@ export interface BacktestRecord {
   probabilitySource?: MatchPrediction["probabilitySource"]; modelVersion?: string; stackingConfidence?: number;
   stackingFallbackUsed?: boolean; stackingTopFeatures?: Array<{feature: string; contribution: number}>;
   openingSp?:ThreeWayOdds; recommendationSp?:ThreeWayOdds; recommendationCreatedAt?:string; recommendationAgeMinutes?:number; recalculationCount?:number; marketMovementBeforeRecommendation?:boolean;
+  edgeQualityLevel?:EdgeQualityOutput["edgeQualityLevel"]; edgeQualityScore?:number; lowerBoundEv?:number; adaptiveEvThreshold?:number; passesTrueOddsFilter?:boolean;
   bankrollBefore?:number; bankrollAfter?:number; suggestedStake?:number; stakePctOfBankroll?:number; stakeCappedBy?:StakeRecommendation["cappedBy"]; stakeStatus?:StakeRecommendation["status"]; drawdownState?:DrawdownState; portfolioExposureAtBet?:PortfolioExposure;
 }
 export interface BacktestMetrics {

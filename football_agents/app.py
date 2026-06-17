@@ -2,7 +2,6 @@
 
 import csv
 import io
-import threading
 from datetime import date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -26,6 +25,7 @@ from .international_history_agent import InternationalHistoryAgent
 from .features import build_features_for_official_matches
 from .repository import Repository
 from .schemas import BacktestRequest, EvaluateRequest, FeatureCreate, MatchCreate, MatchMetadataCreate, OddsCreate, SettingsUpdate
+from .scheduler import BackgroundAgentScheduler
 from .services.task_runner_service import TaskRunnerService
 
 
@@ -47,31 +47,19 @@ historical_agent = HistoricalCollectionAgent(repository)
 international_history_agent = InternationalHistoryAgent(repository)
 agent_orchestrator = AgentOrchestrator(repository)
 task_runner = TaskRunnerService()
-official_sync_stop = threading.Event()
-
-
-def _official_sync_loop() -> None:
-    interval = max(60, settings.official_auto_sync_interval_seconds)
-    while not official_sync_stop.is_set():
-        try:
-            official_data.sync()
-        except Exception:
-            # The service persists failures; keep the scheduler alive for the next retry.
-            pass
-        if official_sync_stop.wait(interval):
-            break
+background_scheduler = BackgroundAgentScheduler(repository, task_runner)
 
 
 @app.on_event("startup")
 def startup() -> None:
     db.initialize()
     historical_data.bootstrap_sample()
-    threading.Thread(target=_official_sync_loop, name="official-data-sync", daemon=True).start()
+    background_scheduler.start()
 
 
 @app.on_event("shutdown")
 def shutdown() -> None:
-    official_sync_stop.set()
+    background_scheduler.stop()
 
 
 @app.get("/", include_in_schema=False)

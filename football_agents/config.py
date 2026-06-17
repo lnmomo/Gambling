@@ -41,6 +41,7 @@ def _database_path_from_url(database_url: str) -> Path:
 
 @dataclass(frozen=True)
 class Settings:
+    project_dir: Path = PROJECT_DIR
     app_env: str = os.getenv("APP_ENV", "development")
     app_host: str = os.getenv("APP_HOST", "127.0.0.1")
     app_port: int = int(os.getenv("APP_PORT", "8000"))
@@ -68,6 +69,12 @@ class Settings:
     official_fetch_timeout_seconds: int = int(os.getenv("OFFICIAL_FETCH_TIMEOUT_SECONDS", "25"))
     official_min_sync_interval_seconds: int = int(os.getenv("OFFICIAL_MIN_SYNC_INTERVAL_SECONDS", "60"))
     official_auto_sync_interval_seconds: int = int(os.getenv("OFFICIAL_AUTO_SYNC_INTERVAL_SECONDS", "3600"))
+    background_agent_interval_seconds: int = int(os.getenv(
+        "BACKGROUND_AGENT_INTERVAL_SECONDS", os.getenv("OFFICIAL_AUTO_SYNC_INTERVAL_SECONDS", "3600")
+    ))
+    auto_backtest_csv_path: str = os.getenv(
+        "AUTO_BACKTEST_CSV_PATH", "football_agents/sample_data/historical_matches.csv"
+    )
     odds_api_key: str = os.getenv("THE_ODDS_API_KEY", "")
     odds_api_base_url: str = os.getenv("ODDS_API_BASE_URL", "https://api.the-odds-api.com/v4")
     odds_api_sport_keys: tuple[str, ...] = tuple(filter(None, os.getenv(
