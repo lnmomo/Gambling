@@ -23,11 +23,13 @@ Array.from(document.querySelectorAll('.m-cardList')).map(el => {
   const year=(heading.match(/(\d{4})-/)||[])[1] || '';
   const oddsText=center?.querySelector('.btm')?.innerText || '', odds={};
   const h=oddsText.match(/胜\s*([0-9.]+)/), d=oddsText.match(/平\s*([0-9.]+)/), a=oddsText.match(/负\s*([0-9.]+)/);
+  const scoreText=center?.innerText || '', score=scoreText.match(/(?:^|\s)(\d{1,2})\s*[:：]\s*(\d{1,2})(?:\s|$)/);
   if(h) odds.home=Number(h[1]); if(d) odds.draw=Number(d[1]); if(a) odds.away=Number(a[1]);
   return {source_match_id:(el.id||'').replace(/^#/,''),match_no:center?.querySelector('.top')?.textContent?.trim()||'',
     league:left?.querySelector('p')?.textContent?.trim()||'',match_date:(year && dateParts[0] ? year+'-'+dateParts[0] : (heading.match(/\d{4}-\d{2}-\d{2}/)||[''])[0]),
     match_time:dateParts[1]||'',home_team:center?.querySelector('.mid-ballLf span')?.textContent?.trim()||'',
-    away_team:center?.querySelector('.mid-ballRt span')?.textContent?.trim()||'',sale_status:root?.querySelector('.m-cardListBat-rt')?.innerText?.trim()||'',odds};
+    away_team:center?.querySelector('.mid-ballRt span')?.textContent?.trim()||'',sale_status:root?.querySelector('.m-cardListBat-rt')?.innerText?.trim()||'',
+    home_score:score?Number(score[1]):null,away_score:score?Number(score[2]):null,odds};
 })})
 """
 

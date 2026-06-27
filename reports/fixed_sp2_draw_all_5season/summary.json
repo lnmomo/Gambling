@@ -1,0 +1,5440 @@
+{
+  "method": "fixed SP2 market-residual edge strategy",
+  "description": "Rolling 18-month residual probability model; bet only Spanish Segunda (SP2) candidates passing fixed pre-declared filters.",
+  "seasons": [
+    "2122",
+    "2223",
+    "2324",
+    "2425",
+    "2526"
+  ],
+  "first_month": "2022-08",
+  "last_month": "2026-05",
+  "same_day_results_hidden_until_settlement": true,
+  "odds_timing": "pre_closing_without_exact_snapshot_timestamp",
+  "config": {
+    "uncertainty_scale": 0.75,
+    "min_lower_ev": -0.01,
+    "max_odds": 5.0,
+    "kelly_fraction": 0.1,
+    "min_stake": 1.0,
+    "max_stake": 20.0,
+    "daily_limit": 100.0,
+    "league_limit": 40.0,
+    "bucket_key": [
+      "outcome",
+      "odds_bucket"
+    ],
+    "allowed_buckets": [
+      [
+        "draw",
+        "[1.0,1.8)"
+      ],
+      [
+        "draw",
+        "[1.8,2.2)"
+      ],
+      [
+        "draw",
+        "[2.2,2.8)"
+      ],
+      [
+        "draw",
+        "[2.8,3.5)"
+      ],
+      [
+        "draw",
+        "[3.5,4.0)"
+      ],
+      [
+        "draw",
+        "[4.0,5.0)"
+      ],
+      [
+        "draw",
+        "[5.0,7.0)"
+      ],
+      [
+        "draw",
+        "[7.0,inf)"
+      ]
+    ],
+    "league_filter": "SP2",
+    "gate_mode": "off",
+    "strategy_mode": "fixed",
+    "outcome_filter": "draw",
+    "odds_bucket_filter": null,
+    "rule_adaptive_grid": null,
+    "rule_lookback_months": null,
+    "rule_min_active_months": null,
+    "rule_min_bets": null,
+    "rule_min_roi": null
+  },
+  "overall": {
+    "bets": 113,
+    "winning_bets": 42,
+    "total_staked": 124.16,
+    "profit": 11.86,
+    "roi_pct": 9.55,
+    "max_drawdown": 15.17,
+    "max_daily_stake": 3.97,
+    "active_days": 99
+  },
+  "active_months": 29,
+  "positive_months": 16,
+  "negative_months": 13,
+  "stability_assessment": {
+    "profitable": true,
+    "sample_size_ok": true,
+    "enough_active_months": true,
+    "month_balance_ok": true,
+    "season_balance_ok": false,
+    "drawdown_ok": false,
+    "latest_season_ok": false,
+    "positive_months": 16,
+    "negative_months": 13,
+    "positive_seasons": 2,
+    "negative_seasons": 2,
+    "latest_season": {
+      "season": "2025-26",
+      "bets": 1,
+      "staked": 1.0,
+      "profit": -1.0,
+      "roi_pct": -100.0,
+      "active_months": 1
+    },
+    "season_summary": [
+      {
+        "season": "2022-23",
+        "bets": 37,
+        "staked": 44.98,
+        "profit": 3.05,
+        "roi_pct": 6.78,
+        "active_months": 9
+      },
+      {
+        "season": "2023-24",
+        "bets": 34,
+        "staked": 36.32,
+        "profit": -1.09,
+        "roi_pct": -3.0,
+        "active_months": 9
+      },
+      {
+        "season": "2024-25",
+        "bets": 41,
+        "staked": 41.86,
+        "profit": 10.9,
+        "roi_pct": 26.04,
+        "active_months": 10
+      },
+      {
+        "season": "2025-26",
+        "bets": 1,
+        "staked": 1.0,
+        "profit": -1.0,
+        "roi_pct": -100.0,
+        "active_months": 1
+      }
+    ],
+    "drawdown_to_profit": 1.279,
+    "verdict": "not_enough_recent_evidence",
+    "notes": [
+      "Positive multi-season walk-forward ROI is necessary but not sufficient for production.",
+      "A production candidate must keep a positive recent season without using future results.",
+      "Monthly and season positive/negative balance plus drawdown control are required before real-money use."
+    ]
+  },
+  "monthly": [
+    {
+      "bets": 3,
+      "winning_bets": 0,
+      "total_staked": 3.0,
+      "profit": -3.0,
+      "roi_pct": -100.0,
+      "max_drawdown": 3.0,
+      "max_daily_stake": 1.0,
+      "active_days": 3,
+      "month": "2022-08",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 3,
+      "candidate_profit": -3.0,
+      "candidate_roi_pct": -100.0
+    },
+    {
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0,
+      "month": "2022-09",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 0,
+      "candidate_profit": 0.0,
+      "candidate_roi_pct": 0.0
+    },
+    {
+      "bets": 2,
+      "winning_bets": 0,
+      "total_staked": 2.32,
+      "profit": -2.32,
+      "roi_pct": -100.0,
+      "max_drawdown": 2.32,
+      "max_daily_stake": 1.32,
+      "active_days": 2,
+      "month": "2022-10",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 2,
+      "candidate_profit": -2.32,
+      "candidate_roi_pct": -100.0
+    },
+    {
+      "bets": 2,
+      "winning_bets": 0,
+      "total_staked": 2.88,
+      "profit": -2.88,
+      "roi_pct": -100.0,
+      "max_drawdown": 2.88,
+      "max_daily_stake": 1.47,
+      "active_days": 2,
+      "month": "2022-11",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 2,
+      "candidate_profit": -2.88,
+      "candidate_roi_pct": -100.0
+    },
+    {
+      "bets": 1,
+      "winning_bets": 1,
+      "total_staked": 1.0,
+      "profit": 1.9,
+      "roi_pct": 190.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 1.0,
+      "active_days": 1,
+      "month": "2022-12",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 1,
+      "candidate_profit": 1.9,
+      "candidate_roi_pct": 190.0
+    },
+    {
+      "bets": 4,
+      "winning_bets": 3,
+      "total_staked": 5.95,
+      "profit": 2.55,
+      "roi_pct": 42.86,
+      "max_drawdown": 2.95,
+      "max_daily_stake": 2.95,
+      "active_days": 4,
+      "month": "2023-01",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 4,
+      "candidate_profit": 2.55,
+      "candidate_roi_pct": 42.86
+    },
+    {
+      "bets": 2,
+      "winning_bets": 1,
+      "total_staked": 2.99,
+      "profit": 0.81,
+      "roi_pct": 27.09,
+      "max_drawdown": 1.0,
+      "max_daily_stake": 1.99,
+      "active_days": 2,
+      "month": "2023-02",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 2,
+      "candidate_profit": 0.81,
+      "candidate_roi_pct": 27.09
+    },
+    {
+      "bets": 9,
+      "winning_bets": 4,
+      "total_staked": 10.87,
+      "profit": 5.29,
+      "roi_pct": 48.67,
+      "max_drawdown": 4.0,
+      "max_daily_stake": 2.87,
+      "active_days": 6,
+      "month": "2023-03",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 9,
+      "candidate_profit": 5.29,
+      "candidate_roi_pct": 48.67
+    },
+    {
+      "bets": 11,
+      "winning_bets": 4,
+      "total_staked": 12.97,
+      "profit": 3.7,
+      "roi_pct": 28.53,
+      "max_drawdown": 4.1,
+      "max_daily_stake": 3.97,
+      "active_days": 9,
+      "month": "2023-04",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 11,
+      "candidate_profit": 3.7,
+      "candidate_roi_pct": 28.53
+    },
+    {
+      "bets": 3,
+      "winning_bets": 0,
+      "total_staked": 3.0,
+      "profit": -3.0,
+      "roi_pct": -100.0,
+      "max_drawdown": 3.0,
+      "max_daily_stake": 2.0,
+      "active_days": 2,
+      "month": "2023-05",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 3,
+      "candidate_profit": -3.0,
+      "candidate_roi_pct": -100.0
+    },
+    {
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0,
+      "month": "2023-06",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 0,
+      "candidate_profit": 0.0,
+      "candidate_roi_pct": 0.0
+    },
+    {
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0,
+      "month": "2023-07",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 0,
+      "candidate_profit": 0.0,
+      "candidate_roi_pct": 0.0
+    },
+    {
+      "bets": 3,
+      "winning_bets": 0,
+      "total_staked": 3.0,
+      "profit": -3.0,
+      "roi_pct": -100.0,
+      "max_drawdown": 3.0,
+      "max_daily_stake": 1.0,
+      "active_days": 3,
+      "month": "2023-08",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 3,
+      "candidate_profit": -3.0,
+      "candidate_roi_pct": -100.0
+    },
+    {
+      "bets": 1,
+      "winning_bets": 0,
+      "total_staked": 1.0,
+      "profit": -1.0,
+      "roi_pct": -100.0,
+      "max_drawdown": 1.0,
+      "max_daily_stake": 1.0,
+      "active_days": 1,
+      "month": "2023-09",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 1,
+      "candidate_profit": -1.0,
+      "candidate_roi_pct": -100.0
+    },
+    {
+      "bets": 2,
+      "winning_bets": 1,
+      "total_staked": 2.0,
+      "profit": 0.9,
+      "roi_pct": 45.0,
+      "max_drawdown": 1.0,
+      "max_daily_stake": 1.0,
+      "active_days": 2,
+      "month": "2023-10",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 2,
+      "candidate_profit": 0.9,
+      "candidate_roi_pct": 45.0
+    },
+    {
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0,
+      "month": "2023-11",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 0,
+      "candidate_profit": 0.0,
+      "candidate_roi_pct": 0.0
+    },
+    {
+      "bets": 2,
+      "winning_bets": 1,
+      "total_staked": 2.0,
+      "profit": 0.9,
+      "roi_pct": 45.0,
+      "max_drawdown": 1.0,
+      "max_daily_stake": 1.0,
+      "active_days": 2,
+      "month": "2023-12",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 2,
+      "candidate_profit": 0.9,
+      "candidate_roi_pct": 45.0
+    },
+    {
+      "bets": 3,
+      "winning_bets": 0,
+      "total_staked": 3.0,
+      "profit": -3.0,
+      "roi_pct": -100.0,
+      "max_drawdown": 3.0,
+      "max_daily_stake": 1.0,
+      "active_days": 3,
+      "month": "2024-01",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 3,
+      "candidate_profit": -3.0,
+      "candidate_roi_pct": -100.0
+    },
+    {
+      "bets": 4,
+      "winning_bets": 2,
+      "total_staked": 4.0,
+      "profit": 1.9,
+      "roi_pct": 47.5,
+      "max_drawdown": 1.0,
+      "max_daily_stake": 1.0,
+      "active_days": 4,
+      "month": "2024-02",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 4,
+      "candidate_profit": 1.9,
+      "candidate_roi_pct": 47.5
+    },
+    {
+      "bets": 8,
+      "winning_bets": 3,
+      "total_staked": 8.0,
+      "profit": 0.78,
+      "roi_pct": 9.75,
+      "max_drawdown": 3.0,
+      "max_daily_stake": 1.0,
+      "active_days": 8,
+      "month": "2024-03",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 8,
+      "candidate_profit": 0.78,
+      "candidate_roi_pct": 9.75
+    },
+    {
+      "bets": 6,
+      "winning_bets": 3,
+      "total_staked": 8.32,
+      "profit": 3.23,
+      "roi_pct": 38.82,
+      "max_drawdown": 2.09,
+      "max_daily_stake": 2.23,
+      "active_days": 4,
+      "month": "2024-04",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 6,
+      "candidate_profit": 3.23,
+      "candidate_roi_pct": 38.82
+    },
+    {
+      "bets": 5,
+      "winning_bets": 1,
+      "total_staked": 5.0,
+      "profit": -1.8,
+      "roi_pct": -36.0,
+      "max_drawdown": 4.0,
+      "max_daily_stake": 2.0,
+      "active_days": 4,
+      "month": "2024-05",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 5,
+      "candidate_profit": -1.8,
+      "candidate_roi_pct": -36.0
+    },
+    {
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0,
+      "month": "2024-06",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 0,
+      "candidate_profit": 0.0,
+      "candidate_roi_pct": 0.0
+    },
+    {
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0,
+      "month": "2024-07",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 0,
+      "candidate_profit": 0.0,
+      "candidate_roi_pct": 0.0
+    },
+    {
+      "bets": 4,
+      "winning_bets": 0,
+      "total_staked": 4.0,
+      "profit": -4.0,
+      "roi_pct": -100.0,
+      "max_drawdown": 4.0,
+      "max_daily_stake": 1.0,
+      "active_days": 4,
+      "month": "2024-08",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 4,
+      "candidate_profit": -4.0,
+      "candidate_roi_pct": -100.0
+    },
+    {
+      "bets": 3,
+      "winning_bets": 1,
+      "total_staked": 3.86,
+      "profit": -0.98,
+      "roi_pct": -25.39,
+      "max_drawdown": 2.86,
+      "max_daily_stake": 1.86,
+      "active_days": 3,
+      "month": "2024-09",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 3,
+      "candidate_profit": -0.98,
+      "candidate_roi_pct": -25.39
+    },
+    {
+      "bets": 10,
+      "winning_bets": 4,
+      "total_staked": 10.0,
+      "profit": 1.25,
+      "roi_pct": 12.5,
+      "max_drawdown": 4.0,
+      "max_daily_stake": 2.0,
+      "active_days": 9,
+      "month": "2024-10",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 10,
+      "candidate_profit": 1.25,
+      "candidate_roi_pct": 12.5
+    },
+    {
+      "bets": 5,
+      "winning_bets": 5,
+      "total_staked": 5.0,
+      "profit": 9.95,
+      "roi_pct": 199.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 2.0,
+      "active_days": 4,
+      "month": "2024-11",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 5,
+      "candidate_profit": 9.95,
+      "candidate_roi_pct": 199.0
+    },
+    {
+      "bets": 3,
+      "winning_bets": 1,
+      "total_staked": 3.0,
+      "profit": 0.25,
+      "roi_pct": 8.33,
+      "max_drawdown": 1.0,
+      "max_daily_stake": 2.0,
+      "active_days": 2,
+      "month": "2024-12",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 3,
+      "candidate_profit": 0.25,
+      "candidate_roi_pct": 8.33
+    },
+    {
+      "bets": 3,
+      "winning_bets": 1,
+      "total_staked": 3.0,
+      "profit": 0.25,
+      "roi_pct": 8.33,
+      "max_drawdown": 1.0,
+      "max_daily_stake": 2.0,
+      "active_days": 2,
+      "month": "2025-01",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 3,
+      "candidate_profit": 0.25,
+      "candidate_roi_pct": 8.33
+    },
+    {
+      "bets": 3,
+      "winning_bets": 2,
+      "total_staked": 3.0,
+      "profit": 3.0,
+      "roi_pct": 100.0,
+      "max_drawdown": 1.0,
+      "max_daily_stake": 1.0,
+      "active_days": 3,
+      "month": "2025-02",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 3,
+      "candidate_profit": 3.0,
+      "candidate_roi_pct": 100.0
+    },
+    {
+      "bets": 6,
+      "winning_bets": 2,
+      "total_staked": 6.0,
+      "profit": -0.37,
+      "roi_pct": -6.17,
+      "max_drawdown": 2.12,
+      "max_daily_stake": 2.0,
+      "active_days": 5,
+      "month": "2025-03",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 6,
+      "candidate_profit": -0.37,
+      "candidate_roi_pct": -6.17
+    },
+    {
+      "bets": 3,
+      "winning_bets": 2,
+      "total_staked": 3.0,
+      "profit": 2.55,
+      "roi_pct": 85.0,
+      "max_drawdown": 1.0,
+      "max_daily_stake": 1.0,
+      "active_days": 3,
+      "month": "2025-04",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 3,
+      "candidate_profit": 2.55,
+      "candidate_roi_pct": 85.0
+    },
+    {
+      "bets": 1,
+      "winning_bets": 0,
+      "total_staked": 1.0,
+      "profit": -1.0,
+      "roi_pct": -100.0,
+      "max_drawdown": 1.0,
+      "max_daily_stake": 1.0,
+      "active_days": 1,
+      "month": "2025-05",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 1,
+      "candidate_profit": -1.0,
+      "candidate_roi_pct": -100.0
+    },
+    {
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0,
+      "month": "2025-06",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 0,
+      "candidate_profit": 0.0,
+      "candidate_roi_pct": 0.0
+    },
+    {
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0,
+      "month": "2025-07",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 0,
+      "candidate_profit": 0.0,
+      "candidate_roi_pct": 0.0
+    },
+    {
+      "bets": 1,
+      "winning_bets": 0,
+      "total_staked": 1.0,
+      "profit": -1.0,
+      "roi_pct": -100.0,
+      "max_drawdown": 1.0,
+      "max_daily_stake": 1.0,
+      "active_days": 1,
+      "month": "2025-08",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 1,
+      "candidate_profit": -1.0,
+      "candidate_roi_pct": -100.0
+    },
+    {
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0,
+      "month": "2025-09",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 0,
+      "candidate_profit": 0.0,
+      "candidate_roi_pct": 0.0
+    },
+    {
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0,
+      "month": "2025-10",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 0,
+      "candidate_profit": 0.0,
+      "candidate_roi_pct": 0.0
+    },
+    {
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0,
+      "month": "2025-11",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 0,
+      "candidate_profit": 0.0,
+      "candidate_roi_pct": 0.0
+    },
+    {
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0,
+      "month": "2025-12",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 0,
+      "candidate_profit": 0.0,
+      "candidate_roi_pct": 0.0
+    },
+    {
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0,
+      "month": "2026-01",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 0,
+      "candidate_profit": 0.0,
+      "candidate_roi_pct": 0.0
+    },
+    {
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0,
+      "month": "2026-02",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 0,
+      "candidate_profit": 0.0,
+      "candidate_roi_pct": 0.0
+    },
+    {
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0,
+      "month": "2026-03",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 0,
+      "candidate_profit": 0.0,
+      "candidate_roi_pct": 0.0
+    },
+    {
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0,
+      "month": "2026-04",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 0,
+      "candidate_profit": 0.0,
+      "candidate_roi_pct": 0.0
+    },
+    {
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0,
+      "month": "2026-05",
+      "gate_enabled": true,
+      "gate_reason": "gate_off",
+      "strategy_mode": "fixed",
+      "selected_rule": "fixed_cli_config",
+      "selected_config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [
+          "outcome",
+          "odds_bucket"
+        ],
+        "allowed_buckets": [
+          [
+            "draw",
+            "[1.0,1.8)"
+          ],
+          [
+            "draw",
+            "[1.8,2.2)"
+          ],
+          [
+            "draw",
+            "[2.2,2.8)"
+          ],
+          [
+            "draw",
+            "[2.8,3.5)"
+          ],
+          [
+            "draw",
+            "[3.5,4.0)"
+          ],
+          [
+            "draw",
+            "[4.0,5.0)"
+          ],
+          [
+            "draw",
+            "[5.0,7.0)"
+          ],
+          [
+            "draw",
+            "[7.0,inf)"
+          ]
+        ]
+      },
+      "selection_report": {
+        "decision": "FIXED",
+        "config": {
+          "min_lower_ev": -0.01,
+          "max_odds": 5.0,
+          "kelly_fraction": 0.1,
+          "min_stake": 1.0,
+          "max_stake": 20.0,
+          "daily_limit": 100.0,
+          "league_limit": 40.0,
+          "bucket_key": [
+            "outcome",
+            "odds_bucket"
+          ],
+          "allowed_buckets": [
+            [
+              "draw",
+              "[1.0,1.8)"
+            ],
+            [
+              "draw",
+              "[1.8,2.2)"
+            ],
+            [
+              "draw",
+              "[2.2,2.8)"
+            ],
+            [
+              "draw",
+              "[2.8,3.5)"
+            ],
+            [
+              "draw",
+              "[3.5,4.0)"
+            ],
+            [
+              "draw",
+              "[4.0,5.0)"
+            ],
+            [
+              "draw",
+              "[5.0,7.0)"
+            ],
+            [
+              "draw",
+              "[7.0,inf)"
+            ]
+          ]
+        }
+      },
+      "candidate_bets": 0,
+      "candidate_profit": 0.0,
+      "candidate_roi_pct": 0.0
+    }
+  ]
+}

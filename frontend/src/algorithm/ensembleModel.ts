@@ -35,9 +35,13 @@ export function getExternalMarketEnsembleWeights(level: "HIGH" | "MEDIUM" | "LOW
 export function ensembleMarketAndModel(market: ThreeWayProbability, externalMarket: ThreeWayProbability, pureModel: ThreeWayProbability, weights: {market: number; externalMarket: number; pureModel: number}) {
   return normalizeProbability({home: market.home * weights.market + externalMarket.home * weights.externalMarket + pureModel.home * weights.pureModel, draw: market.draw * weights.market + externalMarket.draw * weights.externalMarket + pureModel.draw * weights.pureModel, away: market.away * weights.market + externalMarket.away * weights.externalMarket + pureModel.away * weights.pureModel});
 }
-export function calculateModelDisagreement(models: ThreeWayProbability[]): ModelDisagreement {
+export function calculateModelDisagreement(models: ThreeWayProbability[], options: {maxLevel?: "LOW" | "MEDIUM" | "HIGH"} = {}): ModelDisagreement {
   const spread = (key: typeof keys[number]) => Math.max(...models.map(model => model[key])) - Math.min(...models.map(model => model[key]));
   const homeDisagreement = spread("home"), drawDisagreement = spread("draw"), awayDisagreement = spread("away");
   const maxDisagreement = Math.max(homeDisagreement, drawDisagreement, awayDisagreement);
-  return {homeDisagreement, drawDisagreement, awayDisagreement, maxDisagreement, level: maxDisagreement > .12 ? "HIGH" : maxDisagreement > .07 ? "MEDIUM" : "LOW"};
+  const rawLevel = maxDisagreement > .12 ? "HIGH" : maxDisagreement > .07 ? "MEDIUM" : "LOW";
+  const rank = {LOW: 0, MEDIUM: 1, HIGH: 2} as const;
+  const maxLevel = options.maxLevel ?? "HIGH";
+  const level = rank[rawLevel] > rank[maxLevel] ? maxLevel : rawLevel;
+  return {homeDisagreement, drawDisagreement, awayDisagreement, maxDisagreement, level};
 }

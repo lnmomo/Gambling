@@ -49,6 +49,14 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
         "latestShadowRunAt": None,
         "warnings": [],
     }
+    prospective_research = {
+        "enabled": settings.enable_prospective_research, "status": "NOT_REGISTERED",
+        "studyId": None, "freezeId": None, "predictions": 0, "settledMatches": 0,
+        "minimumSettledMatches": settings.prospective_research_min_settled,
+        "minimumCalendarDays": settings.prospective_research_min_days,
+        "remainingMatches": settings.prospective_research_min_settled,
+        "remainingDays": settings.prospective_research_min_days, "confirmationDecision": None,
+    }
 
     try:
         with database.connect() as c:
@@ -86,6 +94,32 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
             shadow_validation["latestShadowRunAt"] = latest_shadow["created_at"] if latest_shadow else None
             latest_gate = c.execute("SELECT decision FROM shadow_validation_runs ORDER BY created_at DESC LIMIT 1").fetchone()
             shadow_validation["latestPromotionDecision"] = latest_gate["decision"] if latest_gate else None
+            study = c.execute("SELECT * FROM prospective_research_studies ORDER BY registered_at DESC LIMIT 1").fetchone()
+            if study:
+                counts = c.execute("""SELECT COUNT(*) predictions,
+                    COUNT(DISTINCT CASE WHEN r.outcome IN ('home','draw','away')
+                        AND o.minutes_to_kickoff BETWEEN ? AND ? THEN p.match_id END) settled
+                    FROM prospective_predictions p
+                    JOIN official_odds_observations o ON o.id=p.official_odds_observation_id
+                    LEFT JOIN results r ON r.match_id=p.match_id WHERE p.study_id=?""",
+                    (study["primary_horizon_minutes"],
+                     study["primary_horizon_minutes"] + study["horizon_tolerance_minutes"],
+                     study["study_id"])).fetchone()
+                run = c.execute("SELECT decision FROM prospective_confirmation_runs WHERE study_id=?",
+                                (study["study_id"],)).fetchone()
+                elapsed = max(0, (datetime.now(timezone.utc) - (_parse_time(study["starts_at"]) or datetime.now(timezone.utc))).days)
+                settled = int(counts["settled"] or 0)
+                ready = settled >= study["min_settled_matches"] and elapsed >= study["min_calendar_days"]
+                prospective_research.update({
+                    "status": "COMPLETED" if run else "READY" if ready else "COLLECTING",
+                    "studyId": study["study_id"], "freezeId": study["freeze_id"],
+                    "predictions": int(counts["predictions"] or 0), "settledMatches": settled,
+                    "minimumSettledMatches": study["min_settled_matches"],
+                    "minimumCalendarDays": study["min_calendar_days"],
+                    "remainingMatches": max(0, study["min_settled_matches"] - settled),
+                    "remainingDays": max(0, study["min_calendar_days"] - elapsed),
+                    "confirmationDecision": run["decision"] if run else None,
+                })
         scheduler = SchedulerHealthService()
         recent_task_runs = scheduler.list_recent_task_runs(20)
         governance = ModelGovernancePersistenceService(database)
@@ -145,4 +179,5 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
         "recentTaskRuns": recent_task_runs,
         "dataQuality": data_quality,
         "shadowValidation": shadow_validation,
+        "prospectiveResearch": prospective_research,
     }

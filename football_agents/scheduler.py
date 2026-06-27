@@ -16,6 +16,7 @@ from .official_data import OfficialDataService
 from .repository import Repository
 from .services.model_governance_persistence_service import ModelGovernancePersistenceService
 from .services.task_runner_service import TaskRunnerService
+from .research.prospective import ProspectiveResearchService
 
 
 TaskAction = Callable[[], dict[str, Any]]
@@ -62,7 +63,7 @@ class BackgroundAgentScheduler:
             self.task_runner.finish_task_run_success(
                 run["id"],
                 affected_matches=int(report.get("matches", report.get("affected_matches", 0)) or 0),
-                created_snapshots=int(report.get("market_odds", report.get("odds_snapshots", report.get("snapshots", 0))) or 0),
+                created_snapshots=int(report.get("market_odds", report.get("hourly_observations", report.get("odds_snapshots", report.get("snapshots", 0)))) or 0),
                 created_predictions=int(report.get("predictions", report.get("evaluated", 0)) or 0),
                 warnings=self._warnings(report),
             )
@@ -70,7 +71,7 @@ class BackgroundAgentScheduler:
             self.task_runner.finish_task_run_failed(run["id"], str(exc))
 
     def _tasks(self) -> list[tuple[str, TaskAction]]:
-        return [
+        tasks = [
             ("official_sp_sync", self._sync_official),
             ("external_odds_news_weather_sync", self._sync_external_news_weather),
             ("feature_build", self._build_features),
@@ -79,6 +80,9 @@ class BackgroundAgentScheduler:
             ("backtest_run", self._run_backtest),
             ("model_governance_check", self._check_model_governance),
         ]
+        if settings.enable_prospective_research:
+            tasks.append(("prospective_research_capture", self._capture_prospective_research))
+        return tasks
 
     def _sync_official(self) -> dict[str, Any]:
         return OfficialDataService(self.repository).sync()
@@ -160,6 +164,9 @@ class BackgroundAgentScheduler:
             "actor": "background-model-governance-agent",
         })
         return {"matches": 1, "decision_id": decision["id"], "warnings": warnings}
+
+    def _capture_prospective_research(self) -> dict[str, Any]:
+        return ProspectiveResearchService(self.repository.db, self.repository).capture(settings.agent_match_limit)
 
     def _target_matches(self, limit: int) -> list[dict[str, Any]]:
         rows = self.repository.list_official_matches()

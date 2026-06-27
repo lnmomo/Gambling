@@ -5,7 +5,7 @@ from typing import Any
 
 from ..config import settings
 from ..models import EloModel, EnsembleModel, PoissonModel
-from ..models.ensemble import market_probabilities
+from ..models.ensemble import market_probabilities, market_residual_anchor
 from ..repository import Repository
 from ..risk import CriticPolicy, RiskLimits, calculate_stake
 from ..true_odds_engine import calculate_true_odds_estimate, selected_outcome_passes
@@ -61,25 +61,43 @@ class DecisionWorkflow:
             return {**blocked, "models": {"elo": elo_prediction, "poisson": poisson_prediction},
                     "baseline": baseline, "fair_odds": baseline_fair_odds, "market_calibrated": False}
 
+        official_market_prediction = market_probabilities(official["odds"])
         market_prediction = market_probabilities(market["odds"])
         component_predictions = {
             "elo": elo_prediction,
             "poisson": poisson_prediction,
             "market": market_prediction,
         }
-        ensemble_prediction = self.ensemble.predict(component_predictions)
+        raw_ensemble_prediction = self.ensemble.predict(component_predictions)
         disagreement = self.ensemble.disagreement(component_predictions)
+        feature_reliability = self._feature_reliability(features)
+        ensemble_prediction, anchor_metadata = market_residual_anchor(
+            raw_ensemble_prediction, official_market_prediction, reliability=feature_reliability
+        )
+        component_predictions["official_market"] = official_market_prediction
         self.repository.add_prediction(match_id, "market", market_prediction)
+        self.repository.add_prediction(match_id, "official_market", official_market_prediction)
+        self.repository.add_prediction(match_id, "raw_ensemble", raw_ensemble_prediction, {
+            "weights": self.ensemble.weights, "disagreement": disagreement,
+            "fair_odds": {option: 1 / probability for option, probability in raw_ensemble_prediction.items()},
+        })
         llm_analysis = self.repository.latest_llm_analysis(match_id)
         contextual_prediction, context_metadata = self._apply_llm_context(ensemble_prediction, llm_analysis)
         self.repository.add_prediction(match_id, "ensemble", ensemble_prediction, {
             "weights": self.ensemble.weights, "disagreement": disagreement,
+            "raw_ensemble": raw_ensemble_prediction,
+            "official_market_probability": official_market_prediction,
+            "external_market_probability": market_prediction,
+            "anchor": anchor_metadata,
             "fair_odds": {option: 1 / probability for option, probability in ensemble_prediction.items()},
         })
         if context_metadata["applied"]:
             ensemble_prediction = contextual_prediction
             self.repository.add_prediction(match_id, "contextual_ensemble", ensemble_prediction, {
                 "weights": self.ensemble.weights, "disagreement": disagreement,
+                "official_market_probability": official_market_prediction,
+                "external_market_probability": market_prediction,
+                "anchor": anchor_metadata,
                 "fair_odds": {option: 1 / probability for option, probability in ensemble_prediction.items()},
                 "qwen_context": context_metadata,
             })
@@ -204,6 +222,16 @@ class DecisionWorkflow:
             max_daily_fraction=float(saved.get("max_daily_exposure", self.limits.max_daily_fraction)),
             max_weekly_fraction=float(saved.get("max_weekly_exposure", self.limits.max_weekly_fraction)),
         )
+
+    @staticmethod
+    def _feature_reliability(features: dict[str, Any]) -> float:
+        source = max(0.0, min(1.0, float(features.get("source_confidence", 0.5))))
+        sample = min(
+            int(features.get("home_recent_matches", 0) or 0),
+            int(features.get("away_recent_matches", 0) or 0),
+        )
+        sample_reliability = min(1.0, max(0.0, sample / 50))
+        return 0.65 * source + 0.35 * sample_reliability
 
     def _blocked(self, match_id: int, reason: str) -> dict[str, Any]:
         critic = {"passed": False, "risk_level": "HIGH", "checks": {"required_data": False}, "reasons": [reason]}

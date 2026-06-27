@@ -53,6 +53,12 @@ class EvaluateRequest(BaseModel):
     fetched_at: datetime | None = None
 
 
+class ResultCreate(BaseModel):
+    home_score: int = Field(ge=0)
+    away_score: int = Field(ge=0)
+    settled_at: datetime | None = None
+
+
 class MatchMetadataCreate(BaseModel):
     venue: str | None = None
     city: str | None = None

@@ -51,6 +51,9 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn(result["signal"]["status"], {"BET", "WATCH", "NO_BET"})
         self.assertAlmostEqual(sum(result["ensemble"].values()), 1, places=8)
         self.assertAlmostEqual(result["fair_odds"]["draw"], 1 / result["ensemble"]["draw"])
+        self.assertIn("official_market", result["models"])
+        stored = self.repo.latest_prediction(self.match_id)
+        self.assertTrue(stored["metadata"]["anchor"]["market_residual_anchor"])
         self.assertIsNotNone(self.repo.latest_signal(self.match_id))
 
 

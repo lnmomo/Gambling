@@ -32,7 +32,35 @@ export type SystemHealth = {
     warnings: string[];
   }>;
   dataQuality?: {invalidSnapshots: number; duplicateSkipped: number; staleSnapshots: number};
+  prospectiveResearch?: {
+    enabled: boolean;
+    status: "NOT_REGISTERED" | "COLLECTING" | "READY" | "COMPLETED";
+    studyId: string | null;
+    freezeId: string | null;
+    predictions: number;
+    settledMatches: number;
+    minimumSettledMatches: number;
+    minimumCalendarDays: number;
+    remainingMatches: number;
+    remainingDays: number;
+    confirmationDecision: string | null;
+  };
 };
+
+export type HealthTaskRun = NonNullable<SystemHealth["recentTaskRuns"]>[number];
+
+export function latestTaskRunByName(rows: HealthTaskRun[] = []): Map<string, HealthTaskRun> {
+  const latest = new Map<string, HealthTaskRun>();
+  for (const row of rows) {
+    const current = latest.get(row.task_name);
+    const rowTime = Date.parse(row.started_at);
+    const currentTime = current ? Date.parse(current.started_at) : Number.NEGATIVE_INFINITY;
+    if (!current || (Number.isFinite(rowTime) && (!Number.isFinite(currentTime) || rowTime > currentTime))) {
+      latest.set(row.task_name, row);
+    }
+  }
+  return latest;
+}
 
 export async function fetchSystemHealth(): Promise<SystemHealth> {
   try {

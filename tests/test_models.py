@@ -1,7 +1,7 @@
 import unittest
 
 from football_agents.models import EloModel, EnsembleModel, PoissonModel
-from football_agents.models.ensemble import market_probabilities
+from football_agents.models.ensemble import market_probabilities, market_residual_anchor
 
 
 class ModelTests(unittest.TestCase):
@@ -23,6 +23,15 @@ class ModelTests(unittest.TestCase):
             "market": {"home": .55, "draw": .27, "away": .18},
         })
         self.assertEqual(max(result, key=result.get), "home")
+
+    def test_market_residual_anchor_caps_sparse_longshot_edges(self):
+        market = {"home": .14, "draw": .23, "away": .63}
+        raw_model = {"home": .32, "draw": .25, "away": .43}
+        anchored, metadata = market_residual_anchor(raw_model, market, reliability=.55)
+        self.assertAlmostEqual(sum(anchored.values()), 1.0, places=8)
+        self.assertTrue(metadata["capped"])
+        self.assertLess(anchored["home"] - market["home"], .05)
+        self.assertGreater(anchored["away"], raw_model["away"])
 
 
 if __name__ == "__main__":

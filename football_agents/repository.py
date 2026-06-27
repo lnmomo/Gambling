@@ -71,6 +71,83 @@ class Repository:
                  for option, value in odds.items()])
             return True
 
+    def archive_official_odds_observation(self, match_id: int, official_match_id: str,
+                                          odds: dict[str, float], observed_at: str,
+                                          kickoff_time: str, sale_status: str,
+                                          source: str, source_url: str, raw_hash: str) -> int:
+        observed = datetime.fromisoformat(observed_at.replace("Z", "+00:00"))
+        kickoff = datetime.fromisoformat(kickoff_time.replace("Z", "+00:00"))
+        if observed.tzinfo is None:
+            observed = observed.replace(tzinfo=timezone.utc)
+        if kickoff.tzinfo is None:
+            kickoff = kickoff.replace(tzinfo=timezone.utc)
+        minutes = (kickoff - observed).total_seconds() / 60
+        stage = ("POST_MATCH" if minutes < 0 else "T_MINUS_1H" if minutes <= 60 else
+                 "T_MINUS_6H" if minutes <= 360 else "T_MINUS_24H" if minutes <= 1440 else "EARLY")
+        with self.db.connect() as c:
+            cursor = c.execute("""INSERT INTO official_odds_observations
+                (match_id,official_match_id,observed_at,kickoff_time,sale_status,
+                 home_sp,draw_sp,away_sp,is_pre_match,minutes_to_kickoff,capture_stage,
+                 source,source_url,raw_hash)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (match_id, official_match_id, observed_at, kickoff_time, sale_status,
+                 float(odds["home"]), float(odds["draw"]), float(odds["away"]),
+                 int(minutes >= 0), minutes, stage, source, source_url, raw_hash))
+            return int(cursor.lastrowid)
+
+    def list_official_odds_observations(self, official_match_id: str | None = None,
+                                        limit: int = 1000) -> list[dict[str, Any]]:
+        query = "SELECT * FROM official_odds_observations"
+        params: list[Any] = []
+        if official_match_id:
+            query += " WHERE official_match_id=?"
+            params.append(official_match_id)
+        query += " ORDER BY observed_at DESC LIMIT ?"
+        params.append(max(1, min(limit, 100_000)))
+        with self.db.connect() as c:
+            return [dict(row) for row in c.execute(query, tuple(params)).fetchall()]
+
+    def official_odds_timeseries_status(self) -> dict[str, Any]:
+        with self.db.connect() as c:
+            row = c.execute("""SELECT COUNT(*) observations,COUNT(DISTINCT match_id) matches,
+                MIN(observed_at) first_observed_at,MAX(observed_at) last_observed_at,
+                SUM(CASE WHEN is_pre_match=1 THEN 1 ELSE 0 END) pre_match_observations
+                FROM official_odds_observations""").fetchone()
+            closing = c.execute("SELECT COUNT(*) FROM official_odds_closing_observations").fetchone()[0]
+            settled = c.execute("""SELECT COUNT(*) FROM results r WHERE EXISTS(
+                SELECT 1 FROM official_odds_observations o WHERE o.match_id=r.match_id)""").fetchone()[0]
+        return {**dict(row), "closing_observations": int(closing), "settled_matches": int(settled)}
+
+    def upsert_result(self, match_id: int, home_score: int, away_score: int,
+                      settled_at: str | None = None) -> dict[str, Any]:
+        outcome = "home" if home_score > away_score else "draw" if home_score == away_score else "away"
+        timestamp = settled_at or utcnow()
+        with self.db.connect() as c:
+            c.execute("""INSERT INTO results(match_id,home_score,away_score,outcome,settled_at)
+                VALUES(?,?,?,?,?) ON CONFLICT(match_id) DO UPDATE SET
+                home_score=excluded.home_score,away_score=excluded.away_score,
+                outcome=excluded.outcome,settled_at=excluded.settled_at""",
+                (match_id, home_score, away_score, outcome, timestamp))
+            row = c.execute("SELECT * FROM results WHERE match_id=?", (match_id,)).fetchone()
+        return dict(row)
+
+    def list_official_odds_training_samples(self, limit: int = 10_000) -> list[dict[str, Any]]:
+        with self.db.connect() as c:
+            rows = c.execute("""SELECT m.official_match_id,m.league,m.home_team,m.away_team,m.kickoff_time,
+                opening.observed_at opening_observed_at,opening.home_sp opening_home_sp,
+                opening.draw_sp opening_draw_sp,opening.away_sp opening_away_sp,
+                closing.observed_at closing_observed_at,closing.home_sp closing_home_sp,
+                closing.draw_sp closing_draw_sp,closing.away_sp closing_away_sp,
+                r.home_score,r.away_score,r.outcome,r.settled_at
+                FROM results r JOIN matches m ON m.id=r.match_id
+                JOIN official_odds_closing_observations closing ON closing.match_id=m.id
+                JOIN official_odds_observations opening ON opening.id=(
+                    SELECT first.id FROM official_odds_observations first
+                    WHERE first.match_id=m.id AND first.is_pre_match=1
+                    ORDER BY first.observed_at ASC LIMIT 1)
+                ORDER BY m.kickoff_time DESC LIMIT ?""", (max(1, min(limit, 100_000)),)).fetchall()
+        return [dict(row) for row in rows]
+
     def save_fetch_log(self, source_name: str, source_url: str, success: bool,
                        raw_hash: str | None = None, record_count: int = 0,
                        error_message: str | None = None, status_code: int | None = None) -> None:

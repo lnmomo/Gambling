@@ -131,7 +131,19 @@ function composePrediction(match: Pick<OfficialMatch, "id" | "officialMatchId" |
   const calibrated = calibrateProbabilities(probabilitySource === "STACKING_MODEL" ? stackingPrediction!.probability : raw, {method: AlgorithmConfig.calibration.method, temperature}), anchored = applyMarketAnchor(calibrated, marketResult.probability);
   if (anchored.warning) warnings.push(anchored.warning);
   const finalProbability = Object.values(anchored.probability).every(Number.isFinite) ? normalizeProbability(anchored.probability) : (warnings.push("最终概率异常，已回退到市场概率。"), marketResult.probability);
-  const finalFairOdds = calculateFairOddsFromProbability(finalProbability), finalEdge = calculateEdge(finalProbability, marketResult.probability), ev = calculateEv(finalProbability, match.officialSp), modelDisagreement = calculateModelDisagreement([marketResult.probability, externalMarketProbability, dc.probability, elo]);
+  const disagreementSources = [
+    marketResult.probability,
+    ...(externalConsensus.quality.available ? [externalMarketProbability] : []),
+    pureModelProbability,
+  ];
+  const pureModelReliability = pureModelBreakdown?.reliability ?? teamStatsReliability;
+  const modelDisagreement = calculateModelDisagreement(disagreementSources, {
+    maxLevel: pureModelReliability === "LOW" ? "MEDIUM" : "HIGH",
+  });
+  if (pureModelReliability === "LOW" && modelDisagreement.maxDisagreement > .12) {
+    warnings.push("纯模型可靠性较低，原始模型分歧仅作为 MEDIUM 风险处理，不执行 HIGH 一票否决。");
+  }
+  const finalFairOdds = calculateFairOddsFromProbability(finalProbability), finalEdge = calculateEdge(finalProbability, marketResult.probability), ev = calculateEv(finalProbability, match.officialSp);
   const best = [...([{action: "HOME", ev: ev.home, odds: match.officialSp.home}, {action: "DRAW", ev: ev.draw, odds: match.officialSp.draw}, {action: "AWAY", ev: ev.away, odds: match.officialSp.away}] as const)].sort((a, b) => b.ev - a.ev)[0];
   const minutesToKickoff = (new Date(match.kickoffTime).getTime() - Date.now()) / 60000, competitionType = context.isCupOrFriendly ? "CUP" as const : "LEAGUE" as const;
   const pureAdjustment=pureModelBreakdown?(pureModelBreakdown.reliability==="LOW"?.015:0)+(pureModelBreakdown.lineupImpact.riskLevel==="HIGH"?.02:0)+(pureModelBreakdown.fatigue.riskLevel==="HIGH"?.015:0)+(pureModelBreakdown.leagueParameters.reliability==="LOW"?.015:0)+(Math.min(pureModelBreakdown.homeStrength.overallReliability,pureModelBreakdown.awayStrength.overallReliability)<.5?.02:0)+(pureModelBreakdown.lambdaClamped?.015:0):0;

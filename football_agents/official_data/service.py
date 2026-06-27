@@ -35,7 +35,7 @@ class OfficialDataService:
                 payload = self.client.fetch(settings.official_source_url)
                 raw_hash = hashlib.sha256(payload["html"].encode("utf-8")).hexdigest()
                 fetched_at = datetime.now(timezone.utc).isoformat()
-                summary = {"created": 0, "updated": 0, "odds_snapshots": 0, "incomplete_odds": 0,
+                summary = {"created": 0, "updated": 0, "odds_snapshots": 0, "hourly_observations": 0, "results_settled": 0, "incomplete_odds": 0,
                            "invalid": 0, "records": len(payload["matches"]), "raw_hash": raw_hash}
                 for raw in payload["matches"]:
                     item = self._normalize(raw, raw_hash)
@@ -44,6 +44,9 @@ class OfficialDataService:
                         continue
                     match_id, created, _ = self.repository.upsert_official_match(item)
                     summary["created" if created else "updated"] += 1
+                    if item["status"] == "finished" and isinstance(raw.get("home_score"), int) and isinstance(raw.get("away_score"), int):
+                        self.repository.upsert_result(match_id, raw["home_score"], raw["away_score"], fetched_at)
+                        summary["results_settled"] += 1
                     odds = raw.get("odds") or {}
                     if set(odds) == {"home", "draw", "away"} and all(float(v) > 1 for v in odds.values()):
                         odds_hash = hashlib.sha256(json.dumps({"id": item["official_match_id"], "odds": odds},
@@ -51,6 +54,12 @@ class OfficialDataService:
                         if self.repository.add_official_odds(match_id, odds, "中国竞彩网",
                                                              fetched_at, settings.official_source_url, odds_hash):
                             summary["odds_snapshots"] += 1
+                        self.repository.archive_official_odds_observation(
+                            match_id, item["official_match_id"], odds, fetched_at,
+                            item["kickoff_time"], item["status"], "中国竞彩网",
+                            settings.official_source_url, odds_hash,
+                        )
+                        summary["hourly_observations"] += 1
                     else:
                         summary["incomplete_odds"] += 1
                 valid_records = summary["created"] + summary["updated"]
@@ -86,4 +95,5 @@ class OfficialDataService:
         latest = self.repository.latest_fetch_log()
         return {"source": "中国竞彩网", "source_url": settings.official_source_url,
                 "browser_path": settings.official_browser_path, "latest": latest,
-                "recent_logs": self.repository.list_fetch_logs(10)}
+                "recent_logs": self.repository.list_fetch_logs(10),
+                "timeseries": self.repository.official_odds_timeseries_status()}

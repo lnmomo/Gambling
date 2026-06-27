@@ -1,0 +1,286 @@
+{
+  "method": "nested rolling-origin market-anchored hierarchical residual experiment",
+  "config": {
+    "first_test_month": "2024-06",
+    "test_months": 12,
+    "min_training_matches": 1000,
+    "residual_training_months": 24,
+    "calibration_months": 3,
+    "bootstrap_samples": 2000,
+    "seed": 20260622
+  },
+  "evaluated_matches": 6592,
+  "folds": [
+    {
+      "month": "2024-06",
+      "status": "EVALUATED",
+      "train": 13374,
+      "calibration": 1994,
+      "test": 13,
+      "validation_log_loss": 0.9826099183103655,
+      "league_shrinkage": 1000.0,
+      "temperature": 1.0
+    },
+    {
+      "month": "2024-07",
+      "status": "EVALUATED",
+      "train": 13434,
+      "calibration": 1301,
+      "test": 8,
+      "validation_log_loss": 0.9828639218105946,
+      "league_shrinkage": 1000.0,
+      "temperature": 1.0
+    },
+    {
+      "month": "2024-08",
+      "status": "EVALUATED",
+      "train": 13367,
+      "calibration": 497,
+      "test": 552,
+      "validation_log_loss": 0.9371116256602607,
+      "league_shrinkage": 50.0,
+      "temperature": 0.8700000000000001
+    },
+    {
+      "month": "2024-09",
+      "status": "EVALUATED",
+      "train": 13401,
+      "calibration": 573,
+      "test": 618,
+      "validation_log_loss": 0.9906330267172921,
+      "league_shrinkage": 1000.0,
+      "temperature": 1.0
+    },
+    {
+      "month": "2024-10",
+      "status": "EVALUATED",
+      "train": 13414,
+      "calibration": 1178,
+      "test": 646,
+      "validation_log_loss": 0.9813890319522552,
+      "league_shrinkage": 1000000000000.0,
+      "temperature": 0.9600000000000001
+    },
+    {
+      "month": "2024-11",
+      "status": "EVALUATED",
+      "train": 13336,
+      "calibration": 1816,
+      "test": 615,
+      "validation_log_loss": 0.9904143344160975,
+      "league_shrinkage": 1000000000000.0,
+      "temperature": 1.0
+    },
+    {
+      "month": "2024-12",
+      "status": "EVALUATED",
+      "train": 13168,
+      "calibration": 1879,
+      "test": 756,
+      "validation_log_loss": 0.9959633810105142,
+      "league_shrinkage": 1000000000000.0,
+      "temperature": 1.0
+    },
+    {
+      "month": "2025-01",
+      "status": "EVALUATED",
+      "train": 13233,
+      "calibration": 2017,
+      "test": 672,
+      "validation_log_loss": 0.9983791018952547,
+      "league_shrinkage": 1000000000000.0,
+      "temperature": 1.05
+    },
+    {
+      "month": "2025-02",
+      "status": "EVALUATED",
+      "train": 12936,
+      "calibration": 2043,
+      "test": 719,
+      "validation_log_loss": 1.002524520176564,
+      "league_shrinkage": 1000000000000.0,
+      "temperature": 1.11
+    },
+    {
+      "month": "2025-03",
+      "status": "EVALUATED",
+      "train": 13097,
+      "calibration": 2147,
+      "test": 705,
+      "validation_log_loss": 0.9951589992803834,
+      "league_shrinkage": 1000000000000.0,
+      "temperature": 1.07
+    },
+    {
+      "month": "2025-04",
+      "status": "EVALUATED",
+      "train": 13488,
+      "calibration": 2096,
+      "test": 759,
+      "validation_log_loss": 1.000786302924937,
+      "league_shrinkage": 200.0,
+      "temperature": 1.07
+    },
+    {
+      "month": "2025-05",
+      "status": "EVALUATED",
+      "train": 13479,
+      "calibration": 2183,
+      "test": 529,
+      "validation_log_loss": 0.9945739385918049,
+      "league_shrinkage": 200.0,
+      "temperature": 1.0
+    }
+  ],
+  "metrics": {
+    "market": {
+      "sample_count": 6592,
+      "brier_score": 0.5946118421159474,
+      "rps": 0.20172909702956313,
+      "log_loss": 0.9959166825559425,
+      "top_label_ece": 0.014830340132219344,
+      "classwise_ece": {
+        "home": 0.014289614542684728,
+        "draw": 0.006047820316503482,
+        "away": 0.015228592155656502
+      },
+      "macro_classwise_ece": 0.011855342338281569
+    },
+    "dixon_coles": {
+      "sample_count": 6592,
+      "brier_score": 0.640658089227304,
+      "rps": 0.2236870924870498,
+      "log_loss": 1.0614284654737687,
+      "top_label_ece": 0.03395429483916589,
+      "classwise_ece": {
+        "home": 0.03453597463027807,
+        "draw": 0.011526418393731364,
+        "away": 0.07133377464052856
+      },
+      "macro_classwise_ece": 0.039132055888179335
+    },
+    "fixed_blend": {
+      "sample_count": 6592,
+      "brier_score": 0.5989256085893632,
+      "rps": 0.20380038100949932,
+      "log_loss": 1.0028752776333272,
+      "top_label_ece": 0.03513905965342958,
+      "classwise_ece": {
+        "home": 0.04132760981728438,
+        "draw": 0.006090866111906083,
+        "away": 0.037915677437912174
+      },
+      "macro_classwise_ece": 0.02844471778903421
+    },
+    "proposed": {
+      "sample_count": 6592,
+      "brier_score": 0.5944425308899693,
+      "rps": 0.20165892283220888,
+      "log_loss": 0.9953228878497247,
+      "top_label_ece": 0.010625615896521423,
+      "classwise_ece": {
+        "home": 0.012526401180250822,
+        "draw": 0.0038083568403702666,
+        "away": 0.009735711902606413
+      },
+      "macro_classwise_ece": 0.008690156641075834
+    },
+    "ablation_no_calibration": {
+      "sample_count": 6592,
+      "brier_score": 0.5945051266766253,
+      "rps": 0.20173020758749843,
+      "log_loss": 0.9956105099599939,
+      "top_label_ece": 0.010214448924143835,
+      "classwise_ece": {
+        "home": 0.0106330941672204,
+        "draw": 0.004796914217785833,
+        "away": 0.01453979244834919
+      },
+      "macro_classwise_ece": 0.009989933611118475
+    },
+    "ablation_no_league": {
+      "sample_count": 6592,
+      "brier_score": 0.5942915314267906,
+      "rps": 0.20154662055188366,
+      "log_loss": 0.9951571856888626,
+      "top_label_ece": 0.010416935974202058,
+      "classwise_ece": {
+        "home": 0.013760979426781197,
+        "draw": 0.003076048299070092,
+        "away": 0.006958747289313189
+      },
+      "macro_classwise_ece": 0.007931925005054826
+    },
+    "closing_market_reference": {
+      "sample_count": 6592,
+      "brier_score": 0.592630539949577,
+      "rps": 0.20085712063871938,
+      "log_loss": 0.9931592568469098,
+      "top_label_ece": 0.012937907923154343,
+      "classwise_ece": {
+        "home": 0.013739067364236348,
+        "draw": 0.0054838842444779375,
+        "away": 0.017151312351567475
+      },
+      "macro_classwise_ece": 0.012124754653427253
+    }
+  },
+  "paired_bootstrap_log_loss_proposed_minus_baseline": {
+    "market": {
+      "difference": -0.0005937947062177873,
+      "ci95_low": -0.0020216894909020704,
+      "ci95_high": 0.0009482032482024162,
+      "probability_first_better": 0.782
+    },
+    "dixon_coles": {
+      "difference": -0.06610557762404401,
+      "ci95_low": -0.07441882445898737,
+      "ci95_high": -0.05724820333798312,
+      "probability_first_better": 1.0
+    },
+    "fixed_blend": {
+      "difference": -0.007552389783602509,
+      "ci95_low": -0.010622183632589276,
+      "ci95_high": -0.004081578882356304,
+      "probability_first_better": 1.0
+    },
+    "ablation_no_calibration": {
+      "difference": -0.00028762211026922557,
+      "ci95_low": -0.0013331032105043188,
+      "ci95_high": 0.0007705988813341432,
+      "probability_first_better": 0.691
+    },
+    "ablation_no_league": {
+      "difference": 0.00016570216086209122,
+      "ci95_low": -0.0004171514864599435,
+      "ci95_high": 0.0007555023455394377,
+      "probability_first_better": 0.2785
+    },
+    "closing_market_reference": {
+      "difference": 0.002163631002814914,
+      "ci95_low": -0.0001722934660655373,
+      "ci95_high": 0.004603176788303364,
+      "probability_first_better": 0.0385
+    }
+  },
+  "lower_difference_is_better": true,
+  "closing_market_is_reference_only": true,
+  "dataset_audit": {
+    "files": 106,
+    "raw_rows": 33364,
+    "usable_rows": 33331,
+    "duplicate_matches": 0,
+    "invalid_dates": 0,
+    "missing_selected_odds": 32,
+    "files_with_closing_odds": 104,
+    "first_match_date": "2021-07-23",
+    "last_match_date": "2026-05-31",
+    "selected_odds_timing": "pre_closing",
+    "exact_snapshot_timestamps_available": false,
+    "leakage_safe_for_prematch_features": false,
+    "warnings": [
+      "Provider odds columns do not include exact collection timestamps; call them pre-closing, not opening odds.",
+      "Result and post-match columns share each CSV; feature builders must explicitly whitelist pre-match columns."
+    ]
+  }
+}

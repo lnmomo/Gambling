@@ -24,9 +24,10 @@ from .health import build_health_report
 from .international_history_agent import InternationalHistoryAgent
 from .features import build_features_for_official_matches
 from .repository import Repository
-from .schemas import BacktestRequest, EvaluateRequest, FeatureCreate, MatchCreate, MatchMetadataCreate, OddsCreate, SettingsUpdate
+from .schemas import BacktestRequest, EvaluateRequest, FeatureCreate, MatchCreate, MatchMetadataCreate, OddsCreate, ResultCreate, SettingsUpdate
 from .scheduler import BackgroundAgentScheduler
 from .services.task_runner_service import TaskRunnerService
+from .research.prospective import ProspectiveResearchService
 
 
 WEB_DIR = Path(__file__).with_name("web")
@@ -48,6 +49,7 @@ international_history_agent = InternationalHistoryAgent(repository)
 agent_orchestrator = AgentOrchestrator(repository)
 task_runner = TaskRunnerService()
 background_scheduler = BackgroundAgentScheduler(repository, task_runner)
+prospective_research = ProspectiveResearchService(repository.db, repository, workflow)
 
 
 @app.on_event("startup")
@@ -160,7 +162,7 @@ def sync_official_data(force: bool = False) -> dict:
     try:
         report = qwen_ops.attach("official-data-agent", official_data.sync(force=force))
         task_runner.finish_task_run_success(task["id"], affected_matches=report.get("matches", report.get("upserted", 0)),
-                                            created_snapshots=report.get("odds_snapshots", report.get("snapshots", 0)),
+                                            created_snapshots=report.get("hourly_observations", report.get("odds_snapshots", report.get("snapshots", 0))),
                                             warnings=report.get("warnings", []))
         return report
     except Exception as exc:
@@ -171,6 +173,51 @@ def sync_official_data(force: bool = False) -> dict:
 @app.get("/api/official/status")
 def official_data_status() -> dict:
     return official_data.status()
+
+
+@app.get("/api/official/odds-observations")
+def official_odds_observations(official_match_id: str | None = None, limit: int = 1000) -> list[dict]:
+    return repository.list_official_odds_observations(official_match_id, limit)
+
+
+@app.get("/api/official/odds-timeseries/status")
+def official_odds_timeseries_status() -> dict:
+    return repository.official_odds_timeseries_status()
+
+
+@app.get("/api/official/training-samples")
+def official_odds_training_samples(limit: int = 10_000) -> list[dict]:
+    return repository.list_official_odds_training_samples(limit)
+
+
+@app.get("/api/research/prospective/status")
+def prospective_research_status(study_id: str | None = None) -> dict:
+    return prospective_research.progress(study_id)
+
+
+@app.post("/api/research/prospective/capture")
+def capture_prospective_research(limit: int = 100, study_id: str | None = None) -> dict:
+    try:
+        return prospective_research.capture(limit, study_id)
+    except RuntimeError as exc:
+        raise HTTPException(409, str(exc)) from exc
+
+
+@app.post("/api/research/prospective/confirm")
+def confirm_prospective_research(study_id: str | None = None) -> dict:
+    try:
+        return prospective_research.run_confirmation_once(study_id)
+    except RuntimeError as exc:
+        raise HTTPException(409, str(exc)) from exc
+
+
+@app.post("/api/matches/{match_id}/result")
+def save_match_result(match_id: int, payload: ResultCreate) -> dict:
+    _require_match(match_id)
+    return repository.upsert_result(
+        match_id, payload.home_score, payload.away_score,
+        payload.settled_at.isoformat() if payload.settled_at else None,
+    )
 
 
 @app.get("/api/official/matches")

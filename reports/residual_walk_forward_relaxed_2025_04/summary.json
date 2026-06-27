@@ -1,0 +1,89 @@
+{
+  "method": "nested monthly walk-forward market residual + isotonic + league shrinkage + constrained Kelly",
+  "experiment_profile": "relaxed",
+  "profile_config": {
+    "validation_min_bets": 15,
+    "min_positive_validation_months": 2,
+    "uncertainty_scale": 0.75,
+    "ev_thresholds": [
+      -0.01,
+      0.0,
+      0.01,
+      0.02
+    ],
+    "max_odds": [
+      5.0,
+      6.0,
+      7.0
+    ],
+    "kelly_fractions": [
+      0.1,
+      0.25
+    ]
+  },
+  "first_month": "2025-04",
+  "months": 1,
+  "odds_timing": "pre_closing_without_exact_snapshot_timestamp",
+  "same_day_results_hidden_until_settlement": true,
+  "overall": {
+    "bets": 16,
+    "winning_bets": 4,
+    "total_staked": 17.91,
+    "profit": -7.62,
+    "roi_pct": -42.55,
+    "max_drawdown": 7.62,
+    "max_daily_stake": 3.6,
+    "active_days": 10
+  },
+  "probability_metrics": {
+    "matches": 759,
+    "brier_score": 0.199492,
+    "log_loss": 1.003498,
+    "ece": 0.016553
+  },
+  "promotion_decision": "NEED_MORE_DATA",
+  "months_invested": 1,
+  "months_abstained": 0,
+  "monthly": [
+    {
+      "month": "2025-04",
+      "decision": "INVEST",
+      "config": {
+        "min_lower_ev": -0.01,
+        "max_odds": 5.0,
+        "kelly_fraction": 0.25,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0
+      },
+      "validation": {
+        "positive_validation_months": 2,
+        "bets": 44,
+        "winning_bets": 17,
+        "total_staked": 50.94,
+        "profit": 1.67,
+        "roi_pct": 3.28,
+        "max_drawdown": 12.55,
+        "max_daily_stake": 5.17,
+        "active_days": 29
+      },
+      "probability_metrics": {
+        "matches": 759,
+        "brier_score": 0.199492,
+        "log_loss": 1.003498,
+        "ece": 0.016553
+      },
+      "test": {
+        "bets": 16,
+        "winning_bets": 4,
+        "total_staked": 17.91,
+        "profit": -7.62,
+        "roi_pct": -42.55,
+        "max_drawdown": 7.62,
+        "max_daily_stake": 3.6,
+        "active_days": 10
+      }
+    }
+  ]
+}

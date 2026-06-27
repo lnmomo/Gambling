@@ -2,7 +2,7 @@ import {useEffect, useMemo, useState} from "react";
 import PageHeader from "../components/PageHeader";
 import useApi from "../hooks/useApi";
 import useOfficialMatches from "../hooks/useOfficialMatches";
-import {fetchSystemHealth, type SystemHealth} from "../services/healthService";
+import {fetchSystemHealth, latestTaskRunByName, type SystemHealth} from "../services/healthService";
 
 type AgentStep = {id: number; agent_name: string; status: string; error_message: string | null; started_at: string; finished_at: string | null; output: Record<string, unknown>};
 type AgentRun = {id: string; status: string; trigger_name: string; started_at: string; finished_at: string | null; summary: Record<string, unknown>; steps: AgentStep[]};
@@ -15,13 +15,17 @@ const WORKFLOW: WorkflowItem[] = [
   {task: "historical_data_sync", title: "历史库扩充", description: "联赛、全球、国家队历史 CSV 增量归档", dependsOn: "official_sp_sync"},
   {task: "external_odds_news_weather_sync", title: "外部赔率/新闻/天气", description: "The Odds API、新闻、天气与场地元数据", dependsOn: "official_sp_sync"},
   {task: "feature_build", title: "球队特征", description: "历史样本、Elo、lambda、source confidence", dependsOn: "historical_data_sync"},
+  {task: "prospective_research_capture", title: "前瞻研究归档", description: "冻结模型、小时赔率与不可覆盖赛前预测", dependsOn: "feature_build"},
   {task: "qwen_news_analysis", title: "Qwen 情报", description: "新闻摘要、伤停与上下文因子", dependsOn: "external_odds_news_weather_sync"},
   {task: "backtest_run", title: "自动回测", description: "默认 CSV 回测与指标落库", dependsOn: "feature_build"},
   {task: "model_governance_check", title: "模型治理", description: "Champion/Challenger 检查，不自动替换模型", dependsOn: "backtest_run"},
 ];
 
 const taskLabel: Record<TaskRun["status"], string> = {SUCCESS: "完成", FAILED: "失败", RUNNING: "运行中", SKIPPED: "跳过"};
-const fmt = (value?: string | null) => value ? new Date(value).toLocaleString("zh-CN") : "-";
+const fmt = (value?: string | null) => value ? new Intl.DateTimeFormat("zh-CN", {
+  timeZone: "Asia/Shanghai", year: "numeric", month: "2-digit", day: "2-digit",
+  hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+}).format(new Date(value)) : "-";
 const duration = (row?: TaskRun) => {
   if (!row?.finished_at) return row?.status === "RUNNING" ? "运行中" : "-";
   const ms = Date.parse(row.finished_at) - Date.parse(row.started_at);
@@ -29,7 +33,6 @@ const duration = (row?: TaskRun) => {
 };
 const statusClass = (status?: TaskRun["status"]) => status === "SUCCESS" ? "running" : status === "FAILED" ? "alert" : status === "RUNNING" ? "delayed" : "finished";
 const statusText = (status?: TaskRun["status"]) => status ? taskLabel[status] : "等待";
-const latestByTask = (rows: TaskRun[] = []) => new Map(rows.map(row => [row.task_name, row]));
 const outputSummary = (row?: TaskRun) => {
   if (!row) return "尚未运行";
   if (row.error_message) return row.error_message;
@@ -51,7 +54,7 @@ function WorkflowGraph({tasks}:{tasks: Map<string, TaskRun>}) {
           <article className={`workflow-node ${item.task === "model_governance_check" ? "critic" : ""}`}>
             <i>{index + 1}</i>
             <b>{item.title}</b>
-            <small>{statusText(row?.status)} · {fmt(row?.finished_at ?? row?.started_at)}</small>
+            <small>{statusText(row?.status)} · {row?.status === "RUNNING" ? "开始时间" : "完成时间"} {fmt(row?.status === "RUNNING" ? row.started_at : row?.finished_at)}</small>
           </article>
           {index < WORKFLOW.length - 1 && <span className="workflow-arrow">→</span>}
         </div>;
@@ -87,7 +90,7 @@ export default function AgentMonitorPage() {
   const refreshHealth = () => fetchSystemHealth().then(setHealth);
   useEffect(() => { void refreshHealth(); const timer = window.setInterval(refreshHealth, 30_000); return () => window.clearInterval(timer); }, []);
 
-  const tasks = useMemo(() => latestByTask(health?.recentTaskRuns ?? []), [health]);
+  const tasks = useMemo(() => latestTaskRunByName(health?.recentTaskRuns ?? []), [health]);
   const latestManual = agentStatus.data.runs[0];
   const blocked = matches.filter(match => !match.prediction.criticReport.passed);
   const done = WORKFLOW.filter(item => tasks.get(item.task)?.status === "SUCCESS").length;
@@ -120,9 +123,22 @@ export default function AgentMonitorPage() {
         <span>运行中<b>{runningCount}</b></span>
         <span>失败<b>{failed}</b></span>
         <span>Qwen<b>{agentStatus.data.qwen.configured ? "已配置" : "未配置"}</b></span>
+        <span>前瞻研究<b>{health?.prospectiveResearch?.status ?? "未注册"}</b></span>
       </section>
       <WorkflowGraph tasks={tasks}/>
       <TaskCards tasks={tasks}/>
+    </section>
+
+    <section className="panel" style={{marginBottom: 16}}>
+      <div className="panel-heading"><div><h2>前瞻确认研究</h2><p>算法冻结后只追加赛前预测；达到注册样本与时间门槛后仅检验一次。</p></div></div>
+      <section className="summary-strip" style={{padding: 16, margin: 0}}>
+        <span>状态<b>{health?.prospectiveResearch?.status ?? "NOT_REGISTERED"}</b></span>
+        <span>不可变预测<b>{health?.prospectiveResearch?.predictions ?? 0}</b></span>
+        <span>已结算比赛<b>{health?.prospectiveResearch?.settledMatches ?? 0}</b></span>
+        <span>剩余样本<b>{health?.prospectiveResearch?.remainingMatches ?? 0}</b></span>
+        <span>剩余天数<b>{health?.prospectiveResearch?.remainingDays ?? 0}</b></span>
+        <span>确认结论<b>{health?.prospectiveResearch?.confirmationDecision ?? "尚未执行"}</b></span>
+      </section>
     </section>
 
     <section className="panel" style={{marginBottom: 16}}>
