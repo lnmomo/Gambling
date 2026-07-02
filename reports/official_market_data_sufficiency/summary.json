@@ -1,0 +1,51 @@
+{
+  "created_at": "2026-06-30T14:44:19.054849+00:00",
+  "database_path": "data\\football_agents.db",
+  "required_objects": [
+    {
+      "name": "matches",
+      "status": "present"
+    },
+    {
+      "name": "results",
+      "status": "present"
+    },
+    {
+      "name": "official_odds_observations",
+      "status": "missing"
+    },
+    {
+      "name": "official_odds_closing_observations",
+      "status": "missing"
+    },
+    {
+      "name": "external_bookmaker_odds",
+      "status": "present"
+    }
+  ],
+  "counts": {
+    "matches": 61,
+    "results": 0,
+    "official_odds_observations": null,
+    "official_odds_closing_observations": null,
+    "external_bookmaker_odds": 164,
+    "official_opening_settled_matches": null,
+    "official_closing_settled_matches": null,
+    "external_settled_matches": 0,
+    "official_settled_months": 0
+  },
+  "monthly": {
+    "official_sp_settled": [],
+    "external_market_settled": []
+  },
+  "thresholds": {
+    "min_settled": 200,
+    "min_months": 6
+  },
+  "decision": "BLOCKED_SCHEMA_MISSING",
+  "algorithm_blocked": true,
+  "next_actions": [
+    "run database initialization/migrations before algorithm validation",
+    "do not evaluate official-SP edge until official odds observation tables exist"
+  ]
+}

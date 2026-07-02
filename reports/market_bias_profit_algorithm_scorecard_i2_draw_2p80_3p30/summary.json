@@ -1,0 +1,76 @@
+{
+  "method": "market-bias profit algorithm scorecard",
+  "strategy_id": "market-bias-i2-draw-2.80-3.30-v1",
+  "rule": null,
+  "created_at": "2026-06-29T13:25:10.910349+00:00",
+  "score": 57.12,
+  "max_score": 100.0,
+  "deployment_tier": "SHADOW_READY_PRODUCTION_BLOCKED",
+  "pre_multi_window_tier": "SHADOW_READY_PRODUCTION_BLOCKED",
+  "promotion_decision": "SHADOW_READY_PRODUCTION_BLOCKED",
+  "recommended_for_shadow": true,
+  "recommended_for_production": false,
+  "components": {
+    "historical_robustness": {
+      "score": 30.0,
+      "max_score": 30.0,
+      "passed_runs": 21,
+      "total_runs": 24,
+      "pass_rate": 0.875,
+      "source_passes": 8,
+      "profile_passes": 3,
+      "decision": "RESEARCH_CANDIDATE_SHADOW_VALIDATION"
+    },
+    "settlement_portfolio": {
+      "score": 22.12,
+      "max_score": 25.0,
+      "profit": 410.6,
+      "roi_pct": 5.47,
+      "max_drawdown": 223.1,
+      "drawdown_to_profit": 0.5434,
+      "positive_months": 16,
+      "negative_months": 13,
+      "positive_seasons": 4,
+      "negative_seasons": 0
+    },
+    "cross_source_validation": {
+      "score": 0.0,
+      "max_score": 20.0,
+      "available": false
+    },
+    "official_sp_prospective": {
+      "score": 0.0,
+      "max_score": 20.0,
+      "settled_candidate_count": 0,
+      "roi_pct": 0.0,
+      "active_months": 0,
+      "positive_months": 0,
+      "negative_months": 0
+    },
+    "multi_window_validation": {
+      "available": true,
+      "decision": "MULTI_WINDOW_SHADOW_CANDIDATE",
+      "passed_windows": 15,
+      "window_count": 24,
+      "pass_rate": 0.625,
+      "source_passes": 4,
+      "source_count": 4,
+      "combined_roi_pct": 10.64,
+      "worst_window_roi_pct": -12.23
+    },
+    "governance": {
+      "score": 5.0,
+      "max_score": 5.0,
+      "same_day_results_hidden_until_settlement": true,
+      "walk_forward_evidence_present": true
+    }
+  },
+  "blocking_checks_failed": [],
+  "production_checks_failed": [
+    "official_sample",
+    "official_months",
+    "official_roi",
+    "official_month_balance"
+  ],
+  "interpretation": "Historical edge is strong enough for shadow monitoring, but official-SP prospective samples still block production."
+}

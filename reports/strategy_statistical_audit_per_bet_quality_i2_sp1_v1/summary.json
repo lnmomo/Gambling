@@ -1,0 +1,182 @@
+{
+  "method": "monthly block bootstrap and sign-flip strategy audit",
+  "created_at": "2026-07-01T06:15:58.156371+00:00",
+  "bets_path": "reports\\per_bet_price_quality_i2_sp1_v1\\best_bets.csv",
+  "config": {
+    "iterations": 5000,
+    "seed": 42,
+    "min_bets": 200,
+    "min_months": 12,
+    "resampling_unit": "active betting month"
+  },
+  "overall": {
+    "bets": 239,
+    "active_months": 15,
+    "total_staked": 2299.85,
+    "profit": 76.58,
+    "roi_pct": 3.33,
+    "positive_months": 8,
+    "negative_months": 7,
+    "max_negative_month_streak": 3,
+    "max_month_drawdown": 132.5,
+    "drawdown_to_profit": 1.7302
+  },
+  "bootstrap": {
+    "iterations": 5000,
+    "roi_ci_pct": {
+      "p05": -10.73,
+      "p50": 3.09,
+      "p95": 14.95
+    },
+    "profit_ci": {
+      "p05": -204.62,
+      "p50": 65.3,
+      "p95": 379.34
+    },
+    "probability_roi_positive": 0.6424,
+    "probability_profit_positive": 0.6424
+  },
+  "sign_flip_test": {
+    "iterations": 5000,
+    "one_sided_p_value": 0.3706,
+    "null_profit_ci": {
+      "p05": -289.56,
+      "p50": 0.22,
+      "p95": 301.95
+    }
+  },
+  "rule_contributions": [
+    {
+      "rule_label": "league|outcome|odds_bucket=I2|draw|[2.8,3.5)",
+      "bets": 191,
+      "staked": 1819.85,
+      "profit": 55.08,
+      "roi_pct": 3.03,
+      "positive_months": 6,
+      "negative_months": 5
+    },
+    {
+      "rule_label": "league|outcome|market_prob_bucket=SP1|home|[0.55,1.00]",
+      "bets": 48,
+      "staked": 480.0,
+      "profit": 21.5,
+      "roi_pct": 4.48,
+      "positive_months": 2,
+      "negative_months": 3
+    }
+  ],
+  "monthly": [
+    {
+      "month": "2023-10",
+      "bets": 62,
+      "staked": 589.97,
+      "profit": -60.18,
+      "roi_pct": -10.2
+    },
+    {
+      "month": "2023-12",
+      "bets": 12,
+      "staked": 120.0,
+      "profit": 15.8,
+      "roi_pct": 13.17
+    },
+    {
+      "month": "2024-02",
+      "bets": 10,
+      "staked": 100.0,
+      "profit": 5.2,
+      "roi_pct": 5.2
+    },
+    {
+      "month": "2024-03",
+      "bets": 9,
+      "staked": 90.0,
+      "profit": 44.4,
+      "roi_pct": 49.33
+    },
+    {
+      "month": "2024-04",
+      "bets": 11,
+      "staked": 110.0,
+      "profit": -20.9,
+      "roi_pct": -19.0
+    },
+    {
+      "month": "2024-10",
+      "bets": 6,
+      "staked": 60.0,
+      "profit": -6.1,
+      "roi_pct": -10.17
+    },
+    {
+      "month": "2024-12",
+      "bets": 2,
+      "staked": 20.0,
+      "profit": 13.3,
+      "roi_pct": 66.5
+    },
+    {
+      "month": "2025-01",
+      "bets": 1,
+      "staked": 10.0,
+      "profit": -10.0,
+      "roi_pct": -100.0
+    },
+    {
+      "month": "2025-02",
+      "bets": 5,
+      "staked": 50.0,
+      "profit": -15.6,
+      "roi_pct": -31.2
+    },
+    {
+      "month": "2025-03",
+      "bets": 15,
+      "staked": 150.0,
+      "profit": -31.1,
+      "roi_pct": -20.73
+    },
+    {
+      "month": "2025-04",
+      "bets": 3,
+      "staked": 30.0,
+      "profit": 4.0,
+      "roi_pct": 13.33
+    },
+    {
+      "month": "2025-05",
+      "bets": 10,
+      "staked": 100.0,
+      "profit": -66.1,
+      "roi_pct": -66.1
+    },
+    {
+      "month": "2025-09",
+      "bets": 6,
+      "staked": 60.0,
+      "profit": 41.6,
+      "roi_pct": 69.33
+    },
+    {
+      "month": "2025-10",
+      "bets": 79,
+      "staked": 729.88,
+      "profit": 139.76,
+      "roi_pct": 19.15
+    },
+    {
+      "month": "2025-11",
+      "bets": 8,
+      "staked": 80.0,
+      "profit": 22.5,
+      "roi_pct": 28.12
+    }
+  ],
+  "decision": "REJECT_STATISTICALLY_WEAK",
+  "decision_reasons": [
+    "bootstrap_roi_p05<=0",
+    "bootstrap_positive_probability<0.95",
+    "sign_flip_p_value>0.05",
+    "drawdown_to_profit>0.5"
+  ]
+}

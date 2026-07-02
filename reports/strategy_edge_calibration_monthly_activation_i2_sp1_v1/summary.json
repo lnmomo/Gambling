@@ -1,0 +1,189 @@
+{
+  "method": "strategy edge calibration against selected-odds implied probability",
+  "created_at": "2026-07-01T06:05:39.197532+00:00",
+  "bets_path": "reports\\monthly_rule_activation_i2_sp1_v1\\best_bets.csv",
+  "config": {
+    "min_bets": 100,
+    "hit_rate_interval": "Wilson 95% lower bound",
+    "selected_side_implied_probability": "mean(1 / selected_decimal_odds)"
+  },
+  "overall": {
+    "label": "overall",
+    "bets": 519,
+    "wins": 192,
+    "hit_rate": 0.3699,
+    "wilson_hit_rate_lower_95": 0.3295,
+    "avg_odds": 2.9604,
+    "avg_implied_probability": 0.3581,
+    "edge_vs_implied_probability": 0.0118,
+    "conservative_edge_vs_implied": -0.0286,
+    "staked": 4649.53,
+    "profit": 195.05,
+    "roi_pct": 4.2,
+    "decision": "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE",
+    "decision_reasons": [
+      "wilson_lower<=average_implied_probability"
+    ]
+  },
+  "by_rule": [
+    {
+      "label": "league|outcome|odds_bucket=I2|draw|[2.8,3.5)",
+      "bets": 465,
+      "wins": 154,
+      "hit_rate": 0.3312,
+      "wilson_hit_rate_lower_95": 0.2899,
+      "avg_odds": 3.1333,
+      "avg_implied_probability": 0.3199,
+      "edge_vs_implied_probability": 0.0113,
+      "conservative_edge_vs_implied": -0.0299,
+      "staked": 4109.53,
+      "profit": 177.05,
+      "roi_pct": 4.31,
+      "decision": "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE",
+      "decision_reasons": [
+        "wilson_lower<=average_implied_probability"
+      ]
+    },
+    {
+      "label": "league|outcome|market_prob_bucket=SP1|home|[0.55,1.00]",
+      "bets": 54,
+      "wins": 38,
+      "hit_rate": 0.7037,
+      "wilson_hit_rate_lower_95": 0.5717,
+      "avg_odds": 1.472,
+      "avg_implied_probability": 0.6873,
+      "edge_vs_implied_probability": 0.0164,
+      "conservative_edge_vs_implied": -0.1155,
+      "staked": 540.0,
+      "profit": 18.0,
+      "roi_pct": 3.33,
+      "decision": "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE",
+      "decision_reasons": [
+        "bets<minimum",
+        "wilson_lower<=average_implied_probability"
+      ]
+    }
+  ],
+  "by_season": [
+    {
+      "label": "2025-26",
+      "bets": 289,
+      "wins": 101,
+      "hit_rate": 0.3495,
+      "wilson_hit_rate_lower_95": 0.2968,
+      "avg_odds": 3.1111,
+      "avg_implied_probability": 0.3221,
+      "edge_vs_implied_probability": 0.0273,
+      "conservative_edge_vs_implied": -0.0253,
+      "staked": 2679.65,
+      "profit": 253.02,
+      "roi_pct": 9.44,
+      "decision": "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE",
+      "decision_reasons": [
+        "wilson_lower<=average_implied_probability"
+      ]
+    },
+    {
+      "label": "2024-25",
+      "bets": 120,
+      "wins": 39,
+      "hit_rate": 0.325,
+      "wilson_hit_rate_lower_95": 0.2478,
+      "avg_odds": 3.0699,
+      "avg_implied_probability": 0.3368,
+      "edge_vs_implied_probability": -0.0118,
+      "conservative_edge_vs_implied": -0.089,
+      "staked": 899.91,
+      "profit": -21.89,
+      "roi_pct": -2.43,
+      "decision": "NO_CALIBRATED_EDGE",
+      "decision_reasons": [
+        "hit_rate<=average_implied_probability",
+        "wilson_lower<=average_implied_probability",
+        "roi<=0"
+      ]
+    },
+    {
+      "label": "2023-24",
+      "bets": 110,
+      "wins": 52,
+      "hit_rate": 0.4727,
+      "wilson_hit_rate_lower_95": 0.3819,
+      "avg_odds": 2.4452,
+      "avg_implied_probability": 0.4759,
+      "edge_vs_implied_probability": -0.0032,
+      "conservative_edge_vs_implied": -0.094,
+      "staked": 1069.97,
+      "profit": -36.08,
+      "roi_pct": -3.37,
+      "decision": "NO_CALIBRATED_EDGE",
+      "decision_reasons": [
+        "hit_rate<=average_implied_probability",
+        "wilson_lower<=average_implied_probability",
+        "roi<=0"
+      ]
+    }
+  ],
+  "by_odds_band": [
+    {
+      "label": "[2.8,3.3)",
+      "bets": 386,
+      "wins": 124,
+      "hit_rate": 0.3212,
+      "wilson_hit_rate_lower_95": 0.2766,
+      "avg_odds": 3.0838,
+      "avg_implied_probability": 0.3247,
+      "edge_vs_implied_probability": -0.0035,
+      "conservative_edge_vs_implied": -0.0481,
+      "staked": 3414.98,
+      "profit": -42.58,
+      "roi_pct": -1.25,
+      "decision": "NO_CALIBRATED_EDGE",
+      "decision_reasons": [
+        "hit_rate<=average_implied_probability",
+        "wilson_lower<=average_implied_probability",
+        "roi<=0"
+      ]
+    },
+    {
+      "label": "[3.3,3.5)",
+      "bets": 79,
+      "wins": 30,
+      "hit_rate": 0.3797,
+      "wilson_hit_rate_lower_95": 0.2807,
+      "avg_odds": 3.3752,
+      "avg_implied_probability": 0.2963,
+      "edge_vs_implied_probability": 0.0834,
+      "conservative_edge_vs_implied": -0.0157,
+      "staked": 694.55,
+      "profit": 219.63,
+      "roi_pct": 31.62,
+      "decision": "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE",
+      "decision_reasons": [
+        "wilson_lower<=average_implied_probability"
+      ]
+    },
+    {
+      "label": "[1.0,1.8)",
+      "bets": 54,
+      "wins": 38,
+      "hit_rate": 0.7037,
+      "wilson_hit_rate_lower_95": 0.5717,
+      "avg_odds": 1.472,
+      "avg_implied_probability": 0.6873,
+      "edge_vs_implied_probability": 0.0164,
+      "conservative_edge_vs_implied": -0.1155,
+      "staked": 540.0,
+      "profit": 18.0,
+      "roi_pct": 3.33,
+      "decision": "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE",
+      "decision_reasons": [
+        "wilson_lower<=average_implied_probability"
+      ]
+    }
+  ],
+  "decision": "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE",
+  "decision_reasons": [
+    "wilson_lower<=average_implied_probability"
+  ]
+}

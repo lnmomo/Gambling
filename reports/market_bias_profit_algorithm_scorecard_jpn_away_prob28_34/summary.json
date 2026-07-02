@@ -1,0 +1,74 @@
+{
+  "method": "market-bias profit algorithm scorecard",
+  "strategy_id": "research-market-bias-jpn-away-market-prob-0.28-0.34-v1",
+  "rule": "league|outcome|market_prob_bucket=JPN|away|[0.28,0.34)",
+  "created_at": "2026-06-29T12:51:40.833430+00:00",
+  "score": 62.98,
+  "max_score": 100.0,
+  "deployment_tier": "RESEARCH_WATCH_ONLY",
+  "promotion_decision": "REJECT_RESEARCH_CANDIDATE",
+  "recommended_for_shadow": false,
+  "recommended_for_production": false,
+  "components": {
+    "historical_robustness": {
+      "score": 15.33,
+      "max_score": 30.0,
+      "passed_runs": 4,
+      "total_runs": 12,
+      "pass_rate": 0.3333,
+      "source_passes": 2,
+      "profile_passes": 3,
+      "decision": "KEEP_SHADOW_ONLY"
+    },
+    "settlement_portfolio": {
+      "score": 22.65,
+      "max_score": 25.0,
+      "profit": 211.4,
+      "roi_pct": 6.24,
+      "max_drawdown": 165.8,
+      "drawdown_to_profit": 0.7843,
+      "positive_months": 27,
+      "negative_months": 20,
+      "positive_seasons": 7,
+      "negative_seasons": 3
+    },
+    "cross_source_validation": {
+      "score": 20.0,
+      "max_score": 20.0,
+      "available": true,
+      "validation_source_count": 2,
+      "passed_validation_sources": 2,
+      "combined_roi_pct": 5.45,
+      "worst_source_roi_pct": 4.79,
+      "total_portfolio_bets": 741,
+      "passes_all_validation_sources": true
+    },
+    "official_sp_prospective": {
+      "score": 0.0,
+      "max_score": 20.0,
+      "settled_candidate_count": 0,
+      "roi_pct": 0.0,
+      "active_months": 0,
+      "positive_months": 0,
+      "negative_months": 0
+    },
+    "governance": {
+      "score": 5.0,
+      "max_score": 5.0,
+      "same_day_results_hidden_until_settlement": true,
+      "walk_forward_evidence_present": true
+    }
+  },
+  "blocking_checks_failed": [
+    "robust_decision",
+    "robust_pass_rate",
+    "source_passes"
+  ],
+  "production_checks_failed": [
+    "official_sample",
+    "official_months",
+    "official_roi",
+    "official_month_balance"
+  ],
+  "interpretation": "Keep collecting evidence before this strategy can influence betting decisions."
+}

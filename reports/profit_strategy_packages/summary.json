@@ -1,0 +1,64 @@
+{
+  "strategies": [
+    {
+      "strategy_id": "profit-i2-draw-market-anchored-stop3-cool3-v1",
+      "name": "Market-anchored Italy Serie B draw residual strategy with settled-loss cooldown",
+      "status": "PROMOTE_TO_OFFICIAL_SP_SHADOW_VALIDATION",
+      "historical_report": "reports\\feature_enriched_market_anchored_i2_stop3_cool3_v1\\summary.json",
+      "statistical_audit_report": "reports\\strategy_statistical_audit_market_anchored_i2_stop3_cool3_v1\\summary.json",
+      "edge_calibration_report": "reports\\strategy_edge_calibration_market_anchored_i2_stop3_cool3_v1\\summary.json",
+      "scorer_artifact_report": "reports\\feature_enriched_market_anchored_i2_scorer_v1\\scorer.json",
+      "selection": {
+        "league_family": "I2",
+        "outcome": "DRAW",
+        "odds_source": "AVG_OPEN",
+        "odds_band": "[2.8,3.5)",
+        "train_months": 30,
+        "min_prior_candidates": 120,
+        "min_predicted_ev": 0.02,
+        "ridge": 10.0,
+        "market_residual_cap": 0.08,
+        "max_bets_per_day": 1
+      },
+      "risk_control": {
+        "stop_after_losing_settlement_days": 3,
+        "cooldown_days": 3
+      },
+      "historical_metrics": {
+        "bets": 303,
+        "profit": 644.1,
+        "roi_pct": 21.26,
+        "max_drawdown": 90.0,
+        "positive_months": 25,
+        "negative_months": 15,
+        "passed_windows": 5,
+        "window_count": 6,
+        "active_pass_rate": 0.8333
+      },
+      "audit": {
+        "decision": "STATISTICALLY_SUPPORTED_RESEARCH_CANDIDATE",
+        "bootstrap_roi_p05": 8.91,
+        "probability_roi_positive": 0.9975,
+        "sign_flip_p_value": 0.0065,
+        "drawdown_to_profit": 0.1143
+      },
+      "calibration": {
+        "decision": "CALIBRATED_EDGE_CONFIRMED",
+        "hit_rate": 0.3795,
+        "wilson_hit_rate_lower_95": 0.3267,
+        "avg_implied_probability": 0.3119,
+        "conservative_edge_vs_implied": 0.0148
+      },
+      "deployment_blockers": [
+        "historical validation uses football-data AVG_OPEN, not collected China Sporttery official SP snapshots",
+        "first rolling annual window remains weak, so production allocation is blocked until prospective official-SP evidence accumulates"
+      ],
+      "next_validation": [
+        "Replay the same candidate rule on official_odds_observations using only pre-match snapshots.",
+        "Map official live features into the scorer feature schema before generating residual-scored shadow picks.",
+        "Re-train or refresh the scorer artifact on a scheduled cadence as new settled history arrives.",
+        "Keep the strategy in shadow/research mode until official-SP sample size and rolling-window gates pass."
+      ]
+    }
+  ]
+}

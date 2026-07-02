@@ -44,3 +44,62 @@ def test_shadow_new_recommendation_is_record_only(tmp_path):
     assert record["baseline_recommendation"] == "NO_BET"
     assert "shadow_would_recommend_new" in record
     assert record["lifecycle_status"] == "PENDING_RESULT"
+
+
+def test_i2_market_bias_shadow_candidate_can_add_draw_without_mutating_baseline(tmp_path):
+    _, version = setup_store(tmp_path)
+    match = {"id": "1", "official_match_id": "M3", "kickoff_time": "2027-01-01T12:00:00Z", "league": "Italian Serie B"}
+    original = baseline("NO_BET")
+    original["officialSp"] = {"home": 2.4, "draw": 3.1, "away": 3.0}
+    record = run_live_shadow_prediction(match, original, version, {"official_sp_snapshot_id": "s3"})
+    assert original["recommendation"] == "NO_BET"
+    assert record["baseline_recommendation"] == "NO_BET"
+    assert record["shadow_recommendation"] == "DRAW"
+    assert record["shadow_selected_outcome"] == "DRAW"
+    assert record["shadow_would_recommend_new"] == 1
+    assert record["shadow_edge_quality_level"] == "MARKET_BIAS"
+    assert record["shadow_ev"] == 0.0774
+
+
+def test_i2_market_bias_shadow_candidate_requires_valid_draw_band(tmp_path):
+    _, version = setup_store(tmp_path)
+    match = {"id": "1", "official_match_id": "M4", "kickoff_time": "2027-01-01T12:00:00Z", "league": "Italian Serie B"}
+    original = baseline("NO_BET")
+    original["officialSp"] = {"home": 1.8, "draw": 3.7, "away": 4.2}
+    record = run_live_shadow_prediction(match, original, version, {"official_sp_snapshot_id": "s4"})
+    assert record["baseline_recommendation"] == "NO_BET"
+    assert record["shadow_recommendation"] == "NO_BET"
+    assert record["shadow_would_recommend_new"] == 0
+
+
+def test_sp1_research_candidate_does_not_create_shadow_recommendation(tmp_path):
+    _, version = setup_store(tmp_path)
+    match = {"id": "1", "official_match_id": "M5", "kickoff_time": "2027-01-01T12:00:00Z", "league": "Spanish La Liga"}
+    original = baseline("NO_BET")
+    original["officialSp"] = {"home": 1.6, "draw": 4.0, "away": 5.0}
+    record = run_live_shadow_prediction(match, original, version, {"official_sp_snapshot_id": "s5"})
+    assert record["baseline_recommendation"] == "NO_BET"
+    assert record["shadow_recommendation"] == "NO_BET"
+    assert record["shadow_would_recommend_new"] == 0
+
+
+def test_sp1_research_candidate_still_does_not_create_shadow_when_probability_is_low(tmp_path):
+    _, version = setup_store(tmp_path)
+    match = {"id": "1", "official_match_id": "M6", "kickoff_time": "2027-01-01T12:00:00Z", "league": "Spanish La Liga"}
+    original = baseline("NO_BET")
+    original["officialSp"] = {"home": 1.9, "draw": 3.5, "away": 4.0}
+    record = run_live_shadow_prediction(match, original, version, {"official_sp_snapshot_id": "s6"})
+    assert record["baseline_recommendation"] == "NO_BET"
+    assert record["shadow_recommendation"] == "NO_BET"
+    assert record["shadow_would_recommend_new"] == 0
+
+
+def test_jpn_research_candidate_does_not_create_shadow_recommendation(tmp_path):
+    _, version = setup_store(tmp_path)
+    match = {"id": "1", "official_match_id": "M7", "kickoff_time": "2027-01-01T12:00:00Z", "league": "Japanese J1 League"}
+    original = baseline("NO_BET")
+    original["officialSp"] = {"home": 2.1, "draw": 3.2, "away": 3.2}
+    record = run_live_shadow_prediction(match, original, version, {"official_sp_snapshot_id": "s7"})
+    assert record["baseline_recommendation"] == "NO_BET"
+    assert record["shadow_recommendation"] == "NO_BET"
+    assert record["shadow_would_recommend_new"] == 0

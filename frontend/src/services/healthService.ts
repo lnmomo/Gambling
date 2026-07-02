@@ -45,6 +45,19 @@ export type SystemHealth = {
     remainingDays: number;
     confirmationDecision: string | null;
   };
+  profitScorerOfficialSp?: {
+    status: string;
+    openingPreMatchSnapshots: number;
+    scoredSnapshots: number;
+    selectedSnapshots: number;
+    settledSelectedSnapshots: number;
+    minimumSettledSelected: number;
+    minimumMonths: number;
+    remainingSettledSelected: number;
+    decision: string | null;
+    decisionReasons: string[];
+    lastRunAt: string | null;
+  };
 };
 
 export type HealthTaskRun = NonNullable<SystemHealth["recentTaskRuns"]>[number];

@@ -1,0 +1,30 @@
+{
+  "method": "direct diagnostic rule unit bet builder",
+  "rules": [
+    "league|outcome|odds_bucket=RUS|home|[2.2,2.8)",
+    "league|outcome|market_prob_bucket=JPN|away|[0.28,0.34)",
+    "league|outcome|odds_bucket=SWE|away|[2.2,2.8)",
+    "league|outcome|odds_bucket=NOR|home|[1.8,2.2)",
+    "league|outcome|market_prob_bucket=AUT|away|[0.20,0.28)",
+    "league|odds_bucket|market_prob_bucket=NOR|[2.2,2.8)|[0.42,0.55)",
+    "league|odds_bucket|market_prob_bucket=AUT|[4.0,5.0)|[0.20,0.28)",
+    "league|outcome|odds_bucket=JPN|away|[2.8,3.5)",
+    "league|outcome|market_prob_bucket=FIN|away|[0.28,0.34)",
+    "league|outcome|market_prob_bucket=SWZ|away|[0.42,0.55)",
+    "league|outcome|market_prob_bucket=NOR|home|[0.42,0.55)",
+    "league|outcome|favorite_relation=SWE|away|market_favorite",
+    "league|market_prob_bucket=BRA|[0.42,0.55)",
+    "league|market_prob_bucket|favorite_relation=BRA|[0.42,0.55)|market_favorite",
+    "league|outcome|odds_bucket=FIN|away|[2.8,3.5)",
+    "league|outcome|odds_bucket=AUT|away|[1.8,2.2)",
+    "league|outcome|odds_bucket=SWZ|away|[1.8,2.2)",
+    "league|odds_bucket=USA|[1.8,2.2)",
+    "league|odds_bucket|favorite_relation=USA|[1.8,2.2)|market_favorite",
+    "league|odds_bucket|market_prob_bucket=USA|[1.8,2.2)|[0.42,0.55)"
+  ],
+  "rule_count": 20,
+  "unit_bets": 40720,
+  "notes": [
+    "This builds a research rule pool from diagnostic CSVs. Use downstream walk-forward windows for validation."
+  ]
+}

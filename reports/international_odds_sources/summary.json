@@ -1,0 +1,179 @@
+{
+  "method": "broad international football odds source discovery",
+  "generated_at": "2026-07-01T15:26:24.053449+00:00",
+  "public_csv_sources": [
+    {
+      "name": "Footiqo World Cup",
+      "coverage": "World Cup only",
+      "data": "historical results + 1X2 closing odds",
+      "status": "usable_integrated",
+      "path": "data/historical_csv/football-data/new/WORLD_CUP.csv",
+      "note": "Already used by sync-international-odds-history."
+    },
+    {
+      "name": "martj42 international_results",
+      "coverage": "senior international-team results",
+      "data": "results only, no odds",
+      "status": "features_only_not_edge_validation",
+      "path": "data/historical_csv/international/results.csv",
+      "note": "Useful for team features, not sufficient for betting-edge backtests."
+    },
+    {
+      "name": "openfootball national-team datasets",
+      "coverage": "World Cup, Euro, qualifiers and other national-team competitions depending on repository",
+      "data": "fixtures/results in open text/CSV-like formats, no bookmaker odds",
+      "status": "features_only_candidate",
+      "path": "https://github.com/openfootball",
+      "note": "Good fallback for filling tournament history and team form features; not enough for edge validation without odds."
+    },
+    {
+      "name": "Kaggle/martj42 international football results",
+      "coverage": "senior international-team results from 1872 onward",
+      "data": "results only, no odds",
+      "status": "features_only_candidate",
+      "path": "https://www.kaggle.com/datasets/martj42/international-football-results-from-1872-to-2017",
+      "note": "Same family of data as the configured martj42 CSV; useful for manual refresh checks."
+    },
+    {
+      "name": "football-data.co.uk",
+      "coverage": "club/domestic leagues",
+      "data": "historical results + bookmaker odds",
+      "status": "not_broad_international",
+      "path": "data/historical_csv/football-data",
+      "note": "No broad national-team international CSV feed found in this project source."
+    }
+  ],
+  "commercial_odds_sources": [
+    {
+      "name": "The Odds API Historical Odds",
+      "coverage": "international competitions returned by /v4/sports, including World Cup, Euro, Copa America and UEFA Nations League when listed",
+      "data": "historical bookmaker odds snapshots, h2h market usable as 1X2",
+      "status": "usable_with_paid_historical_access",
+      "path": "https://the-odds-api.com/liveapi/guides/v4/#get-historical-odds",
+      "note": "Best match for this project because the live odds integration already uses The Odds API."
+    },
+    {
+      "name": "API-Football / API-Sports",
+      "coverage": "broad football fixtures, teams, leagues, cups and odds depending on subscription",
+      "data": "fixtures/results plus odds endpoints",
+      "status": "commercial_candidate",
+      "path": "https://api-sports.io/documentation/football/v3",
+      "note": "Potential fallback provider if The Odds API historical access is not sufficient."
+    },
+    {
+      "name": "Sportmonks Premium Odds Feed",
+      "coverage": "football historical pre-match odds depending on subscription",
+      "data": "historical pre-match odds",
+      "status": "commercial_candidate",
+      "path": "https://docs.sportmonks.com/football/endpoints-and-entities/endpoints/premium-odds-feed",
+      "note": "Useful only with paid premium odds access; would require a new adapter."
+    }
+  ],
+  "odds_api": {
+    "configured": true,
+    "base_url": "https://api.the-odds-api.com/v4",
+    "probe_used": true,
+    "quota_headers": {
+      "x-requests-remaining": "500",
+      "x-requests-used": "0",
+      "x-requests-last": "0"
+    },
+    "candidates": [
+      {
+        "sport_key": "soccer_fifa_world_cup",
+        "title": "FIFA World Cup",
+        "description": "FIFA World Cup 2026",
+        "status": "available_active",
+        "historical_odds_endpoint": "/v4/historical/sports/soccer_fifa_world_cup/odds",
+        "markets": "h2h",
+        "regions": "uk,eu"
+      },
+      {
+        "sport_key": "soccer_uefa_european_championship",
+        "title": "UEFA Euro",
+        "description": "UEFA European Championship",
+        "status": "available_out_of_season",
+        "historical_odds_endpoint": "/v4/historical/sports/soccer_uefa_european_championship/odds",
+        "markets": "h2h",
+        "regions": "uk,eu"
+      },
+      {
+        "sport_key": "soccer_conmebol_copa_america",
+        "title": "Copa América",
+        "description": "CONMEBOL Copa América",
+        "status": "available_out_of_season",
+        "historical_odds_endpoint": "/v4/historical/sports/soccer_conmebol_copa_america/odds",
+        "markets": "h2h",
+        "regions": "uk,eu"
+      },
+      {
+        "sport_key": "soccer_uefa_nations_league",
+        "title": "UEFA Nations League",
+        "description": "UEFA Nations League",
+        "status": "available_out_of_season",
+        "historical_odds_endpoint": "/v4/historical/sports/soccer_uefa_nations_league/odds",
+        "markets": "h2h",
+        "regions": "uk,eu"
+      },
+      {
+        "sport_key": "soccer_fifa_world_cup_qualifiers",
+        "title": "World Cup Qualifiers",
+        "description": "",
+        "status": "not_returned_by_sports_endpoint",
+        "historical_odds_endpoint": "/v4/historical/sports/soccer_fifa_world_cup_qualifiers/odds",
+        "markets": "h2h",
+        "regions": "uk,eu"
+      }
+    ],
+    "usable_or_configurable": [
+      {
+        "sport_key": "soccer_fifa_world_cup",
+        "title": "FIFA World Cup",
+        "description": "FIFA World Cup 2026",
+        "status": "available_active",
+        "historical_odds_endpoint": "/v4/historical/sports/soccer_fifa_world_cup/odds",
+        "markets": "h2h",
+        "regions": "uk,eu"
+      },
+      {
+        "sport_key": "soccer_uefa_european_championship",
+        "title": "UEFA Euro",
+        "description": "UEFA European Championship",
+        "status": "available_out_of_season",
+        "historical_odds_endpoint": "/v4/historical/sports/soccer_uefa_european_championship/odds",
+        "markets": "h2h",
+        "regions": "uk,eu"
+      },
+      {
+        "sport_key": "soccer_conmebol_copa_america",
+        "title": "Copa América",
+        "description": "CONMEBOL Copa América",
+        "status": "available_out_of_season",
+        "historical_odds_endpoint": "/v4/historical/sports/soccer_conmebol_copa_america/odds",
+        "markets": "h2h",
+        "regions": "uk,eu"
+      },
+      {
+        "sport_key": "soccer_uefa_nations_league",
+        "title": "UEFA Nations League",
+        "description": "UEFA Nations League",
+        "status": "available_out_of_season",
+        "historical_odds_endpoint": "/v4/historical/sports/soccer_uefa_nations_league/odds",
+        "markets": "h2h",
+        "regions": "uk,eu"
+      }
+    ],
+    "note": "Use The Odds API historical endpoint for broad international 1X2 odds. Historical snapshots require a paid usage plan and start from 2020-06-06."
+  },
+  "recommended_env": {
+    "THE_ODDS_API_KEY": "<your key>",
+    "INTERNATIONAL_ODDS_SPORT_KEYS": "soccer_fifa_world_cup,soccer_uefa_european_championship,soccer_conmebol_copa_america,soccer_uefa_nations_league,soccer_fifa_world_cup_qualifiers"
+  },
+  "next_actions": [
+    "Keep Footiqo WORLD_CUP.csv as the already-integrated free World Cup odds source.",
+    "Use martj42/openfootball-style results data only for national-team feature coverage, not for betting-edge proof.",
+    "Configure THE_ODDS_API_KEY with historical access, then rerun this command to verify broad international sport keys.",
+    "Only after keys are verified, archive paid historical h2h snapshots and join them to settled international results."
+  ],
+  "blockers": []
+}

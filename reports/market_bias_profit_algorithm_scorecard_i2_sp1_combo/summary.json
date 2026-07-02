@@ -1,0 +1,99 @@
+{
+  "method": "market-bias profit algorithm scorecard",
+  "strategy_id": "market-bias-i2-draw-plus-sp1-home-v1",
+  "rule": null,
+  "created_at": "2026-06-30T14:53:37.501608+00:00",
+  "score": 59.59,
+  "max_score": 100.0,
+  "deployment_tier": "RESEARCH_ONLY_UNSTABLE_WINDOWS",
+  "pre_multi_window_tier": "SHADOW_READY_PRODUCTION_BLOCKED",
+  "promotion_decision": "SHADOW_READY_PRODUCTION_BLOCKED",
+  "recommended_for_shadow": false,
+  "recommended_for_production": false,
+  "components": {
+    "historical_robustness": {
+      "score": 30.0,
+      "max_score": 30.0,
+      "passed_runs": 22,
+      "total_runs": 24,
+      "pass_rate": 0.9167,
+      "source_passes": 8,
+      "profile_passes": 3,
+      "decision": "RESEARCH_CANDIDATE_SHADOW_VALIDATION"
+    },
+    "settlement_portfolio": {
+      "score": 24.59,
+      "max_score": 25.0,
+      "profit": 1040.1,
+      "roi_pct": 10.03,
+      "max_drawdown": 143.1,
+      "drawdown_to_profit": 0.1376,
+      "positive_months": 19,
+      "negative_months": 12,
+      "positive_seasons": 4,
+      "negative_seasons": 0
+    },
+    "cross_source_validation": {
+      "score": 0.0,
+      "max_score": 20.0,
+      "available": false
+    },
+    "official_sp_prospective": {
+      "score": 0.0,
+      "max_score": 20.0,
+      "settled_candidate_count": 0,
+      "roi_pct": 0.0,
+      "active_months": 0,
+      "positive_months": 0,
+      "negative_months": 0
+    },
+    "multi_window_validation": {
+      "available": true,
+      "decision": "RESEARCH_ONLY_UNSTABLE_WINDOWS",
+      "passed_windows": 7,
+      "window_count": 12,
+      "pass_rate": 0.5833,
+      "source_passes": 2,
+      "source_count": 2,
+      "combined_roi_pct": 8.81,
+      "worst_window_roi_pct": -5.61
+    },
+    "statistical_audit": {
+      "available": true,
+      "decision": "STATISTICALLY_SUPPORTED_RESEARCH_CANDIDATE",
+      "bets": 1037,
+      "active_months": 31,
+      "roi_pct": 10.03,
+      "bootstrap_roi_p05": 3.77,
+      "bootstrap_probability_roi_positive": 0.9962,
+      "sign_flip_p_value": 0.0124,
+      "decision_reasons": []
+    },
+    "edge_calibration": {
+      "available": true,
+      "decision": "CALIBRATED_EDGE_CONFIRMED",
+      "bets": 1037,
+      "hit_rate": 0.4166,
+      "wilson_hit_rate_lower_95": 0.3869,
+      "avg_implied_probability": 0.3779,
+      "edge_vs_implied_probability": 0.0387,
+      "conservative_edge_vs_implied": 0.0091,
+      "roi_pct": 10.03,
+      "decision_reasons": []
+    },
+    "governance": {
+      "score": 5.0,
+      "max_score": 5.0,
+      "same_day_results_hidden_until_settlement": true,
+      "walk_forward_evidence_present": true
+    }
+  },
+  "blocking_checks_failed": [],
+  "production_checks_failed": [
+    "official_sample",
+    "official_months",
+    "official_roi",
+    "official_month_balance"
+  ],
+  "interpretation": "Historical edge is positive, but multi-window validation is not stable enough for shadow promotion."
+}

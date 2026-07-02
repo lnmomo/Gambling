@@ -1,0 +1,144 @@
+{
+  "method": "market-bias promotion gate",
+  "strategy_id": "market-bias-sp1-home-market-prob-0.55-1.00-v1",
+  "rules": [
+    "league|outcome|market_prob_bucket=SP1|home|[0.55,1.00]"
+  ],
+  "evaluated_at": "2026-06-28T06:17:37.361517+00:00",
+  "decision": "SHADOW_READY_PRODUCTION_BLOCKED",
+  "recommended_for_shadow": true,
+  "recommended_for_production": false,
+  "requires_human_confirmation": true,
+  "checks": [
+    {
+      "check_id": "robust_decision",
+      "description": "Robustness gate remains research/shadow eligible",
+      "passed": true,
+      "value": "RESEARCH_CANDIDATE_SHADOW_VALIDATION",
+      "threshold": "RESEARCH_CANDIDATE_SHADOW_VALIDATION",
+      "severity": "BLOCKING",
+      "message": "historical multi-source gate"
+    },
+    {
+      "check_id": "robust_pass_rate",
+      "description": "Robust pass rate >= minimum",
+      "passed": true,
+      "value": 0.9583,
+      "threshold": 0.75,
+      "severity": "BLOCKING",
+      "message": "historical robustness pass rate"
+    },
+    {
+      "check_id": "source_passes",
+      "description": "Enough odds sources pass",
+      "passed": true,
+      "value": 8,
+      "threshold": 4,
+      "severity": "BLOCKING",
+      "message": "odds-source diversity"
+    },
+    {
+      "check_id": "profile_passes",
+      "description": "Enough rolling profiles pass",
+      "passed": true,
+      "value": 3,
+      "threshold": 2,
+      "severity": "BLOCKING",
+      "message": "rolling-profile diversity"
+    },
+    {
+      "check_id": "portfolio_profit",
+      "description": "Portfolio profit is positive",
+      "passed": true,
+      "value": 1040.1,
+      "threshold": ">0",
+      "severity": "BLOCKING",
+      "message": "settlement-aware portfolio profit"
+    },
+    {
+      "check_id": "portfolio_roi",
+      "description": "Portfolio ROI >= minimum",
+      "passed": true,
+      "value": 10.03,
+      "threshold": 3.0,
+      "severity": "BLOCKING",
+      "message": "settlement-aware portfolio ROI"
+    },
+    {
+      "check_id": "portfolio_month_balance",
+      "description": "Positive months exceed negative months by margin",
+      "passed": true,
+      "value": "19/12",
+      "threshold": "+2",
+      "severity": "BLOCKING",
+      "message": "monthly stability"
+    },
+    {
+      "check_id": "portfolio_season_balance",
+      "description": "More positive than negative seasons",
+      "passed": true,
+      "value": "4/0",
+      "threshold": "positive>negative",
+      "severity": "BLOCKING",
+      "message": "season stability"
+    },
+    {
+      "check_id": "drawdown_to_profit",
+      "description": "Portfolio drawdown <= profit",
+      "passed": true,
+      "value": 0.1376,
+      "threshold": 1.0,
+      "severity": "WARNING",
+      "message": "drawdown guard"
+    },
+    {
+      "check_id": "official_sample",
+      "description": "Official-SP settled candidate sample >= minimum",
+      "passed": false,
+      "value": 0,
+      "threshold": 100,
+      "severity": "PRODUCTION_BLOCKING",
+      "message": "official SP prospective sample"
+    },
+    {
+      "check_id": "official_months",
+      "description": "Official-SP active months >= minimum",
+      "passed": false,
+      "value": 0,
+      "threshold": 12,
+      "severity": "PRODUCTION_BLOCKING",
+      "message": "official SP month coverage"
+    },
+    {
+      "check_id": "official_roi",
+      "description": "Official-SP ROI >= minimum",
+      "passed": false,
+      "value": 0.0,
+      "threshold": 3.0,
+      "severity": "PRODUCTION_BLOCKING",
+      "message": "official SP ROI"
+    },
+    {
+      "check_id": "official_month_balance",
+      "description": "Official-SP positive months exceed negative months",
+      "passed": false,
+      "value": "0/0",
+      "threshold": "positive>negative",
+      "severity": "PRODUCTION_BLOCKING",
+      "message": "official SP monthly stability"
+    }
+  ],
+  "failed_blocking_checks": [],
+  "failed_production_checks": [
+    "official_sample",
+    "official_months",
+    "official_roi",
+    "official_month_balance"
+  ],
+  "failed_warning_checks": [],
+  "summary": [
+    "Decision: SHADOW_READY_PRODUCTION_BLOCKED",
+    "Historical robustness and settlement-aware portfolio evidence are necessary but not sufficient.",
+    "Production remains blocked until official-SP prospective settlement satisfies sample, ROI, and month-balance gates."
+  ]
+}

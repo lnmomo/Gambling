@@ -1,0 +1,101 @@
+{
+  "method": "market-bias profit algorithm scorecard",
+  "strategy_id": "market-bias-i2-draw-2.8-3.5-v1",
+  "rule": null,
+  "created_at": "2026-06-30T14:53:37.432481+00:00",
+  "score": 59.18,
+  "max_score": 100.0,
+  "deployment_tier": "RESEARCH_ONLY_CALIBRATION_WEAK",
+  "pre_multi_window_tier": "SHADOW_READY_PRODUCTION_BLOCKED",
+  "promotion_decision": "SHADOW_READY_PRODUCTION_BLOCKED",
+  "recommended_for_shadow": false,
+  "recommended_for_production": false,
+  "components": {
+    "historical_robustness": {
+      "score": 30.0,
+      "max_score": 30.0,
+      "passed_runs": 22,
+      "total_runs": 24,
+      "pass_rate": 0.9167,
+      "source_passes": 8,
+      "profile_passes": 3,
+      "decision": "RESEARCH_CANDIDATE_SHADOW_VALIDATION"
+    },
+    "settlement_portfolio": {
+      "score": 24.18,
+      "max_score": 25.0,
+      "profit": 827.6,
+      "roi_pct": 9.5,
+      "max_drawdown": 225.0,
+      "drawdown_to_profit": 0.2719,
+      "positive_months": 17,
+      "negative_months": 11,
+      "positive_seasons": 3,
+      "negative_seasons": 1
+    },
+    "cross_source_validation": {
+      "score": 0.0,
+      "max_score": 20.0,
+      "available": false
+    },
+    "official_sp_prospective": {
+      "score": 0.0,
+      "max_score": 20.0,
+      "settled_candidate_count": 0,
+      "roi_pct": 0.0,
+      "active_months": 0,
+      "positive_months": 0,
+      "negative_months": 0
+    },
+    "multi_window_validation": {
+      "available": true,
+      "decision": "MULTI_WINDOW_SHADOW_CANDIDATE",
+      "passed_windows": 8,
+      "window_count": 12,
+      "pass_rate": 0.6667,
+      "source_passes": 2,
+      "source_count": 2,
+      "combined_roi_pct": 8.85,
+      "worst_window_roi_pct": -5.48
+    },
+    "statistical_audit": {
+      "available": true,
+      "decision": "STATISTICALLY_SUPPORTED_RESEARCH_CANDIDATE",
+      "bets": 871,
+      "active_months": 28,
+      "roi_pct": 9.5,
+      "bootstrap_roi_p05": 1.85,
+      "bootstrap_probability_roi_positive": 0.9802,
+      "sign_flip_p_value": 0.0314,
+      "decision_reasons": []
+    },
+    "edge_calibration": {
+      "available": true,
+      "decision": "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE",
+      "bets": 871,
+      "hit_rate": 0.3479,
+      "wilson_hit_rate_lower_95": 0.317,
+      "avg_implied_probability": 0.3174,
+      "edge_vs_implied_probability": 0.0305,
+      "conservative_edge_vs_implied": -0.0004,
+      "roi_pct": 9.5,
+      "decision_reasons": [
+        "wilson_lower<=average_implied_probability"
+      ]
+    },
+    "governance": {
+      "score": 5.0,
+      "max_score": 5.0,
+      "same_day_results_hidden_until_settlement": true,
+      "walk_forward_evidence_present": true
+    }
+  },
+  "blocking_checks_failed": [],
+  "production_checks_failed": [
+    "official_sample",
+    "official_months",
+    "official_roi",
+    "official_month_balance"
+  ],
+  "interpretation": "Historical edge is positive, but selected-odds calibration is not conservative enough for shadow promotion."
+}

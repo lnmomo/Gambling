@@ -4,6 +4,7 @@ from typing import Any
 
 from .repository import Repository
 from .db import db
+from .market_bias_shadow_strategy import find_market_bias_shadow_candidate
 from .shadow_prediction_store import ShadowPredictionStore, TrueOddsConfigVersion, dumps
 from .true_odds_engine import calculate_true_odds_estimate
 
@@ -35,9 +36,24 @@ def run_live_shadow_prediction(match: dict[str, Any], baseline_prediction: dict[
     )
     edge = estimate.edge_quality_by_outcome.get(selected_key.upper()) or estimate.selected_edge
     passes = bool(edge.passes_true_odds_filter)
-    shadow_rec = baseline_rec if baseline_rec != "NO_BET" and passes else "NO_BET"
+    market_bias_candidate = find_market_bias_shadow_candidate(match, official_sp)
+    market_bias_applies = baseline_rec == "NO_BET" and market_bias_candidate is not None
+    if baseline_rec != "NO_BET" and passes:
+        shadow_rec = baseline_rec
+        shadow_key = selected_key
+    elif market_bias_applies:
+        shadow_rec = market_bias_candidate.outcome
+        shadow_key = market_bias_candidate.outcome.lower()
+    else:
+        shadow_rec = "NO_BET"
+        shadow_key = selected_key
     would_block = baseline_rec != "NO_BET" and shadow_rec == "NO_BET"
-    would_recommend_new = baseline_rec == "NO_BET" and estimate.selected_edge.passes_true_odds_filter
+    would_recommend_new = baseline_rec == "NO_BET" and (estimate.selected_edge.passes_true_odds_filter or market_bias_applies)
+    estimate_payload = estimate.to_dict()
+    warnings = list(estimate.warnings)
+    if market_bias_candidate:
+        estimate_payload["market_bias_shadow_candidate"] = market_bias_candidate.to_dict()
+        warnings.append(f"market_bias_shadow_candidate:{market_bias_candidate.strategy_id}")
     record = {
         "match_id": str(match.get("id")),
         "official_match_id": str(match.get("official_match_id") or match.get("officialMatchId")),
@@ -54,25 +70,25 @@ def run_live_shadow_prediction(match: dict[str, Any], baseline_prediction: dict[
         "baseline_probability": baseline_prediction.get("recommendedProbability") or (final_probability.get(baseline_key) if baseline_key else None),
         "baseline_official_sp": baseline_prediction.get("recommendedSp") or (official_sp.get(baseline_key) if baseline_key else None),
         "shadow_recommendation": shadow_rec,
-        "shadow_selected_outcome": selected_key.upper() if shadow_rec != "NO_BET" else None,
-        "shadow_ev": edge.expected_ev if shadow_rec != "NO_BET" else None,
-        "shadow_lower_bound_ev": edge.lower_bound_ev,
-        "shadow_edge_quality_score": edge.edge_quality_score,
-        "shadow_edge_quality_level": edge.edge_quality_level,
+        "shadow_selected_outcome": shadow_key.upper() if shadow_rec != "NO_BET" else None,
+        "shadow_ev": (market_bias_candidate.expected_roi if market_bias_applies else edge.expected_ev) if shadow_rec != "NO_BET" else None,
+        "shadow_lower_bound_ev": None if market_bias_applies else edge.lower_bound_ev,
+        "shadow_edge_quality_score": 65.0 if market_bias_applies else edge.edge_quality_score,
+        "shadow_edge_quality_level": "MARKET_BIAS" if market_bias_applies else edge.edge_quality_level,
         "shadow_adaptive_threshold": edge.adaptive_threshold,
-        "shadow_passes_true_odds_filter": int(passes),
+        "shadow_passes_true_odds_filter": int(passes and not market_bias_applies),
         "shadow_would_block_baseline": int(would_block),
         "shadow_would_recommend_new": int(would_recommend_new),
-        "no_bet_reason": "; ".join(edge.reasons) if edge.reasons else None,
-        "true_odds_estimate_json": dumps(estimate.to_dict()),
+        "no_bet_reason": None if market_bias_applies else ("; ".join(edge.reasons) if edge.reasons else None),
+        "true_odds_estimate_json": dumps(estimate_payload),
         "lifecycle_status": "PENDING_RESULT",
-        "warnings_json": dumps(estimate.warnings),
+        "warnings_json": dumps(warnings),
     }
     return ShadowPredictionStore(getattr(config_version, "_database", db)).save_shadow_prediction(record)
 
 
-def run_shadow_for_active_matches(config_version_id: str) -> dict[str, Any]:
-    repo = Repository()
+def run_shadow_for_active_matches(config_version_id: str, repository: Repository | None = None) -> dict[str, Any]:
+    repo = repository or Repository()
     store = ShadowPredictionStore(repo.db)
     version = store.get_config_version(config_version_id)
     if not version:

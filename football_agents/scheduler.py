@@ -12,7 +12,9 @@ from .historical_agent import HistoricalCollectionAgent
 from .integrations import DataEnrichmentService
 from .international_history_agent import InternationalHistoryAgent
 from .llm import LLMNewsAgent
+from .market_bias_monitor import MarketBiasMonitorService
 from .official_data import OfficialDataService
+from .profit_scorer_prospective import validate_profit_scorer_on_official_sp
 from .repository import Repository
 from .services.model_governance_persistence_service import ModelGovernancePersistenceService
 from .services.task_runner_service import TaskRunnerService
@@ -79,6 +81,8 @@ class BackgroundAgentScheduler:
             ("historical_data_sync", self._sync_history),
             ("backtest_run", self._run_backtest),
             ("model_governance_check", self._check_model_governance),
+            ("market_bias_shadow_monitor", self._refresh_market_bias_monitor),
+            ("profit_scorer_official_sp_validation", self._validate_profit_scorer_official_sp),
         ]
         if settings.enable_prospective_research:
             tasks.append(("prospective_research_capture", self._capture_prospective_research))
@@ -164,6 +168,22 @@ class BackgroundAgentScheduler:
             "actor": "background-model-governance-agent",
         })
         return {"matches": 1, "decision_id": decision["id"], "warnings": warnings}
+
+    def _refresh_market_bias_monitor(self) -> dict[str, Any]:
+        return MarketBiasMonitorService(self.repository.db).refresh(run_shadow=True)
+
+    def _validate_profit_scorer_official_sp(self) -> dict[str, Any]:
+        report = validate_profit_scorer_on_official_sp(self.repository.db)
+        return {
+            "matches": report.get("opening_pre_match_snapshots", 0),
+            "evaluated": report.get("scored_snapshots", 0),
+            "predictions": report.get("selected_snapshots", 0),
+            "snapshots": report.get("settled_selected_snapshots", 0),
+            "settled_selected": report.get("settled_selected_snapshots", 0),
+            "decision": report.get("decision"),
+            "warnings": report.get("decision_reasons", []),
+            "report": report,
+        }
 
     def _capture_prospective_research(self) -> dict[str, Any]:
         return ProspectiveResearchService(self.repository.db, self.repository).capture(settings.agent_match_limit)

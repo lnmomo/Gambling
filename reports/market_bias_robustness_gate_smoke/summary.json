@@ -1,0 +1,94 @@
+{
+  "method": "market-bias robustness gate",
+  "seasons": [
+    "2122",
+    "2223",
+    "2324",
+    "2425",
+    "2526"
+  ],
+  "first_month": "2022-08",
+  "last_month": "2026-05",
+  "rules": [
+    "league|outcome|odds_bucket=I2|draw|[2.8,3.5)"
+  ],
+  "profiles": [
+    {
+      "name": "default",
+      "lookback_months": 12,
+      "min_active_months": 6,
+      "min_bets": 50,
+      "min_roi": 0.02,
+      "max_rules": 3
+    },
+    {
+      "name": "stricter_selection",
+      "lookback_months": 12,
+      "min_active_months": 8,
+      "min_bets": 80,
+      "min_roi": 0.04,
+      "max_rules": 3
+    }
+  ],
+  "odds_sources": [
+    "AVG_OPEN"
+  ],
+  "total_runs": 2,
+  "passed_runs": 2,
+  "source_passes": 1,
+  "profile_passes": 2,
+  "decision": "KEEP_SHADOW_ONLY",
+  "decision_reasons": [
+    "official SP prospective sample is not yet sufficient for production promotion",
+    "fewer than 6 source/profile runs passed the robustness gate",
+    "fewer than 4 odds sources passed at least one profile"
+  ],
+  "rows": [
+    {
+      "odds_source": "AVG_OPEN",
+      "profile": "default",
+      "lookback_months": 12,
+      "min_active_months": 6,
+      "min_bets": 50,
+      "min_roi": 0.02,
+      "bets": 871,
+      "profit": 82.76,
+      "roi_pct": 9.5,
+      "max_drawdown": 22.5,
+      "active_months": 28,
+      "positive_months": 17,
+      "negative_months": 11,
+      "positive_seasons": 3,
+      "negative_seasons": 1,
+      "latest_season": "2025-26",
+      "latest_season_bets": 304,
+      "latest_season_profit": 28.77,
+      "verdict": "research_candidate_requires_live_shadow",
+      "passes_gate": true,
+      "fail_reasons": []
+    },
+    {
+      "odds_source": "AVG_OPEN",
+      "profile": "stricter_selection",
+      "lookback_months": 12,
+      "min_active_months": 8,
+      "min_bets": 80,
+      "min_roi": 0.04,
+      "bets": 871,
+      "profit": 82.76,
+      "roi_pct": 9.5,
+      "max_drawdown": 22.5,
+      "active_months": 28,
+      "positive_months": 17,
+      "negative_months": 11,
+      "positive_seasons": 3,
+      "negative_seasons": 1,
+      "latest_season": "2025-26",
+      "latest_season_bets": 304,
+      "latest_season_profit": 28.77,
+      "verdict": "research_candidate_requires_live_shadow",
+      "passes_gate": true,
+      "fail_reasons": []
+    }
+  ]
+}

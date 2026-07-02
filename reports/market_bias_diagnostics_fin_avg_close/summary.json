@@ -1,0 +1,53 @@
+{
+  "method": "market odds bias diagnostics",
+  "seasons": [
+    "FIN"
+  ],
+  "odds_source": "AVG_CLOSE",
+  "candidate_count": 7860,
+  "diagnostic_rows": 3,
+  "top": [
+    {
+      "columns": "odds_bucket|market_prob_bucket",
+      "key": "[1.0,1.8)|[0.42,0.55)",
+      "bets": 184,
+      "profit": 7.61,
+      "roi_pct": 4.14,
+      "active_months": 86,
+      "positive_months": 46,
+      "negative_months": 40,
+      "latest_month": "2026-06",
+      "latest_profit": 0.49,
+      "score": 12.4549
+    },
+    {
+      "columns": "league|odds_bucket|market_prob_bucket",
+      "key": "FIN|[1.0,1.8)|[0.42,0.55)",
+      "bets": 184,
+      "profit": 7.61,
+      "roi_pct": 4.14,
+      "active_months": 86,
+      "positive_months": 46,
+      "negative_months": 40,
+      "latest_month": "2026-06",
+      "latest_profit": 0.49,
+      "score": 12.4549
+    },
+    {
+      "columns": "odds_bucket|market_prob_bucket|favorite_relation",
+      "key": "[1.0,1.8)|[0.42,0.55)|market_favorite",
+      "bets": 184,
+      "profit": 7.61,
+      "roi_pct": 4.14,
+      "active_months": 86,
+      "positive_months": 46,
+      "negative_months": 40,
+      "latest_month": "2026-06",
+      "latest_profit": 0.49,
+      "score": 12.4549
+    }
+  ],
+  "notes": [
+    "This is market-bias discovery only. Any pattern must be converted into no-lookahead walk-forward rules."
+  ]
+}

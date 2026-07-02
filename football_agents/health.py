@@ -57,6 +57,19 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
         "remainingMatches": settings.prospective_research_min_settled,
         "remainingDays": settings.prospective_research_min_days, "confirmationDecision": None,
     }
+    profit_scorer_official_sp = {
+        "status": "NOT_RUN",
+        "openingPreMatchSnapshots": 0,
+        "scoredSnapshots": 0,
+        "selectedSnapshots": 0,
+        "settledSelectedSnapshots": 0,
+        "minimumSettledSelected": 200,
+        "minimumMonths": 6,
+        "remainingSettledSelected": 200,
+        "decision": None,
+        "decisionReasons": [],
+        "lastRunAt": None,
+    }
 
     try:
         with database.connect() as c:
@@ -120,6 +133,29 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
                     "remainingDays": max(0, study["min_calendar_days"] - elapsed),
                     "confirmationDecision": run["decision"] if run else None,
                 })
+            validation_run = c.execute("""SELECT * FROM task_runs
+                WHERE task_name='profit_scorer_official_sp_validation'
+                ORDER BY started_at DESC LIMIT 1""").fetchone()
+            if validation_run:
+                reasons = json_loads(validation_run["warnings_json"])
+                settled_selected = int(validation_run["created_snapshots"] or 0)
+                # The task runner stores only compact counters. Use them for health without
+                # reading generated report files, so /health stays database-backed.
+                profit_scorer_official_sp.update({
+                    "status": validation_run["status"],
+                    "openingPreMatchSnapshots": int(validation_run["affected_matches"] or 0),
+                    "scoredSnapshots": 0,
+                    "selectedSnapshots": int(validation_run["created_predictions"] or 0),
+                    "settledSelectedSnapshots": settled_selected,
+                    "remainingSettledSelected": max(0, 200 - settled_selected),
+                    "decision": (
+                        None if validation_run["status"] == "FAILED"
+                        else "OFFICIAL_SP_PROSPECTIVE_BLOCKED" if reasons
+                        else "OFFICIAL_SP_PROSPECTIVE_PASS"
+                    ),
+                    "decisionReasons": reasons,
+                    "lastRunAt": validation_run["finished_at"] or validation_run["started_at"],
+                })
         scheduler = SchedulerHealthService()
         recent_task_runs = scheduler.list_recent_task_runs(20)
         governance = ModelGovernancePersistenceService(database)
@@ -180,4 +216,15 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
         "dataQuality": data_quality,
         "shadowValidation": shadow_validation,
         "prospectiveResearch": prospective_research,
+        "profitScorerOfficialSp": profit_scorer_official_sp,
     }
+
+
+def json_loads(value: Any) -> list[str]:
+    import json
+
+    try:
+        parsed = json.loads(value or "[]")
+        return parsed if isinstance(parsed, list) else []
+    except Exception:
+        return []

@@ -1,0 +1,73 @@
+{
+  "method": "market-bias official pool relevance diagnostics",
+  "created_at": "2026-06-29T13:35:38.376152+00:00",
+  "strategy_id": "market-bias-i2-draw-2.8-3.5-v1",
+  "official_matches": 100,
+  "with_latest_odds": 45,
+  "missing_latest_odds": 55,
+  "validated_shadow_candidates": 0,
+  "research_watch_candidates": 0,
+  "league_count": 3,
+  "leagues": [
+    {
+      "league": "世界杯",
+      "matches": 74,
+      "with_latest_odds": 33,
+      "missing_latest_odds": 41,
+      "mapped_history_code": "WORLD_CUP",
+      "strategy_coverage": "NO_MARKET_BIAS_VALIDATION_SOURCE",
+      "validated_shadow_candidates": 0,
+      "research_watch_candidates": 0,
+      "evidence_status": "results history may exist, but no validated 1X2 odds-bias history is available here",
+      "evidence_reports": [],
+      "blocker": "current league has no validated odds-bias history package",
+      "recommended_action": "Collect historical 1X2 odds for World Cup/international matches before creating a market-bias rule."
+    },
+    {
+      "league": "芬超",
+      "matches": 24,
+      "with_latest_odds": 12,
+      "missing_latest_odds": 12,
+      "mapped_history_code": "FIN",
+      "strategy_coverage": "REJECTED_RESEARCH_RULE",
+      "validated_shadow_candidates": 0,
+      "research_watch_candidates": 0,
+      "evidence_status": "FIN away probability rule failed robustness and selected no settlement-aware bets",
+      "evidence_reports": [
+        "reports/market_bias_robustness_gate_fin_away_prob28_34/summary.json",
+        "reports/market_bias_portfolio_simulation_fin_away_prob28_34_ps_close/summary.json"
+      ],
+      "blocker": "current league has historical data, but candidate rule failed robustness",
+      "recommended_action": "Do not loosen FIN into live allocation; run new FIN-specific research before using it."
+    },
+    {
+      "league": "国际赛",
+      "matches": 2,
+      "with_latest_odds": 0,
+      "missing_latest_odds": 2,
+      "mapped_history_code": "INTERNATIONAL",
+      "strategy_coverage": "NO_MARKET_BIAS_VALIDATION_SOURCE",
+      "validated_shadow_candidates": 0,
+      "research_watch_candidates": 0,
+      "evidence_status": "international-team results are not enough for odds-bias profit validation",
+      "evidence_reports": [],
+      "blocker": "no latest official 1X2 odds in current pool",
+      "recommended_action": "Collect match odds plus results before considering allocation."
+    }
+  ],
+  "blocker_summary": [
+    {
+      "blocker": "current league has no validated odds-bias history package",
+      "matches": 74
+    },
+    {
+      "blocker": "current league has historical data, but candidate rule failed robustness",
+      "matches": 24
+    },
+    {
+      "blocker": "no latest official 1X2 odds in current pool",
+      "matches": 2
+    }
+  ],
+  "recommended_next_experiment": "Do not force NO_BET bypasses. First collect World Cup/international 1X2 odds history, or run a new FIN-specific multi-window search; current validated I2 rule has no live pool coverage."
+}

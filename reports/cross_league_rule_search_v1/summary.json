@@ -1,0 +1,1799 @@
+{
+  "method": "cross-league monthly no-lookahead rule search",
+  "description": "Searches league/outcome/odds-bucket residual-edge rules using only prior months, then validates on the next month.",
+  "seasons": [
+    "2122",
+    "2223",
+    "2324",
+    "2425",
+    "2526"
+  ],
+  "first_month": "2022-08",
+  "last_month": "2026-05",
+  "same_day_results_hidden_until_settlement": true,
+  "odds_timing": "pre_closing_without_exact_snapshot_timestamp",
+  "config": {
+    "lookback_months": 12,
+    "min_active_months": 5,
+    "min_bets": 25,
+    "min_roi": 0.03,
+    "max_rules": 5,
+    "min_league_matches": 1000,
+    "daily_limit": 100.0,
+    "stake_mode": "fixed_1_unit_per_bet",
+    "rules_tested": 1512
+  },
+  "overall": {
+    "bets": 256,
+    "winning_bets": 86,
+    "total_staked": 256.0,
+    "profit": -17.3,
+    "roi_pct": -6.76,
+    "max_drawdown": 38.39,
+    "max_daily_stake": 7.0,
+    "active_days": 141
+  },
+  "active_months": 27,
+  "positive_months": 10,
+  "negative_months": 17,
+  "stability_assessment": {
+    "profitable": false,
+    "sample_size_ok": true,
+    "enough_active_months": true,
+    "month_balance_ok": false,
+    "season_balance_ok": false,
+    "drawdown_ok": false,
+    "latest_season_ok": false,
+    "positive_months": 10,
+    "negative_months": 17,
+    "positive_seasons": 1,
+    "negative_seasons": 2,
+    "latest_season": {
+      "season": "2025-26",
+      "bets": 42,
+      "staked": 42.0,
+      "profit": -13.0,
+      "roi_pct": -30.95,
+      "active_months": 9
+    },
+    "season_summary": [
+      {
+        "season": "2023-24",
+        "bets": 76,
+        "staked": 76.0,
+        "profit": 4.99,
+        "roi_pct": 6.57,
+        "active_months": 8
+      },
+      {
+        "season": "2024-25",
+        "bets": 138,
+        "staked": 138.0,
+        "profit": -9.29,
+        "roi_pct": -6.73,
+        "active_months": 10
+      },
+      {
+        "season": "2025-26",
+        "bets": 42,
+        "staked": 42.0,
+        "profit": -13.0,
+        "roi_pct": -30.95,
+        "active_months": 9
+      }
+    ],
+    "drawdown_to_profit": null,
+    "verdict": "rejected_negative_edge",
+    "notes": [
+      "Positive multi-season walk-forward ROI is necessary but not sufficient for production.",
+      "A production candidate must keep a positive recent season without using future results.",
+      "Monthly and season positive/negative balance plus drawdown control are required before real-money use."
+    ]
+  },
+  "monthly": [
+    {
+      "month": "2022-08",
+      "decision": "ABSTAIN",
+      "selection": {
+        "decision": "ABSTAIN",
+        "reason": "fewer_than_5_active_history_months"
+      },
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0
+    },
+    {
+      "month": "2022-09",
+      "decision": "ABSTAIN",
+      "selection": {
+        "decision": "ABSTAIN",
+        "reason": "fewer_than_5_active_history_months"
+      },
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0
+    },
+    {
+      "month": "2022-10",
+      "decision": "ABSTAIN",
+      "selection": {
+        "decision": "ABSTAIN",
+        "reason": "fewer_than_5_active_history_months"
+      },
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0
+    },
+    {
+      "month": "2022-11",
+      "decision": "ABSTAIN",
+      "selection": {
+        "decision": "ABSTAIN",
+        "reason": "fewer_than_5_active_history_months"
+      },
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0
+    },
+    {
+      "month": "2022-12",
+      "decision": "ABSTAIN",
+      "selection": {
+        "decision": "ABSTAIN",
+        "reason": "fewer_than_5_active_history_months"
+      },
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0
+    },
+    {
+      "month": "2023-01",
+      "decision": "ABSTAIN",
+      "selection": {
+        "decision": "ABSTAIN",
+        "selected": [],
+        "eligible_rules": 0
+      },
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0
+    },
+    {
+      "month": "2023-02",
+      "decision": "ABSTAIN",
+      "selection": {
+        "decision": "ABSTAIN",
+        "selected": [],
+        "eligible_rules": 0
+      },
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0
+    },
+    {
+      "month": "2023-03",
+      "decision": "ABSTAIN",
+      "selection": {
+        "decision": "ABSTAIN",
+        "selected": [],
+        "eligible_rules": 0
+      },
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0
+    },
+    {
+      "month": "2023-04",
+      "decision": "ABSTAIN",
+      "selection": {
+        "decision": "ABSTAIN",
+        "selected": [],
+        "eligible_rules": 0
+      },
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0
+    },
+    {
+      "month": "2023-05",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "E1|draw|[3.5,4.0)|ev>=-0.05",
+            "bets": 27,
+            "profit": 18.8,
+            "roi": 0.6963,
+            "positive_months": 7,
+            "negative_months": 1,
+            "active_months": 8,
+            "score": 19.659259259259258
+          }
+        ],
+        "eligible_rules": 1
+      },
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0
+    },
+    {
+      "month": "2023-06",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "E1|draw|[3.5,4.0)|ev>=-0.05",
+            "bets": 27,
+            "profit": 18.8,
+            "roi": 0.6963,
+            "positive_months": 7,
+            "negative_months": 1,
+            "active_months": 8,
+            "score": 19.659259259259258
+          },
+          {
+            "label": "E2|away|[2.2,2.8)|ev>=-0.05",
+            "bets": 26,
+            "profit": 7.9,
+            "roi": 0.3038,
+            "positive_months": 6,
+            "negative_months": 4,
+            "active_months": 10,
+            "score": 7.342307692307692
+          }
+        ],
+        "eligible_rules": 2
+      },
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0
+    },
+    {
+      "month": "2023-07",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "E1|draw|[3.5,4.0)|ev>=-0.05",
+            "bets": 27,
+            "profit": 18.8,
+            "roi": 0.6963,
+            "positive_months": 7,
+            "negative_months": 1,
+            "active_months": 8,
+            "score": 19.659259259259258
+          },
+          {
+            "label": "E2|away|[2.2,2.8)|ev>=-0.05",
+            "bets": 26,
+            "profit": 7.9,
+            "roi": 0.3038,
+            "positive_months": 6,
+            "negative_months": 4,
+            "active_months": 10,
+            "score": 7.342307692307692
+          }
+        ],
+        "eligible_rules": 2
+      },
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0
+    },
+    {
+      "month": "2023-08",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "E1|draw|[3.5,4.0)|ev>=-0.05",
+            "bets": 27,
+            "profit": 18.8,
+            "roi": 0.6963,
+            "positive_months": 7,
+            "negative_months": 1,
+            "active_months": 8,
+            "score": 19.659259259259258
+          },
+          {
+            "label": "E2|away|[2.2,2.8)|ev>=-0.05",
+            "bets": 26,
+            "profit": 7.9,
+            "roi": 0.3038,
+            "positive_months": 6,
+            "negative_months": 4,
+            "active_months": 10,
+            "score": 7.342307692307692
+          }
+        ],
+        "eligible_rules": 2
+      },
+      "bets": 6,
+      "winning_bets": 1,
+      "total_staked": 6.0,
+      "profit": -3.5,
+      "roi_pct": -58.33,
+      "max_drawdown": 3.5,
+      "max_daily_stake": 3.0,
+      "active_days": 4
+    },
+    {
+      "month": "2023-09",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "E1|draw|[3.5,4.0)|ev>=-0.05",
+            "bets": 25,
+            "profit": 13.8,
+            "roi": 0.552,
+            "positive_months": 6,
+            "negative_months": 1,
+            "active_months": 7,
+            "score": 16.072
+          }
+        ],
+        "eligible_rules": 1
+      },
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0
+    },
+    {
+      "month": "2023-10",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "E3|away|[2.2,2.8)|ev>=-0.05",
+            "bets": 26,
+            "profit": 6.25,
+            "roi": 0.2404,
+            "positive_months": 5,
+            "negative_months": 4,
+            "active_months": 9,
+            "score": 4.644230769230768
+          },
+          {
+            "label": "E3|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 55,
+            "profit": 11.4,
+            "roi": 0.2073,
+            "positive_months": 4,
+            "negative_months": 3,
+            "active_months": 8,
+            "score": 4.28
+          }
+        ],
+        "eligible_rules": 2
+      },
+      "bets": 5,
+      "winning_bets": 1,
+      "total_staked": 5.0,
+      "profit": -2.7,
+      "roi_pct": -54.0,
+      "max_drawdown": 3.0,
+      "max_daily_stake": 2.0,
+      "active_days": 4
+    },
+    {
+      "month": "2023-11",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "E3|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 50,
+            "profit": 13.0,
+            "roi": 0.26,
+            "positive_months": 4,
+            "negative_months": 2,
+            "active_months": 7,
+            "score": 6.859999999999999
+          },
+          {
+            "label": "E3|away|[2.2,2.8)|ev>=-0.05",
+            "bets": 29,
+            "profit": 5.55,
+            "roi": 0.1914,
+            "positive_months": 5,
+            "negative_months": 4,
+            "active_months": 9,
+            "score": 4.105172413793103
+          }
+        ],
+        "eligible_rules": 2
+      },
+      "bets": 2,
+      "winning_bets": 0,
+      "total_staked": 2.0,
+      "profit": -2.0,
+      "roi_pct": -100.0,
+      "max_drawdown": 2.0,
+      "max_daily_stake": 2.0,
+      "active_days": 1
+    },
+    {
+      "month": "2023-12",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "E3|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 49,
+            "profit": 14.0,
+            "roi": 0.2857,
+            "positive_months": 4,
+            "negative_months": 1,
+            "active_months": 6,
+            "score": 9.142857142857144
+          },
+          {
+            "label": "E2|away|[2.2,2.8)|ev>=-0.05",
+            "bets": 37,
+            "profit": 7.88,
+            "roi": 0.213,
+            "positive_months": 6,
+            "negative_months": 4,
+            "active_months": 10,
+            "score": 6.342702702702703
+          }
+        ],
+        "eligible_rules": 2
+      },
+      "bets": 6,
+      "winning_bets": 2,
+      "total_staked": 6.0,
+      "profit": -1.55,
+      "roi_pct": -25.83,
+      "max_drawdown": 2.8,
+      "max_daily_stake": 2.0,
+      "active_days": 5
+    },
+    {
+      "month": "2024-01",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "E2|away|[2.2,2.8)|ev>=-0.05",
+            "bets": 41,
+            "profit": 8.33,
+            "roi": 0.2032,
+            "positive_months": 6,
+            "negative_months": 4,
+            "active_months": 10,
+            "score": 6.234878048780487
+          },
+          {
+            "label": "E3|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 40,
+            "profit": 10.4,
+            "roi": 0.26,
+            "positive_months": 3,
+            "negative_months": 2,
+            "active_months": 6,
+            "score": 4.86
+          },
+          {
+            "label": "E3|home|[1.8,2.2)|ev>=-0.05",
+            "bets": 26,
+            "profit": 4.55,
+            "roi": 0.175,
+            "positive_months": 5,
+            "negative_months": 4,
+            "active_months": 9,
+            "score": 3.925
+          }
+        ],
+        "eligible_rules": 3
+      },
+      "bets": 12,
+      "winning_bets": 6,
+      "total_staked": 12.0,
+      "profit": 0.52,
+      "roi_pct": 4.33,
+      "max_drawdown": 3.65,
+      "max_daily_stake": 4.0,
+      "active_days": 6
+    },
+    {
+      "month": "2024-02",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "E2|away|[2.2,2.8)|ev>=-0.05",
+            "bets": 42,
+            "profit": 9.48,
+            "roi": 0.2257,
+            "positive_months": 6,
+            "negative_months": 4,
+            "active_months": 10,
+            "score": 6.482857142857143
+          },
+          {
+            "label": "E3|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 35,
+            "profit": 12.3,
+            "roi": 0.3514,
+            "positive_months": 3,
+            "negative_months": 2,
+            "active_months": 6,
+            "score": 5.865714285714286
+          }
+        ],
+        "eligible_rules": 2
+      },
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0
+    },
+    {
+      "month": "2024-03",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "E2|away|[2.2,2.8)|ev>=-0.05",
+            "bets": 39,
+            "profit": 9.98,
+            "roi": 0.2559,
+            "positive_months": 6,
+            "negative_months": 3,
+            "active_months": 9,
+            "score": 8.814871794871795
+          },
+          {
+            "label": "I2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 28,
+            "profit": 5.16,
+            "roi": 0.1843,
+            "positive_months": 6,
+            "negative_months": 4,
+            "active_months": 10,
+            "score": 6.027142857142858
+          },
+          {
+            "label": "E3|home|[1.8,2.2)|ev>=-0.05",
+            "bets": 39,
+            "profit": 7.17,
+            "roi": 0.1838,
+            "positive_months": 6,
+            "negative_months": 4,
+            "active_months": 10,
+            "score": 6.022307692307693
+          }
+        ],
+        "eligible_rules": 3
+      },
+      "bets": 14,
+      "winning_bets": 6,
+      "total_staked": 14.0,
+      "profit": -1.66,
+      "roi_pct": -11.86,
+      "max_drawdown": 5.0,
+      "max_daily_stake": 3.0,
+      "active_days": 9
+    },
+    {
+      "month": "2024-04",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "E3|home|[1.8,2.2)|ev>=-0.05",
+            "bets": 46,
+            "profit": 9.61,
+            "roi": 0.2089,
+            "positive_months": 7,
+            "negative_months": 3,
+            "active_months": 10,
+            "score": 10.298043478260869
+          },
+          {
+            "label": "E2|away|[2.2,2.8)|ev>=-0.05",
+            "bets": 34,
+            "profit": 10.13,
+            "roi": 0.2979,
+            "positive_months": 6,
+            "negative_months": 3,
+            "active_months": 9,
+            "score": 9.277352941176472
+          },
+          {
+            "label": "I2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 29,
+            "profit": 3.96,
+            "roi": 0.1366,
+            "positive_months": 6,
+            "negative_months": 4,
+            "active_months": 10,
+            "score": 5.502068965517241
+          }
+        ],
+        "eligible_rules": 3
+      },
+      "bets": 29,
+      "winning_bets": 16,
+      "total_staked": 29.0,
+      "profit": 11.78,
+      "roi_pct": 40.62,
+      "max_drawdown": 2.9,
+      "max_daily_stake": 7.0,
+      "active_days": 8
+    },
+    {
+      "month": "2024-05",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "E3|home|[1.8,2.2)|ev>=-0.05",
+            "bets": 53,
+            "profit": 10.58,
+            "roi": 0.1996,
+            "positive_months": 7,
+            "negative_months": 3,
+            "active_months": 10,
+            "score": 10.195849056603773
+          },
+          {
+            "label": "I2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 38,
+            "profit": 10.36,
+            "roi": 0.2726,
+            "positive_months": 6,
+            "negative_months": 4,
+            "active_months": 10,
+            "score": 6.998947368421053
+          },
+          {
+            "label": "E2|away|[2.2,2.8)|ev>=-0.05",
+            "bets": 40,
+            "profit": 6.81,
+            "roi": 0.1703,
+            "positive_months": 5,
+            "negative_months": 4,
+            "active_months": 9,
+            "score": 3.87275
+          }
+        ],
+        "eligible_rules": 3
+      },
+      "bets": 2,
+      "winning_bets": 2,
+      "total_staked": 2.0,
+      "profit": 4.1,
+      "roi_pct": 205.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 2.0,
+      "active_days": 1
+    },
+    {
+      "month": "2024-06",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "I2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 36,
+            "profit": 15.36,
+            "roi": 0.4267,
+            "positive_months": 7,
+            "negative_months": 3,
+            "active_months": 10,
+            "score": 12.693333333333332
+          },
+          {
+            "label": "E3|home|[1.8,2.2)|ev>=-0.05",
+            "bets": 51,
+            "profit": 10.78,
+            "roi": 0.2114,
+            "positive_months": 7,
+            "negative_months": 2,
+            "active_months": 9,
+            "score": 12.325098039215685
+          }
+        ],
+        "eligible_rules": 2
+      },
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0
+    },
+    {
+      "month": "2024-07",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "I2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 36,
+            "profit": 15.36,
+            "roi": 0.4267,
+            "positive_months": 7,
+            "negative_months": 3,
+            "active_months": 10,
+            "score": 12.693333333333332
+          },
+          {
+            "label": "E3|home|[1.8,2.2)|ev>=-0.05",
+            "bets": 51,
+            "profit": 10.78,
+            "roi": 0.2114,
+            "positive_months": 7,
+            "negative_months": 2,
+            "active_months": 9,
+            "score": 12.325098039215685
+          }
+        ],
+        "eligible_rules": 2
+      },
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0
+    },
+    {
+      "month": "2024-08",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "I2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 36,
+            "profit": 15.36,
+            "roi": 0.4267,
+            "positive_months": 7,
+            "negative_months": 3,
+            "active_months": 10,
+            "score": 12.693333333333332
+          },
+          {
+            "label": "E3|home|[1.8,2.2)|ev>=-0.05",
+            "bets": 51,
+            "profit": 10.78,
+            "roi": 0.2114,
+            "positive_months": 7,
+            "negative_months": 2,
+            "active_months": 9,
+            "score": 12.325098039215685
+          }
+        ],
+        "eligible_rules": 2
+      },
+      "bets": 8,
+      "winning_bets": 4,
+      "total_staked": 8.0,
+      "profit": 4.75,
+      "roi_pct": 59.38,
+      "max_drawdown": 3.0,
+      "max_daily_stake": 2.0,
+      "active_days": 5
+    },
+    {
+      "month": "2024-09",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "I2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 44,
+            "profit": 20.11,
+            "roi": 0.457,
+            "positive_months": 8,
+            "negative_months": 3,
+            "active_months": 11,
+            "score": 15.0275
+          },
+          {
+            "label": "E3|home|[1.8,2.2)|ev>=-0.05",
+            "bets": 51,
+            "profit": 10.78,
+            "roi": 0.2114,
+            "positive_months": 7,
+            "negative_months": 2,
+            "active_months": 9,
+            "score": 12.325098039215685
+          }
+        ],
+        "eligible_rules": 2
+      },
+      "bets": 9,
+      "winning_bets": 4,
+      "total_staked": 9.0,
+      "profit": 2.5,
+      "roi_pct": 27.78,
+      "max_drawdown": 3.15,
+      "max_daily_stake": 2.0,
+      "active_days": 7
+    },
+    {
+      "month": "2024-10",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "I2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 52,
+            "profit": 21.76,
+            "roi": 0.4185,
+            "positive_months": 9,
+            "negative_months": 3,
+            "active_months": 12,
+            "score": 16.603076923076923
+          },
+          {
+            "label": "E3|home|[1.8,2.2)|ev>=-0.05",
+            "bets": 52,
+            "profit": 11.63,
+            "roi": 0.2237,
+            "positive_months": 8,
+            "negative_months": 2,
+            "active_months": 10,
+            "score": 14.460192307692308
+          }
+        ],
+        "eligible_rules": 2
+      },
+      "bets": 8,
+      "winning_bets": 2,
+      "total_staked": 8.0,
+      "profit": -3.2,
+      "roi_pct": -40.0,
+      "max_drawdown": 5.0,
+      "max_daily_stake": 3.0,
+      "active_days": 6
+    },
+    {
+      "month": "2024-11",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "E3|home|[1.8,2.2)|ev>=-0.05",
+            "bets": 50,
+            "profit": 11.8,
+            "roi": 0.236,
+            "positive_months": 8,
+            "negative_months": 2,
+            "active_months": 10,
+            "score": 14.596
+          },
+          {
+            "label": "I2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 54,
+            "profit": 19.46,
+            "roi": 0.3604,
+            "positive_months": 8,
+            "negative_months": 4,
+            "active_months": 12,
+            "score": 11.964074074074075
+          },
+          {
+            "label": "E2|away|[2.2,2.8)|ev>=-0.05",
+            "bets": 39,
+            "profit": 10.01,
+            "roi": 0.2567,
+            "positive_months": 6,
+            "negative_months": 4,
+            "active_months": 10,
+            "score": 6.823333333333333
+          },
+          {
+            "label": "E1|home|[1.8,2.2)|ev>=-0.05",
+            "bets": 38,
+            "profit": 1.39,
+            "roi": 0.0366,
+            "positive_months": 6,
+            "negative_months": 4,
+            "active_months": 11,
+            "score": 4.402368421052632
+          }
+        ],
+        "eligible_rules": 4
+      },
+      "bets": 7,
+      "winning_bets": 5,
+      "total_staked": 7.0,
+      "profit": 8.8,
+      "roi_pct": 125.71,
+      "max_drawdown": 1.0,
+      "max_daily_stake": 2.0,
+      "active_days": 6
+    },
+    {
+      "month": "2024-12",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "I2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 57,
+            "profit": 26.26,
+            "roi": 0.4607,
+            "positive_months": 8,
+            "negative_months": 4,
+            "active_months": 12,
+            "score": 13.067719298245615
+          },
+          {
+            "label": "E3|home|[1.8,2.2)|ev>=-0.05",
+            "bets": 47,
+            "profit": 7.17,
+            "roi": 0.1526,
+            "positive_months": 7,
+            "negative_months": 3,
+            "active_months": 10,
+            "score": 9.678085106382978
+          },
+          {
+            "label": "E1|home|[1.8,2.2)|ev>=-0.05",
+            "bets": 36,
+            "profit": 3.39,
+            "roi": 0.0942,
+            "positive_months": 6,
+            "negative_months": 3,
+            "active_months": 10,
+            "score": 7.035833333333333
+          },
+          {
+            "label": "SP2|draw|[2.8,3.5)|ev>=-0.01",
+            "bets": 41,
+            "profit": 3.34,
+            "roi": 0.0815,
+            "positive_months": 7,
+            "negative_months": 4,
+            "active_months": 11,
+            "score": 6.896097560975609
+          },
+          {
+            "label": "SP2|draw|[2.8,3.5)|ev>=-0.02",
+            "bets": 54,
+            "profit": 2.84,
+            "roi": 0.0526,
+            "positive_months": 7,
+            "negative_months": 5,
+            "active_months": 12,
+            "score": 4.578518518518519
+          }
+        ],
+        "eligible_rules": 6
+      },
+      "bets": 21,
+      "winning_bets": 4,
+      "total_staked": 21.0,
+      "profit": -9.75,
+      "roi_pct": -46.43,
+      "max_drawdown": 10.65,
+      "max_daily_stake": 5.0,
+      "active_days": 10
+    },
+    {
+      "month": "2025-01",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "I2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 73,
+            "profit": 16.46,
+            "roi": 0.2255,
+            "positive_months": 8,
+            "negative_months": 4,
+            "active_months": 12,
+            "score": 10.48027397260274
+          },
+          {
+            "label": "E3|home|[1.8,2.2)|ev>=-0.05",
+            "bets": 43,
+            "profit": 5.12,
+            "roi": 0.1191,
+            "positive_months": 6,
+            "negative_months": 3,
+            "active_months": 9,
+            "score": 7.3097674418604655
+          },
+          {
+            "label": "SP2|draw|[2.8,3.5)|ev>=-0.01",
+            "bets": 40,
+            "profit": 4.69,
+            "roi": 0.1173,
+            "positive_months": 7,
+            "negative_months": 4,
+            "active_months": 11,
+            "score": 7.289750000000001
+          },
+          {
+            "label": "SP2|draw|[2.8,3.5)|ev>=-0.02",
+            "bets": 54,
+            "profit": 3.19,
+            "roi": 0.0591,
+            "positive_months": 7,
+            "negative_months": 5,
+            "active_months": 12,
+            "score": 4.649814814814815
+          },
+          {
+            "label": "F2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 25,
+            "profit": 2.38,
+            "roi": 0.0952,
+            "positive_months": 5,
+            "negative_months": 4,
+            "active_months": 9,
+            "score": 3.0472
+          }
+        ],
+        "eligible_rules": 6
+      },
+      "bets": 15,
+      "winning_bets": 9,
+      "total_staked": 15.0,
+      "profit": 12.0,
+      "roi_pct": 80.0,
+      "max_drawdown": 1.0,
+      "max_daily_stake": 5.0,
+      "active_days": 7
+    },
+    {
+      "month": "2025-02",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "I2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 82,
+            "profit": 26.46,
+            "roi": 0.3227,
+            "positive_months": 8,
+            "negative_months": 4,
+            "active_months": 12,
+            "score": 11.54951219512195
+          },
+          {
+            "label": "SP2|draw|[2.8,3.5)|ev>=-0.01",
+            "bets": 43,
+            "profit": 4.94,
+            "roi": 0.1149,
+            "positive_months": 8,
+            "negative_months": 4,
+            "active_months": 12,
+            "score": 9.263720930232557
+          },
+          {
+            "label": "E3|home|[1.8,2.2)|ev>=-0.05",
+            "bets": 40,
+            "profit": 4.49,
+            "roi": 0.1123,
+            "positive_months": 6,
+            "negative_months": 3,
+            "active_months": 9,
+            "score": 7.234750000000001
+          },
+          {
+            "label": "F2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 25,
+            "profit": 2.38,
+            "roi": 0.0952,
+            "positive_months": 5,
+            "negative_months": 4,
+            "active_months": 9,
+            "score": 3.0472
+          }
+        ],
+        "eligible_rules": 4
+      },
+      "bets": 14,
+      "winning_bets": 4,
+      "total_staked": 14.0,
+      "profit": -2.32,
+      "roi_pct": -16.57,
+      "max_drawdown": 5.0,
+      "max_daily_stake": 3.0,
+      "active_days": 8
+    },
+    {
+      "month": "2025-03",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "I2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 89,
+            "profit": 25.14,
+            "roi": 0.2825,
+            "positive_months": 8,
+            "negative_months": 4,
+            "active_months": 12,
+            "score": 11.107191011235955
+          },
+          {
+            "label": "SP2|draw|[2.8,3.5)|ev>=-0.01",
+            "bets": 43,
+            "profit": 8.04,
+            "roi": 0.187,
+            "positive_months": 8,
+            "negative_months": 4,
+            "active_months": 12,
+            "score": 10.056744186046512
+          },
+          {
+            "label": "E3|home|[1.8,2.2)|ev>=-0.05",
+            "bets": 37,
+            "profit": 3.53,
+            "roi": 0.0954,
+            "positive_months": 5,
+            "negative_months": 3,
+            "active_months": 8,
+            "score": 5.0494594594594595
+          },
+          {
+            "label": "SP2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 133,
+            "profit": 7.91,
+            "roi": 0.0595,
+            "positive_months": 7,
+            "negative_months": 5,
+            "active_months": 12,
+            "score": 4.654210526315789
+          }
+        ],
+        "eligible_rules": 4
+      },
+      "bets": 29,
+      "winning_bets": 7,
+      "total_staked": 29.0,
+      "profit": -7.07,
+      "roi_pct": -24.38,
+      "max_drawdown": 7.07,
+      "max_daily_stake": 6.0,
+      "active_days": 12
+    },
+    {
+      "month": "2025-04",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "SP2|draw|[2.8,3.5)|ev>=-0.01",
+            "bets": 44,
+            "profit": 9.92,
+            "roi": 0.2255,
+            "positive_months": 8,
+            "negative_months": 4,
+            "active_months": 12,
+            "score": 10.479999999999999
+          },
+          {
+            "label": "E3|home|[1.8,2.2)|ev>=-0.05",
+            "bets": 29,
+            "profit": 3.76,
+            "roi": 0.1297,
+            "positive_months": 5,
+            "negative_months": 2,
+            "active_months": 7,
+            "score": 7.426206896551724
+          },
+          {
+            "label": "I2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 100,
+            "profit": 20.39,
+            "roi": 0.2039,
+            "positive_months": 7,
+            "negative_months": 5,
+            "active_months": 12,
+            "score": 6.2429
+          },
+          {
+            "label": "SP2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 145,
+            "profit": 5.61,
+            "roi": 0.0387,
+            "positive_months": 7,
+            "negative_months": 5,
+            "active_months": 12,
+            "score": 4.4255862068965515
+          },
+          {
+            "label": "E2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 43,
+            "profit": 8.45,
+            "roi": 0.1965,
+            "positive_months": 5,
+            "negative_months": 4,
+            "active_months": 9,
+            "score": 4.161627906976745
+          }
+        ],
+        "eligible_rules": 6
+      },
+      "bets": 26,
+      "winning_bets": 4,
+      "total_staked": 26.0,
+      "profit": -14.0,
+      "roi_pct": -53.85,
+      "max_drawdown": 14.0,
+      "max_daily_stake": 5.0,
+      "active_days": 12
+    },
+    {
+      "month": "2025-05",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "SP2|draw|[2.8,3.5)|ev>=-0.01",
+            "bets": 41,
+            "profit": 9.82,
+            "roi": 0.2395,
+            "positive_months": 8,
+            "negative_months": 4,
+            "active_months": 12,
+            "score": 10.634634146341464
+          }
+        ],
+        "eligible_rules": 1
+      },
+      "bets": 1,
+      "winning_bets": 0,
+      "total_staked": 1.0,
+      "profit": -1.0,
+      "roi_pct": -100.0,
+      "max_drawdown": 1.0,
+      "max_daily_stake": 1.0,
+      "active_days": 1
+    },
+    {
+      "month": "2025-06",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "SP2|draw|[2.8,3.5)|ev>=-0.01",
+            "bets": 34,
+            "profit": 8.04,
+            "roi": 0.2365,
+            "positive_months": 7,
+            "negative_months": 5,
+            "active_months": 12,
+            "score": 6.601176470588236
+          },
+          {
+            "label": "I1|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 56,
+            "profit": 10.28,
+            "roi": 0.1836,
+            "positive_months": 7,
+            "negative_months": 5,
+            "active_months": 12,
+            "score": 6.019285714285714
+          }
+        ],
+        "eligible_rules": 2
+      },
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0
+    },
+    {
+      "month": "2025-07",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "I1|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 50,
+            "profit": 13.03,
+            "roi": 0.2606,
+            "positive_months": 7,
+            "negative_months": 4,
+            "active_months": 11,
+            "score": 8.8666
+          },
+          {
+            "label": "SP2|draw|[2.8,3.5)|ev>=-0.01",
+            "bets": 30,
+            "profit": 6.36,
+            "roi": 0.212,
+            "positive_months": 6,
+            "negative_months": 5,
+            "active_months": 11,
+            "score": 4.332
+          },
+          {
+            "label": "SP2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 129,
+            "profit": 4.69,
+            "roi": 0.0364,
+            "positive_months": 6,
+            "negative_months": 5,
+            "active_months": 11,
+            "score": 2.3999224806201553
+          }
+        ],
+        "eligible_rules": 3
+      },
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0
+    },
+    {
+      "month": "2025-08",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "I1|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 50,
+            "profit": 13.03,
+            "roi": 0.2606,
+            "positive_months": 7,
+            "negative_months": 4,
+            "active_months": 11,
+            "score": 8.8666
+          },
+          {
+            "label": "SP2|draw|[2.8,3.5)|ev>=-0.01",
+            "bets": 30,
+            "profit": 6.36,
+            "roi": 0.212,
+            "positive_months": 6,
+            "negative_months": 5,
+            "active_months": 11,
+            "score": 4.332
+          },
+          {
+            "label": "SP2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 129,
+            "profit": 4.69,
+            "roi": 0.0364,
+            "positive_months": 6,
+            "negative_months": 5,
+            "active_months": 11,
+            "score": 2.3999224806201553
+          }
+        ],
+        "eligible_rules": 3
+      },
+      "bets": 10,
+      "winning_bets": 4,
+      "total_staked": 10.0,
+      "profit": 2.6,
+      "roi_pct": 26.0,
+      "max_drawdown": 1.0,
+      "max_daily_stake": 3.0,
+      "active_days": 5
+    },
+    {
+      "month": "2025-09",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "I1|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 48,
+            "profit": 12.63,
+            "roi": 0.2631,
+            "positive_months": 7,
+            "negative_months": 4,
+            "active_months": 11,
+            "score": 8.894375
+          },
+          {
+            "label": "SP2|draw|[2.8,3.5)|ev>=-0.01",
+            "bets": 27,
+            "profit": 9.36,
+            "roi": 0.3467,
+            "positive_months": 6,
+            "negative_months": 5,
+            "active_months": 11,
+            "score": 5.8133333333333335
+          }
+        ],
+        "eligible_rules": 2
+      },
+      "bets": 1,
+      "winning_bets": 0,
+      "total_staked": 1.0,
+      "profit": -1.0,
+      "roi_pct": -100.0,
+      "max_drawdown": 1.0,
+      "max_daily_stake": 1.0,
+      "active_days": 1
+    },
+    {
+      "month": "2025-10",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "I1|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 46,
+            "profit": 8.03,
+            "roi": 0.1746,
+            "positive_months": 6,
+            "negative_months": 5,
+            "active_months": 11,
+            "score": 3.920217391304348
+          }
+        ],
+        "eligible_rules": 1
+      },
+      "bets": 3,
+      "winning_bets": 1,
+      "total_staked": 3.0,
+      "profit": 0.25,
+      "roi_pct": 8.33,
+      "max_drawdown": 2.0,
+      "max_daily_stake": 1.0,
+      "active_days": 3
+    },
+    {
+      "month": "2025-11",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "I1|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 47,
+            "profit": 3.68,
+            "roi": 0.0783,
+            "positive_months": 6,
+            "negative_months": 5,
+            "active_months": 11,
+            "score": 2.861276595744681
+          },
+          {
+            "label": "SP2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 110,
+            "profit": 8.26,
+            "roi": 0.0751,
+            "positive_months": 6,
+            "negative_months": 5,
+            "active_months": 11,
+            "score": 2.826
+          },
+          {
+            "label": "SP1|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 56,
+            "profit": 2.98,
+            "roi": 0.0532,
+            "positive_months": 6,
+            "negative_months": 5,
+            "active_months": 11,
+            "score": 2.585357142857143
+          }
+        ],
+        "eligible_rules": 3
+      },
+      "bets": 15,
+      "winning_bets": 3,
+      "total_staked": 15.0,
+      "profit": -5.25,
+      "roi_pct": -35.0,
+      "max_drawdown": 6.5,
+      "max_daily_stake": 5.0,
+      "active_days": 8
+    },
+    {
+      "month": "2025-12",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "SP2|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 104,
+            "profit": 5.81,
+            "roi": 0.0559,
+            "positive_months": 6,
+            "negative_months": 5,
+            "active_months": 11,
+            "score": 2.614519230769231
+          },
+          {
+            "label": "I1|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 48,
+            "profit": 2.68,
+            "roi": 0.0558,
+            "positive_months": 6,
+            "negative_months": 5,
+            "active_months": 11,
+            "score": 2.6141666666666663
+          }
+        ],
+        "eligible_rules": 2
+      },
+      "bets": 2,
+      "winning_bets": 0,
+      "total_staked": 2.0,
+      "profit": -2.0,
+      "roi_pct": -100.0,
+      "max_drawdown": 2.0,
+      "max_daily_stake": 1.0,
+      "active_days": 2
+    },
+    {
+      "month": "2026-01",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "SP1|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 57,
+            "profit": 6.2,
+            "roi": 0.1088,
+            "positive_months": 6,
+            "negative_months": 5,
+            "active_months": 11,
+            "score": 3.196491228070175
+          }
+        ],
+        "eligible_rules": 1
+      },
+      "bets": 2,
+      "winning_bets": 0,
+      "total_staked": 2.0,
+      "profit": -2.0,
+      "roi_pct": -100.0,
+      "max_drawdown": 2.0,
+      "max_daily_stake": 1.0,
+      "active_days": 2
+    },
+    {
+      "month": "2026-02",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "I1|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 46,
+            "profit": 4.93,
+            "roi": 0.1072,
+            "positive_months": 6,
+            "negative_months": 5,
+            "active_months": 11,
+            "score": 3.1789130434782606
+          },
+          {
+            "label": "SP1|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 52,
+            "profit": 5.0,
+            "roi": 0.0962,
+            "positive_months": 6,
+            "negative_months": 5,
+            "active_months": 11,
+            "score": 3.057692307692308
+          }
+        ],
+        "eligible_rules": 2
+      },
+      "bets": 3,
+      "winning_bets": 1,
+      "total_staked": 3.0,
+      "profit": 0.4,
+      "roi_pct": 13.33,
+      "max_drawdown": 2.0,
+      "max_daily_stake": 1.0,
+      "active_days": 3
+    },
+    {
+      "month": "2026-03",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "SP1|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 45,
+            "profit": 9.3,
+            "roi": 0.2067,
+            "positive_months": 7,
+            "negative_months": 4,
+            "active_months": 11,
+            "score": 8.273333333333333
+          },
+          {
+            "label": "I1|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 40,
+            "profit": 4.68,
+            "roi": 0.117,
+            "positive_months": 6,
+            "negative_months": 5,
+            "active_months": 11,
+            "score": 3.287
+          }
+        ],
+        "eligible_rules": 2
+      },
+      "bets": 4,
+      "winning_bets": 0,
+      "total_staked": 4.0,
+      "profit": -4.0,
+      "roi_pct": -100.0,
+      "max_drawdown": 4.0,
+      "max_daily_stake": 2.0,
+      "active_days": 3
+    },
+    {
+      "month": "2026-04",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "SP1|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 43,
+            "profit": 5.2,
+            "roi": 0.1209,
+            "positive_months": 6,
+            "negative_months": 5,
+            "active_months": 11,
+            "score": 3.3302325581395347
+          }
+        ],
+        "eligible_rules": 1
+      },
+      "bets": 0,
+      "winning_bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "max_daily_stake": 0.0,
+      "active_days": 0
+    },
+    {
+      "month": "2026-05",
+      "decision": "INVEST",
+      "selection": {
+        "decision": "INVEST",
+        "selected": [
+          {
+            "label": "I1|draw|[2.8,3.5)|ev>=-0.05",
+            "bets": 34,
+            "profit": 4.18,
+            "roi": 0.1229,
+            "positive_months": 6,
+            "negative_months": 5,
+            "active_months": 11,
+            "score": 3.3523529411764708
+          }
+        ],
+        "eligible_rules": 1
+      },
+      "bets": 2,
+      "winning_bets": 0,
+      "total_staked": 2.0,
+      "profit": -2.0,
+      "roi_pct": -100.0,
+      "max_drawdown": 2.0,
+      "max_daily_stake": 1.0,
+      "active_days": 2
+    }
+  ]
+}

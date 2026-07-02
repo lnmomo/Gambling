@@ -38,8 +38,29 @@ class ResidualStrategyTests(unittest.TestCase):
         changed.loc[1, ["home_goals", "away_goals"]] = [0, 8]
         original_features = build_feature_history(rows)
         changed_features = build_feature_history(changed)
-        columns = [f"pure_{outcome}" for outcome in ("home", "draw", "away")]
+        columns = [
+            f"pure_{outcome}" for outcome in ("home", "draw", "away")
+        ] + [
+            "form_points_diff",
+            "form_goal_diff_delta",
+            "season_points_per_match_delta",
+            "rest_days_delta",
+        ]
         self.assertTrue(original_features[columns].equals(changed_features[columns]))
+
+    def test_recent_form_features_use_prior_matches(self) -> None:
+        rows = pd.DataFrame([
+            {"match_date": pd.Timestamp("2025-01-01"), "league": "L", "HomeTeam": "A", "AwayTeam": "B",
+             "home_goals": 3, "away_goals": 0, "odds_home": 2.0, "odds_draw": 3.4, "odds_away": 4.0},
+            {"match_date": pd.Timestamp("2025-01-08"), "league": "L", "HomeTeam": "A", "AwayTeam": "C",
+             "home_goals": 1, "away_goals": 1, "odds_home": 2.1, "odds_draw": 3.3, "odds_away": 3.8},
+        ])
+
+        features = build_feature_history(rows)
+
+        self.assertEqual(float(features.loc[0, "form_points_diff"]), 0.0)
+        self.assertGreater(float(features.loc[1, "form_points_diff"]), 0.0)
+        self.assertEqual(float(features.loc[1, "home_rest_days"]), 7.0)
 
     def test_constrained_kelly_respects_daily_and_league_limits(self) -> None:
         rows = []

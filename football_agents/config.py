@@ -80,6 +80,11 @@ class Settings:
     odds_api_sport_keys: tuple[str, ...] = tuple(filter(None, os.getenv(
         "ODDS_API_SPORT_KEYS", "soccer_fifa_world_cup,soccer_finland_veikkausliiga"
     ).split(",")))
+    international_odds_sport_keys: tuple[str, ...] = tuple(filter(None, os.getenv(
+        "INTERNATIONAL_ODDS_SPORT_KEYS",
+        "soccer_fifa_world_cup,soccer_uefa_european_championship,soccer_conmebol_copa_america,"
+        "soccer_uefa_nations_league,soccer_fifa_world_cup_qualifiers",
+    ).split(",")))
     gdelt_api_url: str = os.getenv("GDELT_API_URL", "https://api.gdeltproject.org/api/v2/doc/doc")
     open_meteo_geocoding_url: str = os.getenv(
         "OPEN_METEO_GEOCODING_URL", "https://geocoding-api.open-meteo.com/v1/search"

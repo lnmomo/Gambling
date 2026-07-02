@@ -104,7 +104,21 @@ class ResidualProbabilityModel:
         market = frame[f"market_{outcome}"].to_numpy(float)
         pure = frame[f"pure_{outcome}"].to_numpy(float)
         odds = frame[f"odds_{outcome}"].to_numpy(float)
-        return np.column_stack([np.ones(len(frame)), pure - market, market - 1 / 3, np.log(odds)])
+        optional_columns = [
+            "form_points_diff",
+            "form_goal_diff_delta",
+            "form_goals_for_delta",
+            "form_goals_against_delta",
+            "season_points_per_match_delta",
+            "season_goal_diff_per_match_delta",
+            "rest_days_delta",
+        ]
+        extras = [
+            frame[column].fillna(0).to_numpy(float)
+            for column in optional_columns
+            if column in frame.columns
+        ]
+        return np.column_stack([np.ones(len(frame)), pure - market, market - 1 / 3, np.log(odds), *extras])
 
     def fit(self, frame: pd.DataFrame) -> "ResidualProbabilityModel":
         if len(frame) < 300:
@@ -150,27 +164,125 @@ class ResidualProbabilityModel:
 def build_feature_history(matches: pd.DataFrame) -> pd.DataFrame:
     elo, poisson = EloModel(), PoissonModel()
     pure_ensemble = EnsembleModel({"elo": 0.30, "poisson": 0.70})
+    league_draws: dict[str, int] = {}
+    league_matches: dict[str, int] = {}
+    team_history: dict[str, list[dict[str, float]]] = {}
+    season_stats: dict[tuple[str, str], dict[str, float]] = {}
+    last_played: dict[str, pd.Timestamp] = {}
     rows: list[dict] = []
     for date, day in matches.groupby("match_date", sort=True):
         for _, match in day.iterrows():
+            league = str(match["league"])
             home, away = str(match["HomeTeam"]), str(match["AwayTeam"])
             delta = elo.rating(home) - elo.rating(away)
+            lambda_home = max(.45, 1.35 + delta / 700)
+            lambda_away = max(.35, 1.05 - delta / 900)
             pure = pure_ensemble.predict({
                 "elo": elo.predict(home, away),
-                "poisson": poisson.predict(max(.45, 1.35 + delta / 700), max(.35, 1.05 - delta / 900)),
+                "poisson": poisson.predict(lambda_home, lambda_away),
             })
             odds = {outcome: float(match[f"odds_{outcome}"]) for outcome in OUTCOMES}
             market = market_probabilities(odds)
+            prior_league_matches = league_matches.get(league, 0)
+            prior_league_draws = league_draws.get(league, 0)
+            home_form = _recent_team_form(team_history.get(home, []))
+            away_form = _recent_team_form(team_history.get(away, []))
+            home_season = _season_rate(season_stats.get((league, home), {}))
+            away_season = _season_rate(season_stats.get((league, away), {}))
+            home_rest = _rest_days(last_played.get(home), date)
+            away_rest = _rest_days(last_played.get(away), date)
             rows.append({
-                "match_date": date, "league": str(match["league"]),
+                "match_date": date, "league": league,
                 "home_team": home, "away_team": away, "actual_result": actual_outcome(match),
+                "elo_delta": round(delta, 6),
+                "lambda_home": round(lambda_home, 6),
+                "lambda_away": round(lambda_away, 6),
+                "lambda_total": round(lambda_home + lambda_away, 6),
+                "lambda_diff": round(abs(lambda_home - lambda_away), 6),
+                "league_prior_matches": prior_league_matches,
+                "league_draw_rate": round(prior_league_draws / prior_league_matches, 6) if prior_league_matches else 0.27,
+                "home_form_points": home_form["points"],
+                "away_form_points": away_form["points"],
+                "form_points_diff": round(home_form["points"] - away_form["points"], 6),
+                "form_goals_for_delta": round(home_form["goals_for"] - away_form["goals_for"], 6),
+                "form_goals_against_delta": round(home_form["goals_against"] - away_form["goals_against"], 6),
+                "form_goal_diff_delta": round(home_form["goal_diff"] - away_form["goal_diff"], 6),
+                "season_points_per_match_delta": round(home_season["points_per_match"] - away_season["points_per_match"], 6),
+                "season_goal_diff_per_match_delta": round(home_season["goal_diff_per_match"] - away_season["goal_diff_per_match"], 6),
+                "home_rest_days": home_rest,
+                "away_rest_days": away_rest,
+                "rest_days_delta": round(home_rest - away_rest, 6),
                 **{f"odds_{outcome}": odds[outcome] for outcome in OUTCOMES},
                 **{f"market_{outcome}": market[outcome] for outcome in OUTCOMES},
                 **{f"pure_{outcome}": pure[outcome] for outcome in OUTCOMES},
             })
         for _, match in day.iterrows():
-            elo.update(str(match["HomeTeam"]), str(match["AwayTeam"]), int(match["home_goals"]), int(match["away_goals"]))
+            home, away = str(match["HomeTeam"]), str(match["AwayTeam"])
+            home_goals, away_goals = int(match["home_goals"]), int(match["away_goals"])
+            elo.update(home, away, home_goals, away_goals)
+            league = str(match["league"])
+            league_matches[league] = league_matches.get(league, 0) + 1
+            if home_goals == away_goals:
+                league_draws[league] = league_draws.get(league, 0) + 1
+            _update_team_history(team_history, home, goals_for=home_goals, goals_against=away_goals)
+            _update_team_history(team_history, away, goals_for=away_goals, goals_against=home_goals)
+            _update_season_stats(season_stats, league, home, goals_for=home_goals, goals_against=away_goals)
+            _update_season_stats(season_stats, league, away, goals_for=away_goals, goals_against=home_goals)
+            last_played[home] = date
+            last_played[away] = date
     return pd.DataFrame(rows).sort_values("match_date").reset_index(drop=True)
+
+
+def _points_for(goals_for: int, goals_against: int) -> int:
+    return 3 if goals_for > goals_against else 1 if goals_for == goals_against else 0
+
+
+def _recent_team_form(history: list[dict[str, float]], window: int = 5) -> dict[str, float]:
+    recent = history[-window:]
+    if not recent:
+        return {"points": 1.0, "goals_for": 1.2, "goals_against": 1.2, "goal_diff": 0.0}
+    count = len(recent)
+    goals_for = sum(row["goals_for"] for row in recent) / count
+    goals_against = sum(row["goals_against"] for row in recent) / count
+    return {
+        "points": sum(row["points"] for row in recent) / count,
+        "goals_for": goals_for,
+        "goals_against": goals_against,
+        "goal_diff": goals_for - goals_against,
+    }
+
+
+def _rest_days(last_date: pd.Timestamp | None, current_date: pd.Timestamp) -> float:
+    if last_date is None:
+        return 7.0
+    return float(max(0, min(21, (current_date - last_date).days)))
+
+
+def _season_rate(stats: dict[str, float]) -> dict[str, float]:
+    matches = float(stats.get("matches", 0) or 0)
+    if matches <= 0:
+        return {"points_per_match": 1.0, "goal_diff_per_match": 0.0}
+    return {
+        "points_per_match": float(stats.get("points", 0)) / matches,
+        "goal_diff_per_match": float(stats.get("goal_diff", 0)) / matches,
+    }
+
+
+def _update_team_history(history: dict[str, list[dict[str, float]]], team: str, *,
+                         goals_for: int, goals_against: int) -> None:
+    history.setdefault(team, []).append({
+        "points": float(_points_for(goals_for, goals_against)),
+        "goals_for": float(goals_for),
+        "goals_against": float(goals_against),
+    })
+
+
+def _update_season_stats(stats: dict[tuple[str, str], dict[str, float]], league: str, team: str, *,
+                         goals_for: int, goals_against: int) -> None:
+    item = stats.setdefault((league, team), {"matches": 0.0, "points": 0.0, "goal_diff": 0.0})
+    item["matches"] += 1.0
+    item["points"] += float(_points_for(goals_for, goals_against))
+    item["goal_diff"] += float(goals_for - goals_against)
 
 
 def choose_candidates(predictions: pd.DataFrame, config: PortfolioConfig) -> pd.DataFrame:

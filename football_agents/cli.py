@@ -5,8 +5,6 @@ import csv
 import json
 from pathlib import Path
 
-import uvicorn
-
 from .backtesting import BacktestEngine
 from .config import settings
 from .db import db
@@ -74,8 +72,42 @@ def main() -> None:
     shadow_metrics = sub.add_parser("shadow-metrics", help="Show shadow validation metrics")
     shadow_metrics.add_argument("config_version_id")
 
+    market_bias_monitor = sub.add_parser("refresh-market-bias-monitor", help="Refresh market-bias shadow metrics, official-SP validation, and promotion gate")
+    market_bias_monitor.add_argument("--no-run-shadow", action="store_true", help="Only refresh reports; do not create live shadow predictions")
+    market_bias_monitor.add_argument("--no-ensure-shadow-config", action="store_true", help="Do not auto-create a market-bias shadow config when none is active")
+
     eval_promo = sub.add_parser("evaluate-promotion", help="Evaluate shadow promotion gate")
     eval_promo.add_argument("config_version_id")
+
+    official_bias = sub.add_parser("validate-market-bias-official-sp", help="Validate frozen market-bias rule on settled official SP snapshots")
+    official_bias.add_argument("--limit", type=int, default=100_000)
+    official_bias.add_argument("--strategy-id", default="", help="Optional frozen market-bias strategy id to validate")
+    official_bias.add_argument("--output", default="")
+
+    official_bias_diag = sub.add_parser("diagnose-market-bias-official-sp", help="Diagnose why official SP market-bias samples are missing")
+    official_bias_diag.add_argument("--limit", type=int, default=100_000)
+    official_bias_diag.add_argument("--draw-low", type=float, default=2.8)
+    official_bias_diag.add_argument("--draw-high", type=float, default=3.5)
+    official_bias_diag.add_argument("--output", default="")
+
+    official_pool_relevance = sub.add_parser("diagnose-market-bias-official-pool", help="Diagnose whether the current official pool is covered by validated market-bias strategies")
+    official_pool_relevance.add_argument("--output", default="")
+
+    official_pool_research = sub.add_parser("plan-official-pool-profit-research", help="Plan profit-algorithm experiments from the current official pool")
+    official_pool_research.add_argument("--output", default="")
+
+    profit_strategies = sub.add_parser("profit-strategies", help="List validated profit-strategy research packages")
+    profit_strategies.add_argument("--output", default="")
+
+    profit_scorer = sub.add_parser("diagnose-profit-scorer-official-pool", help="Score official pool readiness for the exported profit scorer")
+    profit_scorer.add_argument("--scorer", default="reports/feature_enriched_market_anchored_i2_scorer_v1/scorer.json")
+    profit_scorer.add_argument("--limit", type=int, default=500)
+    profit_scorer.add_argument("--output", default="")
+
+    profit_scorer_validate = sub.add_parser("validate-profit-scorer-official-sp", help="Prospectively validate the exported profit scorer on earliest pre-match official SP snapshots")
+    profit_scorer_validate.add_argument("--scorer", default="reports/feature_enriched_market_anchored_i2_scorer_v1/scorer.json")
+    profit_scorer_validate.add_argument("--limit", type=int, default=100_000)
+    profit_scorer_validate.add_argument("--output", default="")
 
     activate = sub.add_parser("activate-filter-only", help="Manually activate FILTER_ONLY after promotion gate")
     activate.add_argument("config_version_id")
@@ -93,6 +125,10 @@ def main() -> None:
     worldwide.add_argument("--divisions", default="", help="Comma-separated codes, e.g. FIN,USA,BRA,JPN")
 
     sub.add_parser("sync-international-history", help="Sync real international-team historical results")
+    sub.add_parser("sync-international-odds-history", help="Sync international-team historical 1X2 odds where available")
+    source_research = sub.add_parser("research-international-odds-sources", help="Find usable broad international 1X2 odds data sources")
+    source_research.add_argument("--no-probe-api", action="store_true", help="Do not call The Odds API /sports endpoint")
+    source_research.add_argument("--output", default="")
 
     agent_run = sub.add_parser("run-agents", help="Run data, Qwen, model, and critic agents")
     agent_run.add_argument("--limit", type=int, default=settings.agent_match_limit)
@@ -102,6 +138,7 @@ def main() -> None:
 
     args = parser.parse_args()
     if args.command == "serve":
+        import uvicorn
         uvicorn.run("football_agents.app:app", host=args.host, port=args.port, reload=False)
     elif args.command == "init-db":
         db.initialize()
@@ -155,6 +192,19 @@ def main() -> None:
         db.initialize()
         report = InternationalHistoryAgent().sync()
         print(json.dumps(QwenOpsAgent().attach("international-history-agent", report), ensure_ascii=False, indent=2))
+    elif args.command == "sync-international-odds-history":
+        from .international_odds_agent import InternationalOddsHistoryAgent
+        from .llm import QwenOpsAgent
+        db.initialize()
+        report = InternationalOddsHistoryAgent().sync_world_cup()
+        print(json.dumps(QwenOpsAgent().attach("international-odds-history-agent", report), ensure_ascii=False, indent=2))
+    elif args.command == "research-international-odds-sources":
+        from .international_odds_sources import find_international_odds_sources
+        payload = find_international_odds_sources(probe_api=not args.no_probe_api)
+        if args.output:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
     elif args.command == "run-agents":
         from .agents.orchestrator import AgentOrchestrator
         db.initialize()
@@ -223,6 +273,13 @@ def main() -> None:
         from .shadow_evaluator import build_shadow_validation_metrics
         db.initialize()
         print(json.dumps(build_shadow_validation_metrics(args.config_version_id).to_dict(), ensure_ascii=False, indent=2))
+    elif args.command == "refresh-market-bias-monitor":
+        from .market_bias_monitor import MarketBiasMonitorService
+        db.initialize()
+        print(json.dumps(MarketBiasMonitorService(db).refresh(
+            run_shadow=not args.no_run_shadow,
+            ensure_shadow_config=not args.no_ensure_shadow_config,
+        ), ensure_ascii=False, indent=2))
     elif args.command == "evaluate-promotion":
         from .promotion_gate import evaluate_promotion_gate, save_promotion_gate_result
         from .shadow_evaluator import build_shadow_validation_metrics
@@ -236,6 +293,62 @@ def main() -> None:
         result = evaluate_promotion_gate(metrics, version)
         save_promotion_gate_result(result, metrics)
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    elif args.command == "validate-market-bias-official-sp":
+        from .market_bias_official_validation import validate_market_bias_on_official_sp
+        db.initialize()
+        result = validate_market_bias_on_official_sp(db, args.limit, args.strategy_id or None)
+        payload = result.to_dict()
+        if args.output:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    elif args.command == "diagnose-market-bias-official-sp":
+        from .market_bias_official_validation import diagnose_market_bias_official_sp_funnel
+        db.initialize()
+        payload = diagnose_market_bias_official_sp_funnel(db, args.limit, args.draw_low, args.draw_high)
+        if args.output:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    elif args.command == "diagnose-market-bias-official-pool":
+        from .market_bias_pool_relevance import diagnose_market_bias_official_pool_relevance
+        db.initialize()
+        payload = diagnose_market_bias_official_pool_relevance(db)
+        if args.output:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    elif args.command == "plan-official-pool-profit-research":
+        from .official_pool_research import plan_official_pool_profit_research
+        db.initialize()
+        payload = plan_official_pool_profit_research(db)
+        if args.output:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    elif args.command == "profit-strategies":
+        from .profit_strategy_registry import list_profit_strategy_packages
+        payload = {"strategies": list_profit_strategy_packages()}
+        if args.output:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    elif args.command == "diagnose-profit-scorer-official-pool":
+        from .profit_scorer_official import diagnose_official_profit_scorer_pool
+        db.initialize()
+        payload = diagnose_official_profit_scorer_pool(db, args.scorer, args.limit)
+        if args.output:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    elif args.command == "validate-profit-scorer-official-sp":
+        from .profit_scorer_prospective import validate_profit_scorer_on_official_sp
+        db.initialize()
+        payload = validate_profit_scorer_on_official_sp(db, args.scorer, args.limit)
+        if args.output:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
     elif args.command == "activate-filter-only":
         from .shadow_prediction_store import ShadowPredictionStore
         db.initialize()

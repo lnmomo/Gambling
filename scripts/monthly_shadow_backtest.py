@@ -28,9 +28,9 @@ IMPROVED_CONFIG = {
     "allowed_outcomes": ("away",),
 }
 ODDS_COLUMNS = {
-    "home": ("B365H", "AvgH", "PSH", "MaxH"),
-    "draw": ("B365D", "AvgD", "PSD", "MaxD"),
-    "away": ("B365A", "AvgA", "PSA", "MaxA"),
+    "home": ("B365H", "AvgH", "PSH", "MaxH", "B365CH", "AvgCH", "PSCH", "MaxCH"),
+    "draw": ("B365D", "AvgD", "PSD", "MaxD", "B365CD", "AvgCD", "PSCD", "MaxCD"),
+    "away": ("B365A", "AvgA", "PSA", "MaxA", "B365CA", "AvgCA", "PSCA", "MaxCA"),
 }
 
 
@@ -44,13 +44,21 @@ def first_valid_odds(row: pd.Series, names: tuple[str, ...]) -> float | None:
 
 def load_matches(source_dir: Path) -> pd.DataFrame:
     frames: list[pd.DataFrame] = []
-    for path in sorted(source_dir.glob("*.csv")):
+    paths = [source_dir] if source_dir.is_file() else sorted(source_dir.glob("*.csv"))
+    for path in paths:
         frame = pd.read_csv(path, low_memory=False)
+        if {"Home", "Away", "HG", "AG"}.issubset(frame.columns):
+            frame = frame.rename(columns={
+                "Home": "HomeTeam",
+                "Away": "AwayTeam",
+                "HG": "FTHG",
+                "AG": "FTAG",
+            })
         required = {"Date", "HomeTeam", "AwayTeam", "FTHG", "FTAG"}
         if not required.issubset(frame.columns):
             continue
         frame = frame.copy()
-        frame["league"] = frame.get("Div", path.stem)
+        frame["league"] = frame["Div"] if "Div" in frame else path.stem
         frame["source_file"] = path.name
         frames.append(frame)
     if not frames:

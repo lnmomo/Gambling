@@ -1,0 +1,504 @@
+{
+  "method": "I2 draw odds-band grid search with multi-window validation",
+  "created_at": "2026-06-29T13:13:30.032456+00:00",
+  "config": {
+    "seasons": [
+      "2122",
+      "2223",
+      "2324",
+      "2425",
+      "2526"
+    ],
+    "first_month": "2022-08",
+    "last_month": "2026-05",
+    "odds_sources": [
+      "AVG_OPEN",
+      "AVG_CLOSE"
+    ],
+    "min_low": 2.6,
+    "max_low": 3.0,
+    "min_width": 0.5,
+    "max_width": 0.7,
+    "step": 0.2,
+    "window_months": 12,
+    "step_months": 6,
+    "daily_limit": 100.0,
+    "max_single_stake": 10.0,
+    "min_pass_rate": 0.6,
+    "min_source_pass_rate": 0.5
+  },
+  "band_count": 6,
+  "current_band": {
+    "candidate_id": "market-bias-i2-draw-2.80-3.50",
+    "rule": "league|outcome|custom_i2_draw_band=I2|draw|[2.80,3.50)",
+    "band": "[2.80,3.50)",
+    "low": 2.8,
+    "high": 3.5,
+    "window_count": 12,
+    "passed_windows": 8,
+    "pass_rate": 0.6667,
+    "source_count": 2,
+    "source_passes": 2,
+    "source_pass_rate": 1.0,
+    "total_bets": 2639,
+    "total_staked": 26390.0,
+    "total_profit": 2335.1,
+    "combined_roi_pct": 8.85,
+    "worst_window_roi_pct": -5.48,
+    "worst_source_roi_pct": 7.62,
+    "source_summary": [
+      {
+        "odds_source": "AVG_CLOSE",
+        "windows": 6,
+        "passed_windows": 4,
+        "profit": 1004.1,
+        "roi_pct": 7.62
+      },
+      {
+        "odds_source": "AVG_OPEN",
+        "windows": 6,
+        "passed_windows": 4,
+        "profit": 1331.0,
+        "roi_pct": 10.07
+      }
+    ],
+    "decision": "MULTI_WINDOW_SHADOW_CANDIDATE"
+  },
+  "top": [
+    {
+      "candidate_id": "market-bias-i2-draw-2.60-3.10",
+      "rule": "league|outcome|custom_i2_draw_band=I2|draw|[2.60,3.10)",
+      "band": "[2.60,3.10)",
+      "low": 2.6,
+      "high": 3.1,
+      "window_count": 12,
+      "passed_windows": 8,
+      "pass_rate": 0.6667,
+      "source_count": 2,
+      "source_passes": 2,
+      "source_pass_rate": 1.0,
+      "total_bets": 1390,
+      "total_staked": 13900.0,
+      "total_profit": 1336.8,
+      "combined_roi_pct": 9.62,
+      "worst_window_roi_pct": 0.28,
+      "worst_source_roi_pct": 6.49,
+      "source_summary": [
+        {
+          "odds_source": "AVG_CLOSE",
+          "windows": 6,
+          "passed_windows": 4,
+          "profit": 543.3,
+          "roi_pct": 6.49
+        },
+        {
+          "odds_source": "AVG_OPEN",
+          "windows": 6,
+          "passed_windows": 4,
+          "profit": 793.5,
+          "roi_pct": 14.35
+        }
+      ],
+      "decision": "MULTI_WINDOW_SHADOW_CANDIDATE"
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-2.80-3.50",
+      "rule": "league|outcome|custom_i2_draw_band=I2|draw|[2.80,3.50)",
+      "band": "[2.80,3.50)",
+      "low": 2.8,
+      "high": 3.5,
+      "window_count": 12,
+      "passed_windows": 8,
+      "pass_rate": 0.6667,
+      "source_count": 2,
+      "source_passes": 2,
+      "source_pass_rate": 1.0,
+      "total_bets": 2639,
+      "total_staked": 26390.0,
+      "total_profit": 2335.1,
+      "combined_roi_pct": 8.85,
+      "worst_window_roi_pct": -5.48,
+      "worst_source_roi_pct": 7.62,
+      "source_summary": [
+        {
+          "odds_source": "AVG_CLOSE",
+          "windows": 6,
+          "passed_windows": 4,
+          "profit": 1004.1,
+          "roi_pct": 7.62
+        },
+        {
+          "odds_source": "AVG_OPEN",
+          "windows": 6,
+          "passed_windows": 4,
+          "profit": 1331.0,
+          "roi_pct": 10.07
+        }
+      ],
+      "decision": "MULTI_WINDOW_SHADOW_CANDIDATE"
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-2.80-3.30",
+      "rule": "league|outcome|custom_i2_draw_band=I2|draw|[2.80,3.30)",
+      "band": "[2.80,3.30)",
+      "low": 2.8,
+      "high": 3.3,
+      "window_count": 12,
+      "passed_windows": 5,
+      "pass_rate": 0.4167,
+      "source_count": 2,
+      "source_passes": 2,
+      "source_pass_rate": 1.0,
+      "total_bets": 2380,
+      "total_staked": 23800.0,
+      "total_profit": 1295.9,
+      "combined_roi_pct": 5.44,
+      "worst_window_roi_pct": -12.23,
+      "worst_source_roi_pct": 4.07,
+      "source_summary": [
+        {
+          "odds_source": "AVG_CLOSE",
+          "windows": 6,
+          "passed_windows": 2,
+          "profit": 475.0,
+          "roi_pct": 4.07
+        },
+        {
+          "odds_source": "AVG_OPEN",
+          "windows": 6,
+          "passed_windows": 3,
+          "profit": 820.9,
+          "roi_pct": 6.77
+        }
+      ],
+      "decision": "RESEARCH_ONLY_UNSTABLE_WINDOWS"
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-3.00-3.50",
+      "rule": "league|outcome|custom_i2_draw_band=I2|draw|[3.00,3.50)",
+      "band": "[3.00,3.50)",
+      "low": 3.0,
+      "high": 3.5,
+      "window_count": 12,
+      "passed_windows": 4,
+      "pass_rate": 0.3333,
+      "source_count": 2,
+      "source_passes": 2,
+      "source_pass_rate": 1.0,
+      "total_bets": 1294,
+      "total_staked": 12940.0,
+      "total_profit": 1450.6,
+      "combined_roi_pct": 11.21,
+      "worst_window_roi_pct": -14.33,
+      "worst_source_roi_pct": 10.94,
+      "source_summary": [
+        {
+          "odds_source": "AVG_CLOSE",
+          "windows": 6,
+          "passed_windows": 1,
+          "profit": 512.0,
+          "roi_pct": 11.74
+        },
+        {
+          "odds_source": "AVG_OPEN",
+          "windows": 6,
+          "passed_windows": 3,
+          "profit": 938.6,
+          "roi_pct": 10.94
+        }
+      ],
+      "decision": "RESEARCH_ONLY_UNSTABLE_WINDOWS"
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-2.60-3.30",
+      "rule": "league|outcome|custom_i2_draw_band=I2|draw|[2.60,3.30)",
+      "band": "[2.60,3.30)",
+      "low": 2.6,
+      "high": 3.3,
+      "window_count": 12,
+      "passed_windows": 4,
+      "pass_rate": 0.3333,
+      "source_count": 2,
+      "source_passes": 2,
+      "source_pass_rate": 1.0,
+      "total_bets": 2438,
+      "total_staked": 24380.0,
+      "total_profit": 1047.9,
+      "combined_roi_pct": 4.3,
+      "worst_window_roi_pct": -10.6,
+      "worst_source_roi_pct": 1.95,
+      "source_summary": [
+        {
+          "odds_source": "AVG_CLOSE",
+          "windows": 6,
+          "passed_windows": 1,
+          "profit": 236.2,
+          "roi_pct": 1.95
+        },
+        {
+          "odds_source": "AVG_OPEN",
+          "windows": 6,
+          "passed_windows": 3,
+          "profit": 811.7,
+          "roi_pct": 6.63
+        }
+      ],
+      "decision": "RESEARCH_ONLY_UNSTABLE_WINDOWS"
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-3.00-3.70",
+      "rule": "league|outcome|custom_i2_draw_band=I2|draw|[3.00,3.70)",
+      "band": "[3.00,3.70)",
+      "low": 3.0,
+      "high": 3.7,
+      "window_count": 12,
+      "passed_windows": 1,
+      "pass_rate": 0.0833,
+      "source_count": 2,
+      "source_passes": 1,
+      "source_pass_rate": 0.5,
+      "total_bets": 1096,
+      "total_staked": 10960.0,
+      "total_profit": -85.0,
+      "combined_roi_pct": -0.78,
+      "worst_window_roi_pct": -23.43,
+      "worst_source_roi_pct": -3.9,
+      "source_summary": [
+        {
+          "odds_source": "AVG_CLOSE",
+          "windows": 6,
+          "passed_windows": 1,
+          "profit": 179.0,
+          "roi_pct": 4.27
+        },
+        {
+          "odds_source": "AVG_OPEN",
+          "windows": 6,
+          "passed_windows": 0,
+          "profit": -264.0,
+          "roi_pct": -3.9
+        }
+      ],
+      "decision": "REJECT_UNSTABLE"
+    }
+  ],
+  "summaries": [
+    {
+      "candidate_id": "market-bias-i2-draw-2.60-3.10",
+      "rule": "league|outcome|custom_i2_draw_band=I2|draw|[2.60,3.10)",
+      "band": "[2.60,3.10)",
+      "low": 2.6,
+      "high": 3.1,
+      "window_count": 12,
+      "passed_windows": 8,
+      "pass_rate": 0.6667,
+      "source_count": 2,
+      "source_passes": 2,
+      "source_pass_rate": 1.0,
+      "total_bets": 1390,
+      "total_staked": 13900.0,
+      "total_profit": 1336.8,
+      "combined_roi_pct": 9.62,
+      "worst_window_roi_pct": 0.28,
+      "worst_source_roi_pct": 6.49,
+      "source_summary": [
+        {
+          "odds_source": "AVG_CLOSE",
+          "windows": 6,
+          "passed_windows": 4,
+          "profit": 543.3,
+          "roi_pct": 6.49
+        },
+        {
+          "odds_source": "AVG_OPEN",
+          "windows": 6,
+          "passed_windows": 4,
+          "profit": 793.5,
+          "roi_pct": 14.35
+        }
+      ],
+      "decision": "MULTI_WINDOW_SHADOW_CANDIDATE"
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-2.80-3.50",
+      "rule": "league|outcome|custom_i2_draw_band=I2|draw|[2.80,3.50)",
+      "band": "[2.80,3.50)",
+      "low": 2.8,
+      "high": 3.5,
+      "window_count": 12,
+      "passed_windows": 8,
+      "pass_rate": 0.6667,
+      "source_count": 2,
+      "source_passes": 2,
+      "source_pass_rate": 1.0,
+      "total_bets": 2639,
+      "total_staked": 26390.0,
+      "total_profit": 2335.1,
+      "combined_roi_pct": 8.85,
+      "worst_window_roi_pct": -5.48,
+      "worst_source_roi_pct": 7.62,
+      "source_summary": [
+        {
+          "odds_source": "AVG_CLOSE",
+          "windows": 6,
+          "passed_windows": 4,
+          "profit": 1004.1,
+          "roi_pct": 7.62
+        },
+        {
+          "odds_source": "AVG_OPEN",
+          "windows": 6,
+          "passed_windows": 4,
+          "profit": 1331.0,
+          "roi_pct": 10.07
+        }
+      ],
+      "decision": "MULTI_WINDOW_SHADOW_CANDIDATE"
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-2.80-3.30",
+      "rule": "league|outcome|custom_i2_draw_band=I2|draw|[2.80,3.30)",
+      "band": "[2.80,3.30)",
+      "low": 2.8,
+      "high": 3.3,
+      "window_count": 12,
+      "passed_windows": 5,
+      "pass_rate": 0.4167,
+      "source_count": 2,
+      "source_passes": 2,
+      "source_pass_rate": 1.0,
+      "total_bets": 2380,
+      "total_staked": 23800.0,
+      "total_profit": 1295.9,
+      "combined_roi_pct": 5.44,
+      "worst_window_roi_pct": -12.23,
+      "worst_source_roi_pct": 4.07,
+      "source_summary": [
+        {
+          "odds_source": "AVG_CLOSE",
+          "windows": 6,
+          "passed_windows": 2,
+          "profit": 475.0,
+          "roi_pct": 4.07
+        },
+        {
+          "odds_source": "AVG_OPEN",
+          "windows": 6,
+          "passed_windows": 3,
+          "profit": 820.9,
+          "roi_pct": 6.77
+        }
+      ],
+      "decision": "RESEARCH_ONLY_UNSTABLE_WINDOWS"
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-3.00-3.50",
+      "rule": "league|outcome|custom_i2_draw_band=I2|draw|[3.00,3.50)",
+      "band": "[3.00,3.50)",
+      "low": 3.0,
+      "high": 3.5,
+      "window_count": 12,
+      "passed_windows": 4,
+      "pass_rate": 0.3333,
+      "source_count": 2,
+      "source_passes": 2,
+      "source_pass_rate": 1.0,
+      "total_bets": 1294,
+      "total_staked": 12940.0,
+      "total_profit": 1450.6,
+      "combined_roi_pct": 11.21,
+      "worst_window_roi_pct": -14.33,
+      "worst_source_roi_pct": 10.94,
+      "source_summary": [
+        {
+          "odds_source": "AVG_CLOSE",
+          "windows": 6,
+          "passed_windows": 1,
+          "profit": 512.0,
+          "roi_pct": 11.74
+        },
+        {
+          "odds_source": "AVG_OPEN",
+          "windows": 6,
+          "passed_windows": 3,
+          "profit": 938.6,
+          "roi_pct": 10.94
+        }
+      ],
+      "decision": "RESEARCH_ONLY_UNSTABLE_WINDOWS"
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-2.60-3.30",
+      "rule": "league|outcome|custom_i2_draw_band=I2|draw|[2.60,3.30)",
+      "band": "[2.60,3.30)",
+      "low": 2.6,
+      "high": 3.3,
+      "window_count": 12,
+      "passed_windows": 4,
+      "pass_rate": 0.3333,
+      "source_count": 2,
+      "source_passes": 2,
+      "source_pass_rate": 1.0,
+      "total_bets": 2438,
+      "total_staked": 24380.0,
+      "total_profit": 1047.9,
+      "combined_roi_pct": 4.3,
+      "worst_window_roi_pct": -10.6,
+      "worst_source_roi_pct": 1.95,
+      "source_summary": [
+        {
+          "odds_source": "AVG_CLOSE",
+          "windows": 6,
+          "passed_windows": 1,
+          "profit": 236.2,
+          "roi_pct": 1.95
+        },
+        {
+          "odds_source": "AVG_OPEN",
+          "windows": 6,
+          "passed_windows": 3,
+          "profit": 811.7,
+          "roi_pct": 6.63
+        }
+      ],
+      "decision": "RESEARCH_ONLY_UNSTABLE_WINDOWS"
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-3.00-3.70",
+      "rule": "league|outcome|custom_i2_draw_band=I2|draw|[3.00,3.70)",
+      "band": "[3.00,3.70)",
+      "low": 3.0,
+      "high": 3.7,
+      "window_count": 12,
+      "passed_windows": 1,
+      "pass_rate": 0.0833,
+      "source_count": 2,
+      "source_passes": 1,
+      "source_pass_rate": 0.5,
+      "total_bets": 1096,
+      "total_staked": 10960.0,
+      "total_profit": -85.0,
+      "combined_roi_pct": -0.78,
+      "worst_window_roi_pct": -23.43,
+      "worst_source_roi_pct": -3.9,
+      "source_summary": [
+        {
+          "odds_source": "AVG_CLOSE",
+          "windows": 6,
+          "passed_windows": 1,
+          "profit": 179.0,
+          "roi_pct": 4.27
+        },
+        {
+          "odds_source": "AVG_OPEN",
+          "windows": 6,
+          "passed_windows": 0,
+          "profit": -264.0,
+          "roi_pct": -3.9
+        }
+      ],
+      "decision": "REJECT_UNSTABLE"
+    }
+  ],
+  "next_step": "Prefer bands that beat the current [2.80,3.50) rule on pass rate without sacrificing source diversity."
+}

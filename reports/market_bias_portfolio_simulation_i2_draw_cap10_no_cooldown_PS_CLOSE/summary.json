@@ -1,0 +1,197 @@
+{
+  "method": "settlement-aware market-bias portfolio simulation",
+  "config": {
+    "daily_limit": 100.0,
+    "max_single_stake": 10.0,
+    "settlement_delay_days": 1,
+    "stop_after_losing_settlement_days": 999,
+    "cooldown_days": 0,
+    "stake_mode": "split_daily_limit_evenly_across_selected_bets",
+    "same_day_results_hidden_until_settlement": true
+  },
+  "overall": {
+    "bets": 472,
+    "winning_bets": 167,
+    "active_bet_days": 142,
+    "skipped_cooldown_days": 0,
+    "total_staked": 4720.0,
+    "profit": 454.2,
+    "roi_pct": 9.62,
+    "ending_equity": 454.2,
+    "max_drawdown": 246.8
+  },
+  "monthly": [
+    {
+      "month": "2023-05",
+      "bets": 23,
+      "staked": 230.0,
+      "profit": 58.4,
+      "roi_pct": 25.39
+    },
+    {
+      "month": "2023-08",
+      "bets": 21,
+      "staked": 210.0,
+      "profit": -51.5,
+      "roi_pct": -24.52
+    },
+    {
+      "month": "2023-09",
+      "bets": 38,
+      "staked": 380.0,
+      "profit": 121.0,
+      "roi_pct": 31.84
+    },
+    {
+      "month": "2023-10",
+      "bets": 31,
+      "staked": 310.0,
+      "profit": -61.9,
+      "roi_pct": -19.97
+    },
+    {
+      "month": "2023-11",
+      "bets": 25,
+      "staked": 250.0,
+      "profit": -4.4,
+      "roi_pct": -1.76
+    },
+    {
+      "month": "2023-12",
+      "bets": 42,
+      "staked": 420.0,
+      "profit": -77.3,
+      "roi_pct": -18.4
+    },
+    {
+      "month": "2024-11",
+      "bets": 28,
+      "staked": 280.0,
+      "profit": 122.8,
+      "roi_pct": 43.86
+    },
+    {
+      "month": "2024-12",
+      "bets": 42,
+      "staked": 420.0,
+      "profit": -26.6,
+      "roi_pct": -6.33
+    },
+    {
+      "month": "2025-01",
+      "bets": 27,
+      "staked": 270.0,
+      "profit": 94.3,
+      "roi_pct": 34.93
+    },
+    {
+      "month": "2025-02",
+      "bets": 29,
+      "staked": 290.0,
+      "profit": 44.0,
+      "roi_pct": 15.17
+    },
+    {
+      "month": "2025-03",
+      "bets": 33,
+      "staked": 330.0,
+      "profit": 1.7,
+      "roi_pct": 0.52
+    },
+    {
+      "month": "2025-04",
+      "bets": 25,
+      "staked": 250.0,
+      "profit": -0.2,
+      "roi_pct": -0.08
+    },
+    {
+      "month": "2025-05",
+      "bets": 30,
+      "staked": 300.0,
+      "profit": -10.1,
+      "roi_pct": -3.37
+    },
+    {
+      "month": "2025-08",
+      "bets": 16,
+      "staked": 160.0,
+      "profit": 88.8,
+      "roi_pct": 55.5
+    },
+    {
+      "month": "2025-09",
+      "bets": 32,
+      "staked": 320.0,
+      "profit": 78.9,
+      "roi_pct": 24.66
+    },
+    {
+      "month": "2025-10",
+      "bets": 30,
+      "staked": 300.0,
+      "profit": 76.3,
+      "roi_pct": 25.43
+    }
+  ],
+  "positive_months": 9,
+  "negative_months": 7,
+  "season_summary": [
+    {
+      "season": "2022-23",
+      "bets": 23,
+      "staked": 230.0,
+      "profit": 58.4,
+      "roi_pct": 25.39
+    },
+    {
+      "season": "2023-24",
+      "bets": 157,
+      "staked": 1570.0,
+      "profit": -74.1,
+      "roi_pct": -4.72
+    },
+    {
+      "season": "2024-25",
+      "bets": 214,
+      "staked": 2140.0,
+      "profit": 225.9,
+      "roi_pct": 10.56
+    },
+    {
+      "season": "2025-26",
+      "bets": 78,
+      "staked": 780.0,
+      "profit": 244.0,
+      "roi_pct": 31.28
+    }
+  ],
+  "positive_seasons": 3,
+  "negative_seasons": 1,
+  "warnings": [
+    "Historical football-data odds are not Chinese official SP; keep official-SP shadow validation separate.",
+    "Cooling decisions use only already-settled results, not same-day final scores."
+  ],
+  "walk_forward_config": {
+    "odds_source": "PS_CLOSE",
+    "lookback_months": 12,
+    "min_active_months": 6,
+    "min_bets": 50,
+    "min_roi": 0.02,
+    "max_rules": 3,
+    "daily_limit": 100.0,
+    "rules": [
+      "league|outcome|odds_bucket=I2|draw|[2.8,3.5)"
+    ]
+  },
+  "walk_forward_overall_unit_stake": {
+    "bets": 472,
+    "winning_bets": 167,
+    "total_staked": 472.0,
+    "profit": 45.42,
+    "roi_pct": 9.62,
+    "max_drawdown": 24.68,
+    "max_daily_stake": 10.0,
+    "active_days": 142
+  }
+}
