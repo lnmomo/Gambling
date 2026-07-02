@@ -47,7 +47,10 @@ def test_official_pool_profit_research_detects_archived_world_cup_odds(tmp_path)
 
     archived = tmp_path / "WORLD_CUP.csv"
     archived.write_text("Date,Home,Away,HG,AG,AvgCH,AvgCD,AvgCA\n", encoding="utf-8")
-    with patch("football_agents.official_pool_research._history_paths", return_value=[Path(archived)]):
+    with (
+        patch("football_agents.official_pool_research._history_paths", return_value=[Path(archived)]),
+        patch("football_agents.official_pool_research._world_cup_validation_evidence", return_value=None),
+    ):
         report = plan_official_pool_profit_research(database)
 
     league = report["leagues"][0]
@@ -55,6 +58,35 @@ def test_official_pool_profit_research_detects_archived_world_cup_odds(tmp_path)
     assert league["historical_odds_available"] is True
     assert league["evidence_status"] == "historical_1x2_odds_collected_needs_walk_forward_validation"
     assert league["research_priority"] == "HIGH_RESEARCH"
+
+
+def test_official_pool_profit_research_uses_world_cup_rejection_report(tmp_path):
+    database = Database(tmp_path / "pool-world-cup-rejected.db")
+    database.initialize()
+    repo = Repository(database)
+    match_id = _official_match(repo, "\u4e16\u754c\u676f")
+    repo.add_odds(match_id, {"home": 2.2, "draw": 3.1, "away": 3.3}, "official")
+
+    archived = tmp_path / "WORLD_CUP.csv"
+    archived.write_text("Date,Home,Away,HG,AG,AvgCH,AvgCD,AvgCA\n01/01/2022,A,B,1,0,2.2,3.1,3.3\n", encoding="utf-8")
+    validation = {
+        "status": "rejected_by_world_cup_tournament_holdout",
+        "blocker": "World Cup holdout rejected reusable rules",
+        "priority": "LOW_DO_NOT_LOOSEN",
+        "reports": ["reports/world_cup_tournament_validation_current/summary.json"],
+        "commands": ["rerun"],
+    }
+    with (
+        patch("football_agents.official_pool_research._history_paths", return_value=[Path(archived)]),
+        patch("football_agents.official_pool_research._world_cup_validation_evidence", return_value=validation),
+    ):
+        report = plan_official_pool_profit_research(database)
+
+    league = report["leagues"][0]
+    assert league["evidence_status"] == "rejected_by_world_cup_tournament_holdout"
+    assert league["research_priority"] == "LOW_DO_NOT_LOOSEN"
+    assert league["evidence_reports"] == ["reports/world_cup_tournament_validation_current/summary.json"]
+    assert "rejected" in league["blocker"]
 
 
 def test_official_pool_profit_research_keeps_fin_rejected(tmp_path):

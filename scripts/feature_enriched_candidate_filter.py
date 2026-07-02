@@ -381,6 +381,22 @@ def default_configs(odds_sources: tuple[str, ...]) -> list[FeatureFilterConfig]:
     return configs
 
 
+def formal_i2_configs(odds_sources: tuple[str, ...]) -> list[FeatureFilterConfig]:
+    return [
+        FeatureFilterConfig(
+            odds_source,
+            train_months=30,
+            min_train_rows=120,
+            min_predicted_ev=0.02,
+            max_bets_per_day=1,
+            ridge=10.0,
+            residual_cap=0.08,
+            selected_rules=(I2_DRAW_RULE,),
+        )
+        for odds_source in odds_sources
+    ]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="No-leak feature-enriched candidate filter for I2 draw and SP1 home.")
     parser.add_argument("--seasons", default=",".join(DEFAULT_SEASONS))
@@ -388,8 +404,12 @@ def main() -> None:
     parser.add_argument("--last-month", default="2026-05")
     parser.add_argument("--odds-sources", default="AVG_OPEN,AVG_CLOSE")
     parser.add_argument("--output-dir", type=Path, default=Path("reports/feature_enriched_candidate_filter"))
+    parser.add_argument("--formal-i2-only", action="store_true",
+                        help="Run only the formal I2 draw market-anchored configuration")
     parser.add_argument("--export-formal-i2-scorer", action="store_true",
                         help="Export the formal I2 market-anchored scorer artifact instead of running the full grid")
+    parser.add_argument("--export-odds-source", default="AVG_OPEN",
+                        help="Odds source to use when exporting --export-formal-i2-scorer")
     parser.add_argument("--prediction-month", default="2026-06",
                         help="Future month the exported scorer is allowed to predict")
     args = parser.parse_args()
@@ -400,8 +420,10 @@ def main() -> None:
         raise SystemExit(f"Unknown odds source(s): {', '.join(unknown)}")
 
     if args.export_formal_i2_scorer:
+        if args.export_odds_source not in ODDS_SOURCE_COLUMNS:
+            raise SystemExit(f"Unknown export odds source: {args.export_odds_source}")
         config = FeatureFilterConfig(
-            "AVG_OPEN",
+            args.export_odds_source,
             train_months=30,
             min_train_rows=120,
             min_predicted_ev=0.02,
@@ -417,7 +439,8 @@ def main() -> None:
         print(json.dumps(artifact, ensure_ascii=False, indent=2))
         return
 
-    report = run_grid(seasons, args.first_month, args.last_month, default_configs(odds_sources))
+    configs = formal_i2_configs(odds_sources) if args.formal_i2_only else default_configs(odds_sources)
+    report = run_grid(seasons, args.first_month, args.last_month, configs)
     artifacts = report.pop("artifacts")
     args.output_dir.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(report["results"]).to_csv(args.output_dir / "grid_results.csv", index=False, encoding="utf-8-sig")

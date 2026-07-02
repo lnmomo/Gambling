@@ -1,6 +1,6 @@
 {
   "method": "broad international football odds source discovery",
-  "generated_at": "2026-07-01T15:26:24.053449+00:00",
+  "generated_at": "2026-07-02T04:35:50.552585+00:00",
   "public_csv_sources": [
     {
       "name": "Footiqo World Cup",
@@ -70,20 +70,16 @@
     }
   ],
   "odds_api": {
-    "configured": true,
+    "configured": false,
     "base_url": "https://api.the-odds-api.com/v4",
-    "probe_used": true,
-    "quota_headers": {
-      "x-requests-remaining": "500",
-      "x-requests-used": "0",
-      "x-requests-last": "0"
-    },
+    "probe_used": false,
+    "quota_headers": {},
     "candidates": [
       {
         "sport_key": "soccer_fifa_world_cup",
-        "title": "FIFA World Cup",
-        "description": "FIFA World Cup 2026",
-        "status": "available_active",
+        "title": "World Cup",
+        "description": "",
+        "status": "not_probed_missing_api_key",
         "historical_odds_endpoint": "/v4/historical/sports/soccer_fifa_world_cup/odds",
         "markets": "h2h",
         "regions": "uk,eu"
@@ -91,17 +87,17 @@
       {
         "sport_key": "soccer_uefa_european_championship",
         "title": "UEFA Euro",
-        "description": "UEFA European Championship",
-        "status": "available_out_of_season",
+        "description": "",
+        "status": "not_probed_missing_api_key",
         "historical_odds_endpoint": "/v4/historical/sports/soccer_uefa_european_championship/odds",
         "markets": "h2h",
         "regions": "uk,eu"
       },
       {
         "sport_key": "soccer_conmebol_copa_america",
-        "title": "Copa América",
-        "description": "CONMEBOL Copa América",
-        "status": "available_out_of_season",
+        "title": "Copa America",
+        "description": "",
+        "status": "not_probed_missing_api_key",
         "historical_odds_endpoint": "/v4/historical/sports/soccer_conmebol_copa_america/odds",
         "markets": "h2h",
         "regions": "uk,eu"
@@ -109,8 +105,8 @@
       {
         "sport_key": "soccer_uefa_nations_league",
         "title": "UEFA Nations League",
-        "description": "UEFA Nations League",
-        "status": "available_out_of_season",
+        "description": "",
+        "status": "not_probed_missing_api_key",
         "historical_odds_endpoint": "/v4/historical/sports/soccer_uefa_nations_league/odds",
         "markets": "h2h",
         "regions": "uk,eu"
@@ -119,7 +115,7 @@
         "sport_key": "soccer_fifa_world_cup_qualifiers",
         "title": "World Cup Qualifiers",
         "description": "",
-        "status": "not_returned_by_sports_endpoint",
+        "status": "not_probed_missing_api_key",
         "historical_odds_endpoint": "/v4/historical/sports/soccer_fifa_world_cup_qualifiers/odds",
         "markets": "h2h",
         "regions": "uk,eu"
@@ -128,9 +124,9 @@
     "usable_or_configurable": [
       {
         "sport_key": "soccer_fifa_world_cup",
-        "title": "FIFA World Cup",
-        "description": "FIFA World Cup 2026",
-        "status": "available_active",
+        "title": "World Cup",
+        "description": "",
+        "status": "not_probed_missing_api_key",
         "historical_odds_endpoint": "/v4/historical/sports/soccer_fifa_world_cup/odds",
         "markets": "h2h",
         "regions": "uk,eu"
@@ -138,17 +134,17 @@
       {
         "sport_key": "soccer_uefa_european_championship",
         "title": "UEFA Euro",
-        "description": "UEFA European Championship",
-        "status": "available_out_of_season",
+        "description": "",
+        "status": "not_probed_missing_api_key",
         "historical_odds_endpoint": "/v4/historical/sports/soccer_uefa_european_championship/odds",
         "markets": "h2h",
         "regions": "uk,eu"
       },
       {
         "sport_key": "soccer_conmebol_copa_america",
-        "title": "Copa América",
-        "description": "CONMEBOL Copa América",
-        "status": "available_out_of_season",
+        "title": "Copa America",
+        "description": "",
+        "status": "not_probed_missing_api_key",
         "historical_odds_endpoint": "/v4/historical/sports/soccer_conmebol_copa_america/odds",
         "markets": "h2h",
         "regions": "uk,eu"
@@ -156,9 +152,18 @@
       {
         "sport_key": "soccer_uefa_nations_league",
         "title": "UEFA Nations League",
-        "description": "UEFA Nations League",
-        "status": "available_out_of_season",
+        "description": "",
+        "status": "not_probed_missing_api_key",
         "historical_odds_endpoint": "/v4/historical/sports/soccer_uefa_nations_league/odds",
+        "markets": "h2h",
+        "regions": "uk,eu"
+      },
+      {
+        "sport_key": "soccer_fifa_world_cup_qualifiers",
+        "title": "World Cup Qualifiers",
+        "description": "",
+        "status": "not_probed_missing_api_key",
+        "historical_odds_endpoint": "/v4/historical/sports/soccer_fifa_world_cup_qualifiers/odds",
         "markets": "h2h",
         "regions": "uk,eu"
       }
@@ -175,5 +180,7 @@
     "Configure THE_ODDS_API_KEY with historical access, then rerun this command to verify broad international sport keys.",
     "Only after keys are verified, archive paid historical h2h snapshots and join them to settled international results."
   ],
-  "blockers": []
+  "blockers": [
+    "THE_ODDS_API_KEY is missing; cannot verify The Odds API sport-key coverage from this machine."
+  ]
 }

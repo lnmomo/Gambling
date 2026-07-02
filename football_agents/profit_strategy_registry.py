@@ -7,6 +7,7 @@ from typing import Any
 
 
 MARKET_ANCHORED_I2_DRAWS_STRATEGY_ID = "profit-i2-draw-market-anchored-stop3-cool3-v1"
+MARKET_ANCHORED_I2_AVG_CLOSE_RESEARCH_ID = "profit-i2-draw-market-anchored-avg-close-stop3-cool14-v1"
 
 
 @dataclass(frozen=True)
@@ -32,6 +33,15 @@ class ProfitStrategyPackage:
 
 def _read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _optional_json(path_text: str | None) -> dict[str, Any] | None:
+    if not path_text:
+        return None
+    path = Path(path_text)
+    if not path.exists():
+        return None
+    return _read_json(path)
 
 
 def build_market_anchored_i2_strategy_package(
@@ -128,6 +138,83 @@ def build_market_anchored_i2_strategy_package(
     )
 
 
+def build_market_anchored_i2_avg_close_research_package(
+    manifest_report: Path | str = Path("reports/profit_strategy_research_candidates/i2_avg_close_stop3_cool14_v1/manifest.json"),
+) -> dict[str, Any]:
+    manifest_path = Path(manifest_report)
+    if not manifest_path.exists():
+        raise FileNotFoundError(f"Missing strategy research manifest: {manifest_path}")
+
+    manifest = _read_json(manifest_path)
+    evidence_reports = manifest.get("evidence_reports", {})
+    statistical = _optional_json(evidence_reports.get("statistical_audit"))
+    calibration = _optional_json(evidence_reports.get("edge_calibration"))
+    official_pool = _optional_json(evidence_reports.get("official_pool_diagnosis"))
+    official_sp = _optional_json(evidence_reports.get("official_sp_validation"))
+    audit_overall = (statistical or {}).get("overall", {})
+    calibration_overall = (calibration or {}).get("overall", {})
+    audit_payload = {
+        "decision": "PENDING_STATISTICAL_AUDIT",
+        "reason": "This candidate is frozen from a close-price stress test and cooldown grid; it needs a fresh audit before promotion.",
+    }
+    if statistical:
+        audit_payload = {
+            "decision": statistical.get("decision"),
+            "bootstrap_roi_p05": statistical.get("bootstrap", {}).get("roi_ci_pct", {}).get("p05"),
+            "probability_roi_positive": statistical.get("bootstrap", {}).get("probability_roi_positive"),
+            "sign_flip_p_value": statistical.get("sign_flip_test", {}).get("one_sided_p_value"),
+            "drawdown_to_profit": audit_overall.get("drawdown_to_profit"),
+            "decision_reasons": statistical.get("decision_reasons", []),
+        }
+    calibration_payload = {
+        "decision": "PENDING_EDGE_CALIBRATION",
+        "reason": "Official-SP prospective calibration is required before any production allocation.",
+    }
+    if calibration:
+        calibration_payload = {
+            "decision": calibration.get("decision"),
+            "hit_rate": calibration_overall.get("hit_rate"),
+            "wilson_hit_rate_lower_95": calibration_overall.get("wilson_hit_rate_lower_95"),
+            "avg_implied_probability": calibration_overall.get("avg_implied_probability"),
+            "conservative_edge_vs_implied": calibration_overall.get("conservative_edge_vs_implied"),
+            "decision_reasons": calibration.get("decision_reasons", []),
+        }
+    official_validation_payload = {
+        "pool_diagnosis_report": evidence_reports.get("official_pool_diagnosis"),
+        "official_sp_validation_report": evidence_reports.get("official_sp_validation"),
+        "pool_scanned_matches": (official_pool or {}).get("scanned_matches"),
+        "pool_scored_matches": (official_pool or {}).get("scored_matches"),
+        "pool_passed_scorer": (official_pool or {}).get("passed_scorer"),
+        "opening_pre_match_snapshots": (official_sp or {}).get("opening_pre_match_snapshots"),
+        "scored_snapshots": (official_sp or {}).get("scored_snapshots"),
+        "selected_snapshots": (official_sp or {}).get("selected_snapshots"),
+        "settled_selected_snapshots": (official_sp or {}).get("settled_selected_snapshots"),
+        "decision": (official_sp or {}).get("decision", "PENDING_OFFICIAL_SP_VALIDATION"),
+        "decision_reasons": (official_sp or {}).get("decision_reasons", []),
+        "top_pool_blockers": (official_pool or {}).get("blocker_counts", [])[:5],
+        "top_snapshot_blockers": (official_sp or {}).get("blocker_counts", [])[:5],
+    }
+    return {
+        "strategy_id": manifest.get("strategy_id", MARKET_ANCHORED_I2_AVG_CLOSE_RESEARCH_ID),
+        "name": "Frozen AVG_CLOSE Italy Serie B draw residual strategy with settled-loss cooldown",
+        "status": manifest.get("status", "RESEARCH_LEAD_FREEZE_FOR_PROSPECTIVE_SHADOW"),
+        "research_manifest_report": str(manifest_path),
+        "historical_report": evidence_reports.get("cooldown_grid"),
+        "statistical_audit_report": evidence_reports.get("statistical_audit"),
+        "edge_calibration_report": evidence_reports.get("edge_calibration"),
+        "scorer_artifact_report": evidence_reports.get("scorer_artifact"),
+        "selection": manifest.get("selection", {}),
+        "risk_control": manifest.get("risk_control", {}),
+        "historical_metrics": manifest.get("historical_metrics", {}).get("cooldown_best", {}),
+        "audit": audit_payload,
+        "calibration": calibration_payload,
+        "official_validation": official_validation_payload,
+        "deployment_blockers": tuple(manifest.get("blockers", ())),
+        "next_validation": tuple(manifest.get("promotion_requirements", ())),
+        "freeze_notes": tuple(manifest.get("freeze_notes", ())),
+    }
+
+
 def list_profit_strategy_packages() -> list[dict[str, Any]]:
     packages: list[dict[str, Any]] = []
     try:
@@ -136,6 +223,14 @@ def list_profit_strategy_packages() -> list[dict[str, Any]]:
         packages.append({
             "strategy_id": MARKET_ANCHORED_I2_DRAWS_STRATEGY_ID,
             "status": "MISSING_EVIDENCE_REPORTS",
+            "error": str(exc),
+        })
+    try:
+        packages.append(build_market_anchored_i2_avg_close_research_package())
+    except FileNotFoundError as exc:
+        packages.append({
+            "strategy_id": MARKET_ANCHORED_I2_AVG_CLOSE_RESEARCH_ID,
+            "status": "MISSING_RESEARCH_MANIFEST",
             "error": str(exc),
         })
     return packages

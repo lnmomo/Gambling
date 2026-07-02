@@ -14,6 +14,7 @@ from market_anchored_candidate_screener import (  # noqa: E402
     _decision_reasons,
     _matches_rule,
     _parse_rule,
+    _rule_id,
     build_rule_candidates,
 )
 
@@ -74,8 +75,18 @@ def test_build_rule_candidates_joins_features(monkeypatch) -> None:
     )
 
     assert len(candidates) == 1
-    assert candidates.loc[0, "rule_label"].startswith("rule_")
+    assert candidates.loc[0, "rule_label"].startswith("r")
+    assert candidates.loc[0, "rule_description"].startswith("rule_")
     assert candidates.loc[0, "unit_profit"] == 2.1
+
+
+def test_rule_id_is_unique_and_config_label_safe() -> None:
+    first = _rule_id({"league": "I2", "outcome": "draw"})
+    second = _rule_id({"league": "SP1", "outcome": "home"})
+
+    assert first != second
+    assert "_" not in first
+    assert "_" not in second
 
 
 def test_decision_reasons_require_walk_forward_stability() -> None:

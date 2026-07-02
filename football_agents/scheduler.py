@@ -173,7 +173,7 @@ class BackgroundAgentScheduler:
         return MarketBiasMonitorService(self.repository.db).refresh(run_shadow=True)
 
     def _validate_profit_scorer_official_sp(self) -> dict[str, Any]:
-        report = validate_profit_scorer_on_official_sp(self.repository.db)
+        report = validate_profit_scorer_on_official_sp(self.repository.db, settings.profit_scorer_artifact_path)
         return {
             "matches": report.get("opening_pre_match_snapshots", 0),
             "evaluated": report.get("scored_snapshots", 0),

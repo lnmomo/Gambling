@@ -1,0 +1,191 @@
+{
+  "strategies": [
+    {
+      "strategy_id": "profit-i2-draw-market-anchored-stop3-cool3-v1",
+      "name": "Market-anchored Italy Serie B draw residual strategy with settled-loss cooldown",
+      "status": "PROMOTE_TO_OFFICIAL_SP_SHADOW_VALIDATION",
+      "historical_report": "reports\\feature_enriched_market_anchored_i2_stop3_cool3_v1\\summary.json",
+      "statistical_audit_report": "reports\\strategy_statistical_audit_market_anchored_i2_stop3_cool3_v1\\summary.json",
+      "edge_calibration_report": "reports\\strategy_edge_calibration_market_anchored_i2_stop3_cool3_v1\\summary.json",
+      "scorer_artifact_report": "reports\\feature_enriched_market_anchored_i2_scorer_v1\\scorer.json",
+      "selection": {
+        "league_family": "I2",
+        "outcome": "DRAW",
+        "odds_source": "AVG_OPEN",
+        "odds_band": "[2.8,3.5)",
+        "train_months": 30,
+        "min_prior_candidates": 120,
+        "min_predicted_ev": 0.02,
+        "ridge": 10.0,
+        "market_residual_cap": 0.08,
+        "max_bets_per_day": 1
+      },
+      "risk_control": {
+        "stop_after_losing_settlement_days": 3,
+        "cooldown_days": 3
+      },
+      "historical_metrics": {
+        "bets": 303,
+        "profit": 644.1,
+        "roi_pct": 21.26,
+        "max_drawdown": 90.0,
+        "positive_months": 25,
+        "negative_months": 15,
+        "passed_windows": 5,
+        "window_count": 6,
+        "active_pass_rate": 0.8333
+      },
+      "audit": {
+        "decision": "STATISTICALLY_SUPPORTED_RESEARCH_CANDIDATE",
+        "bootstrap_roi_p05": 8.91,
+        "probability_roi_positive": 0.9975,
+        "sign_flip_p_value": 0.0065,
+        "drawdown_to_profit": 0.1143
+      },
+      "calibration": {
+        "decision": "CALIBRATED_EDGE_CONFIRMED",
+        "hit_rate": 0.3795,
+        "wilson_hit_rate_lower_95": 0.3267,
+        "avg_implied_probability": 0.3119,
+        "conservative_edge_vs_implied": 0.0148
+      },
+      "deployment_blockers": [
+        "historical validation uses football-data AVG_OPEN, not collected China Sporttery official SP snapshots",
+        "first rolling annual window remains weak, so production allocation is blocked until prospective official-SP evidence accumulates"
+      ],
+      "next_validation": [
+        "Replay the same candidate rule on official_odds_observations using only pre-match snapshots.",
+        "Map official live features into the scorer feature schema before generating residual-scored shadow picks.",
+        "Re-train or refresh the scorer artifact on a scheduled cadence as new settled history arrives.",
+        "Keep the strategy in shadow/research mode until official-SP sample size and rolling-window gates pass."
+      ]
+    },
+    {
+      "strategy_id": "profit-i2-draw-market-anchored-avg-close-stop3-cool14-v1",
+      "name": "Frozen AVG_CLOSE Italy Serie B draw residual strategy with settled-loss cooldown",
+      "status": "STATISTICALLY_CALIBRATED_RESEARCH_LEAD_WAITING_OFFICIAL_SP_SHADOW",
+      "research_manifest_report": "reports\\profit_strategy_research_candidates\\i2_avg_close_stop3_cool14_v1\\manifest.json",
+      "historical_report": "reports/feature_enriched_market_anchored_i2_formal_avg_close_cooldown_v1/summary.json",
+      "statistical_audit_report": "reports/strategy_statistical_audit_market_anchored_i2_avg_close_stop3_cool14_v1/summary.json",
+      "edge_calibration_report": "reports/strategy_edge_calibration_market_anchored_i2_avg_close_stop3_cool14_v1/summary.json",
+      "scorer_artifact_report": "reports/feature_enriched_market_anchored_i2_avg_close_scorer_v1/scorer.json",
+      "selection": {
+        "league_family": "I2",
+        "outcome": "DRAW",
+        "odds_source": "AVG_CLOSE",
+        "odds_band": "[2.8,3.5)",
+        "train_months": 30,
+        "min_prior_candidates": 120,
+        "min_predicted_ev": 0.02,
+        "ridge": 10.0,
+        "market_residual_cap": 0.08,
+        "max_bets_per_day": 1
+      },
+      "risk_control": {
+        "stop_after_losing_settlement_days": 3,
+        "cooldown_days": 14,
+        "uses_only_settled_results": true
+      },
+      "historical_metrics": {
+        "label": "stop3_cool14",
+        "stop_after_losing_settlement_days": 3,
+        "cooldown_days": 14,
+        "bets": 218,
+        "profit": 549.1,
+        "roi_pct": 25.19,
+        "max_drawdown": 127.0,
+        "positive_months": 23,
+        "negative_months": 17,
+        "window_count": 6,
+        "passed_windows": 5,
+        "active_window_count": 6,
+        "active_passed_windows": 5,
+        "active_pass_rate": 0.8333
+      },
+      "audit": {
+        "decision": "STATISTICALLY_SUPPORTED_RESEARCH_CANDIDATE",
+        "bootstrap_roi_p05": 8.79,
+        "probability_roi_positive": 0.9934,
+        "sign_flip_p_value": 0.0128,
+        "drawdown_to_profit": 0.185,
+        "decision_reasons": []
+      },
+      "calibration": {
+        "decision": "CALIBRATED_EDGE_CONFIRMED",
+        "hit_rate": 0.3991,
+        "wilson_hit_rate_lower_95": 0.3364,
+        "avg_implied_probability": 0.3161,
+        "conservative_edge_vs_implied": 0.0202,
+        "decision_reasons": []
+      },
+      "official_validation": {
+        "pool_diagnosis_report": "reports/profit_scorer_official_pool_avg_close_stop3_cool14/summary.json",
+        "official_sp_validation_report": "reports/profit_scorer_official_sp_validation_avg_close_stop3_cool14/summary.json",
+        "pool_scanned_matches": 100,
+        "pool_scored_matches": 0,
+        "pool_passed_scorer": 0,
+        "opening_pre_match_snapshots": 28,
+        "scored_snapshots": 0,
+        "selected_snapshots": 0,
+        "settled_selected_snapshots": 0,
+        "decision": "OFFICIAL_SP_PROSPECTIVE_BLOCKED",
+        "decision_reasons": [
+          "settled_selected<200",
+          "settled_months<6",
+          "profit<=0",
+          "positive_months<=negative_months"
+        ],
+        "top_pool_blockers": [
+          {
+            "reason": "league_not_i2",
+            "matches": 100
+          },
+          {
+            "reason": "draw_sp_outside_[2.8,3.5)",
+            "matches": 84
+          },
+          {
+            "reason": "invalid_three_way_official_sp",
+            "matches": 55
+          },
+          {
+            "reason": "missing_feature:lambda_home",
+            "matches": 14
+          },
+          {
+            "reason": "missing_feature:lambda_away",
+            "matches": 14
+          }
+        ],
+        "top_snapshot_blockers": [
+          {
+            "reason": "league_not_i2",
+            "snapshots": 28
+          },
+          {
+            "reason": "draw_sp_outside_[2.8,3.5)",
+            "snapshots": 19
+          }
+        ]
+      },
+      "deployment_blockers": [
+        "historical reports use football-data AVG_CLOSE, not China Sporttery official SP",
+        "cooldown parameter is post-hoc until frozen prospective shadow validation runs",
+        "official pool currently has no I2 scorer-eligible matches or settled selected official-SP snapshots"
+      ],
+      "next_validation": [
+        "At least 200 settled selected official-SP shadow samples.",
+        "At least 6 active settled months.",
+        "Positive ROI and positive-month count greater than negative-month count.",
+        "Raw official-SP CLV positive on average with positive CLV rate >= 0.5.",
+        "No-vig fair edge warning reviewed before any production allocation."
+      ],
+      "freeze_notes": [
+        "stop3/cool14 is selected after historical grid inspection and must not be promoted without a fresh prospective shadow sample.",
+        "AVG_CLOSE evidence shows the signal does not vanish at close, but Chinese official SP validation remains separate.",
+        "Use this package to run shadow validation only; do not allocate real stake from it yet.",
+        "Formal statistical audit and selected-odds calibration now support the historical AVG_CLOSE candidate, but official-SP prospective validation remains the promotion gate."
+      ]
+    }
+  ]
+}

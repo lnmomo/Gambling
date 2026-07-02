@@ -100,12 +100,12 @@ def main() -> None:
     profit_strategies.add_argument("--output", default="")
 
     profit_scorer = sub.add_parser("diagnose-profit-scorer-official-pool", help="Score official pool readiness for the exported profit scorer")
-    profit_scorer.add_argument("--scorer", default="reports/feature_enriched_market_anchored_i2_scorer_v1/scorer.json")
+    profit_scorer.add_argument("--scorer", default=settings.profit_scorer_artifact_path)
     profit_scorer.add_argument("--limit", type=int, default=500)
     profit_scorer.add_argument("--output", default="")
 
     profit_scorer_validate = sub.add_parser("validate-profit-scorer-official-sp", help="Prospectively validate the exported profit scorer on earliest pre-match official SP snapshots")
-    profit_scorer_validate.add_argument("--scorer", default="reports/feature_enriched_market_anchored_i2_scorer_v1/scorer.json")
+    profit_scorer_validate.add_argument("--scorer", default=settings.profit_scorer_artifact_path)
     profit_scorer_validate.add_argument("--limit", type=int, default=100_000)
     profit_scorer_validate.add_argument("--output", default="")
 

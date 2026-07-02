@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import json
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -88,6 +89,49 @@ def _existing(paths: list[str]) -> list[str]:
     return [path for path in paths if Path(path).exists()]
 
 
+def _world_cup_validation_evidence() -> dict[str, Any] | None:
+    for path in (
+        Path("reports/world_cup_tournament_validation_current/summary.json"),
+        Path("reports/world_cup_tournament_validation/summary.json"),
+    ):
+        if not path.exists():
+            continue
+        try:
+            report = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        decision = str(report.get("decision") or "")
+        promotion = str(report.get("promotion_decision") or "")
+        if decision.startswith("REJECT") or promotion.startswith("BLOCK"):
+            return {
+                "status": "rejected_by_world_cup_tournament_holdout",
+                "blocker": (
+                    "World Cup 1X2 odds are archived, but tournament holdout validation rejected "
+                    f"the reusable allocation rule search ({decision}; {promotion})"
+                ),
+                "priority": "LOW_DO_NOT_LOOSEN",
+                "reports": [str(path)],
+                "commands": [
+                    "python scripts/world_cup_tournament_validation.py --output-dir reports\\world_cup_tournament_validation_current",
+                    "Collect broader paid international 1X2 odds history before retrying an international allocation rule.",
+                ],
+            }
+        if "POSITIVE" in decision:
+            return {
+                "status": "research_only_world_cup_holdout_positive_sample_too_small",
+                "blocker": (
+                    "World Cup holdout produced a research-only positive result, but tournament sample size remains "
+                    "too small for production allocation"
+                ),
+                "priority": "MEDIUM_RESEARCH",
+                "reports": [str(path)],
+                "commands": [
+                    "Run broader international historical-odds validation before any promotion.",
+                ],
+            }
+    return None
+
+
 def _league_evidence(code: str | None) -> dict[str, Any]:
     if code == "I2":
         return {
@@ -147,6 +191,9 @@ def _league_evidence(code: str | None) -> dict[str, Any]:
         }
     if code == "WORLD_CUP":
         if _history_paths("WORLD_CUP"):
+            validation = _world_cup_validation_evidence()
+            if validation:
+                return validation
             return {
                 "status": "historical_1x2_odds_collected_needs_walk_forward_validation",
                 "blocker": "World Cup 1X2 odds are archived; no World Cup strategy has passed no-lookahead validation gates yet",

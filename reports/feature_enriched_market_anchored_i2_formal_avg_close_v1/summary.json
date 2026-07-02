@@ -1,0 +1,71 @@
+{
+  "method": "feature-enriched no-leak candidate quality filter",
+  "seasons": [
+    "2122",
+    "2223",
+    "2324",
+    "2425",
+    "2526"
+  ],
+  "first_month": "2022-08",
+  "last_month": "2026-05",
+  "configs_tested": 1,
+  "results": [
+    {
+      "label": "AVG_CLOSE_rulesi2_train30_n120_ev0p02_top1_ridge10_cap0.08",
+      "odds_source": "AVG_CLOSE",
+      "train_months": 30,
+      "min_train_rows": 120,
+      "min_predicted_ev": 0.02,
+      "max_bets_per_day": 1,
+      "ridge": 10.0,
+      "residual_cap": 0.08,
+      "selected_rules": "I2_draw_2p8_3p5",
+      "candidate_count": 2044,
+      "selected_candidates": 335,
+      "bets": 335,
+      "profit": 439.9,
+      "roi_pct": 13.13,
+      "max_drawdown": 115.8,
+      "positive_months": 21,
+      "negative_months": 19,
+      "window_count": 6,
+      "passed_windows": 3,
+      "active_window_count": 6,
+      "active_passed_windows": 3,
+      "active_pass_rate": 0.5
+    }
+  ],
+  "best_label": "AVG_CLOSE_rulesi2_train30_n120_ev0p02_top1_ridge10_cap0.08",
+  "top": [
+    {
+      "label": "AVG_CLOSE_rulesi2_train30_n120_ev0p02_top1_ridge10_cap0.08",
+      "odds_source": "AVG_CLOSE",
+      "train_months": 30,
+      "min_train_rows": 120,
+      "min_predicted_ev": 0.02,
+      "max_bets_per_day": 1,
+      "ridge": 10.0,
+      "residual_cap": 0.08,
+      "selected_rules": "I2_draw_2p8_3p5",
+      "candidate_count": 2044,
+      "selected_candidates": 335,
+      "bets": 335,
+      "profit": 439.9,
+      "roi_pct": 13.13,
+      "max_drawdown": 115.8,
+      "positive_months": 21,
+      "negative_months": 19,
+      "window_count": 6,
+      "passed_windows": 3,
+      "active_window_count": 6,
+      "active_passed_windows": 3,
+      "active_pass_rate": 0.5
+    }
+  ],
+  "notes": [
+    "Candidate rules are fixed to the current research legs: I2 draw odds [2.8,3.5) and SP1 home market probability >= 0.55.",
+    "Each test month is trained only on prior candidate rows inside the configured rolling window.",
+    "This is still football-data market odds, not verified Chinese official SP."
+  ]
+}

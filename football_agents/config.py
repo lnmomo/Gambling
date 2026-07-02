@@ -75,6 +75,10 @@ class Settings:
     auto_backtest_csv_path: str = os.getenv(
         "AUTO_BACKTEST_CSV_PATH", "football_agents/sample_data/historical_matches.csv"
     )
+    profit_scorer_artifact_path: str = os.getenv(
+        "PROFIT_SCORER_ARTIFACT_PATH",
+        "reports/feature_enriched_market_anchored_i2_avg_close_scorer_v1/scorer.json",
+    )
     odds_api_key: str = os.getenv("THE_ODDS_API_KEY", "")
     odds_api_base_url: str = os.getenv("ODDS_API_BASE_URL", "https://api.the-odds-api.com/v4")
     odds_api_sport_keys: tuple[str, ...] = tuple(filter(None, os.getenv(

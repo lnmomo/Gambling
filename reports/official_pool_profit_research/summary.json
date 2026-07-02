@@ -1,12 +1,12 @@
 {
   "method": "official-pool-driven profit algorithm research planner",
-  "created_at": "2026-07-01T14:45:19.724675+00:00",
+  "created_at": "2026-07-02T04:38:26.462088+00:00",
   "official_matches": 100,
   "with_latest_odds": 45,
   "league_count": 3,
   "status_counts": [
     {
-      "status": "historical_1x2_odds_collected_needs_walk_forward_validation",
+      "status": "rejected_by_world_cup_tournament_holdout",
       "matches": 74
     },
     {
@@ -26,14 +26,16 @@
       "mapped_history_code": "WORLD_CUP",
       "historical_odds_available": true,
       "historical_rows": 128,
-      "evidence_status": "historical_1x2_odds_collected_needs_walk_forward_validation",
-      "blocker": "World Cup 1X2 odds are archived; no World Cup strategy has passed no-lookahead validation gates yet",
-      "research_priority": "HIGH_RESEARCH",
+      "evidence_status": "rejected_by_world_cup_tournament_holdout",
+      "blocker": "World Cup 1X2 odds are archived, but tournament holdout validation rejected the reusable allocation rule search (REJECT_NO_REUSABLE_WORLD_CUP_RULE; BLOCK_PRODUCTION_WORLD_CUP_SAMPLE_TOO_SMALL)",
+      "research_priority": "LOW_DO_NOT_LOOSEN",
       "suggested_commands": [
-        "python scripts/market_bias_diagnostics.py --seasons WORLD_CUP --odds-source AVG_CLOSE --min-samples 20 --min-active-months 2 --output-dir reports\\market_bias_diagnostics_world_cup_avg_close",
-        "python scripts/market_bias_candidate_screen.py --diagnostics-csv reports\\market_bias_diagnostics_world_cup_avg_close\\market_bias.csv --no-include-default-rule --seasons WORLD_CUP --first-month 2018-06 --last-month 2022-12 --validation-odds-source AVG_CLOSE --top-n 8 --output-dir reports\\market_bias_candidate_screen_world_cup"
+        "python scripts/world_cup_tournament_validation.py --output-dir reports\\world_cup_tournament_validation_current",
+        "Collect broader paid international 1X2 odds history before retrying an international allocation rule."
       ],
-      "evidence_reports": []
+      "evidence_reports": [
+        "reports\\world_cup_tournament_validation_current\\summary.json"
+      ]
     },
     {
       "league": "芬超",
@@ -71,6 +73,6 @@
       "evidence_reports": []
     }
   ],
-  "next_algorithmic_action": "Run no-lookahead World Cup validation now that historical 1X2 odds are archived.",
+  "next_algorithmic_action": "Collect historical 1X2 odds for current no-coverage leagues before inventing new betting rules.",
   "guardrail": "A league may enter allocation only after no-lookahead walk-forward, statistical audit, calibration, and official-SP prospective validation."
 }

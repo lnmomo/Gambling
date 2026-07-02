@@ -10,12 +10,13 @@ import numpy as np
 
 from .db import Database, db
 from .features import canonical_team_name
+from .config import settings
 from .market_bias_shadow_strategy import is_i2_league
 from .pandas_pipeline import team_weighted_goal_stats
 from .repository import Repository
 
 
-DEFAULT_SCORER_ARTIFACT = Path("reports/feature_enriched_market_anchored_i2_scorer_v1/scorer.json")
+DEFAULT_SCORER_ARTIFACT = Path(settings.profit_scorer_artifact_path)
 
 
 def _devig_probabilities(odds: dict[str, Any]) -> dict[str, float] | None:

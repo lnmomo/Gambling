@@ -8,6 +8,7 @@ from scripts.feature_enriched_candidate_filter import (
     FeatureFilterConfig,
     export_scorer_artifact,
     fit_ridge_probability_model,
+    formal_i2_configs,
     predict_probability,
     score_with_scorer_artifact,
     training_window,
@@ -61,6 +62,23 @@ def test_training_window_excludes_current_month() -> None:
 
     assert train["month"].tolist() == ["2024-01", "2024-02"]
     assert "2024-03" not in set(train["month"])
+
+
+def test_formal_i2_configs_are_fixed_research_candidate() -> None:
+    configs = formal_i2_configs(("AVG_OPEN", "AVG_CLOSE"))
+
+    assert [config.odds_source for config in configs] == ["AVG_OPEN", "AVG_CLOSE"]
+    assert all(config.train_months == 30 for config in configs)
+    assert all(config.min_train_rows == 120 for config in configs)
+    assert all(config.min_predicted_ev == 0.02 for config in configs)
+    assert all(config.selected_rules == ("I2_draw_2p8_3p5",) for config in configs)
+
+
+def test_formal_i2_config_can_target_close_source() -> None:
+    config = formal_i2_configs(("AVG_CLOSE",))[0]
+
+    assert config.odds_source == "AVG_CLOSE"
+    assert config.label.startswith("AVG_CLOSE_rulesi2_train30_n120_ev0p02")
 
 
 def test_ridge_probability_model_learns_directional_feature() -> None:

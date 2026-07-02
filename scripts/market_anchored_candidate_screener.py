@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -34,6 +35,11 @@ def _parse_rule(columns: str, key: str) -> dict[str, str]:
 def _rule_label(rule: dict[str, str]) -> str:
     parts = [f"{key}={value}" for key, value in sorted(rule.items())]
     return "rule_" + "_".join(parts).replace("[", "").replace("]", "").replace(")", "").replace(",", "_").replace(".", "p").replace("|", "_").replace("=", "_").replace(" ", "")
+
+
+def _rule_id(rule: dict[str, str]) -> str:
+    digest = hashlib.sha1(json.dumps(rule, sort_keys=True).encode("utf-8")).hexdigest()[:8]
+    return f"r{digest}"
 
 
 def _matches_rule(frame: pd.DataFrame, rule: dict[str, str]) -> pd.Series:
@@ -80,6 +86,13 @@ def build_rule_candidates(seasons: tuple[str, ...], odds_source: str,
                           rule_info: dict[str, Any],
                           feature_history: pd.DataFrame | None = None) -> pd.DataFrame:
     market = build_market_frame(seasons, odds_source)
+    return build_rule_candidates_from_market(market, seasons, rule_info, feature_history)
+
+
+def build_rule_candidates_from_market(market: pd.DataFrame,
+                                      seasons: tuple[str, ...],
+                                      rule_info: dict[str, Any],
+                                      feature_history: pd.DataFrame | None = None) -> pd.DataFrame:
     if market.empty:
         return pd.DataFrame()
     features = feature_history.copy() if feature_history is not None else build_feature_history(load_seasons(seasons))
@@ -100,7 +113,8 @@ def build_rule_candidates(seasons: tuple[str, ...], odds_source: str,
     selected = market[_matches_rule(market, rule_info["rule"])].copy()
     if selected.empty:
         return selected
-    selected["rule_label"] = _rule_label(rule_info["rule"])
+    selected["rule_label"] = _rule_id(rule_info["rule"])
+    selected["rule_description"] = _rule_label(rule_info["rule"])
     selected = selected.merge(
         features[join_columns + feature_columns],
         on=join_columns,
@@ -141,14 +155,23 @@ def run_market_anchored_candidate_screen(
     if odds_source not in ODDS_SOURCE_COLUMNS:
         raise ValueError(f"Unknown odds source: {odds_source}")
     rules = load_candidate_rules(diagnostics_csv, top_n, min_discovery_bets)
+    market = build_market_frame(seasons, odds_source)
     feature_history = build_feature_history(load_seasons(seasons))
     rows: list[dict[str, Any]] = []
     artifacts: dict[str, dict[str, pd.DataFrame]] = {}
     for rule in rules:
-        candidates = build_rule_candidates(seasons, odds_source, rule, feature_history)
-        label = _rule_label(rule["rule"])
+        candidates = build_rule_candidates_from_market(market, seasons, rule, feature_history)
+        label = _rule_id(rule["rule"])
+        rule_description = _rule_label(rule["rule"])
         if candidates.empty:
-            rows.append({**rule, "label": label, "decision": "REJECT_NO_CANDIDATES", "candidate_count": 0})
+            rows.append({
+                **rule,
+                "label": label,
+                "rule_id": label,
+                "rule_description": rule_description,
+                "decision": "REJECT_NO_CANDIDATES",
+                "candidate_count": 0,
+            })
             continue
         configs = [
             FeatureFilterConfig(odds_source, train_months, min_rows, min_ev, 1, ridge, 0.08, (label,))
@@ -168,7 +191,8 @@ def run_market_anchored_candidate_screen(
                 "columns": rule["columns"],
                 "key": rule["key"],
                 "label": config.label,
-                "rule_label": label,
+                "rule_id": label,
+                "rule_description": rule_description,
                 "odds_source": odds_source,
                 "candidate_count": int(len(candidates)),
                 "selected_candidates": int(len(selected)),
@@ -224,7 +248,7 @@ def run_market_anchored_candidate_screen(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Screen market-bias discovery candidates with a no-leak market-anchored residual model.")
-    parser.add_argument("--diagnostics-csv", action="append", type=Path, default=[Path("reports/market_bias_diagnostics_v1/market_bias.csv")])
+    parser.add_argument("--diagnostics-csv", action="append", type=Path, default=None)
     parser.add_argument("--seasons", default=",".join(DEFAULT_SEASONS))
     parser.add_argument("--odds-source", default="AVG_OPEN")
     parser.add_argument("--first-month", default="2022-08")
@@ -233,8 +257,9 @@ def main() -> None:
     parser.add_argument("--min-discovery-bets", type=int, default=150)
     parser.add_argument("--output-dir", type=Path, default=Path("reports/market_anchored_candidate_screener"))
     args = parser.parse_args()
+    diagnostics_csv = args.diagnostics_csv or [Path("reports/market_bias_diagnostics_v1/market_bias.csv")]
     report = run_market_anchored_candidate_screen(
-        args.diagnostics_csv,
+        diagnostics_csv,
         tuple(item.strip() for item in args.seasons.split(",") if item.strip()),
         args.odds_source,
         args.first_month,

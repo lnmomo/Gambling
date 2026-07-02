@@ -1196,6 +1196,7 @@ Market-anchored feature residual candidate:
   - `reports/feature_enriched_market_anchored_i2_formal_v1/summary.json`.
   - `reports/feature_enriched_market_anchored_i2_stop3_cool3_v1/summary.json`.
   - `reports/feature_enriched_market_anchored_i2_scorer_v1/scorer.json`.
+  - `reports/feature_enriched_market_anchored_i2_avg_close_scorer_v1/scorer.json`.
   - `reports/strategy_statistical_audit_market_anchored_i2_stop3_cool3_v1/summary.json`.
   - `reports/strategy_edge_calibration_market_anchored_i2_stop3_cool3_v1/summary.json`.
 - Protocol:
@@ -1236,7 +1237,7 @@ Interpretation:
 - The strongest signal is not broad favorite/underdog betting. It is a narrow, market-anchored Italy Serie B draw edge where the model is allowed only a small residual correction over market probability.
 - The first rolling window (`2022-08` to `2023-07`) still fails the window gate, so this should be treated as `PROMOTE_TO_SHADOW_VALIDATION`, not as production-proven live staking.
 - The validation source is still football-data average opening odds, not verified China Sports Lottery official SP. Before real-money use, this candidate must be replayed on collected official-SP snapshots with the same no-leak timing.
-- A frozen scorer artifact has been exported for prediction month `2026-06`. It uses 1074 prior candidate rows from `2023-12-01` through `2026-05-23` and stores the exact feature schema, normalization parameters, coefficients, residual cap, and EV threshold.
+- Frozen scorer artifacts have been exported for prediction month `2026-06`. The default live validation artifact is configured by `PROFIT_SCORER_ARTIFACT_PATH` and now points to `reports/feature_enriched_market_anchored_i2_avg_close_scorer_v1/scorer.json`.
 - The strategy has therefore been registered as `profit-i2-draw-market-anchored-stop3-cool3-v1` with status `PROMOTE_TO_OFFICIAL_SP_SHADOW_VALIDATION`, not `PRODUCTION_READY`.
 
 Official-pool scorer readiness diagnostic:
@@ -1244,6 +1245,7 @@ Official-pool scorer readiness diagnostic:
 - Code: `football_agents/profit_scorer_official.py`.
 - CLI:
   - `python -m football_agents.cli diagnose-profit-scorer-official-pool --limit 500 --output reports/profit_scorer_official_pool/summary.json`
+- Default scorer: `PROFIT_SCORER_ARTIFACT_PATH`, currently `reports/feature_enriched_market_anchored_i2_avg_close_scorer_v1/scorer.json`.
 - Purpose: map the current official match pool into the frozen scorer schema and report whether each match can be scored. This command does not create recommendations or bets.
 - Current local report: `reports/profit_scorer_official_pool/summary.json`.
 
@@ -1272,6 +1274,7 @@ Official-SP prospective validation for the frozen profit scorer:
 - Code: `football_agents/profit_scorer_prospective.py`.
 - CLI:
   - `python -m football_agents.cli validate-profit-scorer-official-sp --output reports/profit_scorer_official_sp_validation/summary.json`
+- Default scorer: `PROFIT_SCORER_ARTIFACT_PATH`, currently `reports/feature_enriched_market_anchored_i2_avg_close_scorer_v1/scorer.json`.
 - Tests: `tests/test_profit_scorer_prospective.py`.
 - Report: `reports/profit_scorer_official_sp_validation/summary.json`.
 - Automation:
@@ -1320,7 +1323,7 @@ Current local planner result:
 
 | League | Matches | With latest odds | Mapped code | Evidence status | Research priority |
 | --- | ---: | ---: | --- | --- | --- |
-| World Cup | 74 | 33 | `WORLD_CUP` | historical 1X2 odds collected, needs walk-forward validation | `HIGH_RESEARCH` |
+| World Cup | 74 | 33 | `WORLD_CUP` | rejected by World Cup tournament holdout | `LOW_DO_NOT_LOOSEN` |
 | Finnish Veikkausliiga | 24 | 12 | `FIN` | rejected by existing market-bias and residual tests | `LOW_DO_NOT_LOOSEN` |
 | International | 2 | 0 | `INTERNATIONAL` | missing historical 1X2 odds | `DATA_FIRST` |
 
@@ -1329,16 +1332,18 @@ Interpretation:
 - The live pool coverage problem is now explicit and machine-readable.
 - World Cup odds are now archived from Footiqo's World Cup database, which describes the odds as historical World Cup closing odds sourced from 1xBet.
 - Archived World Cup output: `data/historical_csv/football-data/new/WORLD_CUP.csv`, 128 matched rows, 2018-06-14 through 2022-12-18, 0 dropped rows.
-- World Cup market-bias discovery found visually attractive long-shot buckets, but the no-lookahead candidate screen selected 0 bets. The dataset has only 4 active tournament months, so it cannot yet satisfy the multi-month stability standard.
+- World Cup market-bias discovery found visually attractive long-shot buckets, but the no-lookahead tournament holdout rejected the reusable allocation rule search. The dataset has only two archived tournaments, so it cannot satisfy the multi-month stability standard.
 - International matches still cannot become an odds-edge strategy from results alone. They need historical 1X2 prices captured before kickoff.
 - FIN has `5240` historical odds rows locally, but the existing market-bias and residual experiments failed stability gates. That makes FIN a bad candidate for threshold loosening.
-- The next algorithmic action is to keep World Cup in research validation, continue looking for broader international 1X2 odds history, and avoid creating allocation rules by relaxing rejected FIN market-bias thresholds.
+- The planner now treats World Cup as `LOW_DO_NOT_LOOSEN` once the rejection report exists. The next algorithmic action is to collect broader paid international 1X2 odds history before retrying an international allocation rule.
 
 World Cup tournament holdout validation:
 
 - Code: `scripts/world_cup_tournament_validation.py`.
 - Tests: `tests/test_world_cup_tournament_validation.py`.
-- Report: `reports/world_cup_tournament_validation/summary.json`.
+- Reports:
+  - `reports/world_cup_tournament_validation_current/summary.json`.
+  - `reports/world_cup_tournament_validation/summary.json`.
 - Protocol:
   - Discover candidate rules only on the 2018 World Cup.
   - Test the discovered rules on the 2022 World Cup.
@@ -1398,3 +1403,224 @@ Updated expansion conclusion:
 - The market-anchored residual architecture is still useful, but its success has not generalized to FIN or World Cup under the current official-pool-driven specs.
 - The current best algorithm remains `profit-i2-draw-market-anchored-stop3-cool3-v1`, still blocked from production by official-SP prospective validation.
 - The next useful expansion should require either a larger validated league domain or paid/broader historical international odds; it should not lower stability gates to force daily bets.
+
+Cross-league candidate screener:
+
+- Code: `scripts/market_anchored_candidate_screener.py`.
+- Tests: `tests/test_market_anchored_candidate_screener.py`.
+- Reports:
+  - `reports/market_anchored_candidate_screener_top4_avg_open/summary.json`.
+  - `reports/market_anchored_candidate_screener_top4_avg_close/summary.json`.
+- Purpose:
+  - Take the highest-scoring market-bias discovery rows.
+  - Re-test them with the same no-lookahead market-anchored residual model family.
+  - Use rolling monthly windows as the stability gate instead of accepting a profitable aggregate backtest.
+
+Implementation note:
+
+- Candidate rule IDs are now stable short hashes, so different rules do not overwrite each other's artifacts when `FeatureFilterConfig.label` is built.
+- The screener now builds the market frame and feature history once per run, then filters rules from that shared frame.
+
+Top-4 discovery candidate screen:
+
+| Odds source | Best screened family | Bets | Profit | ROI | Active passed windows | Decision |
+| --- | --- | ---: | ---: | ---: | ---: | --- |
+| AVG open | Portugal `P1` strong favorite probability bucket `[0.55,1.00]` | 208 | +133.40 | 6.41% | 2 / 6 | `REJECT_RESEARCH_GATES` |
+| AVG close | Portugal `P1` strong favorite probability bucket `[0.55,1.00]` | 221 | -21.50 | -0.97% | 2 / 6 | `REJECT_RESEARCH_GATES` |
+
+Interpretation:
+
+- The apparent P1 favorite edge is not stable enough: the best open-price version only passes `33.33%` of active rolling windows.
+- The same family turns negative on average closing prices, which is a warning that the signal is not a robust market-anchored edge.
+- This is useful negative evidence: do not expand the allocation algorithm by adding P1 favorite slices just because aggregate open-price ROI is positive.
+- The search should continue toward candidates that survive both monthly stability and cross-price sanity checks, or toward broader international historical odds that increase official-pool relevance.
+
+Rolling low-correlation combo stress test:
+
+- Code: `scripts/rolling_low_correlation_rule_selector.py`.
+- Input market candidates:
+  - `reports/market_bias_diagnostics_worldwide_avg_close/market_candidates.csv`.
+  - `reports/market_bias_diagnostics_worldwide_ps_close/market_candidates.csv`.
+- Reports:
+  - `reports/rolling_low_correlation_rule_selector_trainstable_pair_relaxed_v2/summary.json`.
+  - `reports/rolling_low_correlation_rule_selector_trainstable_pair_v2/summary.json`.
+  - `reports/rolling_low_correlation_rule_selector_trainstable_pair_strict_v2/summary.json`.
+- Purpose:
+  - Re-check the attractive low-correlation combo idea with a prospective rolling protocol.
+  - Select rules only from the prior 48 months.
+  - Require each selected pair to pass training-window stability before testing the next 12-month validation window.
+
+Result:
+
+| Train pass-rate gate | Validation windows | Active passed windows | Bets | Profit | ROI | Decision |
+| ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 0.4 | 13 | 4 | 1125 | -48.48 | -4.31% | `REJECT_ROLLING_OOS` |
+| 0.6 | 13 | 4 | 1125 | -48.48 | -4.31% | `REJECT_ROLLING_OOS` |
+| 0.8 | 13 | 4 | 1125 | -48.48 | -4.31% | `REJECT_ROLLING_OOS` |
+
+Interpretation:
+
+- Static low-correlation combos can look attractive when the rule universe is chosen over the full sample, but prospective rolling selection does not preserve the edge.
+- Raising the training stability gate from `0.4` to `0.8` did not improve sample-outcome quality for this compact pair-selection setup.
+- The selected pairs still lose money over 2019-2026 validation windows and pass only `30.77%` of active windows.
+- This rejects the current low-correlation-combo expansion as a deployable allocation algorithm.
+- Future combo work must add a stronger non-price feature model or a stricter cross-provider/CLV confirmation layer, not merely combine more profitable historical buckets.
+
+I2 final-bets CLV audit:
+
+- Code: `scripts/i2_clv_audit.py`.
+- Tests: `tests/test_i2_clv_audit.py`.
+- Report: `reports/i2_final_bets_clv_audit/summary.json`.
+- Input bets: `reports/feature_enriched_market_anchored_i2_stop3_cool3_v1/bets.csv`.
+- Purpose:
+  - Audit the actual final selected I2 draw bets, after the market-anchored filter and stop/cooldown risk control.
+  - Join each selected bet back to football-data opening and closing 1X2 prices.
+  - Separate raw CLV from no-vig closing fair edge.
+
+Result:
+
+| Metric | Value |
+| --- | ---: |
+| Input bets | 303 |
+| Matched bets | 303 |
+| Unmatched bets | 0 |
+| Profit | +644.10 |
+| ROI | 21.26% |
+| Average bet odds | 3.2131 |
+| Average closing draw odds | 3.1577 |
+| Average raw CLV | +1.878% |
+| Median raw CLV | +1.672% |
+| Positive CLV rate | 73.60% |
+| Positive / negative CLV months | 33 / 7 |
+| Average no-vig closing edge | -4.843% |
+| Decision | `RAW_CLV_CONFIRMED_RESEARCH_ONLY` |
+| Warning | `avg_no_vig_closing_edge<=0` |
+
+By season:
+
+| Season | Bets | ROI | Avg raw CLV | Positive CLV rate | Avg no-vig closing edge |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 2022-23 | 64 | 4.36% | +1.879% | 79.69% | -4.277% |
+| 2023-24 | 74 | 11.80% | +2.203% | 75.68% | -4.001% |
+| 2024-25 | 84 | 37.56% | +2.766% | 76.19% | -3.590% |
+| 2025-26 | 81 | 26.35% | +0.657% | 64.20% | -7.360% |
+
+Interpretation:
+
+- This is the strongest supporting evidence for the current I2 direction so far: final selected bets consistently beat the raw closing draw price.
+- However, the no-vig closing fair edge is still negative on average, so the result is not enough to claim a production-grade edge.
+- The correct status is research-positive but not production-ready.
+- Next validation should focus on whether official Sporttery SP offers similar positive raw CLV and whether a future prospective shadow sample reaches at least 200 settled selected bets across 6+ months.
+
+I2 formal open-vs-close stress test:
+
+- Code change: `scripts/feature_enriched_candidate_filter.py` now supports `--formal-i2-only`.
+- Tests: `tests/test_feature_enriched_candidate_filter.py`.
+- Reports:
+  - `reports/feature_enriched_market_anchored_i2_formal_open_close_compare_v1/summary.json`.
+  - `reports/feature_enriched_market_anchored_i2_formal_avg_close_v1/summary.json`.
+  - `reports/feature_enriched_market_anchored_i2_formal_avg_close_cooldown_v1/summary.json`.
+- Purpose:
+  - Run the same formal market-anchored I2 draw configuration on opening average odds and closing average odds.
+  - Check whether the signal disappears at close.
+  - Apply the same settled-loss cooldown grid to the closing-odds selected bets as a research-only stress test.
+
+Formal no-cooldown comparison:
+
+| Odds source | Bets | Profit | ROI | Positive / Negative Months | Active passed windows |
+| --- | ---: | ---: | ---: | --- | ---: |
+| AVG open | 334 | +625.70 | 18.73% | 25 / 15 | 4 / 6 |
+| AVG close | 335 | +439.90 | 13.13% | 21 / 19 | 3 / 6 |
+
+Closing-odds cooldown grid:
+
+| Variant | Bets | Profit | ROI | Positive / Negative Months | Active passed windows |
+| --- | ---: | ---: | ---: | --- | ---: |
+| stop3/cool14 | 218 | +549.10 | 25.19% | 23 / 17 | 5 / 6 |
+| stop2/cool3 | 284 | +480.20 | 16.91% | 25 / 15 | 5 / 6 |
+| stop3/cool3 | 302 | +278.00 | 9.21% | 20 / 20 | 3 / 6 |
+
+Interpretation:
+
+- The I2 market-anchored draw signal does not vanish at closing odds. That is stronger than a pure early-price artifact.
+- Stability is weaker at close without cooldown: positive months narrow from `25 / 15` to `21 / 19`, and active passed windows fall from `4 / 6` to `3 / 6`.
+- A post-hoc cooldown grid can recover a strong-looking closing-odds profile, especially `stop3/cool14`, but that parameter is selected after seeing the same historical period.
+- Therefore `AVG_CLOSE + stop3/cool14` is a research lead, not a production parameter. It needs the same prospective freeze-and-shadow treatment as the current `AVG_OPEN + stop3/cool3`.
+- The current I2 direction is now supported by three facts: positive multi-window opening performance, positive raw CLV, and positive closing-odds formal performance. The remaining blocker is official-SP prospective validation.
+
+Frozen AVG-close research candidate:
+
+- Manifest: `reports/profit_strategy_research_candidates/i2_avg_close_stop3_cool14_v1/manifest.json`.
+- Scorer artifact: `reports/feature_enriched_market_anchored_i2_avg_close_scorer_v1/scorer.json`.
+- Statistical audit: `reports/strategy_statistical_audit_market_anchored_i2_avg_close_stop3_cool14_v1/summary.json`.
+- Edge calibration: `reports/strategy_edge_calibration_market_anchored_i2_avg_close_stop3_cool14_v1/summary.json`.
+- Tests: `tests/test_profit_research_candidate_manifest.py`, `tests/test_profit_strategy_registry.py`.
+- Strategy id: `profit-i2-draw-market-anchored-avg-close-stop3-cool14-v1`.
+- Status: `STATISTICALLY_CALIBRATED_RESEARCH_LEAD_WAITING_OFFICIAL_SP_SHADOW`.
+
+Frozen parameters:
+
+| Parameter | Value |
+| --- | --- |
+| League | `I2` |
+| Outcome | Draw |
+| Odds source | `AVG_CLOSE` |
+| Odds band | `[2.8,3.5)` |
+| Train months | 30 |
+| Min prior candidates | 120 |
+| Min predicted EV | 0.02 |
+| Ridge | 10 |
+| Residual cap | 0.08 |
+| Max bets per day | 1 |
+| Settled-loss stop | 3 losing settlement days |
+| Cooldown | 14 days |
+
+Audit and calibration result:
+
+| Check | Value |
+| --- | ---: |
+| Bets | 218 |
+| Active months | 40 |
+| Profit | +549.10 |
+| ROI | 25.19% |
+| Positive / negative months | 23 / 17 |
+| Bootstrap ROI p05 | +8.79% |
+| Probability ROI positive | 99.34% |
+| Sign-flip p-value | 0.0128 |
+| Drawdown / profit | 0.185 |
+| Overall hit rate | 39.91% |
+| Avg implied probability | 31.61% |
+| Wilson lower hit rate | 33.64% |
+| Conservative edge vs implied | +2.02 pp |
+
+Freeze interpretation:
+
+- The `AVG_CLOSE + stop3/cool14` variant is now frozen for prospective shadow validation.
+- It now passes the formal monthly bootstrap/sign-flip audit and the overall selected-odds calibration audit.
+- It is still explicitly blocked from production because the historical evidence uses football-data AVG_CLOSE rather than Chinese official SP, and because `cool14` was chosen after inspecting the historical cooldown grid.
+- Season-level calibration is not uniformly conservative: `2022-23` is effectively flat/slightly negative, while later seasons carry most of the edge. This reinforces the need for prospective official-SP validation.
+- The scorer can now be used in a future official-SP shadow workflow without changing the model coefficients or selection parameters.
+- Promotion requires at least 200 settled selected official-SP shadow samples across at least 6 active months, positive ROI, positive month balance, and positive raw official-SP CLV.
+
+Current official-SP validation status:
+
+- Official pool diagnosis: `reports/profit_scorer_official_pool_avg_close_stop3_cool14/summary.json`.
+- Official opening-snapshot validation: `reports/profit_scorer_official_sp_validation_avg_close_stop3_cool14/summary.json`.
+- Strategy registry output: `reports/profit_strategies/summary.json`.
+
+| Check | Value |
+| --- | ---: |
+| Current official pool scanned matches | 100 |
+| Pool matches scored by AVG_CLOSE scorer | 0 |
+| Pool matches passing scorer | 0 |
+| Opening pre-match official snapshots | 28 |
+| Opening snapshots scored | 0 |
+| Selected official-SP snapshots | 0 |
+| Settled selected official-SP snapshots | 0 |
+
+Official-SP blocker interpretation:
+
+- The current official pool blocker is coverage, not model arithmetic: `league_not_i2` blocks all `100` current official-pool matches.
+- In the historical opening-snapshot validation set, `28 / 28` snapshots are also blocked by `league_not_i2`, and `19 / 28` are outside the draw SP band `[2.8,3.5)`.
+- This means the algorithm is ready for I2 official-SP shadow validation, but the current Chinese official pool does not contain eligible I2 fixtures.
+- Do not widen the strategy to World Cup or FIN to force daily bets; those domains already failed their own stability checks.

@@ -1,0 +1,133 @@
+{
+  "strategy_id": "profit-i2-draw-market-anchored-avg-close-stop3-cool14-v1",
+  "status": "STATISTICALLY_CALIBRATED_RESEARCH_LEAD_WAITING_OFFICIAL_SP_SHADOW",
+  "created_at": "2026-07-02T04:31:12.319532+00:00",
+  "selection": {
+    "league_family": "I2",
+    "outcome": "DRAW",
+    "odds_source": "AVG_CLOSE",
+    "odds_band": "[2.8,3.5)",
+    "train_months": 30,
+    "min_prior_candidates": 120,
+    "min_predicted_ev": 0.02,
+    "ridge": 10.0,
+    "market_residual_cap": 0.08,
+    "max_bets_per_day": 1
+  },
+  "risk_control": {
+    "stop_after_losing_settlement_days": 3,
+    "cooldown_days": 14,
+    "uses_only_settled_results": true
+  },
+  "evidence_reports": {
+    "formal_avg_close": "reports/feature_enriched_market_anchored_i2_formal_avg_close_v1/summary.json",
+    "open_close_compare": "reports/feature_enriched_market_anchored_i2_formal_open_close_compare_v1/summary.json",
+    "cooldown_grid": "reports/feature_enriched_market_anchored_i2_formal_avg_close_cooldown_v1/summary.json",
+    "statistical_audit": "reports/strategy_statistical_audit_market_anchored_i2_avg_close_stop3_cool14_v1/summary.json",
+    "edge_calibration": "reports/strategy_edge_calibration_market_anchored_i2_avg_close_stop3_cool14_v1/summary.json",
+    "official_pool_diagnosis": "reports/profit_scorer_official_pool_avg_close_stop3_cool14/summary.json",
+    "official_sp_validation": "reports/profit_scorer_official_sp_validation_avg_close_stop3_cool14/summary.json",
+    "scorer_artifact": "reports/feature_enriched_market_anchored_i2_avg_close_scorer_v1/scorer.json",
+    "raw_clv_audit_reference": "reports/i2_final_bets_clv_audit/summary.json"
+  },
+  "historical_metrics": {
+    "formal_avg_close": {
+      "label": "AVG_CLOSE_rulesi2_train30_n120_ev0p02_top1_ridge10_cap0.08",
+      "odds_source": "AVG_CLOSE",
+      "train_months": 30,
+      "min_train_rows": 120,
+      "min_predicted_ev": 0.02,
+      "max_bets_per_day": 1,
+      "ridge": 10.0,
+      "residual_cap": 0.08,
+      "selected_rules": "I2_draw_2p8_3p5",
+      "candidate_count": 2044,
+      "selected_candidates": 335,
+      "bets": 335,
+      "profit": 439.9,
+      "roi_pct": 13.13,
+      "max_drawdown": 115.8,
+      "positive_months": 21,
+      "negative_months": 19,
+      "window_count": 6,
+      "passed_windows": 3,
+      "active_window_count": 6,
+      "active_passed_windows": 3,
+      "active_pass_rate": 0.5
+    },
+    "cooldown_best": {
+      "label": "stop3_cool14",
+      "stop_after_losing_settlement_days": 3,
+      "cooldown_days": 14,
+      "bets": 218,
+      "profit": 549.1,
+      "roi_pct": 25.19,
+      "max_drawdown": 127.0,
+      "positive_months": 23,
+      "negative_months": 17,
+      "window_count": 6,
+      "passed_windows": 5,
+      "active_window_count": 6,
+      "active_passed_windows": 5,
+      "active_pass_rate": 0.8333
+    }
+  },
+  "scorer": {
+    "artifact_type": "market_anchored_feature_residual_scorer",
+    "strategy_label": "AVG_CLOSE_rulesi2_train30_n120_ev0p02_top1_ridge10_cap0.08",
+    "prediction_month": "2026-06",
+    "training_window": {
+      "train_months": 30,
+      "first_date": "2023-12-01",
+      "last_date": "2026-05-23",
+      "rows": 1056
+    },
+    "selection": {
+      "odds_source": "AVG_CLOSE",
+      "selected_rules": [
+        "I2_draw_2p8_3p5"
+      ],
+      "min_predicted_ev": 0.02,
+      "max_bets_per_day": 1,
+      "residual_cap": 0.08,
+      "ridge": 10.0,
+      "feature_columns": [
+        "market_probability",
+        "log_odds",
+        "is_draw",
+        "is_home",
+        "league_draw_rate",
+        "league_prior_matches_scaled",
+        "form_points_diff",
+        "abs_form_points_diff",
+        "form_goal_diff_delta",
+        "abs_form_goal_diff_delta",
+        "season_points_per_match_delta",
+        "abs_season_points_per_match_delta",
+        "season_goal_diff_per_match_delta",
+        "abs_season_goal_diff_per_match_delta",
+        "rest_days_delta",
+        "lambda_total",
+        "lambda_diff"
+      ]
+    }
+  },
+  "freeze_notes": [
+    "stop3/cool14 is selected after historical grid inspection and must not be promoted without a fresh prospective shadow sample.",
+    "AVG_CLOSE evidence shows the signal does not vanish at close, but Chinese official SP validation remains separate.",
+    "Use this package to run shadow validation only; do not allocate real stake from it yet.",
+    "Formal statistical audit and selected-odds calibration now support the historical AVG_CLOSE candidate, but official-SP prospective validation remains the promotion gate."
+  ],
+  "promotion_requirements": [
+    "At least 200 settled selected official-SP shadow samples.",
+    "At least 6 active settled months.",
+    "Positive ROI and positive-month count greater than negative-month count.",
+    "Raw official-SP CLV positive on average with positive CLV rate >= 0.5.",
+    "No-vig fair edge warning reviewed before any production allocation."
+  ],
+  "blockers": [
+    "historical reports use football-data AVG_CLOSE, not China Sporttery official SP",
+    "cooldown parameter is post-hoc until frozen prospective shadow validation runs",
+    "official pool currently has no I2 scorer-eligible matches or settled selected official-SP snapshots"
+  ]
+}

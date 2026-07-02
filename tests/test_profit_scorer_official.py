@@ -4,7 +4,8 @@ import json
 from pathlib import Path
 
 from football_agents.db import Database
-from football_agents.profit_scorer_official import diagnose_official_profit_scorer_pool
+from football_agents.config import settings
+from football_agents.profit_scorer_official import DEFAULT_SCORER_ARTIFACT, diagnose_official_profit_scorer_pool
 from football_agents.repository import Repository
 
 
@@ -39,6 +40,11 @@ def _artifact(path: Path) -> None:
             ]},
         },
     }), encoding="utf-8")
+
+
+def test_default_profit_scorer_artifact_uses_configured_research_candidate() -> None:
+    assert DEFAULT_SCORER_ARTIFACT == Path(settings.profit_scorer_artifact_path)
+    assert "feature_enriched_market_anchored_i2_avg_close_scorer_v1" in str(DEFAULT_SCORER_ARTIFACT)
 
 
 def _official_match(repo: Repository, database: Database) -> int:
