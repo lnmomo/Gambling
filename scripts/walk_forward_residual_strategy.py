@@ -5,7 +5,7 @@ import itertools
 import json
 import math
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import numpy as np
@@ -20,6 +20,8 @@ from football_agents.models import EloModel, EnsembleModel, PoissonModel
 from football_agents.models.ensemble import market_probabilities
 from monthly_shadow_backtest import OUTCOMES, actual_outcome, load_matches
 
+DEFAULT_SEASONS = ("2122", "2223", "2324", "2425", "2526")
+
 
 @dataclass(frozen=True)
 class PortfolioConfig:
@@ -32,6 +34,10 @@ class PortfolioConfig:
     league_limit: float = 40.0
     bucket_key: tuple[str, ...] = ()
     allowed_buckets: tuple[tuple[str, ...], ...] = ()
+    min_odds: float = 1.5
+    allowed_outcomes: tuple[str, ...] = OUTCOMES
+    stop_loss: float | None = None
+    quality_gate: dict | None = None
 
 
 EXPERIMENT_PROFILES = {
@@ -62,7 +68,207 @@ EXPERIMENT_PROFILES = {
         "min_bucket_samples": (3,),
         "min_bucket_roi": (0.10,),
     },
+    "stability": {
+        "validation_min_bets": 25,
+        "min_positive_validation_months": 2,
+        "min_validation_roi": 0.08,
+        "min_validation_profit": 3.0,
+        "max_drawdown_profit_ratio": 1.25,
+        "uncertainty_scale": 0.75,
+        "ev_thresholds": (0.00, 0.01, 0.02),
+        "max_odds": (5.0, 6.0),
+        "kelly_fractions": (0.10, 0.25),
+    },
+    "guarded": {
+        "validation_min_bets": 20,
+        "min_positive_validation_months": 2,
+        "min_validation_roi": 0.10,
+        "min_validation_profit": 5.0,
+        "max_drawdown_profit_ratio": 0.90,
+        "uncertainty_scale": 1.0,
+        "ev_thresholds": (0.01, 0.02, 0.03),
+        "max_odds": (4.0, 5.0),
+        "kelly_fractions": (0.10,),
+    },
+    "draw_value": {
+        "validation_min_bets": 15,
+        "min_positive_validation_months": 2,
+        "min_validation_roi": 0.05,
+        "min_validation_profit": 2.0,
+        "max_drawdown_profit_ratio": 1.50,
+        "uncertainty_scale": 0.85,
+        "ev_thresholds": (0.00, 0.01, 0.02),
+        "min_odds": (2.2, 2.8),
+        "max_odds": (3.5, 4.0),
+        "kelly_fractions": (0.05, 0.10),
+        "allowed_outcomes": (("draw",),),
+    },
+    "draw_value_stop": {
+        "validation_min_bets": 15,
+        "min_positive_validation_months": 2,
+        "min_validation_roi": 0.05,
+        "min_validation_profit": 2.0,
+        "max_drawdown_profit_ratio": 1.50,
+        "uncertainty_scale": 0.85,
+        "ev_thresholds": (0.00, 0.01, 0.02),
+        "min_odds": (2.2, 2.8),
+        "max_odds": (3.5, 4.0),
+        "kelly_fractions": (0.05, 0.10),
+        "allowed_outcomes": (("draw",),),
+        "stop_losses": (3.0, 5.0),
+    },
+    "draw_regime": {
+        "validation_min_bets": 12,
+        "min_positive_validation_months": 2,
+        "min_validation_roi": 0.05,
+        "min_validation_profit": 2.0,
+        "max_drawdown_profit_ratio": 1.50,
+        "uncertainty_scale": 0.85,
+        "ev_thresholds": (0.00, 0.01, 0.02),
+        "min_odds": (2.2, 2.8),
+        "max_odds": (3.5, 4.0),
+        "kelly_fractions": (0.05, 0.10),
+        "allowed_outcomes": (("draw",),),
+        "bucket_keys": (
+            ("odds_bucket", "market_draw_bucket"),
+            ("odds_bucket", "league_draw_rate_bucket"),
+            ("odds_bucket", "strength_gap_bucket"),
+            ("odds_bucket", "goal_env_bucket"),
+        ),
+        "min_bucket_samples": (8,),
+        "min_bucket_roi": (0.10,),
+    },
+    "draw_regime_strict": {
+        "validation_min_bets": 15,
+        "min_positive_validation_months": 2,
+        "min_validation_roi": 0.08,
+        "min_validation_profit": 3.0,
+        "max_drawdown_profit_ratio": 1.20,
+        "uncertainty_scale": 0.85,
+        "ev_thresholds": (0.01, 0.02),
+        "min_odds": (2.8,),
+        "max_odds": (3.5,),
+        "kelly_fractions": (0.05,),
+        "allowed_outcomes": (("draw",),),
+        "bucket_keys": (
+            ("odds_bucket", "market_draw_bucket"),
+            ("odds_bucket", "league_draw_rate_bucket"),
+            ("odds_bucket", "strength_gap_bucket"),
+            ("odds_bucket", "goal_env_bucket"),
+        ),
+        "min_bucket_samples": (12,),
+        "min_bucket_roi": (0.15,),
+    },
+    "draw_regime_persistent": {
+        "validation_months": 12,
+        "training_months": 18,
+        "validation_min_bets": 10,
+        "min_positive_validation_months": 2,
+        "min_validation_roi": 0.05,
+        "min_validation_profit": 1.0,
+        "max_drawdown_profit_ratio": 1.50,
+        "uncertainty_scale": 0.85,
+        "ev_thresholds": (0.01,),
+        "min_odds": (2.8,),
+        "max_odds": (3.5,),
+        "kelly_fractions": (0.05,),
+        "allowed_outcomes": (("draw",),),
+        "bucket_keys": (
+            ("odds_bucket", "market_draw_bucket"),
+            ("odds_bucket", "league_draw_rate_bucket"),
+            ("odds_bucket", "strength_gap_bucket"),
+            ("odds_bucket", "goal_env_bucket"),
+        ),
+        "min_bucket_samples": (15,),
+        "min_bucket_roi": (0.05,),
+        "persistent_buckets": True,
+        "min_bucket_active_months": 4,
+        "min_bucket_positive_months": 3,
+    },
+    "draw_quality": {
+        "validation_min_bets": 8,
+        "min_positive_validation_months": 1,
+        "min_validation_roi": 0.05,
+        "min_validation_profit": 1.0,
+        "max_drawdown_profit_ratio": 1.50,
+        "uncertainty_scale": 0.85,
+        "ev_thresholds": (0.00, 0.01, 0.02),
+        "min_odds": (2.2, 2.8),
+        "max_odds": (3.5, 4.0),
+        "kelly_fractions": (0.05, 0.10),
+        "allowed_outcomes": (("draw",),),
+        "quality_gate": True,
+        "quality_quantiles": (0.50, 0.65),
+        "quality_min_samples": 18,
+    },
+    "draw_quality_pooled": {
+        "validation_months": 12,
+        "training_months": 18,
+        "validation_min_bets": 15,
+        "min_positive_validation_months": 1,
+        "min_validation_roi": 0.05,
+        "min_validation_profit": 1.0,
+        "max_drawdown_profit_ratio": 1.50,
+        "uncertainty_scale": 0.85,
+        "ev_thresholds": (0.00, 0.01, 0.02),
+        "min_odds": (2.2, 2.8),
+        "max_odds": (3.5, 4.0),
+        "kelly_fractions": (0.05, 0.10),
+        "allowed_outcomes": (("draw",),),
+        "quality_gate": True,
+        "quality_quantiles": (0.50, 0.65, 0.75),
+        "quality_min_samples": 60,
+    },
+    "draw_quality_pooled_full": {
+        "validation_months": 12,
+        "training_months": 18,
+        "validation_min_bets": 15,
+        "min_positive_validation_months": 2,
+        "min_validation_roi": 0.05,
+        "min_validation_profit": 2.0,
+        "max_drawdown_profit_ratio": 1.50,
+        "uncertainty_scale": 0.85,
+        "ev_thresholds": (0.00, 0.01, 0.02),
+        "min_odds": (2.2, 2.8),
+        "max_odds": (3.5, 4.0),
+        "kelly_fractions": (0.05, 0.10),
+        "allowed_outcomes": (("draw",),),
+        "quality_gate": True,
+        "quality_holdout": False,
+        "quality_quantiles": (0.50, 0.65, 0.75),
+        "quality_min_samples": 60,
+    },
+    "draw_quality_pooled_lite": {
+        "validation_months": 12,
+        "training_months": 18,
+        "validation_min_bets": 10,
+        "min_positive_validation_months": 1,
+        "min_validation_roi": 0.03,
+        "min_validation_profit": 1.0,
+        "max_drawdown_profit_ratio": 2.00,
+        "uncertainty_scale": 0.85,
+        "ev_thresholds": (0.01,),
+        "min_odds": (2.8,),
+        "max_odds": (3.5,),
+        "kelly_fractions": (0.05,),
+        "allowed_outcomes": (("draw",),),
+        "quality_gate": True,
+        "quality_holdout": False,
+        "quality_quantiles": (0.50,),
+        "quality_min_samples": 60,
+    },
 }
+
+QUALITY_FEATURE_COLUMNS = (
+    "lower_ev",
+    "probability",
+    "uncertainty",
+    "odds",
+    "market_draw",
+    "league_draw_rate",
+    "abs_elo_delta",
+    "lambda_total",
+)
 
 
 class IsotonicPAV:
@@ -292,19 +498,50 @@ def choose_candidates(predictions: pd.DataFrame, config: PortfolioConfig) -> pd.
             "outcome": outcome, "probability": float(row[f"probability_{outcome}"]),
             "uncertainty": float(row[f"uncertainty_{outcome}"]), "lower_ev": float(row[f"lower_ev_{outcome}"]),
             "odds": float(row[f"odds_{outcome}"]),
-        } for outcome in OUTCOMES]
+        } for outcome in OUTCOMES if outcome in config.allowed_outcomes]
+        if not choices:
+            continue
         best = max(choices, key=lambda item: item["lower_ev"])
-        if best["lower_ev"] < config.min_lower_ev or not 1.5 <= best["odds"] <= config.max_odds:
+        if best["lower_ev"] < config.min_lower_ev or not config.min_odds <= best["odds"] <= config.max_odds:
             continue
         odds_bucket = _odds_bucket(best["odds"])
-        candidate = {**best, "row_index": index, "league": row["league"], "date": row["match_date"],
-                     "odds_bucket": odds_bucket}
+        candidate = {
+            **best,
+            "row_index": index,
+            "league": row["league"],
+            "date": row["match_date"],
+            "odds_bucket": odds_bucket,
+            "market_draw": float(row.get("market_draw", 0.0)),
+            "league_draw_rate": float(row.get("league_draw_rate", 0.0)),
+            "abs_elo_delta": abs(float(row.get("elo_delta", 0.0))),
+            "lambda_total": float(row.get("lambda_total", 0.0)),
+            "market_draw_bucket": _market_draw_bucket(float(row.get("market_draw", 0.0))),
+            "league_draw_rate_bucket": _league_draw_rate_bucket(float(row.get("league_draw_rate", 0.0))),
+            "strength_gap_bucket": _strength_gap_bucket(float(row.get("elo_delta", 0.0))),
+            "goal_env_bucket": _goal_env_bucket(float(row.get("lambda_total", 0.0))),
+        }
         if config.allowed_buckets:
             key = tuple(str(candidate[column]) for column in config.bucket_key)
             if key not in set(config.allowed_buckets):
                 continue
+        if config.quality_gate is not None:
+            score = _quality_score(candidate, config.quality_gate)
+            candidate["quality_score"] = score
+            if score < float(config.quality_gate["threshold"]):
+                continue
         candidates.append(candidate)
     return pd.DataFrame(candidates)
+
+
+def _quality_score(candidate: dict, gate: dict) -> float:
+    means = gate["means"]
+    scales = gate["scales"]
+    coefficients = gate["coefficients"]
+    score = float(gate["intercept"])
+    for column, coefficient in zip(gate["feature_columns"], coefficients):
+        scale = float(scales.get(column, 1.0)) or 1.0
+        score += ((float(candidate.get(column, 0.0)) - float(means.get(column, 0.0))) / scale) * float(coefficient)
+    return score
 
 
 def _odds_bucket(odds: float) -> str:
@@ -313,6 +550,39 @@ def _odds_bucket(odds: float) -> str:
         if lower <= odds < upper:
             return f"[{lower},{upper})"
     return "[7.0,inf)"
+
+
+def _market_draw_bucket(probability: float) -> str:
+    if probability < 0.24:
+        return "market_draw_low"
+    if probability < 0.29:
+        return "market_draw_mid"
+    return "market_draw_high"
+
+
+def _league_draw_rate_bucket(rate: float) -> str:
+    if rate < 0.24:
+        return "league_draw_low"
+    if rate < 0.29:
+        return "league_draw_mid"
+    return "league_draw_high"
+
+
+def _strength_gap_bucket(elo_delta: float) -> str:
+    gap = abs(elo_delta)
+    if gap < 45:
+        return "strength_close"
+    if gap < 120:
+        return "strength_gap_mid"
+    return "strength_gap_wide"
+
+
+def _goal_env_bucket(lambda_total: float) -> str:
+    if lambda_total < 2.35:
+        return "goal_env_low"
+    if lambda_total < 2.70:
+        return "goal_env_mid"
+    return "goal_env_high"
 
 
 def _unit_profit(outcome: str, actual: str, odds: float) -> float:
@@ -350,11 +620,106 @@ def select_allowed_buckets(predictions: pd.DataFrame, base_config: PortfolioConf
     return tuple(tuple(str(row[column]) for column in bucket_key) for _, row in accepted.iterrows())
 
 
+def select_persistent_buckets(predictions: pd.DataFrame, base_config: PortfolioConfig,
+                              bucket_key: tuple[str, ...], min_samples: int,
+                              min_roi: float, min_active_months: int,
+                              min_positive_months: int) -> tuple[tuple[str, ...], ...]:
+    frame = build_candidate_outcomes(predictions, base_config)
+    if frame.empty:
+        return ()
+    frame = frame.copy()
+    frame["month"] = pd.to_datetime(frame["date"]).dt.to_period("M").astype(str)
+    rows: list[dict] = []
+    for key, group in frame.groupby(list(bucket_key), dropna=False):
+        if not isinstance(key, tuple):
+            key = (key,)
+        month_rows = group.groupby("month").agg(
+            samples=("unit_profit", "size"),
+            profit=("unit_profit", "sum"),
+        )
+        samples = int(group["unit_profit"].size)
+        profit = float(group["unit_profit"].sum())
+        roi = profit / samples if samples else 0.0
+        active_months = int((month_rows["samples"] > 0).sum())
+        positive_months = int((month_rows["profit"] > 0).sum())
+        rows.append({
+            "key": tuple(str(value) for value in key),
+            "samples": samples,
+            "profit": profit,
+            "roi": roi,
+            "active_months": active_months,
+            "positive_months": positive_months,
+        })
+    accepted = [
+        row["key"] for row in rows
+        if row["samples"] >= min_samples
+        and row["profit"] > 0
+        and row["roi"] >= min_roi
+        and row["active_months"] >= min_active_months
+        and row["positive_months"] >= min_positive_months
+    ]
+    return tuple(accepted)
+
+
+def build_candidate_outcomes(predictions: pd.DataFrame, config: PortfolioConfig) -> pd.DataFrame:
+    candidates = choose_candidates(predictions, config)
+    if candidates.empty:
+        return candidates
+    rows: list[dict] = []
+    for _, candidate in candidates.iterrows():
+        source = predictions.loc[int(candidate["row_index"])]
+        won = candidate["outcome"] == source["actual_result"]
+        rows.append({
+            **candidate.to_dict(),
+            "actual_result": source["actual_result"],
+            "won": won,
+            "unit_profit": _unit_profit(candidate["outcome"], source["actual_result"], float(candidate["odds"])),
+        })
+    return pd.DataFrame(rows)
+
+
+def fit_quality_gate(predictions: pd.DataFrame, base_config: PortfolioConfig, *,
+                     quantile: float, min_samples: int, ridge: float = 4.0) -> dict | None:
+    frame = build_candidate_outcomes(predictions, base_config)
+    if len(frame) < min_samples:
+        return None
+    x_raw = frame.loc[:, QUALITY_FEATURE_COLUMNS].astype(float)
+    means = x_raw.mean()
+    scales = x_raw.std(ddof=0).replace(0, 1.0).fillna(1.0)
+    x = ((x_raw - means) / scales).to_numpy(float)
+    design = np.column_stack([np.ones(len(x)), x])
+    y = frame["unit_profit"].to_numpy(float)
+    penalty = np.eye(design.shape[1]) * ridge
+    penalty[0, 0] = 0.0
+    beta = np.linalg.solve(design.T @ design + penalty, design.T @ y)
+    scores = design @ beta
+    threshold = float(np.quantile(scores, quantile))
+    return {
+        "kind": "linear_unit_profit_quality",
+        "feature_columns": list(QUALITY_FEATURE_COLUMNS),
+        "intercept": float(beta[0]),
+        "coefficients": [float(value) for value in beta[1:]],
+        "means": {column: float(means[column]) for column in QUALITY_FEATURE_COLUMNS},
+        "scales": {column: float(scales[column]) for column in QUALITY_FEATURE_COLUMNS},
+        "threshold": threshold,
+        "quantile": float(quantile),
+        "training_samples": int(len(frame)),
+    }
+
+
 def simulate(predictions: pd.DataFrame, config: PortfolioConfig) -> tuple[pd.DataFrame, pd.DataFrame]:
     candidates = choose_candidates(predictions, config)
     bets: list[dict] = []
     days: list[dict] = []
+    cumulative_profit = 0.0
+    halted = False
     for date in pd.date_range(predictions["match_date"].min(), predictions["match_date"].max(), freq="D"):
+        if halted:
+            days.append({
+                "date": date.strftime("%Y-%m-%d"), "bets": 0, "staked": 0.0,
+                "profit": 0.0, "halted_by_stop_loss": True,
+            })
+            continue
         day = candidates[candidates["date"] == date].sort_values("lower_ev", ascending=False) if not candidates.empty else candidates
         daily_used, league_used = 0.0, {}
         day_profit, day_bets = 0.0, 0
@@ -383,7 +748,13 @@ def simulate(predictions: pd.DataFrame, config: PortfolioConfig) -> tuple[pd.Dat
                 "lower_ev": round(float(candidate["lower_ev"]), 6), "odds": odds,
                 "stake": round(stake, 2), "won": won, "profit": round(profit, 2),
             })
-        days.append({"date": date.strftime("%Y-%m-%d"), "bets": day_bets, "staked": round(daily_used, 2), "profit": round(day_profit, 2)})
+        cumulative_profit += day_profit
+        if config.stop_loss is not None and cumulative_profit <= -abs(float(config.stop_loss)):
+            halted = True
+        days.append({
+            "date": date.strftime("%Y-%m-%d"), "bets": day_bets, "staked": round(daily_used, 2),
+            "profit": round(day_profit, 2), "halted_by_stop_loss": halted,
+        })
     return pd.DataFrame(days), pd.DataFrame(bets)
 
 
@@ -420,50 +791,148 @@ def probability_metrics(predictions: pd.DataFrame) -> dict:
     return {"matches": int(len(predictions)), "brier_score": round(brier, 6), "log_loss": round(log_loss, 6), "ece": round(ece, 6)}
 
 
+def promotion_decision(
+    overall: dict,
+    calibration: dict,
+    profitable_invested_months: int,
+    losing_invested_months: int,
+) -> str:
+    if overall["bets"] >= 50 and overall["roi_pct"] <= 0:
+        return "REJECT_EXPERIMENT"
+    drawdown_covered_by_profit = overall["profit"] > overall["max_drawdown"]
+    if (
+        overall["bets"] >= 100
+        and overall["roi_pct"] > 0
+        and (calibration["ece"] or 1) <= .05
+        and drawdown_covered_by_profit
+        and profitable_invested_months > losing_invested_months
+    ):
+        return "PROMOTE_TO_LARGER_SHADOW"
+    return "NEED_MORE_DATA"
+
+
 def select_portfolio_config(train: pd.DataFrame, validation: pd.DataFrame, profile: dict) -> tuple[PortfolioConfig | None, dict]:
     model = ResidualProbabilityModel(uncertainty_scale=profile["uncertainty_scale"]).fit(train)
     predicted = model.predict(validation)
+    use_quality_gate = bool(profile.get("quality_gate"))
+    quality_train = predicted
+    quality_eval = predicted
+    if use_quality_gate and profile.get("quality_holdout", True):
+        validation_months = sorted(predicted["match_date"].dt.to_period("M").unique())
+        if len(validation_months) < 2:
+            return None, {"decision": "ABSTAIN", "reason": "Quality gate requires at least two validation months"}
+        eval_month = validation_months[-1]
+        quality_train = predicted[predicted["match_date"].dt.to_period("M") < eval_month].reset_index(drop=True)
+        quality_eval = predicted[predicted["match_date"].dt.to_period("M") == eval_month].reset_index(drop=True)
+        if quality_train.empty or quality_eval.empty:
+            return None, {"decision": "ABSTAIN", "reason": "Quality gate validation split is empty"}
     candidates: list[PortfolioConfig] = []
-    for ev, odds, fraction in itertools.product(profile["ev_thresholds"], profile["max_odds"], profile["kelly_fractions"]):
-        base = PortfolioConfig(ev, odds, fraction)
-        if not profile.get("bucket_keys"):
-            candidates.append(base)
+    min_odds_values = profile.get("min_odds", (1.5,))
+    allowed_outcomes_values = profile.get("allowed_outcomes", (OUTCOMES,))
+    stop_loss_values = profile.get("stop_losses", (None,))
+    quality_quantiles = profile.get("quality_quantiles", (None,))
+    for ev, min_odds, odds, fraction, allowed_outcomes, stop_loss in itertools.product(
+        profile["ev_thresholds"], min_odds_values, profile["max_odds"], profile["kelly_fractions"],
+        allowed_outcomes_values, stop_loss_values,
+    ):
+        if float(min_odds) > float(odds):
             continue
-        for bucket_key, min_samples, min_roi in itertools.product(
-            profile["bucket_keys"], profile["min_bucket_samples"], profile["min_bucket_roi"],
-        ):
-            allowed = select_allowed_buckets(predicted, base, bucket_key, min_samples, min_roi)
-            if allowed:
-                candidates.append(PortfolioConfig(
-                    ev, odds, fraction, bucket_key=tuple(bucket_key), allowed_buckets=allowed
-                ))
+        base = PortfolioConfig(
+            ev, odds, fraction, min_odds=float(min_odds),
+            allowed_outcomes=tuple(allowed_outcomes), stop_loss=stop_loss,
+        )
+        base_configs: list[PortfolioConfig] = []
+        if not profile.get("bucket_keys"):
+            base_configs.append(base)
+        else:
+            for bucket_key, min_samples, min_roi in itertools.product(
+                profile["bucket_keys"], profile["min_bucket_samples"], profile["min_bucket_roi"],
+            ):
+                if profile.get("persistent_buckets"):
+                    allowed = select_persistent_buckets(
+                        predicted,
+                        base,
+                        bucket_key,
+                        min_samples,
+                        min_roi,
+                        int(profile.get("min_bucket_active_months", 1)),
+                        int(profile.get("min_bucket_positive_months", 1)),
+                    )
+                else:
+                    allowed = select_allowed_buckets(predicted, base, bucket_key, min_samples, min_roi)
+                if allowed:
+                    base_configs.append(PortfolioConfig(
+                        ev, odds, fraction, bucket_key=tuple(bucket_key), allowed_buckets=allowed,
+                        min_odds=float(min_odds), allowed_outcomes=tuple(allowed_outcomes), stop_loss=stop_loss,
+                    ))
+        if not use_quality_gate:
+            candidates.extend(base_configs)
+            continue
+        for base_config, quantile in itertools.product(base_configs, quality_quantiles):
+            gate = fit_quality_gate(
+                quality_train,
+                base_config,
+                quantile=float(quantile),
+                min_samples=int(profile.get("quality_min_samples", 20)),
+            )
+            if gate is None:
+                continue
+            candidates.append(replace(base_config, quality_gate=gate))
     rows = []
     for config in candidates:
-        day_rows, bets = simulate(predicted, config)
+        eval_frame = quality_eval if use_quality_gate else predicted
+        day_rows, bets = simulate(eval_frame, config)
         result = metrics(day_rows, bets)
         monthly_results = []
-        for _, month_frame in predicted.groupby(predicted["match_date"].dt.to_period("M")):
+        for _, month_frame in eval_frame.groupby(eval_frame["match_date"].dt.to_period("M")):
             month_days, month_bets = simulate(month_frame.reset_index(drop=True), config)
             monthly_results.append(metrics(month_days, month_bets))
         positive_months = sum(item["bets"] > 0 and item["roi_pct"] > 0 for item in monthly_results)
-        rows.append({"config": config, "positive_validation_months": positive_months, **result})
-    eligible = [row for row in rows if row["bets"] >= profile["validation_min_bets"] and row["roi_pct"] > 0 and row["positive_validation_months"] >= profile["min_positive_validation_months"]]
+        rows.append({"config": config, "base_config": replace(config, quality_gate=None), "positive_validation_months": positive_months, **result})
+    min_validation_roi = float(profile.get("min_validation_roi", 0.0))
+    min_validation_profit = float(profile.get("min_validation_profit", 0.0))
+    max_drawdown_profit_ratio = profile.get("max_drawdown_profit_ratio")
+    eligible = []
+    for row in rows:
+        if row["bets"] < profile["validation_min_bets"]:
+            continue
+        if row["roi_pct"] < min_validation_roi * 100:
+            continue
+        if row["profit"] < min_validation_profit:
+            continue
+        if row["positive_validation_months"] < profile["min_positive_validation_months"]:
+            continue
+        if max_drawdown_profit_ratio is not None and row["max_drawdown"] > row["profit"] * float(max_drawdown_profit_ratio):
+            continue
+        eligible.append(row)
     if not eligible:
         return None, {"decision": "ABSTAIN", "reason": f"No stable configuration with at least {profile['validation_min_bets']} bets and {profile['min_positive_validation_months']} positive validation month(s)"}
     best = max(eligible, key=lambda row: (row["roi_pct"] - row["max_drawdown"] / max(row["total_staked"], 1) * 10, row["profit"]))
-    return best["config"], {key: value for key, value in best.items() if key != "config"}
+    selected_config = best["config"]
+    if use_quality_gate:
+        selected_gate = fit_quality_gate(
+            predicted,
+            best["base_config"],
+            quantile=float(selected_config.quality_gate["quantile"]),
+            min_samples=int(profile.get("quality_min_samples", 20)),
+        )
+        if selected_gate is not None:
+            selected_config = replace(best["base_config"], quality_gate=selected_gate)
+    return selected_config, {key: value for key, value in best.items() if key not in {"config", "base_config"}}
 
 
 def nested_walk_forward(features: pd.DataFrame, first_month: str, months: int, profile_name: str = "strict") -> tuple[dict, pd.DataFrame, pd.DataFrame]:
     profile = EXPERIMENT_PROFILES[profile_name]
+    validation_months = int(profile.get("validation_months", 3))
+    training_months = int(profile.get("training_months", 18))
     all_days: list[pd.DataFrame] = []
     all_bets: list[pd.DataFrame] = []
     all_predictions: list[pd.DataFrame] = []
     month_reports: list[dict] = []
     for period in pd.period_range(first_month, periods=months, freq="M"):
         test_start, test_end = period.start_time.normalize(), period.end_time.normalize()
-        validation_start = test_start - pd.DateOffset(months=3)
-        training_start = validation_start - pd.DateOffset(months=18)
+        validation_start = test_start - pd.DateOffset(months=validation_months)
+        training_start = validation_start - pd.DateOffset(months=training_months)
         inner_train = features[(features.match_date >= training_start) & (features.match_date < validation_start)]
         validation = features[(features.match_date >= validation_start) & (features.match_date < test_start)]
         test = features[(features.match_date >= test_start) & (features.match_date <= test_end)]
@@ -471,7 +940,7 @@ def nested_walk_forward(features: pd.DataFrame, first_month: str, months: int, p
             month_reports.append({"month": str(period), "decision": "ABSTAIN", "reason": "Insufficient train/validation/test data"})
             continue
         config, validation_report = select_portfolio_config(inner_train, validation, profile)
-        outer_train = features[(features.match_date >= test_start - pd.DateOffset(months=18)) & (features.match_date < test_start)]
+        outer_train = features[(features.match_date >= test_start - pd.DateOffset(months=training_months)) & (features.match_date < test_start)]
         predicted = ResidualProbabilityModel(uncertainty_scale=profile["uncertainty_scale"]).fit(outer_train).predict(test)
         model_metrics = probability_metrics(predicted)
         all_predictions.append(predicted.assign(month=str(period)))
@@ -488,24 +957,54 @@ def nested_walk_forward(features: pd.DataFrame, first_month: str, months: int, p
     predictions = pd.concat(all_predictions, ignore_index=True) if all_predictions else pd.DataFrame()
     overall = metrics(days, bets)
     calibration = probability_metrics(predictions)
-    if overall["bets"] >= 50 and overall["roi_pct"] <= 0:
-        promotion = "REJECT_EXPERIMENT"
-    elif overall["bets"] >= 100 and overall["roi_pct"] > 0 and (calibration["ece"] or 1) <= .05:
-        promotion = "PROMOTE_TO_LARGER_SHADOW"
-    else:
-        promotion = "NEED_MORE_DATA"
+    invested_months = [row for row in month_reports if row.get("decision") == "INVEST"]
+    profitable_invested_months = sum(
+        row.get("test", {}).get("bets", 0) > 0 and row.get("test", {}).get("profit", 0) > 0
+        for row in invested_months
+    )
+    losing_invested_months = sum(
+        row.get("test", {}).get("bets", 0) > 0 and row.get("test", {}).get("profit", 0) < 0
+        for row in invested_months
+    )
+    months_with_bets = profitable_invested_months + losing_invested_months + sum(
+        row.get("test", {}).get("bets", 0) > 0 and row.get("test", {}).get("profit", 0) == 0
+        for row in invested_months
+    )
+    drawdown_covered_by_profit = overall["profit"] > overall["max_drawdown"]
+    promotion = promotion_decision(overall, calibration, profitable_invested_months, losing_invested_months)
     summary = {
         "method": "nested monthly walk-forward market residual + isotonic + league shrinkage + constrained Kelly",
         "experiment_profile": profile_name, "profile_config": profile,
         "first_month": first_month, "months": months,
+        "training_months": training_months,
+        "validation_months": validation_months,
         "odds_timing": "pre_closing_without_exact_snapshot_timestamp",
         "same_day_results_hidden_until_settlement": True,
         "overall": overall, "probability_metrics": calibration, "promotion_decision": promotion,
-        "months_invested": sum(row.get("decision") == "INVEST" for row in month_reports),
+        "months_invested": len(invested_months),
         "months_abstained": sum(row.get("decision") == "ABSTAIN" for row in month_reports),
+        "months_with_bets": months_with_bets,
+        "profitable_invested_months": profitable_invested_months,
+        "losing_invested_months": losing_invested_months,
+        "drawdown_covered_by_profit": drawdown_covered_by_profit,
         "monthly": month_reports,
     }
     return summary, days, bets
+
+
+def load_season_matches(seasons: tuple[str, ...]) -> pd.DataFrame:
+    frames: list[pd.DataFrame] = []
+    for season in seasons:
+        season = str(season).strip()
+        if not season:
+            continue
+        path = Path("data") / "historical_csv" / "football-data" / season
+        if not path.exists():
+            continue
+        frames.append(load_matches(path))
+    if not frames:
+        raise ValueError(f"No usable season directories found for: {', '.join(seasons)}")
+    return pd.concat(frames, ignore_index=True).sort_values("match_date").reset_index(drop=True)
 
 
 def main() -> None:
@@ -513,12 +1012,11 @@ def main() -> None:
     parser.add_argument("--first-month", default="2024-06")
     parser.add_argument("--months", type=int, default=12)
     parser.add_argument("--profile", choices=tuple(EXPERIMENT_PROFILES), default="strict")
+    parser.add_argument("--seasons", default=",".join(DEFAULT_SEASONS))
     parser.add_argument("--output-dir", type=Path, default=Path("reports/residual_walk_forward"))
     args = parser.parse_args()
-    matches = pd.concat([
-        load_matches(Path("data/historical_csv/football-data/2324")),
-        load_matches(Path("data/historical_csv/football-data/2425")),
-    ], ignore_index=True).sort_values("match_date").reset_index(drop=True)
+    seasons = tuple(item.strip() for item in args.seasons.split(",") if item.strip())
+    matches = load_season_matches(seasons)
     features = build_feature_history(matches)
     summary, days, bets = nested_walk_forward(features, args.first_month, args.months, args.profile)
     args.output_dir.mkdir(parents=True, exist_ok=True)

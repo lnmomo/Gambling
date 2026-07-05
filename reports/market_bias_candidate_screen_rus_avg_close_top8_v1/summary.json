@@ -1,0 +1,243 @@
+{
+  "method": "market-bias candidate screen",
+  "diagnostics_csv": [
+    "reports\\batch_profit_domain_discovery_next5_v2\\domains\\rus_avg_close\\market_bias.csv"
+  ],
+  "min_diagnostic_sources": 1,
+  "seasons": [
+    "RUS"
+  ],
+  "first_month": "2014-01",
+  "last_month": "2026-05",
+  "odds_source": "AVG_CLOSE",
+  "validation_odds_sources": [
+    "AVG_CLOSE"
+  ],
+  "top_n": 8,
+  "daily_limit": 100.0,
+  "max_single_stake": 10.0,
+  "included_default_rule": false,
+  "candidate_count": 4,
+  "passed_count": 0,
+  "rule_summary": [
+    {
+      "rule": "league|odds_bucket|market_prob_bucket=RUS|[1.0,1.8)|[0.42,0.55)",
+      "validation_source_count": 1,
+      "passed_validation_sources": 0,
+      "failed_validation_sources": 1,
+      "total_portfolio_bets": 0,
+      "total_portfolio_staked": 0.0,
+      "total_portfolio_profit": 0.0,
+      "combined_roi_pct": 0.0,
+      "worst_source_roi_pct": 0.0,
+      "worst_source_drawdown": 0.0,
+      "source_results": [
+        {
+          "odds_source": "AVG_CLOSE",
+          "passes_screen": false,
+          "portfolio_bets": 0,
+          "portfolio_profit": 0.0,
+          "portfolio_roi_pct": 0.0,
+          "portfolio_max_drawdown": 0.0,
+          "fail_reasons": [
+            "bets<100",
+            "profit<=0",
+            "roi<3%",
+            "positive_months<=negative_months",
+            "positive_seasons<=negative_seasons"
+          ]
+        }
+      ],
+      "passes_all_validation_sources": false
+    },
+    {
+      "rule": "league|outcome|market_prob_bucket=RUS|away|[0.55,1.00]",
+      "validation_source_count": 1,
+      "passed_validation_sources": 0,
+      "failed_validation_sources": 1,
+      "total_portfolio_bets": 0,
+      "total_portfolio_staked": 0.0,
+      "total_portfolio_profit": 0.0,
+      "combined_roi_pct": 0.0,
+      "worst_source_roi_pct": 0.0,
+      "worst_source_drawdown": 0.0,
+      "source_results": [
+        {
+          "odds_source": "AVG_CLOSE",
+          "passes_screen": false,
+          "portfolio_bets": 0,
+          "portfolio_profit": 0.0,
+          "portfolio_roi_pct": 0.0,
+          "portfolio_max_drawdown": 0.0,
+          "fail_reasons": [
+            "bets<100",
+            "profit<=0",
+            "roi<3%",
+            "positive_months<=negative_months",
+            "positive_seasons<=negative_seasons"
+          ]
+        }
+      ],
+      "passes_all_validation_sources": false
+    },
+    {
+      "rule": "league|outcome|odds_bucket=RUS|away|[1.0,1.8)",
+      "validation_source_count": 1,
+      "passed_validation_sources": 0,
+      "failed_validation_sources": 1,
+      "total_portfolio_bets": 0,
+      "total_portfolio_staked": 0.0,
+      "total_portfolio_profit": 0.0,
+      "combined_roi_pct": 0.0,
+      "worst_source_roi_pct": 0.0,
+      "worst_source_drawdown": 0.0,
+      "source_results": [
+        {
+          "odds_source": "AVG_CLOSE",
+          "passes_screen": false,
+          "portfolio_bets": 0,
+          "portfolio_profit": 0.0,
+          "portfolio_roi_pct": 0.0,
+          "portfolio_max_drawdown": 0.0,
+          "fail_reasons": [
+            "bets<100",
+            "profit<=0",
+            "roi<3%",
+            "positive_months<=negative_months",
+            "positive_seasons<=negative_seasons"
+          ]
+        }
+      ],
+      "passes_all_validation_sources": false
+    },
+    {
+      "rule": "league|outcome|odds_bucket=RUS|home|[2.2,2.8)",
+      "validation_source_count": 1,
+      "passed_validation_sources": 0,
+      "failed_validation_sources": 1,
+      "total_portfolio_bets": 27,
+      "total_portfolio_staked": 270.0,
+      "total_portfolio_profit": -44.5,
+      "combined_roi_pct": -16.48,
+      "worst_source_roi_pct": -16.48,
+      "worst_source_drawdown": 70.4,
+      "source_results": [
+        {
+          "odds_source": "AVG_CLOSE",
+          "passes_screen": false,
+          "portfolio_bets": 27,
+          "portfolio_profit": -44.5,
+          "portfolio_roi_pct": -16.48,
+          "portfolio_max_drawdown": 70.4,
+          "fail_reasons": [
+            "bets<100",
+            "profit<=0",
+            "roi<3%",
+            "positive_seasons<=negative_seasons",
+            "drawdown>profit"
+          ]
+        }
+      ],
+      "passes_all_validation_sources": false
+    }
+  ],
+  "rows": [
+    {
+      "rule": "league|outcome|odds_bucket=RUS|away|[1.0,1.8)",
+      "odds_source": "AVG_CLOSE",
+      "walk_forward_bets": 0,
+      "walk_forward_profit": 0.0,
+      "walk_forward_roi_pct": 0.0,
+      "portfolio_bets": 0,
+      "portfolio_staked": 0.0,
+      "portfolio_profit": 0.0,
+      "portfolio_roi_pct": 0.0,
+      "portfolio_max_drawdown": 0.0,
+      "positive_months": 0,
+      "negative_months": 0,
+      "positive_seasons": 0,
+      "negative_seasons": 0,
+      "passes_screen": false,
+      "fail_reasons": [
+        "bets<100",
+        "profit<=0",
+        "roi<3%",
+        "positive_months<=negative_months",
+        "positive_seasons<=negative_seasons"
+      ]
+    },
+    {
+      "rule": "league|odds_bucket|market_prob_bucket=RUS|[1.0,1.8)|[0.42,0.55)",
+      "odds_source": "AVG_CLOSE",
+      "walk_forward_bets": 0,
+      "walk_forward_profit": 0.0,
+      "walk_forward_roi_pct": 0.0,
+      "portfolio_bets": 0,
+      "portfolio_staked": 0.0,
+      "portfolio_profit": 0.0,
+      "portfolio_roi_pct": 0.0,
+      "portfolio_max_drawdown": 0.0,
+      "positive_months": 0,
+      "negative_months": 0,
+      "positive_seasons": 0,
+      "negative_seasons": 0,
+      "passes_screen": false,
+      "fail_reasons": [
+        "bets<100",
+        "profit<=0",
+        "roi<3%",
+        "positive_months<=negative_months",
+        "positive_seasons<=negative_seasons"
+      ]
+    },
+    {
+      "rule": "league|outcome|market_prob_bucket=RUS|away|[0.55,1.00]",
+      "odds_source": "AVG_CLOSE",
+      "walk_forward_bets": 0,
+      "walk_forward_profit": 0.0,
+      "walk_forward_roi_pct": 0.0,
+      "portfolio_bets": 0,
+      "portfolio_staked": 0.0,
+      "portfolio_profit": 0.0,
+      "portfolio_roi_pct": 0.0,
+      "portfolio_max_drawdown": 0.0,
+      "positive_months": 0,
+      "negative_months": 0,
+      "positive_seasons": 0,
+      "negative_seasons": 0,
+      "passes_screen": false,
+      "fail_reasons": [
+        "bets<100",
+        "profit<=0",
+        "roi<3%",
+        "positive_months<=negative_months",
+        "positive_seasons<=negative_seasons"
+      ]
+    },
+    {
+      "rule": "league|outcome|odds_bucket=RUS|home|[2.2,2.8)",
+      "odds_source": "AVG_CLOSE",
+      "walk_forward_bets": 27,
+      "walk_forward_profit": -4.45,
+      "walk_forward_roi_pct": -16.48,
+      "portfolio_bets": 27,
+      "portfolio_staked": 270.0,
+      "portfolio_profit": -44.5,
+      "portfolio_roi_pct": -16.48,
+      "portfolio_max_drawdown": 70.4,
+      "positive_months": 3,
+      "negative_months": 2,
+      "positive_seasons": 1,
+      "negative_seasons": 2,
+      "passes_screen": false,
+      "fail_reasons": [
+        "bets<100",
+        "profit<=0",
+        "roi<3%",
+        "positive_seasons<=negative_seasons",
+        "drawdown>profit"
+      ]
+    }
+  ],
+  "next_step": "Run full multi-source robustness and official-SP shadow validation for passed candidates only."
+}

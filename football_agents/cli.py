@@ -99,6 +99,14 @@ def main() -> None:
     profit_strategies = sub.add_parser("profit-strategies", help="List validated profit-strategy research packages")
     profit_strategies.add_argument("--output", default="")
 
+    allocation_readiness = sub.add_parser("profit-allocation-readiness", help="Decide whether the daily profit budget can be allocated")
+    allocation_readiness.add_argument("--daily-budget", type=float, default=settings.profit_daily_budget)
+    allocation_readiness.add_argument("--output", default="")
+
+    domain_readiness = sub.add_parser("profit-data-domain-readiness", help="Rank historical odds domains for the next profit-algorithm search")
+    domain_readiness.add_argument("--root", default="data/historical_csv/football-data")
+    domain_readiness.add_argument("--output", default="")
+
     profit_scorer = sub.add_parser("diagnose-profit-scorer-official-pool", help="Score official pool readiness for the exported profit scorer")
     profit_scorer.add_argument("--scorer", default=settings.profit_scorer_artifact_path)
     profit_scorer.add_argument("--limit", type=int, default=500)
@@ -125,7 +133,13 @@ def main() -> None:
     worldwide.add_argument("--divisions", default="", help="Comma-separated codes, e.g. FIN,USA,BRA,JPN")
 
     sub.add_parser("sync-international-history", help="Sync real international-team historical results")
-    sub.add_parser("sync-international-odds-history", help="Sync international-team historical 1X2 odds where available")
+    international_odds = sub.add_parser("sync-international-odds-history", help="Sync international-team historical 1X2 odds where available")
+    international_odds.add_argument("--provider", choices=["football-data-world-cup", "footiqo", "odds-api"], default="football-data-world-cup")
+    international_odds.add_argument("--sport-keys", default="", help="Comma-separated The Odds API sport keys")
+    international_odds.add_argument("--from-date", default="2020-06-06")
+    international_odds.add_argument("--to-date", default="")
+    international_odds.add_argument("--step-days", type=int, default=7)
+    international_odds.add_argument("--max-snapshots", type=int, default=10)
     source_research = sub.add_parser("research-international-odds-sources", help="Find usable broad international 1X2 odds data sources")
     source_research.add_argument("--no-probe-api", action="store_true", help="Do not call The Odds API /sports endpoint")
     source_research.add_argument("--output", default="")
@@ -196,7 +210,20 @@ def main() -> None:
         from .international_odds_agent import InternationalOddsHistoryAgent
         from .llm import QwenOpsAgent
         db.initialize()
-        report = InternationalOddsHistoryAgent().sync_world_cup()
+        agent = InternationalOddsHistoryAgent()
+        if args.provider == "odds-api":
+            sport_keys = [item.strip() for item in args.sport_keys.split(",") if item.strip()]
+            report = agent.sync_odds_api_historical(
+                sport_keys or None,
+                args.from_date,
+                args.to_date or None,
+                args.step_days,
+                args.max_snapshots,
+            )
+        elif args.provider == "football-data-world-cup":
+            report = agent.sync_football_data_world_cup()
+        else:
+            report = agent.sync_world_cup()
         print(json.dumps(QwenOpsAgent().attach("international-odds-history-agent", report), ensure_ascii=False, indent=2))
     elif args.command == "research-international-odds-sources":
         from .international_odds_sources import find_international_odds_sources
@@ -329,6 +356,21 @@ def main() -> None:
     elif args.command == "profit-strategies":
         from .profit_strategy_registry import list_profit_strategy_packages
         payload = {"strategies": list_profit_strategy_packages()}
+        if args.output:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    elif args.command == "profit-allocation-readiness":
+        from .profit_allocation_readiness import build_profit_allocation_readiness
+        payload = build_profit_allocation_readiness(args.daily_budget)
+        if args.output:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    elif args.command == "profit-data-domain-readiness":
+        from .profit_data_domain_readiness import build_profit_data_domain_readiness
+        db.initialize()
+        payload = build_profit_data_domain_readiness(Path(args.root), db)
         if args.output:
             Path(args.output).parent.mkdir(parents=True, exist_ok=True)
             Path(args.output).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")

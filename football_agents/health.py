@@ -59,6 +59,12 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
     }
     profit_scorer_official_sp = {
         "status": "NOT_RUN",
+        "poolDiagnosisStatus": "NOT_RUN",
+        "poolScannedMatches": 0,
+        "poolScoredMatches": 0,
+        "poolPassedScorer": 0,
+        "poolBlockers": [],
+        "poolLastRunAt": None,
         "openingPreMatchSnapshots": 0,
         "scoredSnapshots": 0,
         "selectedSnapshots": 0,
@@ -136,6 +142,18 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
             validation_run = c.execute("""SELECT * FROM task_runs
                 WHERE task_name='profit_scorer_official_sp_validation'
                 ORDER BY started_at DESC LIMIT 1""").fetchone()
+            pool_run = c.execute("""SELECT * FROM task_runs
+                WHERE task_name='profit_scorer_official_pool_diagnosis'
+                ORDER BY started_at DESC LIMIT 1""").fetchone()
+            if pool_run:
+                profit_scorer_official_sp.update({
+                    "poolDiagnosisStatus": pool_run["status"],
+                    "poolScannedMatches": int(pool_run["affected_matches"] or 0),
+                    "poolScoredMatches": int(pool_run["created_snapshots"] or 0),
+                    "poolPassedScorer": int(pool_run["created_predictions"] or 0),
+                    "poolBlockers": json_loads(pool_run["warnings_json"]),
+                    "poolLastRunAt": pool_run["finished_at"] or pool_run["started_at"],
+                })
             if validation_run:
                 reasons = json_loads(validation_run["warnings_json"])
                 settled_selected = int(validation_run["created_snapshots"] or 0)

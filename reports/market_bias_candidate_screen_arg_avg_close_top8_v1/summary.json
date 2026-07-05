@@ -1,0 +1,73 @@
+{
+  "method": "market-bias candidate screen",
+  "diagnostics_csv": [
+    "reports\\batch_profit_domain_discovery_top3_v1\\domains\\arg_avg_close\\market_bias.csv"
+  ],
+  "min_diagnostic_sources": 1,
+  "seasons": [
+    "ARG"
+  ],
+  "first_month": "2014-01",
+  "last_month": "2026-05",
+  "odds_source": "AVG_CLOSE",
+  "validation_odds_sources": [
+    "AVG_CLOSE"
+  ],
+  "top_n": 8,
+  "daily_limit": 100.0,
+  "max_single_stake": 10.0,
+  "included_default_rule": false,
+  "candidate_count": 1,
+  "passed_count": 0,
+  "rule_summary": [
+    {
+      "rule": "league|outcome|market_prob_bucket=ARG|home|[0.20,0.28)",
+      "validation_source_count": 1,
+      "passed_validation_sources": 0,
+      "failed_validation_sources": 1,
+      "total_portfolio_bets": 4,
+      "total_portfolio_staked": 40.0,
+      "total_portfolio_profit": 28.5,
+      "combined_roi_pct": 71.25,
+      "worst_source_roi_pct": 71.25,
+      "worst_source_drawdown": 10.0,
+      "source_results": [
+        {
+          "odds_source": "AVG_CLOSE",
+          "passes_screen": false,
+          "portfolio_bets": 4,
+          "portfolio_profit": 28.5,
+          "portfolio_roi_pct": 71.25,
+          "portfolio_max_drawdown": 10.0,
+          "fail_reasons": [
+            "bets<100"
+          ]
+        }
+      ],
+      "passes_all_validation_sources": false
+    }
+  ],
+  "rows": [
+    {
+      "rule": "league|outcome|market_prob_bucket=ARG|home|[0.20,0.28)",
+      "odds_source": "AVG_CLOSE",
+      "walk_forward_bets": 4,
+      "walk_forward_profit": 2.85,
+      "walk_forward_roi_pct": 71.25,
+      "portfolio_bets": 4,
+      "portfolio_staked": 40.0,
+      "portfolio_profit": 28.5,
+      "portfolio_roi_pct": 71.25,
+      "portfolio_max_drawdown": 10.0,
+      "positive_months": 2,
+      "negative_months": 0,
+      "positive_seasons": 2,
+      "negative_seasons": 0,
+      "passes_screen": false,
+      "fail_reasons": [
+        "bets<100"
+      ]
+    }
+  ],
+  "next_step": "Run full multi-source robustness and official-SP shadow validation for passed candidates only."
+}

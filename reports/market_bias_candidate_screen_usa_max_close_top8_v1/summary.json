@@ -1,0 +1,77 @@
+{
+  "method": "market-bias candidate screen",
+  "diagnostics_csv": [
+    "reports\\batch_profit_domain_discovery_top3_v1\\domains\\usa_max_close\\market_bias.csv"
+  ],
+  "min_diagnostic_sources": 1,
+  "seasons": [
+    "USA"
+  ],
+  "first_month": "2014-01",
+  "last_month": "2026-05",
+  "odds_source": "MAX_CLOSE",
+  "validation_odds_sources": [
+    "MAX_CLOSE"
+  ],
+  "top_n": 8,
+  "daily_limit": 100.0,
+  "max_single_stake": 10.0,
+  "included_default_rule": false,
+  "candidate_count": 1,
+  "passed_count": 0,
+  "rule_summary": [
+    {
+      "rule": "league|outcome|odds_bucket=USA|home|[2.2,2.8)",
+      "validation_source_count": 1,
+      "passed_validation_sources": 0,
+      "failed_validation_sources": 1,
+      "total_portfolio_bets": 56,
+      "total_portfolio_staked": 560.0,
+      "total_portfolio_profit": 23.7,
+      "combined_roi_pct": 4.23,
+      "worst_source_roi_pct": 4.23,
+      "worst_source_drawdown": 62.9,
+      "source_results": [
+        {
+          "odds_source": "MAX_CLOSE",
+          "passes_screen": false,
+          "portfolio_bets": 56,
+          "portfolio_profit": 23.7,
+          "portfolio_roi_pct": 4.23,
+          "portfolio_max_drawdown": 62.9,
+          "fail_reasons": [
+            "bets<100",
+            "positive_months<=negative_months",
+            "drawdown>profit"
+          ]
+        }
+      ],
+      "passes_all_validation_sources": false
+    }
+  ],
+  "rows": [
+    {
+      "rule": "league|outcome|odds_bucket=USA|home|[2.2,2.8)",
+      "odds_source": "MAX_CLOSE",
+      "walk_forward_bets": 56,
+      "walk_forward_profit": 2.37,
+      "walk_forward_roi_pct": 4.23,
+      "portfolio_bets": 56,
+      "portfolio_staked": 560.0,
+      "portfolio_profit": 23.7,
+      "portfolio_roi_pct": 4.23,
+      "portfolio_max_drawdown": 62.9,
+      "positive_months": 4,
+      "negative_months": 4,
+      "positive_seasons": 2,
+      "negative_seasons": 1,
+      "passes_screen": false,
+      "fail_reasons": [
+        "bets<100",
+        "positive_months<=negative_months",
+        "drawdown>profit"
+      ]
+    }
+  ],
+  "next_step": "Run full multi-source robustness and official-SP shadow validation for passed candidates only."
+}

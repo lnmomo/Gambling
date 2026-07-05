@@ -17,6 +17,9 @@ def test_source_discovery_reports_public_sources_without_api_key(settings) -> No
     assert "THE_ODDS_API_KEY is missing" in report["blockers"][0]
     assert report["public_csv_sources"][0]["status"] == "usable_integrated"
     assert report["odds_api"]["candidates"][0]["status"] == "not_probed_missing_api_key"
+    assert report["source_decision"]["best_feature_source"] == "martj42 international_results"
+    assert report["source_decision"]["best_free_odds_source"] == "football-data.co.uk World Cup workbook"
+    assert "SportsGameOdds" in report["source_decision"]["fallback_broad_odds_sources"][0]
 
 
 @patch("football_agents.international_odds_sources.settings")
@@ -42,3 +45,5 @@ def test_source_discovery_probes_odds_api_sports(get_json, settings) -> None:
     assert statuses["soccer_fifa_world_cup"] == "available_out_of_season"
     assert statuses["soccer_uefa_nations_league"] == "available_active"
     assert statuses["soccer_missing"] == "not_returned_by_sports_endpoint"
+    assert report["source_decision"]["best_broad_odds_source"] == "The Odds API Historical Odds"
+    assert any(source["name"].startswith("SportsGameOdds") for source in report["commercial_odds_sources"])

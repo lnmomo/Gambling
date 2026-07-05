@@ -32,7 +32,12 @@ def _load_market_candidates(paths: list[Path]) -> pd.DataFrame:
     frame["date"] = pd.to_datetime(frame["date"]).dt.date.astype(str)
     frame["month"] = pd.to_datetime(frame["date"]).dt.to_period("M").astype(str)
     frame["stake"] = 1.0
-    frame["profit"] = frame["unit_profit"].astype(float)
+    if "unit_profit" in frame.columns:
+        frame["profit"] = frame["unit_profit"].astype(float)
+    elif "profit" in frame.columns:
+        frame["profit"] = frame["profit"].astype(float)
+    else:
+        raise ValueError("market candidates must include unit_profit or profit")
     return frame
 
 

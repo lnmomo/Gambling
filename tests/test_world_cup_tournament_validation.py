@@ -95,3 +95,68 @@ def test_flatten_rule_rows_keeps_csv_columns_simple() -> None:
         "test_bets": 3,
         "test_profit": -1.0,
     }]
+
+
+def test_rolling_holdout_uses_only_prior_years(monkeypatch) -> None:
+    frame = pd.DataFrame([
+        {
+            "date": "2014-06-01",
+            "month": "2014-06",
+            "home_team": "A",
+            "away_team": "B",
+            "outcome": "draw",
+            "odds_bucket": "[2.8,3.5)",
+            "market_prob_bucket": "[0.28,0.34)",
+            "favorite_relation": "market_non_favorite",
+            "league": "WORLD_CUP",
+            "unit_profit": 2.2,
+        },
+        {
+            "date": "2018-06-01",
+            "month": "2018-06",
+            "home_team": "C",
+            "away_team": "D",
+            "outcome": "draw",
+            "odds_bucket": "[2.8,3.5)",
+            "market_prob_bucket": "[0.28,0.34)",
+            "favorite_relation": "market_non_favorite",
+            "league": "WORLD_CUP",
+            "unit_profit": -1.0,
+        },
+        {
+            "date": "2022-11-01",
+            "month": "2022-11",
+            "home_team": "E",
+            "away_team": "F",
+            "outcome": "draw",
+            "odds_bucket": "[2.8,3.5)",
+            "market_prob_bucket": "[0.28,0.34)",
+            "favorite_relation": "market_non_favorite",
+            "league": "WORLD_CUP",
+            "unit_profit": 2.4,
+        },
+    ])
+    diagnostics = pd.DataFrame([{
+        "columns": "outcome|odds_bucket",
+        "key": "draw|[2.8,3.5)",
+    }])
+    seen_train_years = []
+
+    def fake_run_diagnostics(train: pd.DataFrame, *_args):
+        seen_train_years.append(set(pd.to_datetime(train["date"]).dt.year))
+        return diagnostics
+
+    monkeypatch.setattr(validation, "build_market_frame", lambda *_args: frame)
+    monkeypatch.setattr(validation, "run_diagnostics", fake_run_diagnostics)
+
+    report = validation.validate_world_cup_rolling_holdout(
+        first_test_year=2018,
+        min_train_samples=1,
+        min_train_active_months=1,
+        min_test_bets=1,
+    )
+
+    assert seen_train_years == [{2014}, {2014, 2018}]
+    assert report["fold_count"] == 2
+    assert report["combined_rows"][0]["test"]["bets"] == 2
+    assert report["combined_rows"][0]["test_years_with_bets"] == 2

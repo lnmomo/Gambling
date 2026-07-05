@@ -1,0 +1,441 @@
+{
+  "method": "nested monthly walk-forward market residual + isotonic + league shrinkage + constrained Kelly",
+  "experiment_profile": "guarded",
+  "profile_config": {
+    "validation_min_bets": 20,
+    "min_positive_validation_months": 2,
+    "min_validation_roi": 0.1,
+    "min_validation_profit": 5.0,
+    "max_drawdown_profit_ratio": 0.9,
+    "uncertainty_scale": 1.0,
+    "ev_thresholds": [
+      0.01,
+      0.02,
+      0.03
+    ],
+    "max_odds": [
+      4.0,
+      5.0
+    ],
+    "kelly_fractions": [
+      0.1
+    ]
+  },
+  "first_month": "2024-06",
+  "months": 24,
+  "odds_timing": "pre_closing_without_exact_snapshot_timestamp",
+  "same_day_results_hidden_until_settlement": true,
+  "overall": {
+    "bets": 27,
+    "winning_bets": 6,
+    "total_staked": 27.53,
+    "profit": -7.81,
+    "roi_pct": -28.37,
+    "max_drawdown": 9.81,
+    "max_daily_stake": 3.0,
+    "active_days": 21
+  },
+  "probability_metrics": {
+    "matches": 13156,
+    "brier_score": 0.1987,
+    "log_loss": 0.997751,
+    "ece": 0.003117
+  },
+  "promotion_decision": "NEED_MORE_DATA",
+  "months_invested": 4,
+  "months_abstained": 20,
+  "months_with_bets": 3,
+  "profitable_invested_months": 0,
+  "losing_invested_months": 3,
+  "drawdown_covered_by_profit": false,
+  "monthly": [
+    {
+      "month": "2024-06",
+      "decision": "INVEST",
+      "config": {
+        "min_lower_ev": 0.01,
+        "max_odds": 4.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [],
+        "allowed_buckets": []
+      },
+      "validation": {
+        "positive_validation_months": 2,
+        "bets": 30,
+        "winning_bets": 14,
+        "total_staked": 33.21,
+        "profit": 10.2,
+        "roi_pct": 30.71,
+        "max_drawdown": 5.01,
+        "max_daily_stake": 3.0,
+        "active_days": 21
+      },
+      "probability_metrics": {
+        "matches": 13,
+        "brier_score": 0.201646,
+        "log_loss": 1.017305,
+        "ece": 0.124714
+      },
+      "test": {
+        "bets": 0,
+        "winning_bets": 0,
+        "total_staked": 0.0,
+        "profit": 0.0,
+        "roi_pct": 0.0,
+        "max_drawdown": 0.0,
+        "max_daily_stake": 0.0,
+        "active_days": 0
+      }
+    },
+    {
+      "month": "2024-07",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 20 bets and 2 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 8,
+        "brier_score": 0.238277,
+        "log_loss": 1.118953,
+        "ece": 0.182067
+      }
+    },
+    {
+      "month": "2024-08",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 20 bets and 2 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 552,
+        "brier_score": 0.197594,
+        "log_loss": 0.991371,
+        "ece": 0.019029
+      }
+    },
+    {
+      "month": "2024-09",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 20 bets and 2 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 618,
+        "brier_score": 0.194018,
+        "log_loss": 0.974722,
+        "ece": 0.023589
+      }
+    },
+    {
+      "month": "2024-10",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 20 bets and 2 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 646,
+        "brier_score": 0.20102,
+        "log_loss": 1.008639,
+        "ece": 0.013135
+      }
+    },
+    {
+      "month": "2024-11",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 20 bets and 2 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 615,
+        "brier_score": 0.200562,
+        "log_loss": 1.008763,
+        "ece": 0.017122
+      }
+    },
+    {
+      "month": "2024-12",
+      "decision": "INVEST",
+      "config": {
+        "min_lower_ev": 0.02,
+        "max_odds": 4.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [],
+        "allowed_buckets": []
+      },
+      "validation": {
+        "positive_validation_months": 2,
+        "bets": 29,
+        "winning_bets": 14,
+        "total_staked": 29.98,
+        "profit": 12.5,
+        "roi_pct": 41.69,
+        "max_drawdown": 6.59,
+        "max_daily_stake": 3.51,
+        "active_days": 22
+      },
+      "probability_metrics": {
+        "matches": 756,
+        "brier_score": 0.196197,
+        "log_loss": 0.986533,
+        "ece": 0.016441
+      },
+      "test": {
+        "bets": 10,
+        "winning_bets": 2,
+        "total_staked": 10.16,
+        "profit": -3.76,
+        "roi_pct": -37.01,
+        "max_drawdown": 7.16,
+        "max_daily_stake": 2.16,
+        "active_days": 9
+      }
+    },
+    {
+      "month": "2025-01",
+      "decision": "INVEST",
+      "config": {
+        "min_lower_ev": 0.01,
+        "max_odds": 4.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [],
+        "allowed_buckets": []
+      },
+      "validation": {
+        "positive_validation_months": 2,
+        "bets": 24,
+        "winning_bets": 11,
+        "total_staked": 25.6,
+        "profit": 6.78,
+        "roi_pct": 26.48,
+        "max_drawdown": 2.36,
+        "max_daily_stake": 4.62,
+        "active_days": 18
+      },
+      "probability_metrics": {
+        "matches": 672,
+        "brier_score": 0.204464,
+        "log_loss": 1.020256,
+        "ece": 0.020904
+      },
+      "test": {
+        "bets": 11,
+        "winning_bets": 3,
+        "total_staked": 11.37,
+        "profit": -0.93,
+        "roi_pct": -8.18,
+        "max_drawdown": 4.0,
+        "max_daily_stake": 3.0,
+        "active_days": 7
+      }
+    },
+    {
+      "month": "2025-02",
+      "decision": "INVEST",
+      "config": {
+        "min_lower_ev": 0.02,
+        "max_odds": 4.0,
+        "kelly_fraction": 0.1,
+        "min_stake": 1.0,
+        "max_stake": 20.0,
+        "daily_limit": 100.0,
+        "league_limit": 40.0,
+        "bucket_key": [],
+        "allowed_buckets": []
+      },
+      "validation": {
+        "positive_validation_months": 2,
+        "bets": 25,
+        "winning_bets": 11,
+        "total_staked": 26.47,
+        "profit": 10.28,
+        "roi_pct": 38.84,
+        "max_drawdown": 5.0,
+        "max_daily_stake": 4.99,
+        "active_days": 18
+      },
+      "probability_metrics": {
+        "matches": 719,
+        "brier_score": 0.194002,
+        "log_loss": 0.97965,
+        "ece": 0.013628
+      },
+      "test": {
+        "bets": 6,
+        "winning_bets": 1,
+        "total_staked": 6.0,
+        "profit": -3.12,
+        "roi_pct": -52.0,
+        "max_drawdown": 3.12,
+        "max_daily_stake": 2.0,
+        "active_days": 5
+      }
+    },
+    {
+      "month": "2025-03",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 20 bets and 2 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 705,
+        "brier_score": 0.199555,
+        "log_loss": 1.003816,
+        "ece": 0.011437
+      }
+    },
+    {
+      "month": "2025-04",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 20 bets and 2 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 759,
+        "brier_score": 0.199684,
+        "log_loss": 1.003877,
+        "ece": 0.013396
+      }
+    },
+    {
+      "month": "2025-05",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 20 bets and 2 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 529,
+        "brier_score": 0.192313,
+        "log_loss": 0.973928,
+        "ece": 0.020486
+      }
+    },
+    {
+      "month": "2025-06",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 20 bets and 2 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 10,
+        "brier_score": 0.118327,
+        "log_loss": 0.646033,
+        "ece": 0.157863
+      }
+    },
+    {
+      "month": "2025-07",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 20 bets and 2 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 8,
+        "brier_score": 0.20096,
+        "log_loss": 1.007169,
+        "ece": 0.144405
+      }
+    },
+    {
+      "month": "2025-08",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 20 bets and 2 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 608,
+        "brier_score": 0.198352,
+        "log_loss": 0.993585,
+        "ece": 0.028001
+      }
+    },
+    {
+      "month": "2025-09",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 20 bets and 2 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 588,
+        "brier_score": 0.205217,
+        "log_loss": 1.022525,
+        "ece": 0.030772
+      }
+    },
+    {
+      "month": "2025-10",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 20 bets and 2 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 615,
+        "brier_score": 0.200299,
+        "log_loss": 1.00742,
+        "ece": 0.012323
+      }
+    },
+    {
+      "month": "2025-11",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 20 bets and 2 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 674,
+        "brier_score": 0.196111,
+        "log_loss": 0.986132,
+        "ece": 0.016827
+      }
+    },
+    {
+      "month": "2025-12",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 20 bets and 2 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 659,
+        "brier_score": 0.201315,
+        "log_loss": 1.009592,
+        "ece": 0.016497
+      }
+    },
+    {
+      "month": "2026-01",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 20 bets and 2 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 727,
+        "brier_score": 0.198452,
+        "log_loss": 0.993957,
+        "ece": 0.021381
+      }
+    },
+    {
+      "month": "2026-02",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 20 bets and 2 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 752,
+        "brier_score": 0.195718,
+        "log_loss": 0.984226,
+        "ece": 0.01276
+      }
+    },
+    {
+      "month": "2026-03",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 20 bets and 2 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 670,
+        "brier_score": 0.200889,
+        "log_loss": 1.006751,
+        "ece": 0.010915
+      }
+    },
+    {
+      "month": "2026-04",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 20 bets and 2 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 741,
+        "brier_score": 0.197064,
+        "log_loss": 0.989583,
+        "ece": 0.019675
+      }
+    },
+    {
+      "month": "2026-05",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 20 bets and 2 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 512,
+        "brier_score": 0.203208,
+        "log_loss": 1.019663,
+        "ece": 0.019043
+      }
+    }
+  ]
+}

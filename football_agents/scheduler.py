@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import json
 import threading
 from pathlib import Path
 from typing import Any, Callable
@@ -14,6 +15,7 @@ from .international_history_agent import InternationalHistoryAgent
 from .llm import LLMNewsAgent
 from .market_bias_monitor import MarketBiasMonitorService
 from .official_data import OfficialDataService
+from .profit_scorer_official import diagnose_official_profit_scorer_pool
 from .profit_scorer_prospective import validate_profit_scorer_on_official_sp
 from .repository import Repository
 from .services.model_governance_persistence_service import ModelGovernancePersistenceService
@@ -82,6 +84,7 @@ class BackgroundAgentScheduler:
             ("backtest_run", self._run_backtest),
             ("model_governance_check", self._check_model_governance),
             ("market_bias_shadow_monitor", self._refresh_market_bias_monitor),
+            ("profit_scorer_official_pool_diagnosis", self._diagnose_profit_scorer_official_pool),
             ("profit_scorer_official_sp_validation", self._validate_profit_scorer_official_sp),
         ]
         if settings.enable_prospective_research:
@@ -172,8 +175,26 @@ class BackgroundAgentScheduler:
     def _refresh_market_bias_monitor(self) -> dict[str, Any]:
         return MarketBiasMonitorService(self.repository.db).refresh(run_shadow=True)
 
+    def _diagnose_profit_scorer_official_pool(self) -> dict[str, Any]:
+        report = diagnose_official_profit_scorer_pool(
+            self.repository.db,
+            settings.profit_scorer_artifact_path,
+            settings.agent_match_limit,
+        )
+        self._write_report(settings.profit_scorer_official_pool_report_path, report)
+        top_blockers = [str(item.get("reason")) for item in report.get("blocker_counts", [])[:3]]
+        return {
+            "matches": report.get("scanned_matches", 0),
+            "evaluated": report.get("scored_matches", 0),
+            "predictions": report.get("passed_scorer", 0),
+            "warnings": top_blockers,
+            "report_path": settings.profit_scorer_official_pool_report_path,
+            "report": report,
+        }
+
     def _validate_profit_scorer_official_sp(self) -> dict[str, Any]:
         report = validate_profit_scorer_on_official_sp(self.repository.db, settings.profit_scorer_artifact_path)
+        self._write_report(settings.profit_scorer_official_sp_validation_report_path, report)
         return {
             "matches": report.get("opening_pre_match_snapshots", 0),
             "evaluated": report.get("scored_snapshots", 0),
@@ -193,6 +214,14 @@ class BackgroundAgentScheduler:
         return sorted(rows, key=lambda item: (
             item["status"] not in {"scheduled", "live"}, item["kickoff_time"]
         ))[:max(1, min(limit, 100))]
+
+    @staticmethod
+    def _write_report(path_text: str, report: dict[str, Any]) -> None:
+        path = Path(path_text)
+        if not path.is_absolute():
+            path = settings.project_dir / path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
 
     @staticmethod
     def _warnings(report: dict[str, Any]) -> list[str]:

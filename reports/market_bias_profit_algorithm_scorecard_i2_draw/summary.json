@@ -2,13 +2,13 @@
   "method": "market-bias profit algorithm scorecard",
   "strategy_id": "market-bias-i2-draw-2.8-3.5-v1",
   "rule": null,
-  "created_at": "2026-06-30T14:53:37.432481+00:00",
+  "created_at": "2026-07-05T03:51:26.011446+00:00",
   "score": 59.18,
   "max_score": 100.0,
-  "deployment_tier": "RESEARCH_ONLY_CALIBRATION_WEAK",
+  "deployment_tier": "SHADOW_READY_PRODUCTION_BLOCKED",
   "pre_multi_window_tier": "SHADOW_READY_PRODUCTION_BLOCKED",
   "promotion_decision": "SHADOW_READY_PRODUCTION_BLOCKED",
-  "recommended_for_shadow": false,
+  "recommended_for_shadow": true,
   "recommended_for_production": false,
   "components": {
     "historical_robustness": {
@@ -59,29 +59,10 @@
       "worst_window_roi_pct": -5.48
     },
     "statistical_audit": {
-      "available": true,
-      "decision": "STATISTICALLY_SUPPORTED_RESEARCH_CANDIDATE",
-      "bets": 871,
-      "active_months": 28,
-      "roi_pct": 9.5,
-      "bootstrap_roi_p05": 1.85,
-      "bootstrap_probability_roi_positive": 0.9802,
-      "sign_flip_p_value": 0.0314,
-      "decision_reasons": []
+      "available": false
     },
     "edge_calibration": {
-      "available": true,
-      "decision": "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE",
-      "bets": 871,
-      "hit_rate": 0.3479,
-      "wilson_hit_rate_lower_95": 0.317,
-      "avg_implied_probability": 0.3174,
-      "edge_vs_implied_probability": 0.0305,
-      "conservative_edge_vs_implied": -0.0004,
-      "roi_pct": 9.5,
-      "decision_reasons": [
-        "wilson_lower<=average_implied_probability"
-      ]
+      "available": false
     },
     "governance": {
       "score": 5.0,
@@ -97,5 +78,5 @@
     "official_roi",
     "official_month_balance"
   ],
-  "interpretation": "Historical edge is positive, but selected-odds calibration is not conservative enough for shadow promotion."
+  "interpretation": "Historical edge is strong enough for shadow monitoring, but official-SP prospective samples still block production."
 }

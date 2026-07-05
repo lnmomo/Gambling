@@ -17,12 +17,20 @@ KNOWN_INTERNATIONAL_ODDS_KEYS = {
 
 PUBLIC_SOURCES = [
     {
+        "name": "football-data.co.uk World Cup workbook",
+        "coverage": "World Cup finals plus World Cup qualifiers included in the current workbook",
+        "data": "historical results + average/max 1X2 bookmaker odds",
+        "status": "usable_integrated",
+        "path": "data/historical_csv/football-data/new/WORLD_CUP.csv",
+        "note": "Preferred free source for World Cup research because it includes clean football-data-style odds columns.",
+    },
+    {
         "name": "Footiqo World Cup",
         "coverage": "World Cup only",
         "data": "historical results + 1X2 closing odds",
         "status": "usable_integrated",
         "path": "data/historical_csv/football-data/new/WORLD_CUP.csv",
-        "note": "Already used by sync-international-odds-history.",
+        "note": "Fallback free source available via sync-international-odds-history --provider footiqo.",
     },
     {
         "name": "martj42 international_results",
@@ -56,6 +64,14 @@ PUBLIC_SOURCES = [
         "path": "data/historical_csv/football-data",
         "note": "No broad national-team international CSV feed found in this project source.",
     },
+    {
+        "name": "FootyStats / public pages",
+        "coverage": "selected international competitions and current-season tournament pages",
+        "data": "fixtures/results and some odds-like public page fields depending on competition",
+        "status": "manual_research_only_not_integrated",
+        "path": "https://footystats.org/",
+        "note": "Not a stable broad historical CSV feed for no-leakage 1X2 backtests; useful only as a manual lead.",
+    },
 ]
 
 COMMERCIAL_ODDS_SOURCES = [
@@ -83,21 +99,57 @@ COMMERCIAL_ODDS_SOURCES = [
         "path": "https://docs.sportmonks.com/football/endpoints-and-entities/endpoints/premium-odds-feed",
         "note": "Useful only with paid premium odds access; would require a new adapter.",
     },
+    {
+        "name": "SportsGameOdds Historical Odds API",
+        "coverage": "multi-sport event odds history where soccer coverage includes supported leagues/competitions",
+        "data": "odds history API suitable for adapter research",
+        "status": "commercial_candidate_needs_adapter_and_coverage_probe",
+        "path": "https://sportsgameodds.com/",
+        "note": "Promising fallback when The Odds API historical plan is unavailable; must probe international soccer coverage before implementation.",
+    },
 ]
+
+
+def _ranked_source_decision(usable_api_keys: list[dict[str, Any]], blockers: list[str]) -> dict[str, Any]:
+    if usable_api_keys and not blockers:
+        decision = "USE_THE_ODDS_API_HISTORICAL_FIRST"
+    elif usable_api_keys:
+        decision = "THE_ODDS_API_KEYS_AVAILABLE_BUT_BLOCKED"
+    else:
+        decision = "NO_PUBLIC_BROAD_INTERNATIONAL_1X2_ODDS_CSV_FOUND"
+    return {
+        "decision": decision,
+        "best_feature_source": "martj42 international_results",
+        "best_free_odds_source": "football-data.co.uk World Cup workbook",
+        "best_broad_odds_source": "The Odds API Historical Odds",
+        "fallback_broad_odds_sources": [
+            "SportsGameOdds Historical Odds API",
+            "API-Football / API-Sports",
+            "Sportmonks Premium Odds Feed",
+        ],
+        "why": (
+            "Broad international betting-edge validation needs settled results joined to pre-match 1X2 odds. "
+            "The free sources found here either have results without odds, or odds limited mostly to World Cup / qualifiers."
+        ),
+    }
 
 
 def _configured_international_keys() -> list[str]:
     return [key.strip() for key in settings.international_odds_sport_keys if key.strip()]
 
 
-def _sport_status(key: str, sports_by_key: dict[str, dict[str, Any]] | None) -> dict[str, Any]:
+def _sport_status(
+    key: str,
+    sports_by_key: dict[str, dict[str, Any]] | None,
+    not_probed_status: str = "not_probed",
+) -> dict[str, Any]:
     sport = (sports_by_key or {}).get(key)
     if sport:
         status = "available_active" if sport.get("active") else "available_out_of_season"
         title = sport.get("title") or KNOWN_INTERNATIONAL_ODDS_KEYS.get(key) or key
         description = sport.get("description") or ""
     elif sports_by_key is None:
-        status = "not_probed_missing_api_key"
+        status = not_probed_status
         title = KNOWN_INTERNATIONAL_ODDS_KEYS.get(key) or key
         description = ""
     else:
@@ -137,10 +189,11 @@ def find_international_odds_sources(probe_api: bool = True) -> dict[str, Any]:
             sports_by_key = {}
             probe_error = str(exc)
 
-    odds_api_candidates = [_sport_status(key, sports_by_key) for key in configured_keys]
+    not_probed_status = "not_probed" if settings.odds_api_key else "not_probed_missing_api_key"
+    odds_api_candidates = [_sport_status(key, sports_by_key, not_probed_status) for key in configured_keys]
     usable_api_keys = [
         item for item in odds_api_candidates
-        if item["status"] in {"available_active", "available_out_of_season", "not_probed_missing_api_key"}
+        if item["status"] in {"available_active", "available_out_of_season", "not_probed", "not_probed_missing_api_key"}
     ]
     blockers: list[str] = []
     if not settings.odds_api_key:
@@ -150,9 +203,12 @@ def find_international_odds_sources(probe_api: bool = True) -> dict[str, Any]:
     if not usable_api_keys:
         blockers.append("No configured broad international sport keys are currently usable.")
 
+    source_decision = _ranked_source_decision(usable_api_keys, blockers)
+
     return {
         "method": "broad international football odds source discovery",
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "source_decision": source_decision,
         "public_csv_sources": PUBLIC_SOURCES,
         "commercial_odds_sources": COMMERCIAL_ODDS_SOURCES,
         "odds_api": {
@@ -176,9 +232,11 @@ def find_international_odds_sources(probe_api: bool = True) -> dict[str, Any]:
             "INTERNATIONAL_ODDS_SPORT_KEYS": ",".join(configured_keys),
         },
         "next_actions": [
-            "Keep Footiqo WORLD_CUP.csv as the already-integrated free World Cup odds source.",
+            "Use football-data.co.uk World Cup workbook as the default free WORLD_CUP.csv source.",
+            "Keep Footiqo WORLD_CUP.csv as a fallback free World Cup odds source.",
             "Use martj42/openfootball-style results data only for national-team feature coverage, not for betting-edge proof.",
             "Configure THE_ODDS_API_KEY with historical access, then rerun this command to verify broad international sport keys.",
+            "If The Odds API historical access is not available, probe SportsGameOdds international soccer odds coverage before writing a second adapter.",
             "Only after keys are verified, archive paid historical h2h snapshots and join them to settled international results.",
         ],
         "blockers": blockers,

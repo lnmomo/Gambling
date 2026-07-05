@@ -1,10 +1,10 @@
 {
   "method": "prospective official-SP validation for market-anchored I2 profit scorer",
-  "created_at": "2026-07-02T04:47:54.140339+00:00",
+  "created_at": "2026-07-05T03:51:23.143710+00:00",
   "scorer_artifact": "reports\\feature_enriched_market_anchored_i2_avg_close_scorer_v1\\scorer.json",
-  "opening_pre_match_snapshots": 28,
-  "valid_three_way_snapshots": 28,
-  "settled_opening_snapshots": 13,
+  "opening_pre_match_snapshots": 37,
+  "valid_three_way_snapshots": 37,
+  "settled_opening_snapshots": 23,
   "scored_snapshots": 0,
   "selected_snapshots": 0,
   "settled_selected_snapshots": 0,
@@ -20,11 +20,43 @@
   "blocker_counts": [
     {
       "reason": "league_not_i2",
-      "snapshots": 28
+      "snapshots": 37
     },
     {
       "reason": "draw_sp_outside_[2.8,3.5)",
-      "snapshots": 19
+      "snapshots": 23
+    },
+    {
+      "reason": "missing_feature:lambda_home",
+      "snapshots": 7
+    },
+    {
+      "reason": "missing_feature:lambda_away",
+      "snapshots": 7
+    },
+    {
+      "reason": "missing_feature:home_weighted_points_per_match",
+      "snapshots": 7
+    },
+    {
+      "reason": "missing_feature:away_weighted_points_per_match",
+      "snapshots": 7
+    },
+    {
+      "reason": "missing_feature:home_weighted_goal_difference",
+      "snapshots": 7
+    },
+    {
+      "reason": "missing_feature:away_weighted_goal_difference",
+      "snapshots": 7
+    },
+    {
+      "reason": "home_history<10:0",
+      "snapshots": 6
+    },
+    {
+      "reason": "away_history<10:0",
+      "snapshots": 6
     }
   ],
   "decision": "OFFICIAL_SP_PROSPECTIVE_BLOCKED",

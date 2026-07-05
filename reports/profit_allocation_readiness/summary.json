@@ -1,0 +1,109 @@
+{
+  "method": "profit daily allocation readiness",
+  "generated_at": "2026-07-02T11:08:39.233476+00:00",
+  "daily_budget": 100.0,
+  "allocated_budget": 0,
+  "cash_reserved": 100.0,
+  "decision": "WAIT_FOR_VALIDATED_OFFICIAL_SP_COVERAGE",
+  "reason": "At least one strategy is historically supported, but none covers the current official pool.",
+  "requirements": {
+    "historical_audit": "STATISTICALLY_SUPPORTED_RESEARCH_CANDIDATE",
+    "edge_calibration": "CALIBRATED_EDGE_CONFIRMED",
+    "official_sp_decision": "OFFICIAL_SP_PROSPECTIVE_PASS",
+    "min_settled_selected_snapshots": 200,
+    "min_active_months": 6
+  },
+  "allocations": [],
+  "strategies": [
+    {
+      "strategy_id": "profit-i2-draw-market-anchored-stop3-cool3-v1",
+      "name": "Market-anchored Italy Serie B draw residual strategy with settled-loss cooldown",
+      "status": "PROMOTE_TO_OFFICIAL_SP_SHADOW_VALIDATION",
+      "historically_supported": true,
+      "official_decision": "PENDING_OFFICIAL_SP_VALIDATION",
+      "pool_passed_scorer": 0,
+      "settled_selected_snapshots": 0,
+      "required_settled_selected_snapshots": 200,
+      "action": "WAIT_FOR_ELIGIBLE_OFFICIAL_POOL",
+      "reason": "The strategy is historically supported, but the current official pool has no eligible scored selections.",
+      "top_blockers": [],
+      "deployment_blockers": [
+        "historical validation uses football-data AVG_OPEN, not collected China Sporttery official SP snapshots",
+        "first rolling annual window remains weak, so production allocation is blocked until prospective official-SP evidence accumulates"
+      ],
+      "selection": {
+        "league_family": "I2",
+        "outcome": "DRAW",
+        "odds_source": "AVG_OPEN",
+        "odds_band": "[2.8,3.5)",
+        "train_months": 30,
+        "min_prior_candidates": 120,
+        "min_predicted_ev": 0.02,
+        "ridge": 10.0,
+        "market_residual_cap": 0.08,
+        "max_bets_per_day": 1
+      },
+      "risk_control": {
+        "stop_after_losing_settlement_days": 3,
+        "cooldown_days": 3
+      }
+    },
+    {
+      "strategy_id": "profit-i2-draw-market-anchored-avg-close-stop3-cool14-v1",
+      "name": "Frozen AVG_CLOSE Italy Serie B draw residual strategy with settled-loss cooldown",
+      "status": "STATISTICALLY_CALIBRATED_RESEARCH_LEAD_WAITING_OFFICIAL_SP_SHADOW",
+      "historically_supported": true,
+      "official_decision": "OFFICIAL_SP_PROSPECTIVE_BLOCKED",
+      "pool_passed_scorer": 0,
+      "settled_selected_snapshots": 0,
+      "required_settled_selected_snapshots": 200,
+      "action": "WAIT_FOR_ELIGIBLE_OFFICIAL_POOL",
+      "reason": "The strategy is historically supported, but the current official pool has no eligible scored selections.",
+      "top_blockers": [
+        {
+          "reason": "league_not_i2",
+          "matches": 100
+        },
+        {
+          "reason": "draw_sp_outside_[2.8,3.5)",
+          "matches": 84
+        },
+        {
+          "reason": "invalid_three_way_official_sp",
+          "matches": 55
+        },
+        {
+          "reason": "missing_feature:lambda_home",
+          "matches": 14
+        },
+        {
+          "reason": "missing_feature:lambda_away",
+          "matches": 14
+        }
+      ],
+      "deployment_blockers": [
+        "historical reports use football-data AVG_CLOSE, not China Sporttery official SP",
+        "cooldown parameter is post-hoc until frozen prospective shadow validation runs",
+        "official pool currently has no I2 scorer-eligible matches or settled selected official-SP snapshots"
+      ],
+      "selection": {
+        "league_family": "I2",
+        "outcome": "DRAW",
+        "odds_source": "AVG_CLOSE",
+        "odds_band": "[2.8,3.5)",
+        "train_months": 30,
+        "min_prior_candidates": 120,
+        "min_predicted_ev": 0.02,
+        "ridge": 10.0,
+        "market_residual_cap": 0.08,
+        "max_bets_per_day": 1
+      },
+      "risk_control": {
+        "stop_after_losing_settlement_days": 3,
+        "cooldown_days": 14,
+        "uses_only_settled_results": true
+      }
+    }
+  ],
+  "guardrail": "This report never places real bets. It only decides whether the daily budget may enter shadow/paper allocation under validated strategy coverage."
+}

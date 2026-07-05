@@ -1,9 +1,10 @@
+import json
 from pathlib import Path
+from types import SimpleNamespace
 
 from football_agents.db import Database
 from football_agents.health import build_health_report
 from football_agents.repository import Repository
-from football_agents.config import settings
 from football_agents.scheduler import BackgroundAgentScheduler
 from football_agents.services.task_runner_service import TaskRunnerService
 
@@ -29,6 +30,7 @@ def test_background_scheduler_includes_profit_scorer_official_sp_validation(tmp_
         interval_seconds=60,
     )
     task_names = [name for name, _ in scheduler._tasks()]
+    assert "profit_scorer_official_pool_diagnosis" in task_names
     assert "profit_scorer_official_sp_validation" in task_names
 
 
@@ -36,6 +38,11 @@ def test_background_profit_scorer_validation_uses_configured_artifact(tmp_path, 
     database = Database(Path(tmp_path) / "scheduler-profit-artifact.db")
     database.initialize()
     seen = {}
+    configured = SimpleNamespace(
+        profit_scorer_artifact_path="reports/custom-scorer.json",
+        profit_scorer_official_sp_validation_report_path="reports/validation.json",
+        project_dir=Path(tmp_path),
+    )
 
     def fake_validate(database_arg, scorer_artifact, *_args):
         seen["database"] = database_arg
@@ -49,6 +56,7 @@ def test_background_profit_scorer_validation_uses_configured_artifact(tmp_path, 
             "decision_reasons": ["no_samples"],
         }
 
+    monkeypatch.setattr("football_agents.scheduler.settings", configured)
     monkeypatch.setattr("football_agents.scheduler.validate_profit_scorer_on_official_sp", fake_validate)
     scheduler = BackgroundAgentScheduler(
         Repository(database),
@@ -59,14 +67,64 @@ def test_background_profit_scorer_validation_uses_configured_artifact(tmp_path, 
     report = scheduler._validate_profit_scorer_official_sp()
 
     assert seen["database"] is database
-    assert seen["scorer_artifact"] == settings.profit_scorer_artifact_path
+    assert seen["scorer_artifact"] == configured.profit_scorer_artifact_path
     assert report["decision"] == "OFFICIAL_SP_PROSPECTIVE_BLOCKED"
+    output = Path(tmp_path) / "reports" / "validation.json"
+    assert json.loads(output.read_text(encoding="utf-8"))["decision"] == "OFFICIAL_SP_PROSPECTIVE_BLOCKED"
+
+
+def test_background_profit_scorer_pool_diagnosis_writes_report(tmp_path, monkeypatch):
+    database = Database(Path(tmp_path) / "scheduler-profit-pool.db")
+    database.initialize()
+    seen = {}
+    configured = SimpleNamespace(
+        profit_scorer_artifact_path="reports/custom-scorer.json",
+        profit_scorer_official_pool_report_path="reports/pool.json",
+        agent_match_limit=17,
+        project_dir=Path(tmp_path),
+    )
+
+    def fake_diagnose(database_arg, scorer_artifact, limit):
+        seen["database"] = database_arg
+        seen["scorer_artifact"] = str(scorer_artifact)
+        seen["limit"] = limit
+        return {
+            "scanned_matches": 17,
+            "scored_matches": 2,
+            "passed_scorer": 1,
+            "blocker_counts": [{"reason": "league_not_i2", "matches": 15}],
+        }
+
+    monkeypatch.setattr("football_agents.scheduler.settings", configured)
+    monkeypatch.setattr("football_agents.scheduler.diagnose_official_profit_scorer_pool", fake_diagnose)
+    scheduler = BackgroundAgentScheduler(
+        Repository(database),
+        TaskRunnerService(database),
+        interval_seconds=60,
+    )
+
+    report = scheduler._diagnose_profit_scorer_official_pool()
+
+    assert seen == {"database": database, "scorer_artifact": configured.profit_scorer_artifact_path, "limit": 17}
+    assert report["matches"] == 17
+    assert report["evaluated"] == 2
+    assert report["predictions"] == 1
+    output = Path(tmp_path) / "reports" / "pool.json"
+    assert json.loads(output.read_text(encoding="utf-8"))["passed_scorer"] == 1
 
 
 def test_health_exposes_profit_scorer_official_sp_validation_progress(tmp_path):
     database = Database(Path(tmp_path) / "health-profit.db")
     database.initialize()
     tasks = TaskRunnerService(database)
+    pool = tasks.start_task_run("profit_scorer_official_pool_diagnosis")
+    tasks.finish_task_run_success(
+        pool["id"],
+        affected_matches=100,
+        created_snapshots=0,
+        created_predictions=0,
+        warnings=["league_not_i2"],
+    )
     run = tasks.start_task_run("profit_scorer_official_sp_validation")
     tasks.finish_task_run_success(
         run["id"],
@@ -79,6 +137,11 @@ def test_health_exposes_profit_scorer_official_sp_validation_progress(tmp_path):
     health = build_health_report(database)
 
     progress = health["profitScorerOfficialSp"]
+    assert progress["poolDiagnosisStatus"] == "SUCCESS"
+    assert progress["poolScannedMatches"] == 100
+    assert progress["poolScoredMatches"] == 0
+    assert progress["poolPassedScorer"] == 0
+    assert progress["poolBlockers"] == ["league_not_i2"]
     assert progress["status"] == "SUCCESS"
     assert progress["openingPreMatchSnapshots"] == 28
     assert progress["selectedSnapshots"] == 3

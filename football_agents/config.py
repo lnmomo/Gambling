@@ -61,6 +61,7 @@ class Settings:
     max_single_stake: float = _float("MAX_SINGLE_STAKE", 0.01)
     max_daily_exposure: float = _float("MAX_DAILY_EXPOSURE", 0.03)
     max_weekly_exposure: float = _float("MAX_WEEKLY_EXPOSURE", 0.08)
+    profit_daily_budget: float = _float("PROFIT_DAILY_BUDGET", 100.0)
     odds_max_age_minutes: int = int(os.getenv("ODDS_MAX_AGE_MINUTES", "10"))
     official_source_url: str = os.getenv("OFFICIAL_SOURCE_URL", "https://m.sporttery.cn/mjc/zqsj/?tab=schedule")
     official_browser_path: str = os.getenv(
@@ -78,6 +79,14 @@ class Settings:
     profit_scorer_artifact_path: str = os.getenv(
         "PROFIT_SCORER_ARTIFACT_PATH",
         "reports/feature_enriched_market_anchored_i2_avg_close_scorer_v1/scorer.json",
+    )
+    profit_scorer_official_pool_report_path: str = os.getenv(
+        "PROFIT_SCORER_OFFICIAL_POOL_REPORT_PATH",
+        "reports/profit_scorer_official_pool/summary.json",
+    )
+    profit_scorer_official_sp_validation_report_path: str = os.getenv(
+        "PROFIT_SCORER_OFFICIAL_SP_VALIDATION_REPORT_PATH",
+        "reports/profit_scorer_official_sp_validation/summary.json",
     )
     odds_api_key: str = os.getenv("THE_ODDS_API_KEY", "")
     odds_api_base_url: str = os.getenv("ODDS_API_BASE_URL", "https://api.the-odds-api.com/v4")
@@ -130,6 +139,10 @@ class Settings:
         "https://raw.githubusercontent.com/martj42/international_results/master/results.csv",
     )
     international_data_timeout_seconds: int = int(os.getenv("INTERNATIONAL_DATA_TIMEOUT_SECONDS", "30"))
+    international_football_data_world_cup_url: str = os.getenv(
+        "INTERNATIONAL_FOOTBALL_DATA_WORLD_CUP_URL",
+        "https://www.football-data.co.uk/WorldCup2026.xlsx",
+    )
 
 
 settings = Settings()

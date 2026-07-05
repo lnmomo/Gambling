@@ -1248,6 +1248,10 @@ Official-pool scorer readiness diagnostic:
 - Default scorer: `PROFIT_SCORER_ARTIFACT_PATH`, currently `reports/feature_enriched_market_anchored_i2_avg_close_scorer_v1/scorer.json`.
 - Purpose: map the current official match pool into the frozen scorer schema and report whether each match can be scored. This command does not create recommendations or bets.
 - Current local report: `reports/profit_scorer_official_pool/summary.json`.
+- Automation:
+  - Background task: `profit_scorer_official_pool_diagnosis`.
+  - Runs once on service startup and then every `BACKGROUND_AGENT_INTERVAL_SECONDS`.
+  - Writes `PROFIT_SCORER_OFFICIAL_POOL_REPORT_PATH`, defaulting to `reports/profit_scorer_official_pool/summary.json`.
 
 Current official-pool result:
 
@@ -1280,6 +1284,7 @@ Official-SP prospective validation for the frozen profit scorer:
 - Automation:
   - Background task: `profit_scorer_official_sp_validation`.
   - Runs once on service startup and then every `BACKGROUND_AGENT_INTERVAL_SECONDS`.
+  - Writes `PROFIT_SCORER_OFFICIAL_SP_VALIDATION_REPORT_PATH`, defaulting to `reports/profit_scorer_official_sp_validation/summary.json`.
   - Status is exposed in `/health.profitScorerOfficialSp` and recent task runs.
 - Protocol:
   - Use only the earliest pre-match official SP snapshot for each match.
@@ -1624,3 +1629,292 @@ Official-SP blocker interpretation:
 - In the historical opening-snapshot validation set, `28 / 28` snapshots are also blocked by `league_not_i2`, and `19 / 28` are outside the draw SP band `[2.8,3.5)`.
 - This means the algorithm is ready for I2 official-SP shadow validation, but the current Chinese official pool does not contain eligible I2 fixtures.
 - Do not widen the strategy to World Cup or FIN to force daily bets; those domains already failed their own stability checks.
+
+Broad International Odds Data Status:
+
+- Code: `football_agents/international_odds_agent.py` now supports football-data.co.uk World Cup workbook odds, Footiqo World Cup fallback odds, and The Odds API historical h2h snapshots.
+- CLI:
+  - Default free World Cup / World Cup qualifiers source: `python -m football_agents.cli sync-international-odds-history --provider football-data-world-cup`.
+  - Footiqo fallback source: `python -m football_agents.cli sync-international-odds-history --provider footiqo`.
+  - Paid/broader provider: `python -m football_agents.cli sync-international-odds-history --provider odds-api --sport-keys soccer_uefa_nations_league --from-date 2024-09-06 --to-date 2024-09-06 --max-snapshots 1`.
+- Output:
+  - Default World Cup CSV: `data/historical_csv/football-data/new/WORLD_CUP.csv`.
+  - football-data workbook archive: `data/historical_csv/footiqo/world_cup_football_data.xlsx`.
+  - Raw archive root: `data/historical_csv/the_odds_api/international`.
+  - Converted CSV: `data/historical_csv/football-data/new/INTERNATIONAL_ODDS_API.csv`.
+- Current football-data workbook sync:
+  - Source: `https://www.football-data.co.uk/WorldCup2026.xlsx`.
+  - Matched rows: `1146`.
+  - Dropped rows: `7`.
+  - Coverage: World Cup 2014, 2018, 2022, 2026 plus World Cup 2026 qualifiers.
+  - Date range: `12/06/2014` through `28/06/2026`.
+- Conversion guardrail:
+  - The adapter writes only events that have h2h home/draw/away prices and can be matched to already-settled national-team results by date/home/away.
+  - Unmatched events are dropped, so the dataset does not leak future results into strategy research.
+- Current real-environment probe:
+  - `/sports` verification works with the configured key and returns usable international keys for World Cup, UEFA Euro, Copa America, and UEFA Nations League.
+  - Historical odds fetch for `soccer_uefa_nations_league` on `2024-09-06` returned `HTTP Error 401: Unauthorized`.
+  - Interpretation: the current The Odds API key is valid for sport discovery/live usage but does not currently have historical odds access.
+- Algorithm implication:
+  - Free public data can fill national-team features, but broad international betting-edge validation still requires paid historical 1X2 odds access or another equivalent odds archive.
+  - Until that access is available and archived, do not promote World Cup/Euro/Copa/Nations League allocation rules from result-only data.
+- Source discovery update:
+  - `python -m football_agents.cli research-international-odds-sources` now reports a structured `source_decision`.
+  - Best feature source: `martj42 international_results`, already archived at `data/historical_csv/international/results.csv`.
+  - Best free odds source: football-data.co.uk World Cup workbook, converted to `data/historical_csv/football-data/new/WORLD_CUP.csv`.
+  - Best broad international odds source: The Odds API historical h2h snapshots.
+  - Fallback commercial candidates: SportsGameOdds historical odds, API-Football/API-Sports odds, and Sportmonks Premium Odds Feed. These require coverage probing and new adapters before they can be used for no-leakage edge validation.
+
+Daily Allocation Readiness:
+
+- Code: `football_agents/profit_allocation_readiness.py`.
+- CLI: `python -m football_agents.cli profit-allocation-readiness --daily-budget 100 --output reports/profit_allocation_readiness/summary.json`.
+- Config: `PROFIT_DAILY_BUDGET`, default `100`.
+- Report: `reports/profit_allocation_readiness/summary.json`.
+
+Current result:
+
+| Check | Value |
+| --- | ---: |
+| Daily budget | 100 |
+| Allocated budget | 0 |
+| Cash reserved | 100 |
+| Decision | `WAIT_FOR_VALIDATED_OFFICIAL_SP_COVERAGE` |
+
+Interpretation:
+
+- The system now treats "do not invest today" as a first-class allocation decision, not as an unexplained pile of `NO_BET` rows.
+- Both registered I2 strategy packages are historically supported by statistical audit and edge calibration, but neither currently passes official-SP coverage/settlement gates.
+- The AVG_CLOSE candidate's current top official-pool blocker remains `league_not_i2`, followed by draw-SP band and invalid official-SP issues.
+- This is the correct behavior for the project objective: do not force the daily 100 into World Cup/FIN/international matches that failed or lack validated odds-edge history.
+- Future daily allocation becomes available only after a strategy has:
+  - `STATISTICALLY_SUPPORTED_RESEARCH_CANDIDATE`.
+  - `CALIBRATED_EDGE_CONFIRMED`.
+  - `OFFICIAL_SP_PROSPECTIVE_PASS`.
+  - At least `200` settled selected official-SP shadow samples across the required active-month window.
+
+Historical Data Domain Readiness:
+
+- Code: `football_agents/profit_data_domain_readiness.py`.
+- CLI: `python -m football_agents.cli profit-data-domain-readiness --output reports/profit_data_domain_readiness/summary.json`.
+- API: `GET /api/profit/data-domain-readiness`.
+- Report: `reports/profit_data_domain_readiness/summary.json`.
+
+Current scan:
+
+| Check | Value |
+| --- | ---: |
+| Historical domains scanned | 36 |
+| Search-ready domains not already rejected | 31 |
+| Existing watch-only domains | 2 |
+| Existing rejected domains | 2 |
+| Result-only/no-odds domains | 1 |
+
+Top interpretation:
+
+- `I2` remains the highest-priority profit domain because it already has a statistically supported/calibrated strategy; the blocker is official-pool coverage, not lack of historical evidence.
+- `FIN` has enough historical odds and is present in the current official pool, but it is now explicitly marked `REJECTED_BY_EXISTING_STABILITY_GATES` / `LOW_DO_NOT_LOOSEN`, so the system will not recommend loosening FIN thresholds simply to force daily bets.
+- `WORLD_CUP` is also marked `REJECTED_BY_EXISTING_STABILITY_GATES` because the tournament holdout rejected reusable rules and the sample is too small.
+- `SP1` and `JPN` are watch-only: both have signals worth tracking, but each has already failed at least one promotion/stability gate.
+- Large untested search-ready domains include `ARG`, `USA`, `BRA`, `MEX`, `ROU`, `POL`, `NOR`, `SWE`, `RUS`, `DNK`, and `CHN`. These are candidates for future no-lookahead searches, but they are not current official-pool allocation domains.
+
+Next algorithmic action:
+
+- Do not spend effort loosening FIN or World Cup.
+- Keep I2 frozen for official-SP coverage.
+- For finding a new reusable algorithm, run no-lookahead diagnostics on the highest-ranked untested odds-backed domains, then require the same walk-forward, statistical audit, calibration, and official-SP validation gates before any daily allocation.
+
+Batch Domain Discovery Round 1:
+
+- Code: `scripts/batch_profit_domain_discovery.py`.
+- Input: `reports/profit_data_domain_readiness/summary.json`.
+- Batch report: `reports/batch_profit_domain_discovery_top3_v1/summary.json`.
+- Candidate screens:
+  - `reports/market_bias_candidate_screen_usa_max_close_top8_v1/summary.json`.
+  - `reports/market_bias_candidate_screen_arg_avg_close_top8_v1/summary.json`.
+  - `reports/market_bias_candidate_screen_bra_avg_close_top8_v1/summary.json`.
+
+First-pass domains:
+
+| Domain | Odds source | Diagnostic rows | First-pass signal | Candidate-screen result |
+| --- | --- | ---: | --- | --- |
+| `USA` | `MAX_CLOSE` | 74 | Low-price home favorite buckets, about `1.8%` to `2.0%` raw ROI | Rejected: 56 bets, month balance `4 / 4`, drawdown `62.9` > profit `23.7` |
+| `BRA` | `AVG_CLOSE` | 12 | Home `[1.8,2.2)` buckets, below `1%` raw ROI | Rejected: no candidate survived rolling selection |
+| `ARG` | `AVG_CLOSE` | 3 | Home non-favorite / low market-probability bucket | Rejected: only 4 walk-forward bets |
+
+Interpretation:
+
+- The first untested high-sample domains did not produce a reusable allocation algorithm.
+- This is negative progress, but it is the right kind: it rejects weak broad-domain market-bias patterns before they reach shadow allocation.
+- The USA result is especially instructive: a broad raw diagnostic can show many positive months, but the no-lookahead portfolio gate still rejects it when the selected walk-forward sample is too small and drawdown dominates profit.
+- Continue the search on additional untested domains, but keep the same rejection standard. Do not promote any domain on first-pass raw diagnostic ROI alone.
+
+Batch Domain Discovery Round 2:
+
+- Batch report: `reports/batch_profit_domain_discovery_next5_v1/summary.json`.
+- Candidate screens:
+  - `reports/market_bias_candidate_screen_mex_avg_close_top8_v1/summary.json`.
+  - `reports/market_bias_candidate_screen_nor_avg_close_top8_v1/summary.json`.
+  - `reports/market_bias_candidate_screen_swe_avg_close_top8_v1/summary.json`.
+
+Second-pass domains:
+
+| Domain | Odds source | Diagnostic rows | First-pass signal | Candidate-screen result |
+| --- | --- | ---: | --- | --- |
+| `MEX` | `AVG_CLOSE` | 7 | Low-price favorite bucket, raw ROI up to `4.03%` | Rejected: no candidate survived rolling selection |
+| `NOR` | `AVG_CLOSE` | 20 | Away low-price and favorite buckets | Rejected: 49 bets, `-16.61%` ROI, negative month/season balance |
+| `SWE` | `AVG_CLOSE` | 26 | Away `[2.2,2.8)` showed high sample-out ROI | Rejected: only 23 bets, season balance `1 / 1`, below sample gate |
+| `ROU` | `AVG_CLOSE` | 4 | Weak away favorite bucket, below `1%` raw ROI | Not advanced beyond first-pass diagnostics |
+| `POL` | `AVG_CLOSE` | 0 | No qualifying diagnostic rows | Not advanced |
+
+Interpretation:
+
+- The second batch also failed to produce a reusable allocation candidate.
+- `SWE away [2.2,2.8)` is the tempting result, but it is exactly the kind of sparse rule the process is designed to reject: high ROI, only 23 walk-forward bets, and no season-level dominance.
+- `NOR` shows why raw diagnostics are not enough: the sample-out portfolio flips strongly negative.
+- The current evidence still supports keeping I2 as the only statistically calibrated lead, while expanding search rather than lowering gates.
+
+Batch Domain Discovery Round 3:
+
+- Batch report: `reports/batch_profit_domain_discovery_next5_v2/summary.json`.
+- Candidate screens:
+  - `reports/market_bias_candidate_screen_rus_avg_close_top8_v1/summary.json`.
+  - `reports/market_bias_candidate_screen_dnk_avg_close_top8_v1/summary.json`.
+  - `reports/market_bias_candidate_screen_chn_avg_close_top8_v1/summary.json`.
+  - `reports/market_bias_candidate_screen_e1_b365_open_top8_v1/summary.json`.
+  - `reports/market_bias_candidate_screen_e3_b365_close_top8_v1/summary.json`.
+- Code fix: `scripts/batch_profit_domain_discovery.py` now supports classic football-data league codes such as `E1` and `E3` by loading their season files and filtering the target league, instead of assuming every code exists under `football-data/new`.
+
+Third-pass domains:
+
+| Domain | Odds source | Diagnostic rows | First-pass signal | Candidate-screen result |
+| --- | --- | ---: | --- | --- |
+| `RUS` | `AVG_CLOSE` | 14 | Home `[2.2,2.8)` raw ROI `7.73%` | Rejected: 27 bets, `-16.48%` ROI, drawdown `70.4` |
+| `DNK` | `AVG_CLOSE` | 8 | Draw/favorite buckets, raw ROI up to `5.55%` | Rejected: 17 bets, `-20.29%` ROI for the best advancing rule |
+| `CHN` | `AVG_CLOSE` | 7 | Draw market-probability bucket raw ROI `13.5%` | Rejected: 50 bets, `-22.28%` ROI, drawdown `192.4` |
+| `E1` | `B365_OPEN` | 3 | Mid-price favorite bucket raw ROI `10.93%` | Rejected: no candidate survived rolling selection |
+| `E3` | `B365_CLOSE` | 3 | Mid-price favorite bucket raw ROI `1.39%` | Rejected: no walk-forward bets |
+
+Interpretation:
+
+- This is the strongest negative evidence so far against a simple market-bucket algorithm outside I2.
+- `CHN` is particularly important: the raw diagnostic looked excellent, but the rolling no-lookahead portfolio turned sharply negative. That is exactly the failure mode the monthly walk-forward gate is meant to catch.
+- After 13 newly scanned/search-screened domains, no simple market-bias bucket has passed the current stability and portfolio gates.
+- The next productive step is to move beyond raw market-bias buckets into feature-enriched residual models or multi-domain models with strict out-of-sample gates, while keeping I2 as the only calibrated lead.
+
+Residual Model Walk-Forward Round 1:
+
+- Code: `scripts/walk_forward_residual_strategy.py`.
+- Code update:
+  - The CLI now supports `--seasons`, instead of hard-coding only `2324` and `2425`.
+  - Added `stability` profile with larger validation sample and validation drawdown/profit constraints.
+  - Tightened promotion gate: positive ROI is not enough; total profit must exceed max drawdown and profitable invested months must exceed losing invested months.
+- Test command: `pytest tests/test_walk_forward_residual_strategy.py -q`.
+- Test result: `7 passed`.
+
+Experiments:
+
+| Report | Window | Profile | Bets | Profit | ROI | Max drawdown | Month balance | Decision |
+| --- | --- | --- | ---: | ---: | ---: | ---: | --- | --- |
+| `reports/residual_walk_forward_5season_relaxed_2025_06_v1` | 2025-06 through 2026-05 | relaxed | 35 | 9.62 | 19.38% | 8.54 | mixed, small sample | `NEED_MORE_DATA` |
+| `reports/residual_walk_forward_5season_stability_2025_06_v1` | 2025-06 through 2026-05 | stability | 10 | -0.46 | -4.14% | 5.32 | too few bets | `NEED_MORE_DATA` |
+| `reports/residual_walk_forward_5season_bucketed_2025_06_v1` | 2025-06 through 2026-05 | bucketed | 6 | -6.00 | -100.00% | 6.00 | overfit buckets | `NEED_MORE_DATA` |
+| `reports/residual_walk_forward_5season_relaxed_2024_06_v1` | 2024-06 through 2026-05 | relaxed | 135 | 11.12 | 7.01% | 15.13 | 6 profitable / 5 losing invested months | `NEED_MORE_DATA` |
+| `reports/residual_walk_forward_5season_strict_2024_06_v1` | 2024-06 through 2026-05 | strict | 88 | 1.58 | 1.52% | 15.43 | 5 profitable / 6 losing invested months | `NEED_MORE_DATA` |
+| `reports/residual_walk_forward_5season_guarded_2024_06_v1` | 2024-06 through 2026-05 | guarded | 27 | -7.81 | -28.37% | 9.81 | 0 profitable / 3 losing invested months | `NEED_MORE_DATA` |
+| `reports/residual_walk_forward_5season_draw_value_2024_06_v1` | 2024-06 through 2026-05 | draw_value | 51 | 4.69 | 9.18% | 6.10 | 3 profitable / 3 losing invested months | `NEED_MORE_DATA` |
+| `reports/residual_walk_forward_5season_draw_value_stop_2024_06_v1` | 2024-06 through 2026-05 | draw_value_stop | 27 | -2.22 | -8.19% | 4.70 | 2 profitable / 3 losing invested months | `NEED_MORE_DATA` |
+| `reports/residual_walk_forward_5season_draw_regime_2024_06_v1` | 2024-06 through 2026-05 | draw_regime | 38 | 5.84 | 15.33% | 7.32 | 4 profitable / 2 losing invested months | `NEED_MORE_DATA` |
+| `reports/residual_walk_forward_5season_draw_regime_strict_2024_06_v1` | 2024-06 through 2026-05 | draw_regime_strict | 33 | 2.24 | 6.79% | 8.22 | 3 profitable / 2 losing invested months | `NEED_MORE_DATA` |
+| `reports/residual_walk_forward_5season_draw_quality_2024_06_v1` | 2024-06 through 2026-05 | draw_quality | 15 | -0.54 | -3.60% | 5.00 | 1 profitable / 2 losing invested months | `NEED_MORE_DATA` |
+| `reports/residual_walk_forward_5season_draw_quality_pooled_2024_06_v1` | 2024-06 through 2026-05 | draw_quality_pooled | 0 | 0.00 | 0.00% | 0.00 | 0 profitable / 0 losing invested months | `NEED_MORE_DATA` |
+| `reports/residual_walk_forward_5season_draw_quality_pooled_lite_2024_06_v1` | 2024-06 through 2026-05 | draw_quality_pooled_lite | 25 | -3.22 | -12.88% | 9.80 | 4 profitable / 6 losing invested months | `NEED_MORE_DATA` |
+
+Interpretation:
+
+- The residual model is more promising than simple market-bucket rules because it produced 135 no-lookahead bets over 24 months with positive ROI and good aggregate calibration (`ECE 0.003117`).
+- It is not yet a production money-making algorithm: max drawdown (`15.13`) exceeds total profit (`11.12`), so the profit is too fragile to promote.
+- The `bucketed` experiment is a clear warning against tiny validation buckets: validation ROI looked extreme, but the next-month sample lost every bet.
+- The `strict` and `guarded` experiments show that simply tightening EV thresholds, reducing Kelly, and requiring stronger validation drawdown/profit ratios does not solve the problem; it mostly removes upside or leaves the same bad months.
+- The `draw_value` experiment is the cleanest structural lead so far: forcing residual candidates into draw value ranges improves ROI versus strict/guarded and removes most home/away drag, but drawdown still exceeds profit.
+- The `draw_value_stop` experiment shows that a simple monthly stop loss is not enough. It reduces max drawdown from `6.10` to `4.70`, but flips profit negative, so the issue is candidate quality/regime detection rather than only staking cadence.
+- The `draw_regime` experiment adds a no-lookahead second-stage gate: each month it selects draw-value candidates only from validation-positive regime buckets such as market draw probability, prior league draw rate, strength gap, and goal environment. This improves ROI to `15.33%` and month balance to `4 / 2`, but still fails the profit-over-drawdown gate (`5.84` profit versus `7.32` max drawdown).
+- The stricter regime version reduces sample and upside without improving drawdown, so simply tightening bucket sample/ROI thresholds is not enough.
+- The first candidate-quality model (`draw_quality`) used a no-lookahead validation split: the earlier validation months trained a linear unit-profit score, the final validation month selected the configuration, and the full validation window retrained the gate for the test month. It failed out-of-sample (`-3.60%` ROI), mainly because the 3-month validation window leaves too few quality-model samples.
+- The pooled quality holdout model used a 12-month validation window but still abstained in all test months because the final validation-month gate was too selective after quality filtering.
+- The pooled quality lite model used the full 12-month validation window for quality training/selection and a small fixed grid. It produced many strong validation summaries but still lost out-of-sample (`-12.88%` ROI), which is evidence that the linear quality score is chasing historical noise rather than learning a stable candidate-quality edge.
+- Current best route: keep residual probability modeling and draw-regime constraints, but do not use the current linear quality gates for allocation. The most promising surviving research candidate remains `draw_regime`, while the next quality-model attempt needs either richer features, stronger regularization/monotonic constraints, or a different validation design. Do not promote small bucket filters, relaxed residual output, stop-loss-only variants, current draw-regime variants, or first-pass quality gates until the drawdown/profit gate is passed over a longer sample.
+
+World Cup / International Odds Expansion Validation:
+
+- Data update:
+  - `sync-international-odds-history --provider football-data-world-cup` archived `1146` football-data World Cup / World Cup qualifiers matches with complete `AvgCH/AvgCD/AvgCA`.
+  - Date range: `2014-06-12` through `2026-06-28`.
+  - Competitions in the converted file: World Cup 2014, 2018, 2022, 2026, and World Cup Qualifiers.
+- Code:
+  - `scripts/world_cup_tournament_validation.py` now supports `--mode rolling`.
+  - Rolling mode discovers rules only from years earlier than the test year, which fits sparse tournament/qualifier data better than monthly league windows.
+- Tests:
+  - `pytest tests/test_world_cup_tournament_validation.py -q`
+  - Result: `3 passed`.
+- Reports:
+  - `reports/world_cup_tournament_validation_2018_2022_newdata_v1/summary.json`.
+  - `reports/market_bias_diagnostics_world_cup_avg_close_newdata_v1/summary.json`.
+  - `reports/market_bias_diagnostics_world_cup_max_close_newdata_v1/summary.json`.
+  - `reports/market_bias_candidate_screen_world_cup_newdata_v1/summary.json`.
+  - `reports/world_cup_rolling_validation_avg_close_newdata_v1/summary.json`.
+  - `reports/world_cup_rolling_validation_max_close_newdata_v1/summary.json`.
+
+Results:
+
+| Validation | Odds source | Candidates / rules | Best apparent result | Decision |
+| --- | --- | ---: | --- | --- |
+| Tournament holdout 2018 -> 2022 | `AVG_CLOSE` | 20 | No rule passed; several 2018 winners failed in 2022 | `REJECT_NO_REUSABLE_WORLD_CUP_RULE` |
+| Full-sample diagnostics | `AVG_CLOSE` | 26 diagnostic rows | `[2.8,3.5)` odds bucket: 543 bets, +11.83 units, 2.18% ROI | Diagnostics only |
+| Full-sample diagnostics | `MAX_CLOSE` | 81 diagnostic rows | `[3.5,4.0)` / draw-like buckets show high raw ROI | Diagnostics only |
+| Monthly league-style candidate screen | `AVG_CLOSE,MAX_CLOSE` | 24 checked rows | 0 walk-forward bets because sparse tournament data breaks 12-month league windows | 0 passed |
+| Rolling yearly holdout | `AVG_CLOSE` | 69 combined rules | `[2.8,3.5)` had 255 out-of-sample bets, +10.71 units, 4.20% ROI, but max drawdown 13.22 > profit 10.71 | `REJECT_NO_REUSABLE_WORLD_CUP_ROLLING_RULE` |
+| Rolling yearly holdout | `MAX_CLOSE` | 74 combined rules | Best combined rules had strong ROI but only 15-63 out-of-sample bets or drawdown > profit | `REJECT_NO_REUSABLE_WORLD_CUP_ROLLING_RULE` |
+
+Interpretation:
+
+- The expanded World Cup/qualifier source is useful data, but it still does not produce a production-grade money allocation algorithm.
+- `AVG_CLOSE` has a broad weak signal around odds `[2.8,3.5)`, but profit does not cover drawdown.
+- `MAX_CLOSE` creates attractive-looking 2026 fold winners, including draw odds `[3.5,4.0)`, but the combined no-lookahead sample fails the minimum-bet and stability gates. This is a classic “good year, not good algorithm” pattern.
+- Do not promote World Cup / qualifier rules into daily allocation from this evidence. Keep the data for feature support and future model experiments, but the search for a reusable profitable algorithm should continue outside these rejected tournament-only market-bucket rules.
+
+Low-Correlation Multi-Domain Rule Combination Audit:
+
+- Code:
+  - `scripts/low_correlation_rule_combo_search.py`.
+  - `scripts/rolling_low_correlation_rule_selector.py`.
+- Code update:
+  - `rolling_low_correlation_rule_selector.py` now accepts either `unit_profit` or `profit` input columns, so direct rule pools can be re-used in rolling no-lookahead validation.
+- Test:
+  - `pytest tests/test_rolling_low_correlation_rule_selector.py -q`.
+  - Result: `2 passed`.
+
+Why this audit matters:
+
+- Full-sample low-correlation combinations looked promising:
+  - `reports/low_correlation_rule_combo_search_worldwide_top20_combo3_v1/summary.json` best combo: 1652 bets, +123.03 units, 7.45% ROI, active pass rate 0.68.
+  - `reports/low_correlation_rule_combo_search_worldwide_cross_source_top12_combo3_v1/summary.json` best combo: 2158 bets, +151.35 units, 7.01% ROI, active pass rate 0.60.
+- But those full-sample combinations are not sufficient because the rule set is selected with information from the full period. They must survive rolling no-lookahead selection.
+
+New non-overlapping yearly rolling checks:
+
+| Report | Candidate pool | Config | Bets | Profit | ROI | Active windows | Active pass rate | Decision |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `reports/rolling_low_correlation_rule_selector_cross_source_pair_nonoverlap_v1/summary.json` | Cross-source top12 direct rules | Pair combo, 48m train, 12m test, 12m step | 421 | -6.46 | -1.53% | 4 | 0.25 | Rejected |
+| `reports/rolling_low_correlation_rule_selector_top20_combo3_nonoverlap_v1/summary.json` | Top20 direct rules | 3-rule combo, 48m train, 12m test, 12m step | 726 | -6.04 | -0.83% | 7 | 0.1429 | Rejected |
+| `reports/rolling_low_correlation_rule_selector_cross_source_pair_stricter_nonoverlap_v1/summary.json` | Cross-source top12 direct rules | Stricter 60m train / 0.8 train pass / corr <= 0.25 | 0 | 0.00 | 0.00% | 0 | 0.00 | Abstains |
+| `reports/rolling_low_correlation_rule_selector_top20_combo3_stricter_nonoverlap_v1/summary.json` | Top20 direct rules | Stricter 60m train / 0.8 train pass / corr <= 0.25 | 213 | -12.86 | -6.04% | 2 | 0.00 | Rejected |
+
+Interpretation:
+
+- Low-correlation portfolio construction improves the full-sample story, but it does not solve rule-selection instability.
+- The same rule families that look profitable when chosen with hindsight fail once each yearly test window can only use earlier data.
+- Tightening the train stability gate either abstains completely or still loses, so the issue is not simply that the earlier filter was too loose.
+- Do not promote multi-domain low-correlation market-bucket combinations. The next algorithmic step should move away from hand-picked market buckets toward either:
+  - a properly regularized feature model trained only on prior windows, or
+  - a frozen I2-style candidate that passes official-SP prospective validation.

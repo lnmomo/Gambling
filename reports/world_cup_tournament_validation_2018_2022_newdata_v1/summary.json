@@ -1,0 +1,612 @@
+{
+  "method": "World Cup tournament holdout validation",
+  "seasons": [
+    "WORLD_CUP"
+  ],
+  "odds_source": "AVG_CLOSE",
+  "train_year": 2018,
+  "test_year": 2022,
+  "train_market_rows": 192,
+  "test_market_rows": 192,
+  "train_matches": 64,
+  "test_matches": 64,
+  "available_tournament_years": [
+    2014,
+    2018,
+    2022,
+    2023,
+    2024,
+    2025,
+    2026
+  ],
+  "top_n": 20,
+  "min_train_samples": 6,
+  "min_test_bets": 10,
+  "min_roi_pct": 3.0,
+  "candidate_rules": 20,
+  "passed_rules": 0,
+  "decision": "REJECT_NO_REUSABLE_WORLD_CUP_RULE",
+  "promotion_decision": "RESEARCH_ONLY_PENDING_BROADER_GATES",
+  "stability_gate": {
+    "status": "ELIGIBLE_FOR_MULTI_TOURNAMENT_WALK_FORWARD",
+    "reason": "minimum_tournament_years_available",
+    "minimum_tournament_years": 3,
+    "available_tournament_years": [
+      2014,
+      2018,
+      2022,
+      2023,
+      2024,
+      2025,
+      2026
+    ],
+    "note": "Tournament holdout can reject bad rules, but cannot prove a stable live allocation algorithm with only two World Cups."
+  },
+  "rows": [
+    {
+      "rule": "outcome|market_prob_bucket=away|[0.20,0.28)",
+      "train": {
+        "bets": 10,
+        "profit": 9.03,
+        "roi_pct": 90.3,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 2.0,
+        "settlement_days": 9
+      },
+      "test": {
+        "bets": 9,
+        "profit": 2.68,
+        "roi_pct": 29.78,
+        "positive_months": 1,
+        "negative_months": 1,
+        "max_drawdown": 5.0,
+        "settlement_days": 7
+      },
+      "decision": "REJECT_TOURNAMENT_HOLDOUT_WEAK",
+      "decision_reasons": [
+        "test_bets<minimum",
+        "positive_months<=negative_months",
+        "drawdown>profit"
+      ]
+    },
+    {
+      "rule": "league|outcome|market_prob_bucket=WORLD_CUP|away|[0.20,0.28)",
+      "train": {
+        "bets": 10,
+        "profit": 9.03,
+        "roi_pct": 90.3,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 2.0,
+        "settlement_days": 9
+      },
+      "test": {
+        "bets": 9,
+        "profit": 2.68,
+        "roi_pct": 29.78,
+        "positive_months": 1,
+        "negative_months": 1,
+        "max_drawdown": 5.0,
+        "settlement_days": 7
+      },
+      "decision": "REJECT_TOURNAMENT_HOLDOUT_WEAK",
+      "decision_reasons": [
+        "test_bets<minimum",
+        "positive_months<=negative_months",
+        "drawdown>profit"
+      ]
+    },
+    {
+      "rule": "outcome|market_prob_bucket|favorite_relation=away|[0.20,0.28)|market_non_favorite",
+      "train": {
+        "bets": 10,
+        "profit": 9.03,
+        "roi_pct": 90.3,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 2.0,
+        "settlement_days": 9
+      },
+      "test": {
+        "bets": 9,
+        "profit": 2.68,
+        "roi_pct": 29.78,
+        "positive_months": 1,
+        "negative_months": 1,
+        "max_drawdown": 5.0,
+        "settlement_days": 7
+      },
+      "decision": "REJECT_TOURNAMENT_HOLDOUT_WEAK",
+      "decision_reasons": [
+        "test_bets<minimum",
+        "positive_months<=negative_months",
+        "drawdown>profit"
+      ]
+    },
+    {
+      "rule": "outcome|odds_bucket=home|[2.8,3.5)",
+      "train": {
+        "bets": 7,
+        "profit": 2.4,
+        "roi_pct": 34.29,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 4.0,
+        "settlement_days": 6
+      },
+      "test": {
+        "bets": 3,
+        "profit": -3.0,
+        "roi_pct": -100.0,
+        "positive_months": 0,
+        "negative_months": 2,
+        "max_drawdown": 3.0,
+        "settlement_days": 3
+      },
+      "decision": "REJECT_TOURNAMENT_HOLDOUT_WEAK",
+      "decision_reasons": [
+        "test_bets<minimum",
+        "test_profit<=0",
+        "test_roi<threshold",
+        "positive_months<=negative_months",
+        "drawdown>profit"
+      ]
+    },
+    {
+      "rule": "outcome|market_prob_bucket=home|[0.28,0.34)",
+      "train": {
+        "bets": 7,
+        "profit": 2.4,
+        "roi_pct": 34.29,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 4.0,
+        "settlement_days": 6
+      },
+      "test": {
+        "bets": 2,
+        "profit": -2.0,
+        "roi_pct": -100.0,
+        "positive_months": 0,
+        "negative_months": 1,
+        "max_drawdown": 2.0,
+        "settlement_days": 2
+      },
+      "decision": "REJECT_TOURNAMENT_HOLDOUT_WEAK",
+      "decision_reasons": [
+        "test_bets<minimum",
+        "test_profit<=0",
+        "test_roi<threshold",
+        "positive_months<=negative_months",
+        "drawdown>profit"
+      ]
+    },
+    {
+      "rule": "league|outcome|odds_bucket=WORLD_CUP|home|[2.8,3.5)",
+      "train": {
+        "bets": 7,
+        "profit": 2.4,
+        "roi_pct": 34.29,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 4.0,
+        "settlement_days": 6
+      },
+      "test": {
+        "bets": 3,
+        "profit": -3.0,
+        "roi_pct": -100.0,
+        "positive_months": 0,
+        "negative_months": 2,
+        "max_drawdown": 3.0,
+        "settlement_days": 3
+      },
+      "decision": "REJECT_TOURNAMENT_HOLDOUT_WEAK",
+      "decision_reasons": [
+        "test_bets<minimum",
+        "test_profit<=0",
+        "test_roi<threshold",
+        "positive_months<=negative_months",
+        "drawdown>profit"
+      ]
+    },
+    {
+      "rule": "league|outcome|market_prob_bucket=WORLD_CUP|home|[0.28,0.34)",
+      "train": {
+        "bets": 7,
+        "profit": 2.4,
+        "roi_pct": 34.29,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 4.0,
+        "settlement_days": 6
+      },
+      "test": {
+        "bets": 2,
+        "profit": -2.0,
+        "roi_pct": -100.0,
+        "positive_months": 0,
+        "negative_months": 1,
+        "max_drawdown": 2.0,
+        "settlement_days": 2
+      },
+      "decision": "REJECT_TOURNAMENT_HOLDOUT_WEAK",
+      "decision_reasons": [
+        "test_bets<minimum",
+        "test_profit<=0",
+        "test_roi<threshold",
+        "positive_months<=negative_months",
+        "drawdown>profit"
+      ]
+    },
+    {
+      "rule": "outcome|odds_bucket|market_prob_bucket=home|[2.8,3.5)|[0.28,0.34)",
+      "train": {
+        "bets": 7,
+        "profit": 2.4,
+        "roi_pct": 34.29,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 4.0,
+        "settlement_days": 6
+      },
+      "test": {
+        "bets": 2,
+        "profit": -2.0,
+        "roi_pct": -100.0,
+        "positive_months": 0,
+        "negative_months": 1,
+        "max_drawdown": 2.0,
+        "settlement_days": 2
+      },
+      "decision": "REJECT_TOURNAMENT_HOLDOUT_WEAK",
+      "decision_reasons": [
+        "test_bets<minimum",
+        "test_profit<=0",
+        "test_roi<threshold",
+        "positive_months<=negative_months",
+        "drawdown>profit"
+      ]
+    },
+    {
+      "rule": "outcome|odds_bucket|favorite_relation=home|[2.8,3.5)|market_non_favorite",
+      "train": {
+        "bets": 7,
+        "profit": 2.4,
+        "roi_pct": 34.29,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 4.0,
+        "settlement_days": 6
+      },
+      "test": {
+        "bets": 3,
+        "profit": -3.0,
+        "roi_pct": -100.0,
+        "positive_months": 0,
+        "negative_months": 2,
+        "max_drawdown": 3.0,
+        "settlement_days": 3
+      },
+      "decision": "REJECT_TOURNAMENT_HOLDOUT_WEAK",
+      "decision_reasons": [
+        "test_bets<minimum",
+        "test_profit<=0",
+        "test_roi<threshold",
+        "positive_months<=negative_months",
+        "drawdown>profit"
+      ]
+    },
+    {
+      "rule": "outcome|market_prob_bucket|favorite_relation=home|[0.28,0.34)|market_non_favorite",
+      "train": {
+        "bets": 7,
+        "profit": 2.4,
+        "roi_pct": 34.29,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 4.0,
+        "settlement_days": 6
+      },
+      "test": {
+        "bets": 2,
+        "profit": -2.0,
+        "roi_pct": -100.0,
+        "positive_months": 0,
+        "negative_months": 1,
+        "max_drawdown": 2.0,
+        "settlement_days": 2
+      },
+      "decision": "REJECT_TOURNAMENT_HOLDOUT_WEAK",
+      "decision_reasons": [
+        "test_bets<minimum",
+        "test_profit<=0",
+        "test_roi<threshold",
+        "positive_months<=negative_months",
+        "drawdown>profit"
+      ]
+    },
+    {
+      "rule": "outcome|market_prob_bucket=home|[0.34,0.42)",
+      "train": {
+        "bets": 6,
+        "profit": 1.76,
+        "roi_pct": 29.33,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 2.0,
+        "settlement_days": 6
+      },
+      "test": {
+        "bets": 7,
+        "profit": -7.0,
+        "roi_pct": -100.0,
+        "positive_months": 0,
+        "negative_months": 2,
+        "max_drawdown": 7.0,
+        "settlement_days": 7
+      },
+      "decision": "REJECT_TOURNAMENT_HOLDOUT_WEAK",
+      "decision_reasons": [
+        "test_bets<minimum",
+        "test_profit<=0",
+        "test_roi<threshold",
+        "positive_months<=negative_months",
+        "drawdown>profit"
+      ]
+    },
+    {
+      "rule": "league|outcome|market_prob_bucket=WORLD_CUP|home|[0.34,0.42)",
+      "train": {
+        "bets": 6,
+        "profit": 1.76,
+        "roi_pct": 29.33,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 2.0,
+        "settlement_days": 6
+      },
+      "test": {
+        "bets": 7,
+        "profit": -7.0,
+        "roi_pct": -100.0,
+        "positive_months": 0,
+        "negative_months": 2,
+        "max_drawdown": 7.0,
+        "settlement_days": 7
+      },
+      "decision": "REJECT_TOURNAMENT_HOLDOUT_WEAK",
+      "decision_reasons": [
+        "test_bets<minimum",
+        "test_profit<=0",
+        "test_roi<threshold",
+        "positive_months<=negative_months",
+        "drawdown>profit"
+      ]
+    },
+    {
+      "rule": "outcome|odds_bucket|market_prob_bucket=home|[2.2,2.8)|[0.34,0.42)",
+      "train": {
+        "bets": 6,
+        "profit": 1.76,
+        "roi_pct": 29.33,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 2.0,
+        "settlement_days": 6
+      },
+      "test": {
+        "bets": 7,
+        "profit": -7.0,
+        "roi_pct": -100.0,
+        "positive_months": 0,
+        "negative_months": 2,
+        "max_drawdown": 7.0,
+        "settlement_days": 7
+      },
+      "decision": "REJECT_TOURNAMENT_HOLDOUT_WEAK",
+      "decision_reasons": [
+        "test_bets<minimum",
+        "test_profit<=0",
+        "test_roi<threshold",
+        "positive_months<=negative_months",
+        "drawdown>profit"
+      ]
+    },
+    {
+      "rule": "outcome|market_prob_bucket|favorite_relation=home|[0.34,0.42)|market_favorite",
+      "train": {
+        "bets": 6,
+        "profit": 1.76,
+        "roi_pct": 29.33,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 2.0,
+        "settlement_days": 6
+      },
+      "test": {
+        "bets": 7,
+        "profit": -7.0,
+        "roi_pct": -100.0,
+        "positive_months": 0,
+        "negative_months": 2,
+        "max_drawdown": 7.0,
+        "settlement_days": 7
+      },
+      "decision": "REJECT_TOURNAMENT_HOLDOUT_WEAK",
+      "decision_reasons": [
+        "test_bets<minimum",
+        "test_profit<=0",
+        "test_roi<threshold",
+        "positive_months<=negative_months",
+        "drawdown>profit"
+      ]
+    },
+    {
+      "rule": "odds_bucket|market_prob_bucket=[2.2,2.8)|[0.42,0.55)",
+      "train": {
+        "bets": 7,
+        "profit": 2.0,
+        "roi_pct": 28.57,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 2.0,
+        "settlement_days": 7
+      },
+      "test": {
+        "bets": 5,
+        "profit": 1.65,
+        "roi_pct": 33.0,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 1.0,
+        "settlement_days": 5
+      },
+      "decision": "REJECT_TOURNAMENT_HOLDOUT_WEAK",
+      "decision_reasons": [
+        "test_bets<minimum"
+      ]
+    },
+    {
+      "rule": "league|odds_bucket|market_prob_bucket=WORLD_CUP|[2.2,2.8)|[0.42,0.55)",
+      "train": {
+        "bets": 7,
+        "profit": 2.0,
+        "roi_pct": 28.57,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 2.0,
+        "settlement_days": 7
+      },
+      "test": {
+        "bets": 5,
+        "profit": 1.65,
+        "roi_pct": 33.0,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 1.0,
+        "settlement_days": 5
+      },
+      "decision": "REJECT_TOURNAMENT_HOLDOUT_WEAK",
+      "decision_reasons": [
+        "test_bets<minimum"
+      ]
+    },
+    {
+      "rule": "odds_bucket|market_prob_bucket|favorite_relation=[2.2,2.8)|[0.42,0.55)|market_favorite",
+      "train": {
+        "bets": 7,
+        "profit": 2.0,
+        "roi_pct": 28.57,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 2.0,
+        "settlement_days": 7
+      },
+      "test": {
+        "bets": 5,
+        "profit": 1.65,
+        "roi_pct": 33.0,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 1.0,
+        "settlement_days": 5
+      },
+      "decision": "REJECT_TOURNAMENT_HOLDOUT_WEAK",
+      "decision_reasons": [
+        "test_bets<minimum"
+      ]
+    },
+    {
+      "rule": "odds_bucket=[2.2,2.8)",
+      "train": {
+        "bets": 20,
+        "profit": 4.71,
+        "roi_pct": 23.55,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 4.0,
+        "settlement_days": 15
+      },
+      "test": {
+        "bets": 16,
+        "profit": -3.87,
+        "roi_pct": -24.19,
+        "positive_months": 0,
+        "negative_months": 2,
+        "max_drawdown": 7.01,
+        "settlement_days": 13
+      },
+      "decision": "REJECT_TOURNAMENT_HOLDOUT_WEAK",
+      "decision_reasons": [
+        "test_profit<=0",
+        "test_roi<threshold",
+        "positive_months<=negative_months",
+        "drawdown>profit"
+      ]
+    },
+    {
+      "rule": "league|odds_bucket=WORLD_CUP|[2.2,2.8)",
+      "train": {
+        "bets": 20,
+        "profit": 4.71,
+        "roi_pct": 23.55,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 4.0,
+        "settlement_days": 15
+      },
+      "test": {
+        "bets": 16,
+        "profit": -3.87,
+        "roi_pct": -24.19,
+        "positive_months": 0,
+        "negative_months": 2,
+        "max_drawdown": 7.01,
+        "settlement_days": 13
+      },
+      "decision": "REJECT_TOURNAMENT_HOLDOUT_WEAK",
+      "decision_reasons": [
+        "test_profit<=0",
+        "test_roi<threshold",
+        "positive_months<=negative_months",
+        "drawdown>profit"
+      ]
+    },
+    {
+      "rule": "odds_bucket|market_prob_bucket=[2.2,2.8)|[0.34,0.42)",
+      "train": {
+        "bets": 13,
+        "profit": 2.71,
+        "roi_pct": 20.85,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 4.0,
+        "settlement_days": 9
+      },
+      "test": {
+        "bets": 9,
+        "profit": -6.31,
+        "roi_pct": -70.11,
+        "positive_months": 0,
+        "negative_months": 2,
+        "max_drawdown": 7.0,
+        "settlement_days": 9
+      },
+      "decision": "REJECT_TOURNAMENT_HOLDOUT_WEAK",
+      "decision_reasons": [
+        "test_bets<minimum",
+        "test_profit<=0",
+        "test_roi<threshold",
+        "positive_months<=negative_months",
+        "drawdown>profit"
+      ]
+    }
+  ],
+  "notes": [
+    "Rules are discovered only on the training tournament and tested on a later tournament.",
+    "A positive tournament holdout is research-only; it is not enough for live allocation without broader multi-period evidence.",
+    "World Cup data is sparse; use it to reject fragile ideas, not to promote a standalone money-allocation strategy."
+  ]
+}

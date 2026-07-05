@@ -23,6 +23,8 @@ from .historical_agent import HistoricalCollectionAgent
 from .health import build_health_report
 from .international_history_agent import InternationalHistoryAgent
 from .features import build_features_for_official_matches
+from .profit_allocation_readiness import build_profit_allocation_readiness
+from .profit_data_domain_readiness import build_profit_data_domain_readiness
 from .repository import Repository
 from .schemas import BacktestRequest, EvaluateRequest, FeatureCreate, MatchCreate, MatchMetadataCreate, OddsCreate, ResultCreate, SettingsUpdate
 from .scheduler import BackgroundAgentScheduler
@@ -154,6 +156,16 @@ def bankroll_status() -> dict:
         "weekly_limit": settings.bankroll * settings.max_weekly_exposure,
         "rules": ["四分之一 Kelly", "连续亏损 3 单暂停", "禁止倍投和追损", "系统不执行自动下单"],
     }
+
+
+@app.get("/api/profit/allocation-readiness")
+def profit_allocation_readiness(daily_budget: float | None = None) -> dict:
+    return build_profit_allocation_readiness(daily_budget)
+
+
+@app.get("/api/profit/data-domain-readiness")
+def profit_data_domain_readiness() -> dict:
+    return build_profit_data_domain_readiness(database=db)
 
 
 @app.post("/api/official/sync")

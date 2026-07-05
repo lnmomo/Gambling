@@ -62,6 +62,18 @@ def _metrics(frame: pd.DataFrame) -> dict[str, Any]:
     }
 
 
+def _yearly_metrics(frame: pd.DataFrame) -> dict[str, Any]:
+    metrics = _metrics(frame)
+    if frame.empty:
+        return {**metrics, "positive_years": 0, "negative_years": 0}
+    yearly = frame.groupby(pd.to_datetime(frame["date"]).dt.year)["unit_profit"].sum()
+    return {
+        **metrics,
+        "positive_years": int((yearly > 0).sum()),
+        "negative_years": int((yearly < 0).sum()),
+    }
+
+
 def _decision(test: dict[str, Any], min_test_bets: int, min_roi_pct: float) -> tuple[str, list[str]]:
     reasons: list[str] = []
     if test["bets"] < min_test_bets:
@@ -72,6 +84,8 @@ def _decision(test: dict[str, Any], min_test_bets: int, min_roi_pct: float) -> t
         reasons.append("test_roi<threshold")
     if test["positive_months"] <= test["negative_months"]:
         reasons.append("positive_months<=negative_months")
+    if test.get("positive_years", 1) <= test.get("negative_years", 0):
+        reasons.append("positive_years<=negative_years")
     if test["max_drawdown"] > max(test["profit"], 1.0):
         reasons.append("drawdown>profit")
     if reasons:
@@ -93,7 +107,13 @@ def _flatten_rule_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "decision": row["decision"],
             "decision_reasons": ";".join(row["decision_reasons"]),
         }
+        if "test_year" in row:
+            flattened["test_year"] = row["test_year"]
+        if "test_years_with_bets" in row:
+            flattened["test_years_with_bets"] = row["test_years_with_bets"]
         for side in ("train", "test"):
+            if side not in row:
+                continue
             for key, value in row[side].items():
                 flattened[f"{side}_{key}"] = value
         output.append(flattened)
@@ -188,32 +208,150 @@ def validate_world_cup_tournament_holdout(
     }
 
 
+def validate_world_cup_rolling_holdout(
+    seasons: tuple[str, ...] = ("WORLD_CUP",),
+    odds_source: str = "AVG_CLOSE",
+    first_test_year: int = 2018,
+    last_test_year: int | None = None,
+    top_n: int = 20,
+    min_train_samples: int = 20,
+    min_train_active_months: int = 4,
+    min_test_bets: int = 80,
+    min_roi_pct: float = 3.0,
+) -> dict[str, Any]:
+    frame = build_market_frame(seasons, odds_source)
+    frame["year"] = pd.to_datetime(frame["date"]).dt.year
+    available_years = sorted(int(year) for year in frame["year"].dropna().unique())
+    test_years = [year for year in available_years if year >= first_test_year and (last_test_year is None or year <= last_test_year)]
+    fold_rows: list[dict[str, Any]] = []
+    combined_by_rule: dict[str, list[pd.DataFrame]] = {}
+    skipped_years: list[dict[str, Any]] = []
+
+    for test_year in test_years:
+        train = frame[frame["year"] < test_year].copy()
+        test = frame[frame["year"] == test_year].copy()
+        if train.empty or test.empty:
+            skipped_years.append({"year": test_year, "reason": "missing_train_or_test"})
+            continue
+        diagnostics = run_diagnostics(train, min_train_samples, min_train_active_months, 3)
+        if diagnostics.empty:
+            skipped_years.append({"year": test_year, "reason": "no_training_rule"})
+            continue
+        rules: list[str] = []
+        for _, row in diagnostics.head(top_n).iterrows():
+            rule = f"{row['columns']}={row['key']}"
+            if rule not in rules:
+                rules.append(rule)
+        for rule in rules:
+            train_selected = _filter_rule(train, rule)
+            test_selected = _filter_rule(test, rule)
+            if not test_selected.empty:
+                combined_by_rule.setdefault(rule, []).append(test_selected)
+            test_metrics = _yearly_metrics(test_selected)
+            fold_decision, fold_reasons = _decision(test_metrics, 1, min_roi_pct)
+            fold_rows.append({
+                "test_year": test_year,
+                "rule": rule,
+                "train": _yearly_metrics(train_selected),
+                "test": test_metrics,
+                "decision": fold_decision,
+                "decision_reasons": fold_reasons,
+            })
+
+    combined_rows: list[dict[str, Any]] = []
+    for rule, parts in combined_by_rule.items():
+        selected = pd.concat(parts, ignore_index=True, sort=False)
+        metrics_for_rule = _yearly_metrics(selected)
+        decision, reasons = _decision(metrics_for_rule, min_test_bets, min_roi_pct)
+        combined_rows.append({
+            "rule": rule,
+            "test": metrics_for_rule,
+            "decision": decision,
+            "decision_reasons": reasons,
+            "test_years_with_bets": int(selected["year"].nunique()) if "year" in selected else int(pd.to_datetime(selected["date"]).dt.year.nunique()),
+        })
+    combined_rows.sort(key=lambda row: (
+        row["decision"] == "TOURNAMENT_HOLDOUT_POSITIVE_RESEARCH_ONLY",
+        row["test"]["profit"],
+        row["test"]["roi_pct"],
+        row["test"]["bets"],
+    ), reverse=True)
+    passed = [row for row in combined_rows if row["decision"] == "TOURNAMENT_HOLDOUT_POSITIVE_RESEARCH_ONLY"]
+    promotion_decision = "RESEARCH_ONLY_PENDING_BROADER_GATES" if passed else "REJECT_NO_REUSABLE_WORLD_CUP_ROLLING_RULE"
+    return {
+        "method": "World Cup / qualifiers rolling no-lookahead holdout validation",
+        "seasons": seasons,
+        "odds_source": odds_source,
+        "available_years": available_years,
+        "test_years": test_years,
+        "top_n": top_n,
+        "min_train_samples": min_train_samples,
+        "min_train_active_months": min_train_active_months,
+        "min_test_bets": min_test_bets,
+        "min_roi_pct": min_roi_pct,
+        "fold_count": len({row["test_year"] for row in fold_rows}),
+        "candidate_rules": len(combined_rows),
+        "passed_rules": len(passed),
+        "promotion_decision": promotion_decision,
+        "skipped_years": skipped_years,
+        "combined_rows": combined_rows,
+        "fold_rows": fold_rows,
+        "notes": [
+            "Each test year uses only earlier years for rule discovery.",
+            "This mode is better suited to sparse tournament and qualifier data than monthly league-style walk-forward windows.",
+            "Passed rules remain research-only until they survive independent official-SP prospective validation.",
+        ],
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Validate World Cup rules by tournament holdout.")
     parser.add_argument("--seasons", default="WORLD_CUP")
     parser.add_argument("--odds-source", default="AVG_CLOSE")
+    parser.add_argument("--mode", choices=("single", "rolling"), default="single")
     parser.add_argument("--train-year", type=int, default=2018)
     parser.add_argument("--test-year", type=int, default=2022)
+    parser.add_argument("--first-test-year", type=int, default=2018)
+    parser.add_argument("--last-test-year", type=int)
     parser.add_argument("--top-n", type=int, default=12)
     parser.add_argument("--min-train-samples", type=int, default=8)
+    parser.add_argument("--min-train-active-months", type=int, default=1)
     parser.add_argument("--min-test-bets", type=int, default=20)
     parser.add_argument("--min-roi-pct", type=float, default=3.0)
     parser.add_argument("--output-dir", type=Path, default=Path("reports/world_cup_tournament_validation"))
     args = parser.parse_args()
-    summary = validate_world_cup_tournament_holdout(
-        tuple(item.strip() for item in args.seasons.split(",") if item.strip()),
-        args.odds_source,
-        args.train_year,
-        args.test_year,
-        args.top_n,
-        args.min_train_samples,
-        1,
-        args.min_test_bets,
-        args.min_roi_pct,
-    )
+    seasons = tuple(item.strip() for item in args.seasons.split(",") if item.strip())
+    if args.mode == "rolling":
+        summary = validate_world_cup_rolling_holdout(
+            seasons,
+            args.odds_source,
+            args.first_test_year,
+            args.last_test_year,
+            args.top_n,
+            args.min_train_samples,
+            args.min_train_active_months,
+            args.min_test_bets,
+            args.min_roi_pct,
+        )
+    else:
+        summary = validate_world_cup_tournament_holdout(
+            seasons,
+            args.odds_source,
+            args.train_year,
+            args.test_year,
+            args.top_n,
+            args.min_train_samples,
+            args.min_train_active_months,
+            args.min_test_bets,
+            args.min_roi_pct,
+        )
     args.output_dir.mkdir(parents=True, exist_ok=True)
     (args.output_dir / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
-    pd.DataFrame(_flatten_rule_rows(summary["rows"])).to_csv(args.output_dir / "rules.csv", index=False, encoding="utf-8-sig")
+    if args.mode == "rolling":
+        pd.DataFrame(_flatten_rule_rows(summary["combined_rows"])).to_csv(args.output_dir / "rules.csv", index=False, encoding="utf-8-sig")
+        pd.DataFrame(_flatten_rule_rows(summary["fold_rows"])).to_csv(args.output_dir / "fold_rules.csv", index=False, encoding="utf-8-sig")
+    else:
+        pd.DataFrame(_flatten_rule_rows(summary["rows"])).to_csv(args.output_dir / "rules.csv", index=False, encoding="utf-8-sig")
     print(json.dumps(summary, ensure_ascii=False, indent=2))
 
 
