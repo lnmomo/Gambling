@@ -1,0 +1,151 @@
+{
+  "method": "market-bias candidate screen",
+  "diagnostics_csv": [
+    "reports\\batch_profit_domain_discovery_true_ev_current\\domains\\usa_max_close\\market_bias.csv"
+  ],
+  "min_diagnostic_sources": 1,
+  "seasons": [
+    "USA"
+  ],
+  "first_month": "2013-03",
+  "last_month": "2026-05",
+  "odds_source": "AVG_CLOSE,PS_CLOSE,MAX_CLOSE",
+  "validation_odds_sources": [
+    "AVG_CLOSE",
+    "PS_CLOSE",
+    "MAX_CLOSE"
+  ],
+  "top_n": 12,
+  "daily_limit": 100.0,
+  "max_single_stake": 10.0,
+  "included_default_rule": false,
+  "candidate_count": 3,
+  "passed_count": 0,
+  "rule_summary": [
+    {
+      "rule": "league|outcome|odds_bucket=USA|home|[2.2,2.8)",
+      "validation_source_count": 3,
+      "passed_validation_sources": 0,
+      "failed_validation_sources": 3,
+      "total_portfolio_bets": 107,
+      "total_portfolio_staked": 1070.0,
+      "total_portfolio_profit": -36.3,
+      "combined_roi_pct": -3.39,
+      "worst_source_roi_pct": -18.85,
+      "worst_source_drawdown": 152.5,
+      "source_results": [
+        {
+          "odds_source": "AVG_CLOSE",
+          "passes_screen": false,
+          "portfolio_bets": 4,
+          "portfolio_profit": 28.6,
+          "portfolio_roi_pct": 71.5,
+          "portfolio_max_drawdown": 10.0,
+          "fail_reasons": [
+            "bets<100"
+          ]
+        },
+        {
+          "odds_source": "MAX_CLOSE",
+          "passes_screen": false,
+          "portfolio_bets": 56,
+          "portfolio_profit": 23.7,
+          "portfolio_roi_pct": 4.23,
+          "portfolio_max_drawdown": 62.9,
+          "fail_reasons": [
+            "bets<100",
+            "positive_months<=negative_months",
+            "drawdown>profit"
+          ]
+        },
+        {
+          "odds_source": "PS_CLOSE",
+          "passes_screen": false,
+          "portfolio_bets": 47,
+          "portfolio_profit": -88.6,
+          "portfolio_roi_pct": -18.85,
+          "portfolio_max_drawdown": 152.5,
+          "fail_reasons": [
+            "bets<100",
+            "profit<=0",
+            "roi<3%",
+            "positive_months<=negative_months",
+            "positive_seasons<=negative_seasons",
+            "drawdown>profit"
+          ]
+        }
+      ],
+      "passes_all_validation_sources": false
+    }
+  ],
+  "rows": [
+    {
+      "rule": "league|outcome|odds_bucket=USA|home|[2.2,2.8)",
+      "odds_source": "AVG_CLOSE",
+      "walk_forward_bets": 4,
+      "walk_forward_profit": 2.86,
+      "walk_forward_roi_pct": 71.5,
+      "portfolio_bets": 4,
+      "portfolio_staked": 40.0,
+      "portfolio_profit": 28.6,
+      "portfolio_roi_pct": 71.5,
+      "portfolio_max_drawdown": 10.0,
+      "positive_months": 2,
+      "negative_months": 0,
+      "positive_seasons": 1,
+      "negative_seasons": 0,
+      "passes_screen": false,
+      "fail_reasons": [
+        "bets<100"
+      ]
+    },
+    {
+      "rule": "league|outcome|odds_bucket=USA|home|[2.2,2.8)",
+      "odds_source": "MAX_CLOSE",
+      "walk_forward_bets": 56,
+      "walk_forward_profit": 2.37,
+      "walk_forward_roi_pct": 4.23,
+      "portfolio_bets": 56,
+      "portfolio_staked": 560.0,
+      "portfolio_profit": 23.7,
+      "portfolio_roi_pct": 4.23,
+      "portfolio_max_drawdown": 62.9,
+      "positive_months": 4,
+      "negative_months": 4,
+      "positive_seasons": 2,
+      "negative_seasons": 1,
+      "passes_screen": false,
+      "fail_reasons": [
+        "bets<100",
+        "positive_months<=negative_months",
+        "drawdown>profit"
+      ]
+    },
+    {
+      "rule": "league|outcome|odds_bucket=USA|home|[2.2,2.8)",
+      "odds_source": "PS_CLOSE",
+      "walk_forward_bets": 47,
+      "walk_forward_profit": -8.86,
+      "walk_forward_roi_pct": -18.85,
+      "portfolio_bets": 47,
+      "portfolio_staked": 470.0,
+      "portfolio_profit": -88.6,
+      "portfolio_roi_pct": -18.85,
+      "portfolio_max_drawdown": 152.5,
+      "positive_months": 3,
+      "negative_months": 3,
+      "positive_seasons": 1,
+      "negative_seasons": 2,
+      "passes_screen": false,
+      "fail_reasons": [
+        "bets<100",
+        "profit<=0",
+        "roi<3%",
+        "positive_months<=negative_months",
+        "positive_seasons<=negative_seasons",
+        "drawdown>profit"
+      ]
+    }
+  ],
+  "next_step": "Run full multi-source robustness and official-SP shadow validation for passed candidates only."
+}

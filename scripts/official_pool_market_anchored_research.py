@@ -128,6 +128,25 @@ def _default_specs_for_league(league: str) -> tuple[AnchoredRuleSpec, ...]:
             AnchoredRuleSpec("WORLD_CUP", "home", market_prob_bucket="[0.00,0.20)"),
             AnchoredRuleSpec("WORLD_CUP", "draw", odds_bucket="[4.0,5.0)"),
         )
+    if league == "RUS":
+        return (
+            AnchoredRuleSpec("RUS", "home", odds_bucket="[2.2,2.8)"),
+            AnchoredRuleSpec("RUS", "home", odds_bucket="[2.2,2.8)", favorite_relation="market_favorite"),
+            AnchoredRuleSpec("RUS", "away", odds_bucket="[1.0,1.8)"),
+            AnchoredRuleSpec("RUS", None, odds_bucket="[1.0,1.8)", market_prob_bucket="[0.42,0.55)"),
+        )
+    if league == "DNK":
+        return (
+            AnchoredRuleSpec("DNK", "draw", odds_bucket="[2.8,3.5)"),
+            AnchoredRuleSpec("DNK", None, odds_bucket="[2.8,3.5)", market_prob_bucket="[0.20,0.28)"),
+            AnchoredRuleSpec("DNK", "away", odds_bucket="[2.2,2.8)", favorite_relation="market_favorite"),
+        )
+    if league == "CHN":
+        return (
+            AnchoredRuleSpec("CHN", "draw", market_prob_bucket="[0.28,0.34)"),
+            AnchoredRuleSpec("CHN", "draw", odds_bucket="[2.8,3.5)", market_prob_bucket="[0.28,0.34)"),
+            AnchoredRuleSpec("CHN", "draw", odds_bucket="[2.8,3.5)"),
+        )
     return ()
 
 
@@ -172,9 +191,11 @@ def run_official_pool_market_anchored_research(
     first_month: str = "2020-01",
     last_month: str = "2025-12",
     fast: bool = False,
+    rule_labels: tuple[str, ...] | None = None,
 ) -> dict[str, Any]:
     results: list[dict[str, Any]] = []
     artifact_frames: dict[str, dict[str, pd.DataFrame]] = {}
+    allowed_labels = set(rule_labels or ())
     for league in leagues:
         specs = _default_specs_for_league(league)
         if not specs:
@@ -203,6 +224,18 @@ def run_official_pool_market_anchored_research(
                 })
                 continue
             labels = tuple(sorted(candidates["rule_label"].astype(str).unique()))
+            if allowed_labels:
+                labels = tuple(label for label in labels if label in allowed_labels)
+                candidates = candidates[candidates["rule_label"].isin(labels)].copy()
+            if not labels:
+                results.append({
+                    "league": league,
+                    "odds_source": odds_source,
+                    "decision": "SKIP_NO_MATCHING_RULE_LABELS",
+                    "candidate_count": 0,
+                    "requested_rule_labels": sorted(allowed_labels),
+                })
+                continue
             for config in _config_grid(odds_source, labels, fast=fast):
                 wf_summary, selected = walk_forward_feature_filter(candidates, config, first_month, last_month)
                 portfolio, daily, bets = simulate_settlement_portfolio(selected, daily_limit=100.0, max_single_stake=10.0)
@@ -263,6 +296,7 @@ def run_official_pool_market_anchored_research(
         "first_month": first_month,
         "last_month": last_month,
         "fast": fast,
+        "rule_labels": list(rule_labels or ()),
         "results": ranked,
         "top": ranked[:20],
         "best_label": ranked[0].get("label") if ranked and "label" in ranked[0] else None,
@@ -278,14 +312,17 @@ def main() -> None:
     parser.add_argument("--first-month", default="2020-01")
     parser.add_argument("--last-month", default="2025-12")
     parser.add_argument("--fast", action="store_true", help="Run one representative formal config per rule.")
+    parser.add_argument("--rule-labels", default="", help="Optional comma-separated rule labels to evaluate.")
     parser.add_argument("--output-dir", type=Path, default=Path("reports/official_pool_market_anchored_research"))
     args = parser.parse_args()
+    rule_labels = tuple(item.strip() for item in args.rule_labels.split(",") if item.strip())
     report = run_official_pool_market_anchored_research(
         tuple(item.strip().upper() for item in args.leagues.split(",") if item.strip()),
         tuple(item.strip().upper() for item in args.odds_sources.split(",") if item.strip()),
         args.first_month,
         args.last_month,
         args.fast,
+        rule_labels or None,
     )
     artifacts = report.pop("artifacts")
     args.output_dir.mkdir(parents=True, exist_ok=True)

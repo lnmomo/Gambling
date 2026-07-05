@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
+import json
 from pathlib import Path
 from typing import Any
 
@@ -14,10 +15,13 @@ from .market_bias_shadow_strategy import (
     is_jpn_league,
     is_sp1_league,
 )
+from .official_pool_research import _history_paths, _world_cup_validation_evidence
 from .repository import Repository
 
 
 FIN_AWAY_RESEARCH_RULE = "league|outcome|market_prob_bucket=FIN|away|[0.28,0.34)"
+I2_SCORECARD_PATH = Path("reports/market_bias_profit_algorithm_scorecard_i2_draw/summary.json")
+SHADOW_READY_TIERS = {"SHADOW_READY_PRODUCTION_BLOCKED", "PRODUCTION_REVIEW"}
 
 
 @dataclass(frozen=True)
@@ -43,21 +47,47 @@ def _repo_exists(path: str) -> bool:
     return Path(path).exists()
 
 
-def _league_mapping(league: Any) -> dict[str, Any]:
+def _i2_scorecard_tier(scorecard_path: Path | None = None) -> str | None:
+    path = scorecard_path or I2_SCORECARD_PATH
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    tier = payload.get("deployment_tier")
+    return str(tier) if tier else None
+
+
+def _i2_shadow_ready(scorecard_path: Path | None = None) -> bool:
+    return _i2_scorecard_tier(scorecard_path) in SHADOW_READY_TIERS
+
+
+def _league_mapping(league: Any, scorecard_path: Path | None = None) -> dict[str, Any]:
     raw = str(league or "").strip()
     normalized = raw.casefold()
     if is_i2_league(raw):
+        tier = _i2_scorecard_tier(scorecard_path)
+        shadow_ready = tier in SHADOW_READY_TIERS
         return {
             "code": "I2",
-            "coverage": "VALIDATED_SHADOW_RULE",
-            "evidence_status": "validated historical edge; official prospective samples still required",
+            "coverage": "VALIDATED_SHADOW_RULE" if shadow_ready else "RESEARCH_ONLY_UNSTABLE_WINDOWS",
+            "evidence_status": (
+                "validated historical edge; official prospective samples still required"
+                if shadow_ready
+                else f"scorecard deployment tier is {tier or 'missing'}; multi-window stability blocks shadow allocation"
+            ),
             "reports": [
                 "reports/market_bias_robustness_gate_i2_draw/summary.json",
                 "reports/market_bias_portfolio_simulation_i2_draw_avg_open_default/summary.json",
                 "reports/market_bias_multi_window_optimizer_i2_sp1_default/summary.json",
                 "reports/market_bias_profit_algorithm_scorecard_i2_draw/summary.json",
             ],
-            "action": "Keep I2 draw band in shadow; promote only after official-SP prospective samples pass.",
+            "action": (
+                "Keep I2 draw band in shadow; promote only after official-SP prospective samples pass."
+                if shadow_ready
+                else "Do not use I2 for shadow allocation until the scorecard returns to a shadow-ready tier."
+            ),
         }
     if is_sp1_league(raw):
         return {
@@ -93,12 +123,25 @@ def _league_mapping(league: Any) -> dict[str, Any]:
             "action": "Do not loosen FIN into live allocation; run new FIN-specific research before using it.",
         }
     if raw == "\u4e16\u754c\u676f" or "world cup" in normalized:
+        validation = _world_cup_validation_evidence() if _history_paths("WORLD_CUP") else None
+        if validation:
+            return {
+                "code": "WORLD_CUP",
+                "coverage": "REJECTED_WORLD_CUP_RULE",
+                "evidence_status": validation["status"],
+                "reports": validation["reports"],
+                "action": "Do not loosen World Cup into live allocation; use it only for features or broader future research.",
+            }
         return {
             "code": "WORLD_CUP",
             "coverage": "NO_MARKET_BIAS_VALIDATION_SOURCE",
-            "evidence_status": "results history may exist, but no validated 1X2 odds-bias history is available here",
+            "evidence_status": (
+                "historical World Cup 1X2 odds are needed before creating a market-bias rule"
+                if not _history_paths("WORLD_CUP")
+                else "World Cup 1X2 odds are archived but no validation report is available"
+            ),
             "reports": [],
-            "action": "Collect historical 1X2 odds for World Cup/international matches before creating a market-bias rule.",
+            "action": "Run no-lookahead World Cup validation before creating any allocation rule.",
         }
     if raw == "\u56fd\u9645\u8d5b" or "international" in normalized:
         return {
@@ -117,7 +160,7 @@ def _league_mapping(league: Any) -> dict[str, Any]:
     }
 
 
-def diagnose_market_bias_official_pool_relevance(database: Database = db) -> dict[str, Any]:
+def diagnose_market_bias_official_pool_relevance(database: Database = db, scorecard_path: Path | None = None) -> dict[str, Any]:
     repository = Repository(database)
     league_rows: dict[str, dict[str, Any]] = {}
     for match in repository.list_official_matches():
@@ -135,12 +178,16 @@ def diagnose_market_bias_official_pool_relevance(database: Database = db) -> dic
         if not has_odds:
             continue
         bucket["with_latest_odds"] += 1
-        bucket["validated_shadow_candidates"] += len(find_market_bias_shadow_candidates(match, odds))
+        shadow_candidates = find_market_bias_shadow_candidates(match, odds)
+        if is_i2_league(league) and not _i2_shadow_ready(scorecard_path):
+            bucket["research_watch_candidates"] += len(shadow_candidates)
+        else:
+            bucket["validated_shadow_candidates"] += len(shadow_candidates)
         bucket["research_watch_candidates"] += len(find_market_bias_research_candidates(match, odds))
 
     leagues: list[LeagueRelevance] = []
     for row in sorted(league_rows.values(), key=lambda item: item["matches"], reverse=True):
-        mapping = _league_mapping(row["league"])
+        mapping = _league_mapping(row["league"], scorecard_path)
         missing = int(row["matches"]) - int(row["with_latest_odds"])
         existing_reports = [path for path in mapping["reports"] if _repo_exists(path)]
         if row["validated_shadow_candidates"] > 0:
@@ -149,8 +196,12 @@ def diagnose_market_bias_official_pool_relevance(database: Database = db) -> dic
             blocker = "no latest official 1X2 odds in current pool"
         elif mapping["coverage"] == "VALIDATED_SHADOW_RULE":
             blocker = "validated league exists but current odds do not match the frozen rule band"
+        elif mapping["coverage"] == "RESEARCH_ONLY_UNSTABLE_WINDOWS":
+            blocker = "historical I2 rule matches current odds, but scorecard blocks shadow allocation"
         elif mapping["coverage"] == "REJECTED_RESEARCH_RULE":
             blocker = "current league has historical data, but candidate rule failed robustness"
+        elif mapping["coverage"] == "REJECTED_WORLD_CUP_RULE":
+            blocker = "World Cup odds history exists, but no-lookahead portfolio validation rejected allocation rules"
         elif mapping["coverage"] == "NO_MARKET_BIAS_VALIDATION_SOURCE":
             blocker = "current league has no validated odds-bias history package"
         elif mapping["coverage"].startswith("RESEARCH"):
@@ -195,8 +246,8 @@ def diagnose_market_bias_official_pool_relevance(database: Database = db) -> dic
             for blocker, matches in sorted(blockers.items(), key=lambda item: item[1], reverse=True)
         ],
         "recommended_next_experiment": (
-            "Do not force NO_BET bypasses. First collect World Cup/international 1X2 odds history, "
-            "or run a new FIN-specific multi-window search; current validated I2 rule has no live pool coverage."
+            "Do not force NO_BET bypasses. World Cup and FIN are rejected by stability gates; "
+            "map SWE/KOR or collect a broader international/league odds domain, then require the same multi-window portfolio gate."
             if total_validated == 0 else
             "Keep validated candidates in shadow and wait for settlement evidence before production allocation."
         ),

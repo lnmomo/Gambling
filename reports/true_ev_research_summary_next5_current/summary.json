@@ -1,0 +1,100 @@
+{
+  "method": "true EV research evidence summary",
+  "created_at": "2026-07-05T09:55:12.474316+00:00",
+  "discovery_path": "reports\\batch_profit_domain_discovery_true_ev_next5_current\\summary.json",
+  "selected_domains": [
+    "POL",
+    "NOR",
+    "RUS",
+    "DNK",
+    "CHN"
+  ],
+  "domain_count": 5,
+  "domains_with_diagnostic_hits": 4,
+  "screened_domains": 5,
+  "screen_passed_rules": 0,
+  "multi_window_passed_candidates": 0,
+  "decision": "NO_TRUE_EV_CANDIDATE_FOUND",
+  "screens": [
+    {
+      "domain": "POL",
+      "path": "reports\\market_bias_candidate_screen_pol_true_ev_next5_current\\summary.json",
+      "candidate_count": 0,
+      "passed_count": 0,
+      "status": "NO_SURVIVING_RULE_AFTER_RECENT_FORM_FILTER",
+      "passed_rules": 0,
+      "best_rule": null,
+      "best_combined_roi_pct": 0.0,
+      "best_total_bets": 0,
+      "best_worst_source_roi_pct": 0.0,
+      "reason": "diagnostic positives failed recency/specificity filters before validation"
+    },
+    {
+      "domain": "NOR",
+      "path": "reports\\market_bias_candidate_screen_nor_true_ev_next5_current\\summary.json",
+      "candidate_count": 3,
+      "passed_count": 0,
+      "status": "REJECTED_BY_CROSS_SOURCE_SCREEN",
+      "passed_rules": 0,
+      "best_rule": "league|outcome|odds_bucket=NOR|home|[1.8,2.2)",
+      "best_combined_roi_pct": -19.96,
+      "best_total_bets": 90,
+      "best_worst_source_roi_pct": -39.19,
+      "reason": "PS_CLOSE: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons,drawdown>profit; AVG_CLOSE: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons,drawdown>profit; MAX_CLOSE: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons,drawdown>profit"
+    },
+    {
+      "domain": "RUS",
+      "path": "reports\\market_bias_candidate_screen_rus_true_ev_next5_current\\summary.json",
+      "candidate_count": 12,
+      "passed_count": 0,
+      "status": "REJECTED_BY_CROSS_SOURCE_SCREEN",
+      "passed_rules": 0,
+      "best_rule": "league|odds_bucket|market_prob_bucket=RUS|[1.0,1.8)|[0.42,0.55)",
+      "best_combined_roi_pct": 0.0,
+      "best_total_bets": 0,
+      "best_worst_source_roi_pct": 0.0,
+      "reason": "AVG_CLOSE: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons; PS_CLOSE: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons; MAX_CLOSE: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons"
+    },
+    {
+      "domain": "DNK",
+      "path": "reports\\market_bias_candidate_screen_dnk_true_ev_next5_current\\summary.json",
+      "candidate_count": 6,
+      "passed_count": 0,
+      "status": "REJECTED_BY_CROSS_SOURCE_SCREEN",
+      "passed_rules": 0,
+      "best_rule": "league|outcome|odds_bucket=DNK|draw|[2.8,3.5)",
+      "best_combined_roi_pct": -7.38,
+      "best_total_bets": 61,
+      "best_worst_source_roi_pct": -45.83,
+      "reason": "PS_CLOSE: bets<100,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons,drawdown>profit; MAX_CLOSE: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons,drawdown>profit; AVG_CLOSE: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons,drawdown>profit"
+    },
+    {
+      "domain": "CHN",
+      "path": "reports\\market_bias_candidate_screen_chn_true_ev_next5_current\\summary.json",
+      "candidate_count": 0,
+      "passed_count": 0,
+      "status": "NO_SURVIVING_RULE_AFTER_RECENT_FORM_FILTER",
+      "passed_rules": 0,
+      "best_rule": null,
+      "best_combined_roi_pct": 0.0,
+      "best_total_bets": 0,
+      "best_worst_source_roi_pct": 0.0,
+      "reason": "diagnostic positives failed recency/specificity filters before validation"
+    }
+  ],
+  "multi_window": [
+    {
+      "path": "reports\\market_bias_multi_window_rus_true_ev_next5_current\\summary.json",
+      "available": true,
+      "passed_candidates": 0,
+      "best_candidate_id": "diagnostic-league-outcome-odds-bucket-rus-home-2p2-2p8",
+      "best_decision": "REJECT_UNSTABLE",
+      "best_total_bets": 214,
+      "best_combined_roi_pct": -12.88,
+      "best_active_pass_rate": 0.0,
+      "best_source_pass_rate": 0.0,
+      "best_worst_source_roi_pct": -20.0
+    }
+  ],
+  "interpretation": "A diagnostic positive is not treated as true EV until it survives cross-source prices, 12-month rolling windows, settlement-aware daily allocation, and later official-SP prospective validation."
+}

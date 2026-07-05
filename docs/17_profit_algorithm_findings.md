@@ -315,9 +315,9 @@ I2 + SP1 combo status:
 
 Current best algorithmic direction is therefore:
 
-1. Promote `I2 draw [2.8,3.5)` back to the leading stability candidate. It is lower total profit than the combo but is the only default candidate that passes the 12-month multi-window gate.
-2. Downgrade the `I2 + SP1` combo from leading shadow candidate to research-only until the multi-window pass rate improves. It remains profitable in aggregate but misses the current stability threshold.
-3. Keep `SP1 home / market probability [0.55,1.00]` as a high-ROI pure challenger only; its multi-window pass rate is too low for promotion.
+1. Downgrade `I2 draw [2.8,3.5)` from shadow-ready to research-only. The refreshed 12-month multi-window gate shows only `3 / 12` passed windows, so the old full-period profit is not stable enough for allocation.
+2. Keep the `I2 + SP1` combo as research-only. It remains profitable in aggregate, but also passes only `3 / 12` windows under the refreshed gate.
+3. Reject `SP1 home / market probability [0.55,1.00]` as a standalone allocation candidate for now; it has `0 / 12` passed windows and negative AVG_CLOSE evidence.
 4. Keep `T1 market probability [0.55,1.00]` as a secondary challenger, pending stricter recent-season checks.
 5. Reject the B1 odds/probability band as a primary candidate unless future data changes its cross-source behavior.
 6. Keep the model-derived normal-goal non-favorite draw rule as secondary research only.
@@ -328,7 +328,7 @@ Current best algorithmic direction is therefore:
 11. Keep cross-league group rules, recent-degradation filtering, portfolio-level risk gating, cooldown/probe behavior, and multi-window consensus as rejection/risk filters.
 12. Use `scripts/market_bias_robustness_gate.py` as the promotion firewall for any future market-bias candidate. A candidate may enter shadow validation only after it survives multi-source and multi-profile checks; it may enter production only after official-SP prospective settlement also passes.
 13. Use settlement-aware portfolio simulation before any capital-policy change. The current best research capital policy is daily cap `100`, per-match cap `10`, no cooldown.
-14. Use `scripts/market_bias_promotion_gate.py` as the final promotion decision. The current state is `SHADOW_READY_PRODUCTION_BLOCKED`; do not activate production until official-SP sample, ROI, and month-balance gates pass.
+14. Use `scripts/market_bias_promotion_gate.py` as the historical/official-SP promotion decision, but require the scorecard to apply the multi-window gate after it. The current scorecard state is `RESEARCH_ONLY_UNSTABLE_WINDOWS`, so it should not influence live shadow or production betting.
 15. Use `scripts/market_bias_profit_algorithm_scorecard.py` as the unified evidence score. It combines robustness, settlement-aware portfolio, cross-source validation, official-SP prospective validation, and no-lookahead governance into a single deployment tier.
 16. Use `scripts/market_bias_multi_window_optimizer.py` before promotion. It slices full no-lookahead walk-forward bets into rolling validation windows, so a candidate cannot be promoted merely because the full-period total profit is positive.
 17. Use `scripts/market_bias_candidate_screen.py` to keep searching beyond I2/SP1. A candidate passing the screen must still pass full robustness, settlement-aware portfolio simulation, multi-window validation, and official-SP prospective validation before promotion.
@@ -345,9 +345,16 @@ Default candidate result:
 
 | Candidate | Window Passes | Source Passes | Combined ROI | Worst Window ROI | Decision |
 | --- | ---: | ---: | ---: | ---: | --- |
-| `I2 draw [2.8,3.5)` | 8 / 12 | 2 / 2 | 8.85% | -5.48% | `MULTI_WINDOW_SHADOW_CANDIDATE` |
-| `I2 + SP1 combo` | 7 / 12 | 2 / 2 | 8.81% | -5.61% | `RESEARCH_ONLY_UNSTABLE_WINDOWS` |
-| `SP1 home prob [0.55,1.00]` | 2 / 12 | 1 / 2 | 8.57% | -6.96% | `RESEARCH_ONLY_UNSTABLE_WINDOWS` |
+| `I2 draw [2.8,3.5)` | 3 / 12 | 2 / 2 | 2.57% | -16.03% | `RESEARCH_ONLY_UNSTABLE_WINDOWS` |
+| `I2 + SP1 combo` | 3 / 12 | 2 / 2 | 2.57% | -18.42% | `RESEARCH_ONLY_UNSTABLE_WINDOWS` |
+| `SP1 home prob [0.55,1.00]` | 0 / 12 | 0 / 2 | 2.56% | -26.67% | `REJECT_UNSTABLE` |
+
+Refreshed scorecard:
+
+- Report: `reports/market_bias_profit_algorithm_scorecard_i2_draw/summary.json`.
+- Deployment tier: `RESEARCH_ONLY_UNSTABLE_WINDOWS`.
+- Multi-window component: `3 / 12` passed windows, pass rate `0.25`, combined ROI `2.57%`, worst window ROI `-16.03%`.
+- Interpretation: the historical I2 edge remains a useful research lead, but it is no longer allowed to influence live shadow allocation until a revised rule passes the multi-window gate.
 
 Interpretation:
 
@@ -488,7 +495,7 @@ Current local report:
 
 | League | Matches | With Odds | Validation Coverage | Blocker |
 | --- | ---: | ---: | --- | --- |
-| World Cup | 74 | 33 | `NO_MARKET_BIAS_VALIDATION_SOURCE` | no validated 1X2 odds-bias history package |
+| World Cup | 97 | 42 | `REJECTED_WORLD_CUP_RULE` | World Cup odds history exists, but no-lookahead portfolio validation rejected allocation rules |
 | FIN | 24 | 12 | `REJECTED_RESEARCH_RULE` | FIN historical rule failed robustness |
 | International | 2 | 0 | `NO_MARKET_BIAS_VALIDATION_SOURCE` | no latest official 1X2 odds |
 
@@ -496,7 +503,7 @@ Interpretation:
 
 - The current official pool has 0 validated market-bias shadow candidates because it does not contain I2 fixtures.
 - This is an algorithm/data-coverage blocker, not a reason to force daily allocation.
-- A profitable system should be allowed to hold cash when the live pool is outside validated strategy coverage. Forcing bets in World Cup or FIN without odds-edge validation would turn the strategy from evidence-driven into curve-fitting.
+- A profitable system should be allowed to hold cash when the live pool is outside validated strategy coverage. Forcing bets in World Cup or FIN after their stability gates failed would turn the strategy from evidence-driven into curve-fitting.
 
 FIN current-pool retest:
 
@@ -1041,12 +1048,12 @@ Current statistical audit results:
 
 Updated interpretation:
 
-- The `I2 draw [2.8,3.5)` strategy is now the cleanest historical algorithm candidate: it passes robustness, settlement-aware portfolio simulation, multi-window validation, and the new statistical audit.
-- The `I2 draw + SP1 home` combo has stronger bootstrap statistics and higher ROI, but still fails the multi-window gate by a small margin (`7 / 12` windows, `58.33%`, below the `60%` requirement). It remains research-only rather than shadow-ready.
+- The `I2 draw [2.8,3.5)` strategy still has statistically detectable historical signal, but the refreshed multi-window gate now rejects it for deployment. A statistically positive full-period sample is not enough when rolling windows are unstable.
+- The `I2 draw + SP1 home` combo has stronger bootstrap statistics and higher ROI, but also fails the refreshed multi-window gate. It remains research-only rather than shadow-ready.
 - Current best historical deployment tier:
-  - `I2 draw [2.8,3.5)`: `SHADOW_READY_PRODUCTION_BLOCKED`.
+  - `I2 draw [2.8,3.5)`: `RESEARCH_ONLY_UNSTABLE_WINDOWS`.
   - `I2 draw + SP1 home`: `RESEARCH_ONLY_UNSTABLE_WINDOWS`.
-- Production betting remains blocked by official-SP prospective evidence, not by historical statistics.
+- Production betting is blocked first by multi-window instability and then by missing official-SP prospective evidence.
 
 Selected-odds edge calibration layer:
 
@@ -1070,7 +1077,7 @@ Calibration results:
 
 Updated stricter conclusion:
 
-- `I2 draw [2.8,3.5)` passes multi-window and monthly statistical audit, but its conservative hit-rate lower bound is just below the selected-odds implied probability. It is now downgraded to `RESEARCH_ONLY_CALIBRATION_WEAK`.
+- `I2 draw [2.8,3.5)` has statistically detectable full-period signal, but the refreshed multi-window gate now rejects it for deployment. It remains `RESEARCH_ONLY_UNSTABLE_WINDOWS`, not a live allocation rule.
 - `I2 draw + SP1 home` passes monthly statistical audit and selected-odds calibration, but still fails the multi-window gate (`7 / 12`, `58.33%` versus the `60%` requirement). It remains `RESEARCH_ONLY_UNSTABLE_WINDOWS`.
 - Therefore the project has not yet found a fully promotable historical betting algorithm under the stricter requirements.
 - The practical research target is now clear:
@@ -1864,6 +1871,8 @@ World Cup / International Odds Expansion Validation:
   - `reports/market_bias_candidate_screen_world_cup_newdata_v1/summary.json`.
   - `reports/world_cup_rolling_validation_avg_close_newdata_v1/summary.json`.
   - `reports/world_cup_rolling_validation_max_close_newdata_v1/summary.json`.
+  - `reports/world_cup_rolling_validation_avg_close_current_research/summary.json`.
+  - `reports/world_cup_rolling_validation_max_close_current_research/summary.json`.
 
 Results:
 
@@ -1873,14 +1882,50 @@ Results:
 | Full-sample diagnostics | `AVG_CLOSE` | 26 diagnostic rows | `[2.8,3.5)` odds bucket: 543 bets, +11.83 units, 2.18% ROI | Diagnostics only |
 | Full-sample diagnostics | `MAX_CLOSE` | 81 diagnostic rows | `[3.5,4.0)` / draw-like buckets show high raw ROI | Diagnostics only |
 | Monthly league-style candidate screen | `AVG_CLOSE,MAX_CLOSE` | 24 checked rows | 0 walk-forward bets because sparse tournament data breaks 12-month league windows | 0 passed |
-| Rolling yearly holdout | `AVG_CLOSE` | 69 combined rules | `[2.8,3.5)` had 255 out-of-sample bets, +10.71 units, 4.20% ROI, but max drawdown 13.22 > profit 10.71 | `REJECT_NO_REUSABLE_WORLD_CUP_ROLLING_RULE` |
-| Rolling yearly holdout | `MAX_CLOSE` | 74 combined rules | Best combined rules had strong ROI but only 15-63 out-of-sample bets or drawdown > profit | `REJECT_NO_REUSABLE_WORLD_CUP_ROLLING_RULE` |
+| Rolling yearly holdout | `AVG_CLOSE` | 88 combined rules | `[2.8,3.5)` had 255 out-of-sample bets, +10.71 units, 4.20% ROI, but max drawdown 13.22 > profit 10.71 | `REJECT_NO_REUSABLE_WORLD_CUP_ROLLING_RULE` |
+| Rolling yearly holdout | `MAX_CLOSE` | 111 combined rules | Best combined rules had strong ROI but only 15-64 out-of-sample bets or failed month/drawdown gates | `REJECT_NO_REUSABLE_WORLD_CUP_ROLLING_RULE` |
+
+Daily portfolio validation:
+
+- Code: `scripts/world_cup_tournament_validation.py --mode portfolio`.
+- Selection rule:
+  - Each test year uses only earlier years to discover rules.
+  - Training rule edge is shrunk by sample size and penalized by drawdown.
+  - Test-year bets are deduplicated by match/outcome before staking.
+  - Daily bankroll policy is `daily_limit=100`, `max_single_stake=10`, settlement delay `1` day.
+- Reports:
+  - `reports/world_cup_portfolio_validation_avg_close_current_research/summary.json`.
+  - `reports/world_cup_portfolio_validation_max_close_current_research/summary.json`.
+  - `reports/world_cup_portfolio_validation_avg_close_nonlongshot_current_research/summary.json`.
+  - `reports/world_cup_portfolio_validation_max_close_draw_filtered_current_research/summary.json`.
+  - `reports/world_cup_portfolio_grid_current_research/summary.json`.
+
+| Portfolio experiment | Bets | Staked | Profit | ROI | Max DD | Month balance | Year balance | Decision |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | --- | --- |
+| `AVG_CLOSE`, top 3 rules | 233 | 2219.96 | -148.84 | -6.70% | 359.44 | 7 / 12 | 2 / 4 | `REJECT_WORLD_CUP_PORTFOLIO_WEAK` |
+| `MAX_CLOSE`, top 3 rules | 329 | 3259.97 | -767.17 | -23.53% | 837.87 | 7 / 12 | 1 / 5 | `REJECT_WORLD_CUP_PORTFOLIO_WEAK` |
+| `AVG_CLOSE`, odds <= 3.5, market probability >= 0.20 | 167 | 1670.00 | +4.20 | 0.25% | 177.70 | 7 / 12 | 3 / 3 | `REJECT_WORLD_CUP_PORTFOLIO_WEAK` |
+| `MAX_CLOSE`, draw only, odds <= 5.0, market probability >= 0.20 | 126 | 1260.00 | +67.70 | 5.37% | 240.50 | 7 / 5 | 2 / 1 | `REJECT_WORLD_CUP_PORTFOLIO_WEAK` |
+
+Portfolio grid search:
+
+- Command:
+  - `python scripts/world_cup_tournament_validation.py --mode portfolio-grid --odds-sources AVG_CLOSE,MAX_CLOSE --first-test-year 2018 --top-n 20 --grid-max-rules 1,2 --min-train-samples 20 --min-train-active-months 1 --min-test-bets 40 --min-roi-pct 1 --daily-limit 100 --max-single-stake 10 --grid-allowed-outcomes "all;draw" --grid-max-odds "3.5,5.0,none" --grid-min-market-probabilities "0.2,0.28" --output-dir reports/world_cup_portfolio_grid_current_research`
+- Configs tested: `48`.
+- Passed configs: `0`.
+- Decision: `REJECT_GRID_BEST_POSITIVE_BUT_UNSTABLE`.
+- Best row:
+  - `MAX_CLOSE`, draw only, `max_rules=1`, odds `<=5.0`, market probability `>=0.20`.
+  - 126 bets, staked 1260.00, profit +67.70, ROI 5.37%, max drawdown 240.50.
+  - Rejection reason: `drawdown>profit`.
 
 Interpretation:
 
 - The expanded World Cup/qualifier source is useful data, but it still does not produce a production-grade money allocation algorithm.
 - `AVG_CLOSE` has a broad weak signal around odds `[2.8,3.5)`, but profit does not cover drawdown.
 - `MAX_CLOSE` creates attractive-looking 2026 fold winners, including draw odds `[3.5,4.0)`, but the combined no-lookahead sample fails the minimum-bet and stability gates. This is a classic “good year, not good algorithm” pattern.
+- The daily portfolio experiment confirms the same diagnosis under money allocation: raw yearly rule selection loses money, while the best filtered draw-only configuration is positive but has drawdown `240.50` against only `67.70` profit and lost the full 2025 test year. That is not true EV.
+- The formal 48-config grid confirms that the best World Cup configuration is a near-miss, not a valid allocation strategy. Tightening away from longshots either collapses sample size or turns profit negative.
 - Do not promote World Cup / qualifier rules into daily allocation from this evidence. Keep the data for feature support and future model experiments, but the search for a reusable profitable algorithm should continue outside these rejected tournament-only market-bucket rules.
 
 Low-Correlation Multi-Domain Rule Combination Audit:
@@ -2146,7 +2191,7 @@ Exported scorer:
 - Path: `reports/feature_enriched_market_anchored_i2_avg_open_scorer_current/scorer.json`.
 - Training window: `2023-12-01` through `2026-05-23`.
 - Training rows: `1074`.
-- Strategy label: `AVG_OPEN_rulesi2_train30_n120_ev0p02_top1_ridge10_cap0.08`.
+- Strategy label: `AVG_OPEN_rulesi2_draw_2p8_3p5_train30_n120_ev0p02_top1_ridge10_cap0.08`.
 
 Official-SP checks:
 
@@ -2199,3 +2244,127 @@ Interpretation:
   - SWE: rejected by current feature hard gates.
   - KOR: unmapped / no local historical 1X2 odds domain yet.
   - International: odds history missing.
+
+True-EV broad-domain recheck:
+
+- Purpose:
+  - Move away from the weak-team positive-EV artifact by searching large, odds-backed domains for signals that survive cross-source prices and rolling allocation windows.
+  - Treat diagnostic positives as hypotheses only. A rule is not true EV unless it survives cross-source validation, no-lookahead walk-forward, settlement-aware daily staking, and later official-SP prospective validation.
+- Code:
+  - `scripts/true_ev_research_summary.py` summarizes discovery, cross-source candidate screens, and multi-window reports into one deployment decision.
+- First-pass discovery:
+  - Output: `reports/batch_profit_domain_discovery_true_ev_current/summary.json`.
+  - Domains scanned: `ARG`, `USA`, `BRA`, `MEX`, `ROU`.
+  - All five had diagnostic hits, but these are not enough for allocation.
+- Cross-source screens:
+
+| Domain | Best surviving rule | Screen result | Main rejection reason |
+| --- | --- | --- | --- |
+| ARG | `home market_prob [0.20,0.28)` | `REJECTED_BY_CROSS_SOURCE_SCREEN` | only 27 combined portfolio bets; PS_CLOSE negative |
+| USA | `home odds [2.2,2.8)` | `REJECTED_BY_CROSS_SOURCE_SCREEN` | combined ROI `-3.39%`; PS_CLOSE `-18.85%`; sample too small |
+| BRA | none | `NO_SURVIVING_RULE_AFTER_RECENT_FORM_FILTER` | diagnostic positives failed recency/specificity filters |
+| MEX | none | `NO_SURVIVING_RULE_AFTER_RECENT_FORM_FILTER` | diagnostic positives failed recency/specificity filters |
+| ROU | none | `NO_SURVIVING_RULE_AFTER_RECENT_FORM_FILTER` | diagnostic positives failed recency/specificity filters |
+
+- USA rolling 12-month check:
+  - Report: `reports/market_bias_multi_window_usa_true_ev_current/summary.json`.
+  - Candidate: `USA home odds [2.2,2.8)`.
+  - Total repeated-window bets: `214`.
+  - Combined ROI: `-3.39%`.
+  - Active pass rate: `0.00`.
+  - Source pass rate: `0.00`.
+  - Decision: `REJECT_UNSTABLE`.
+- Consolidated true-EV summary:
+  - Report: `reports/true_ev_research_summary_current/summary.json`.
+  - Decision: `NO_TRUE_EV_CANDIDATE_FOUND`.
+
+Interpretation:
+
+- This is a useful negative result. It shows the stricter process is filtering exactly the kind of false EV we were worried about: impressive local slices, sparse high-ROI samples, and signals that disappear when the available price source changes.
+- The next search should not loosen gates on these domains. It should either:
+  - expand to the next large search-ready domains (`POL`, `NOR`, `RUS`, `DNK`, `CHN`, and classic European league codes), or
+  - move from coarse market-bucket rules to a feature-residual model, while keeping the same cross-source and rolling-window gates.
+
+True-EV broad-domain recheck, next 5 domains:
+
+- Purpose:
+  - Continue the same gate on the next largest search-ready domains rather than loosening failed thresholds.
+  - Domains: `POL`, `NOR`, `RUS`, `DNK`, `CHN`.
+- First-pass discovery:
+  - Output: `reports/batch_profit_domain_discovery_true_ev_next5_current/summary.json`.
+  - Domains with diagnostic hits: `4 / 5`.
+  - `POL` had no diagnostic hits.
+  - Notable surface signals:
+    - `RUS home odds [2.2,2.8)`: 693 diagnostic bets, +53.55 units, 7.73% ROI, latest month positive.
+    - `DNK odds [2.8,3.5) / market_prob [0.20,0.28)`: 765 diagnostic bets, +42.46 units, 5.55% ROI.
+    - `CHN draw market_prob [0.28,0.34)`: 649 diagnostic bets, +86.48 units, 13.33% ROI, but latest month negative.
+- Cross-source screens:
+
+| Domain | Best surviving rule | Screen result | Main rejection reason |
+| --- | --- | --- | --- |
+| POL | none | `NO_SURVIVING_RULE_AFTER_RECENT_FORM_FILTER` | no diagnostic hits |
+| NOR | `home odds [1.8,2.2)` | `REJECTED_BY_CROSS_SOURCE_SCREEN` | combined ROI `-19.96%`; all sources negative |
+| RUS | `home odds [2.2,2.8)` / tested separately | `REJECTED_BY_CROSS_SOURCE_SCREEN` | no rule passed; surface positives disappear after no-lookahead selection |
+| DNK | `draw odds [2.8,3.5)` | `REJECTED_BY_CROSS_SOURCE_SCREEN` | combined ROI `-7.38%`; AVG/MAX close negative |
+| CHN | none | `NO_SURVIVING_RULE_AFTER_RECENT_FORM_FILTER` | strongest draw signal failed recent-form filter |
+
+- RUS rolling 12-month check:
+  - Report: `reports/market_bias_multi_window_rus_true_ev_next5_current/summary.json`.
+  - Representative tested candidate: `RUS home odds [2.2,2.8)`.
+  - Total repeated-window bets: `214`.
+  - Combined ROI: `-12.88%`.
+  - Active pass rate: `0.00`.
+  - Source pass rate: `0.00`.
+  - Worst source ROI: `-20.00%`.
+  - Decision: `REJECT_UNSTABLE`.
+- Consolidated true-EV summary:
+  - Report: `reports/true_ev_research_summary_next5_current/summary.json`.
+  - Decision: `NO_TRUE_EV_CANDIDATE_FOUND`.
+
+Interpretation:
+
+- This second batch confirms that the current coarse market-bucket approach is mostly discovering in-sample price-shape artifacts, not reusable betting edge.
+- The most tempting candidates are exactly where the gate is useful:
+  - `CHN draw` has impressive full-period ROI but fails the recent-form filter.
+  - `RUS home [2.2,2.8)` has strong diagnostic ROI but becomes negative under no-lookahead cross-source validation.
+- Next work should prioritize a model-based residual scorer over more hand bucket widening, unless scanning the remaining classic European domains is needed to rule out obvious coarse signals.
+
+Feature-Residual True-EV Update:
+
+- Problem:
+  - Live EV was too often positive on weak teams and negative on strong teams.
+  - That pattern usually means the model is over-trusting its own residual against the market. It treats high odds as cheap probability, but the bookmaker/market prior is usually the stronger estimate.
+- Code:
+  - `football_agents/real_ev.py` now uses a stricter real-probability anchor:
+    - lower model residual retention: `0.08 + 0.28 * reliability`;
+    - positive residuals on non-favorite home/away teams are discounted before EV;
+    - longshot positive residuals are still discounted;
+    - downside residuals on the market favorite are capped so the model cannot casually turn the strong side into negative EV.
+  - Diagnostics now expose:
+    - `underdog_penalties`;
+    - `favorite_downside_caps`;
+    - warnings such as `away underdog positive residual discounted`.
+- Tests:
+  - `tests/test_real_ev.py::test_underdog_positive_residual_is_discounted_before_ev`.
+  - `tests/test_real_ev.py::test_market_favorite_downside_residual_is_capped`.
+  - Related true-odds/workflow tests remain passing.
+
+Focused feature-residual research:
+
+- Fast next-domain run:
+  - Report: `reports/official_pool_market_anchored_research_true_ev_next5_fast_current/summary.json`.
+  - Best near-miss: `DNK draw odds [2.8,3.5)` on `PS_CLOSE`.
+  - 268 bets, profit `+660.50`, ROI `24.65%`, max drawdown `121.10`.
+  - Rejected because latest-season bets `<20` and active pass rate `<0.60`.
+- Focused DNK draw grid:
+  - Report: `reports/official_pool_market_anchored_research_dnk_draw_grid_current/summary.json`.
+  - Best row: `AVG_CLOSE_rulesdnk_draw_odds2p8_3p5_train30_n80_ev0p02_top1_ridge10_cap0.08`.
+  - 364 bets, profit `+613.60`, ROI `16.86%`, max drawdown `140.00`.
+  - Rolling windows: active pass rate `0.55`.
+  - Decision: `REJECT_RESEARCH_GATES`, reason `active_pass_rate<0.6`.
+
+Interpretation:
+
+- The old weak-team EV problem is now addressed at the EV probability layer, not by hiding results in Critic.
+- The system should now require a model edge to survive market anchoring before it becomes real EV.
+- DNK draw is a genuine research lead, but it is still not live allocation because it narrowly fails the active rolling-window gate. This is exactly the sort of candidate to keep in shadow/research, not to force into daily money allocation yet.

@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from football_agents.db import Database
 from football_agents.official_pool_research import plan_official_pool_profit_research
+from football_agents.official_pool_research import _world_cup_validation_evidence
 from football_agents.repository import Repository
 
 
@@ -87,6 +88,23 @@ def test_official_pool_profit_research_uses_world_cup_rejection_report(tmp_path)
     assert league["research_priority"] == "LOW_DO_NOT_LOOSEN"
     assert league["evidence_reports"] == ["reports/world_cup_tournament_validation_current/summary.json"]
     assert "rejected" in league["blocker"]
+
+
+def test_world_cup_evidence_treats_rolling_reject_promotion_as_blocker(tmp_path, monkeypatch):
+    report_dir = tmp_path / "reports" / "world_cup_rolling_validation_avg_close_current_research"
+    report_dir.mkdir(parents=True)
+    (report_dir / "summary.json").write_text(
+        '{"promotion_decision":"REJECT_NO_REUSABLE_WORLD_CUP_ROLLING_RULE"}',
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+
+    evidence = _world_cup_validation_evidence()
+
+    assert evidence is not None
+    assert evidence["status"] == "rejected_by_world_cup_tournament_holdout"
+    assert evidence["priority"] == "LOW_DO_NOT_LOOSEN"
+    assert "REJECT_NO_REUSABLE_WORLD_CUP_ROLLING_RULE" in evidence["blocker"]
 
 
 def test_official_pool_profit_research_keeps_fin_rejected(tmp_path):

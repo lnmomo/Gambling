@@ -1,0 +1,693 @@
+{
+  "method": "World Cup / qualifiers rolling no-lookahead daily portfolio validation",
+  "seasons": [
+    "WORLD_CUP"
+  ],
+  "odds_source": "MAX_CLOSE",
+  "available_years": [
+    2014,
+    2018,
+    2022,
+    2023,
+    2024,
+    2025,
+    2026
+  ],
+  "test_years": [
+    2018,
+    2022,
+    2023,
+    2024,
+    2025,
+    2026
+  ],
+  "top_n": 30,
+  "max_rules": 3,
+  "min_train_samples": 20,
+  "min_train_active_months": 1,
+  "min_train_roi_pct": 0.0,
+  "min_test_bets": 80,
+  "min_roi_pct": 3.0,
+  "daily_limit": 100.0,
+  "max_single_stake": 10.0,
+  "settlement_delay_days": 1,
+  "shrink_prior_bets": 80,
+  "fold_count": 6,
+  "skipped_years": [],
+  "portfolio": {
+    "method": "settlement-aware market-bias portfolio simulation",
+    "config": {
+      "daily_limit": 100.0,
+      "max_single_stake": 10.0,
+      "settlement_delay_days": 1,
+      "stop_after_losing_settlement_days": 999,
+      "cooldown_days": 0,
+      "stake_mode": "split_daily_limit_evenly_across_selected_bets",
+      "same_day_results_hidden_until_settlement": true
+    },
+    "overall": {
+      "bets": 329,
+      "winning_bets": 99,
+      "active_bet_days": 114,
+      "skipped_cooldown_days": 0,
+      "total_staked": 3259.97,
+      "profit": -767.17,
+      "roi_pct": -23.53,
+      "ending_equity": -767.17,
+      "max_drawdown": 837.87
+    },
+    "monthly": [
+      {
+        "month": "2018-06",
+        "bets": 50,
+        "staked": 500.0,
+        "profit": 33.9,
+        "roi_pct": 6.78
+      },
+      {
+        "month": "2018-07",
+        "bets": 14,
+        "staked": 140.0,
+        "profit": 2.5,
+        "roi_pct": 1.79
+      },
+      {
+        "month": "2022-11",
+        "bets": 40,
+        "staked": 400.0,
+        "profit": -57.0,
+        "roi_pct": -14.25
+      },
+      {
+        "month": "2022-12",
+        "bets": 24,
+        "staked": 240.0,
+        "profit": -9.7,
+        "roi_pct": -4.04
+      },
+      {
+        "month": "2023-09",
+        "bets": 1,
+        "staked": 10.0,
+        "profit": -10.0,
+        "roi_pct": -100.0
+      },
+      {
+        "month": "2023-10",
+        "bets": 6,
+        "staked": 60.0,
+        "profit": 70.0,
+        "roi_pct": 116.67
+      },
+      {
+        "month": "2023-11",
+        "bets": 21,
+        "staked": 179.97,
+        "profit": -179.97,
+        "roi_pct": -100.0
+      },
+      {
+        "month": "2024-03",
+        "bets": 13,
+        "staked": 130.0,
+        "profit": -130.0,
+        "roi_pct": -100.0
+      },
+      {
+        "month": "2024-06",
+        "bets": 28,
+        "staked": 280.0,
+        "profit": -205.0,
+        "roi_pct": -73.21
+      },
+      {
+        "month": "2024-09",
+        "bets": 5,
+        "staked": 50.0,
+        "profit": 30.0,
+        "roi_pct": 60.0
+      },
+      {
+        "month": "2024-11",
+        "bets": 9,
+        "staked": 90.0,
+        "profit": -90.0,
+        "roi_pct": -100.0
+      },
+      {
+        "month": "2025-03",
+        "bets": 19,
+        "staked": 190.0,
+        "profit": 75.3,
+        "roi_pct": 39.63
+      },
+      {
+        "month": "2025-06",
+        "bets": 14,
+        "staked": 140.0,
+        "profit": -95.0,
+        "roi_pct": -67.86
+      },
+      {
+        "month": "2025-09",
+        "bets": 25,
+        "staked": 250.0,
+        "profit": -74.5,
+        "roi_pct": -29.8
+      },
+      {
+        "month": "2025-10",
+        "bets": 20,
+        "staked": 200.0,
+        "profit": -54.0,
+        "roi_pct": -27.0
+      },
+      {
+        "month": "2025-11",
+        "bets": 11,
+        "staked": 110.0,
+        "profit": -22.7,
+        "roi_pct": -20.64
+      },
+      {
+        "month": "2026-03",
+        "bets": 9,
+        "staked": 90.0,
+        "profit": 12.0,
+        "roi_pct": 13.33
+      },
+      {
+        "month": "2026-04",
+        "bets": 2,
+        "staked": 20.0,
+        "profit": 12.5,
+        "roi_pct": 62.5
+      },
+      {
+        "month": "2026-06",
+        "bets": 18,
+        "staked": 180.0,
+        "profit": -75.5,
+        "roi_pct": -41.94
+      }
+    ],
+    "positive_months": 7,
+    "negative_months": 12,
+    "season_summary": [
+      {
+        "season": "2017-18",
+        "bets": 50,
+        "staked": 500.0,
+        "profit": 33.9,
+        "roi_pct": 6.78
+      },
+      {
+        "season": "2018-19",
+        "bets": 14,
+        "staked": 140.0,
+        "profit": 2.5,
+        "roi_pct": 1.79
+      },
+      {
+        "season": "2022-23",
+        "bets": 64,
+        "staked": 640.0,
+        "profit": -66.7,
+        "roi_pct": -10.42
+      },
+      {
+        "season": "2023-24",
+        "bets": 69,
+        "staked": 659.97,
+        "profit": -454.97,
+        "roi_pct": -68.94
+      },
+      {
+        "season": "2024-25",
+        "bets": 47,
+        "staked": 470.0,
+        "profit": -79.7,
+        "roi_pct": -16.96
+      },
+      {
+        "season": "2025-26",
+        "bets": 85,
+        "staked": 850.0,
+        "profit": -202.2,
+        "roi_pct": -23.79
+      }
+    ],
+    "positive_seasons": 2,
+    "negative_seasons": 4,
+    "warnings": [
+      "Historical football-data odds are not Chinese official SP; keep official-SP shadow validation separate.",
+      "Cooling decisions use only already-settled results, not same-day final scores."
+    ],
+    "year_summary": [
+      {
+        "year": 2018,
+        "bets": 64,
+        "staked": 640.0,
+        "profit": 36.4,
+        "roi_pct": 5.69
+      },
+      {
+        "year": 2022,
+        "bets": 64,
+        "staked": 640.0,
+        "profit": -66.7,
+        "roi_pct": -10.42
+      },
+      {
+        "year": 2023,
+        "bets": 28,
+        "staked": 249.97,
+        "profit": -119.97,
+        "roi_pct": -47.99
+      },
+      {
+        "year": 2024,
+        "bets": 55,
+        "staked": 550.0,
+        "profit": -395.0,
+        "roi_pct": -71.82
+      },
+      {
+        "year": 2025,
+        "bets": 89,
+        "staked": 890.0,
+        "profit": -170.9,
+        "roi_pct": -19.2
+      },
+      {
+        "year": 2026,
+        "bets": 29,
+        "staked": 290.0,
+        "profit": -51.0,
+        "roi_pct": -17.59
+      }
+    ],
+    "positive_years": 1,
+    "negative_years": 5
+  },
+  "decision": "REJECT_WORLD_CUP_PORTFOLIO_WEAK",
+  "decision_reasons": [
+    "portfolio_profit<=0",
+    "portfolio_roi<threshold",
+    "positive_months<=negative_months",
+    "positive_years<=negative_years",
+    "drawdown>profit"
+  ],
+  "fold_rows": [
+    {
+      "test_year": 2018,
+      "selected_rules": [
+        {
+          "rule": "favorite_relation=market_favorite",
+          "train": {
+            "bets": 64,
+            "profit": 17.58,
+            "roi_pct": 27.47,
+            "positive_months": 2,
+            "negative_months": 0,
+            "max_drawdown": 6.24,
+            "settlement_days": 25,
+            "positive_years": 1,
+            "negative_years": 0
+          },
+          "score": 0.13498435722411828,
+          "shrunk_train_roi_pct": 13.498
+        },
+        {
+          "rule": "league|favorite_relation=WORLD_CUP|market_favorite",
+          "train": {
+            "bets": 64,
+            "profit": 17.58,
+            "roi_pct": 27.47,
+            "positive_months": 2,
+            "negative_months": 0,
+            "max_drawdown": 6.24,
+            "settlement_days": 25,
+            "positive_years": 1,
+            "negative_years": 0
+          },
+          "score": 0.13498435722411828,
+          "shrunk_train_roi_pct": 13.498
+        },
+        {
+          "rule": "outcome|favorite_relation=home|market_favorite",
+          "train": {
+            "bets": 42,
+            "profit": 12.51,
+            "roi_pct": 29.79,
+            "positive_months": 2,
+            "negative_months": 0,
+            "max_drawdown": 6.38,
+            "settlement_days": 24,
+            "positive_years": 1,
+            "negative_years": 0
+          },
+          "score": 0.1123411434786597,
+          "shrunk_train_roi_pct": 11.234
+        }
+      ],
+      "test": {
+        "bets": 64,
+        "profit": 3.64,
+        "roi_pct": 5.69,
+        "positive_months": 2,
+        "negative_months": 0,
+        "max_drawdown": 3.87,
+        "settlement_days": 25,
+        "positive_years": 1,
+        "negative_years": 0
+      }
+    },
+    {
+      "test_year": 2022,
+      "selected_rules": [
+        {
+          "rule": "favorite_relation=market_favorite",
+          "train": {
+            "bets": 128,
+            "profit": 21.22,
+            "roi_pct": 16.58,
+            "positive_months": 4,
+            "negative_months": 0,
+            "max_drawdown": 6.24,
+            "settlement_days": 50,
+            "positive_years": 2,
+            "negative_years": 0
+          },
+          "score": 0.13613798665989993,
+          "shrunk_train_roi_pct": 13.614
+        },
+        {
+          "rule": "league|favorite_relation=WORLD_CUP|market_favorite",
+          "train": {
+            "bets": 128,
+            "profit": 21.22,
+            "roi_pct": 16.58,
+            "positive_months": 4,
+            "negative_months": 0,
+            "max_drawdown": 6.24,
+            "settlement_days": 50,
+            "positive_years": 2,
+            "negative_years": 0
+          },
+          "score": 0.13613798665989993,
+          "shrunk_train_roi_pct": 13.614
+        },
+        {
+          "rule": "market_prob_bucket|favorite_relation=[0.34,0.42)|market_favorite",
+          "train": {
+            "bets": 25,
+            "profit": 8.5,
+            "roi_pct": 34.0,
+            "positive_months": 4,
+            "negative_months": 0,
+            "max_drawdown": 4.0,
+            "settlement_days": 20,
+            "positive_years": 2,
+            "negative_years": 0
+          },
+          "score": 0.1115406162464986,
+          "shrunk_train_roi_pct": 11.154
+        }
+      ],
+      "test": {
+        "bets": 64,
+        "profit": -6.67,
+        "roi_pct": -10.42,
+        "positive_months": 0,
+        "negative_months": 2,
+        "max_drawdown": 12.72,
+        "settlement_days": 23,
+        "positive_years": 0,
+        "negative_years": 1
+      }
+    },
+    {
+      "test_year": 2023,
+      "selected_rules": [
+        {
+          "rule": "outcome|odds_bucket=home|[7.0,inf)",
+          "train": {
+            "bets": 21,
+            "profit": 36.35,
+            "roi_pct": 173.1,
+            "positive_months": 3,
+            "negative_months": 1,
+            "max_drawdown": 11.0,
+            "settlement_days": 15,
+            "positive_years": 2,
+            "negative_years": 1
+          },
+          "score": 0.3738487204979095,
+          "shrunk_train_roi_pct": 37.385
+        },
+        {
+          "rule": "league|outcome|odds_bucket=WORLD_CUP|home|[7.0,inf)",
+          "train": {
+            "bets": 21,
+            "profit": 36.35,
+            "roi_pct": 173.1,
+            "positive_months": 3,
+            "negative_months": 1,
+            "max_drawdown": 11.0,
+            "settlement_days": 15,
+            "positive_years": 2,
+            "negative_years": 1
+          },
+          "score": 0.3738487204979095,
+          "shrunk_train_roi_pct": 37.385
+        },
+        {
+          "rule": "outcome|odds_bucket|market_prob_bucket=home|[7.0,inf)|[0.00,0.20)",
+          "train": {
+            "bets": 21,
+            "profit": 36.35,
+            "roi_pct": 173.1,
+            "positive_months": 3,
+            "negative_months": 1,
+            "max_drawdown": 11.0,
+            "settlement_days": 15,
+            "positive_years": 2,
+            "negative_years": 1
+          },
+          "score": 0.3738487204979095,
+          "shrunk_train_roi_pct": 37.385
+        }
+      ],
+      "test": {
+        "bets": 28,
+        "profit": -15.0,
+        "roi_pct": -53.57,
+        "positive_months": 1,
+        "negative_months": 2,
+        "max_drawdown": 22.0,
+        "settlement_days": 7,
+        "positive_years": 0,
+        "negative_years": 1
+      }
+    },
+    {
+      "test_year": 2024,
+      "selected_rules": [
+        {
+          "rule": "outcome|odds_bucket=home|[7.0,inf)",
+          "train": {
+            "bets": 49,
+            "profit": 21.35,
+            "roi_pct": 43.57,
+            "positive_months": 4,
+            "negative_months": 3,
+            "max_drawdown": 22.0,
+            "settlement_days": 22,
+            "positive_years": 2,
+            "negative_years": 2
+          },
+          "score": 0.15489497667156837,
+          "shrunk_train_roi_pct": 15.489
+        },
+        {
+          "rule": "league|outcome|odds_bucket=WORLD_CUP|home|[7.0,inf)",
+          "train": {
+            "bets": 49,
+            "profit": 21.35,
+            "roi_pct": 43.57,
+            "positive_months": 4,
+            "negative_months": 3,
+            "max_drawdown": 22.0,
+            "settlement_days": 22,
+            "positive_years": 2,
+            "negative_years": 2
+          },
+          "score": 0.15489497667156837,
+          "shrunk_train_roi_pct": 15.489
+        },
+        {
+          "rule": "outcome|odds_bucket|market_prob_bucket=home|[7.0,inf)|[0.00,0.20)",
+          "train": {
+            "bets": 49,
+            "profit": 21.35,
+            "roi_pct": 43.57,
+            "positive_months": 4,
+            "negative_months": 3,
+            "max_drawdown": 22.0,
+            "settlement_days": 22,
+            "positive_years": 2,
+            "negative_years": 2
+          },
+          "score": 0.15489497667156837,
+          "shrunk_train_roi_pct": 15.489
+        }
+      ],
+      "test": {
+        "bets": 55,
+        "profit": -39.5,
+        "roi_pct": -71.82,
+        "positive_months": 1,
+        "negative_months": 3,
+        "max_drawdown": 39.5,
+        "settlement_days": 12,
+        "positive_years": 0,
+        "negative_years": 1
+      }
+    },
+    {
+      "test_year": 2025,
+      "selected_rules": [
+        {
+          "rule": "outcome|odds_bucket|market_prob_bucket=draw|[4.0,5.0)|[0.20,0.28)",
+          "train": {
+            "bets": 100,
+            "profit": 20.92,
+            "roi_pct": 20.92,
+            "positive_months": 9,
+            "negative_months": 4,
+            "max_drawdown": 10.48,
+            "settlement_days": 64,
+            "positive_years": 4,
+            "negative_years": 1
+          },
+          "score": 0.15620310176333124,
+          "shrunk_train_roi_pct": 15.62
+        },
+        {
+          "rule": "outcome|odds_bucket|market_prob_bucket=home|[2.2,2.8)|[0.42,0.55)",
+          "train": {
+            "bets": 28,
+            "profit": 10.72,
+            "roi_pct": 38.29,
+            "positive_months": 8,
+            "negative_months": 3,
+            "max_drawdown": 3.0,
+            "settlement_days": 27,
+            "positive_years": 5,
+            "negative_years": 0
+          },
+          "score": 0.14366224433388614,
+          "shrunk_train_roi_pct": 14.366
+        },
+        {
+          "rule": "outcome|odds_bucket=draw|[4.0,5.0)",
+          "train": {
+            "bets": 103,
+            "profit": 17.92,
+            "roi_pct": 17.4,
+            "positive_months": 9,
+            "negative_months": 4,
+            "max_drawdown": 10.48,
+            "settlement_days": 65,
+            "positive_years": 4,
+            "negative_years": 1
+          },
+          "score": 0.136227068696331,
+          "shrunk_train_roi_pct": 13.623
+        }
+      ],
+      "test": {
+        "bets": 89,
+        "profit": -17.09,
+        "roi_pct": -19.2,
+        "positive_months": 1,
+        "negative_months": 4,
+        "max_drawdown": 30.75,
+        "settlement_days": 34,
+        "positive_years": 0,
+        "negative_years": 1
+      }
+    },
+    {
+      "test_year": 2026,
+      "selected_rules": [
+        {
+          "rule": "outcome|odds_bucket=away|[2.8,3.5)",
+          "train": {
+            "bets": 79,
+            "profit": 16.89,
+            "roi_pct": 21.38,
+            "positive_months": 11,
+            "negative_months": 8,
+            "max_drawdown": 6.94,
+            "settlement_days": 61,
+            "positive_years": 4,
+            "negative_years": 1
+          },
+          "score": 0.12800853469173454,
+          "shrunk_train_roi_pct": 12.801
+        },
+        {
+          "rule": "league|outcome|odds_bucket=WORLD_CUP|away|[2.8,3.5)",
+          "train": {
+            "bets": 79,
+            "profit": 16.89,
+            "roi_pct": 21.38,
+            "positive_months": 11,
+            "negative_months": 8,
+            "max_drawdown": 6.94,
+            "settlement_days": 61,
+            "positive_years": 4,
+            "negative_years": 1
+          },
+          "score": 0.12800853469173454,
+          "shrunk_train_roi_pct": 12.801
+        },
+        {
+          "rule": "market_prob_bucket=[0.28,0.34)",
+          "train": {
+            "bets": 428,
+            "profit": 28.45,
+            "roi_pct": 6.65,
+            "positive_months": 13,
+            "negative_months": 6,
+            "max_drawdown": 15.01,
+            "settlement_days": 128,
+            "positive_years": 5,
+            "negative_years": 1
+          },
+          "score": 0.11545209166516751,
+          "shrunk_train_roi_pct": 11.545
+        }
+      ],
+      "test": {
+        "bets": 29,
+        "profit": -5.1,
+        "roi_pct": -17.59,
+        "positive_months": 2,
+        "negative_months": 1,
+        "max_drawdown": 9.65,
+        "settlement_days": 13,
+        "positive_years": 0,
+        "negative_years": 1
+      }
+    }
+  ],
+  "notes": [
+    "Each test year selects rules using only earlier years.",
+    "Rule edge is training-window ROI after sample shrinkage and drawdown penalty; no test outcomes are used for selection.",
+    "Daily stake allocation is capped by daily_limit and max_single_stake; same-day outcomes are not available until settlement.",
+    "A positive result is still research-only until it survives broader international odds and official-SP prospective validation."
+  ]
+}

@@ -20,6 +20,7 @@ def _report_paths(tmp_path):
         "official_pool_relevance": tmp_path / "reports" / "official_pool_relevance.json",
         "promotion": tmp_path / "reports" / "promotion.json",
         "scorecard": tmp_path / "reports" / "scorecard.json",
+        "multi_window": tmp_path / "reports" / "multi_window.json",
         "shadow_metrics": tmp_path / "reports" / "shadow_metrics.json",
     }
 
@@ -68,6 +69,33 @@ def test_market_bias_monitor_can_skip_shadow_creation_when_requested(tmp_path):
     assert result["profit_algorithm_score"] >= 55
     assert result["official_sp_funnel_report"] == str(paths["official_sp_funnel"])
     assert result["official_pool_relevance_report"] == str(paths["official_pool_relevance"])
+
+
+def test_market_bias_monitor_shadow_recommendation_uses_final_scorecard(tmp_path):
+    database = Database(tmp_path / "monitor-scorecard.db")
+    database.initialize()
+    paths = _report_paths(tmp_path)
+    _write_required_reports(paths)
+    write_json(paths["multi_window"], {
+        "candidate_summaries": [{
+            "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
+            "decision": "RESEARCH_ONLY_UNSTABLE_WINDOWS",
+            "passed_windows": 3,
+            "window_count": 12,
+            "pass_rate": 0.25,
+            "source_passes": 2,
+            "source_count": 2,
+            "combined_roi_pct": 2.57,
+            "worst_window_roi_pct": -16.03,
+        }],
+    })
+
+    result = MarketBiasMonitorService(database, paths).refresh(run_shadow=False, ensure_shadow_config=False)
+
+    assert result["promotion_decision"] == "SHADOW_READY_PRODUCTION_BLOCKED"
+    assert result["profit_algorithm_tier"] == "RESEARCH_ONLY_UNSTABLE_WINDOWS"
+    assert result["recommended_for_shadow"] is False
+    assert json.loads(paths["scorecard"].read_text(encoding="utf-8"))["recommended_for_shadow"] is False
 
 
 def test_market_bias_monitor_creates_shadow_config_by_default(tmp_path):

@@ -79,7 +79,16 @@ def test_formal_i2_config_can_target_close_source() -> None:
     config = formal_i2_configs(("AVG_CLOSE",))[0]
 
     assert config.odds_source == "AVG_CLOSE"
-    assert config.label.startswith("AVG_CLOSE_rulesi2_train30_n120_ev0p02")
+    assert config.label.startswith("AVG_CLOSE_rulesi2_draw_2p8_3p5_train30_n120_ev0p02")
+
+
+def test_feature_filter_label_keeps_rule_identity() -> None:
+    home = FeatureFilterConfig("AVG_CLOSE", 30, 120, 0.02, 1, 10.0, selected_rules=("SWE_home_prob0p55_1p00",))
+    away = FeatureFilterConfig("AVG_CLOSE", 30, 120, 0.02, 1, 10.0, selected_rules=("SWE_away_odds2p2_2p8",))
+
+    assert home.label != away.label
+    assert "swe_home_prob0p55_1p00" in home.label
+    assert "swe_away_odds2p2_2p8" in away.label
 
 
 def test_ridge_probability_model_learns_directional_feature() -> None:

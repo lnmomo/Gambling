@@ -93,6 +93,13 @@ def _existing(paths: list[str]) -> list[str]:
 
 def _world_cup_validation_evidence() -> dict[str, Any] | None:
     for path in (
+        Path("reports/world_cup_portfolio_grid_current_research/summary.json"),
+        Path("reports/world_cup_portfolio_validation_max_close_draw_filtered_current_research/summary.json"),
+        Path("reports/world_cup_portfolio_validation_avg_close_nonlongshot_current_research/summary.json"),
+        Path("reports/world_cup_rolling_validation_avg_close_current_research/summary.json"),
+        Path("reports/world_cup_rolling_validation_max_close_current_research/summary.json"),
+        Path("reports/world_cup_rolling_validation_avg_close_newdata_v1/summary.json"),
+        Path("reports/world_cup_rolling_validation_max_close_newdata_v1/summary.json"),
         Path("reports/world_cup_tournament_validation_current/summary.json"),
         Path("reports/world_cup_tournament_validation/summary.json"),
     ):
@@ -104,12 +111,13 @@ def _world_cup_validation_evidence() -> dict[str, Any] | None:
             continue
         decision = str(report.get("decision") or "")
         promotion = str(report.get("promotion_decision") or "")
-        if decision.startswith("REJECT") or promotion.startswith("BLOCK"):
+        if decision.startswith("REJECT") or promotion.startswith("REJECT") or promotion.startswith("BLOCK"):
+            verdict = "; ".join(item for item in (decision, promotion) if item) or "rejected"
             return {
                 "status": "rejected_by_world_cup_tournament_holdout",
                 "blocker": (
-                    "World Cup 1X2 odds are archived, but tournament holdout validation rejected "
-                    f"the reusable allocation rule search ({decision}; {promotion})"
+                    "World Cup 1X2 odds are archived, but no-lookahead validation rejected "
+                    f"the reusable allocation rule search ({verdict})"
                 ),
                 "priority": "LOW_DO_NOT_LOOSEN",
                 "reports": [str(path)],

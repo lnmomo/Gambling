@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+from pandas.errors import EmptyDataError
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -42,7 +43,10 @@ def load_candidate_rules(path: Path | list[Path] | tuple[Path, ...], top_n: int,
         rules.append(include_rule)
     rows: list[dict[str, Any]] = []
     for diagnostic_path in _diagnostic_paths(path):
-        frame = pd.read_csv(diagnostic_path)
+        try:
+            frame = pd.read_csv(diagnostic_path)
+        except EmptyDataError:
+            continue
         for _, row in frame.iterrows():
             columns = str(row["columns"])
             key = str(row["key"])

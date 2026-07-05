@@ -16,6 +16,8 @@ class RealProbabilityDiagnostics:
     residual_caps: dict[str, float]
     relative_caps: dict[str, float]
     longshot_penalties: dict[str, float]
+    underdog_penalties: dict[str, float]
+    favorite_downside_caps: dict[str, float]
     warnings: list[str] = field(default_factory=list)
 
 
@@ -58,6 +60,28 @@ def _longshot_penalty(outcome: str, odds: float, reliability: float) -> float:
     return base * (1.0 - 0.35 * reliability)
 
 
+def _underdog_positive_residual_penalty(outcome: str, odds: float, reliability: float, is_market_favorite: bool) -> float:
+    if outcome == "draw" or is_market_favorite or odds < 2.20:
+        return 0.0
+    if odds < 3.00:
+        base = 0.006
+    elif odds < 5.00:
+        base = 0.010
+    else:
+        base = 0.014
+    return base * (1.0 - 0.25 * reliability)
+
+
+def _favorite_downside_cap(odds: float, cap: float, is_market_favorite: bool) -> float:
+    if not is_market_favorite:
+        return cap
+    if odds < 1.60:
+        return min(cap, 0.014)
+    if odds < 2.20:
+        return min(cap, 0.018)
+    return min(cap, 0.024)
+
+
 def anchor_real_probability(
     model_probability: Probability,
     market_probability: Probability,
@@ -75,7 +99,8 @@ def anchor_real_probability(
     market = _normalize(market_probability) or {key: 1 / 3 for key in OUTCOMES}
     model = _normalize(model_probability) or market
     reliability = max(0.0, min(1.0, float(reliability)))
-    residual_retention = 0.12 + 0.38 * reliability
+    residual_retention = 0.08 + 0.28 * reliability
+    market_favorite = max(market, key=market.get)
 
     adjusted: dict[str, float] = {}
     before: dict[str, float] = {}
@@ -83,23 +108,33 @@ def anchor_real_probability(
     caps: dict[str, float] = {}
     relative_caps: dict[str, float] = {}
     penalties: dict[str, float] = {}
+    underdog_penalties: dict[str, float] = {}
+    favorite_downside_caps: dict[str, float] = {}
     warnings: list[str] = []
 
     for key in OUTCOMES:
         price = _odds_for(key, odds)
         absolute_cap, relative_cap = _cap_for_odds(price, key)
         cap = min(absolute_cap, max(0.004, market[key] * relative_cap))
+        downside_cap = _favorite_downside_cap(price, cap, key == market_favorite)
         raw_residual = model[key] - market[key]
-        retained = max(-cap, min(cap, raw_residual * residual_retention))
+        retained = max(-downside_cap, min(cap, raw_residual * residual_retention))
         penalty = _longshot_penalty(key, price, reliability) if retained > 0 else 0.0
-        adjusted[key] = max(0.001, market[key] + retained - penalty)
+        underdog_penalty = _underdog_positive_residual_penalty(key, price, reliability, key == market_favorite) if retained > 0 else 0.0
+        adjusted[key] = max(0.001, market[key] + retained - penalty - underdog_penalty)
         before[key] = raw_residual
-        after[key] = retained - penalty
+        after[key] = retained - penalty - underdog_penalty
         caps[key] = cap
         relative_caps[key] = relative_cap
         penalties[key] = penalty
+        underdog_penalties[key] = underdog_penalty
+        favorite_downside_caps[key] = downside_cap
         if penalty > 0:
             warnings.append(f"{key} longshot positive residual discounted")
+        if underdog_penalty > 0:
+            warnings.append(f"{key} underdog positive residual discounted")
+        if key == market_favorite and raw_residual < 0 and downside_cap < cap:
+            warnings.append(f"{key} market favorite downside residual capped")
 
     normalized = _normalize(adjusted) or market
     diagnostics = RealProbabilityDiagnostics(
@@ -111,6 +146,8 @@ def anchor_real_probability(
         residual_caps=caps,
         relative_caps=relative_caps,
         longshot_penalties=penalties,
+        underdog_penalties=underdog_penalties,
+        favorite_downside_caps=favorite_downside_caps,
         warnings=list(dict.fromkeys(warnings)),
     )
     return normalized, diagnostics
@@ -134,5 +171,7 @@ def diagnostics_to_dict(diagnostics: RealProbabilityDiagnostics) -> dict[str, An
         "residual_caps": diagnostics.residual_caps,
         "relative_caps": diagnostics.relative_caps,
         "longshot_penalties": diagnostics.longshot_penalties,
+        "underdog_penalties": diagnostics.underdog_penalties,
+        "favorite_downside_caps": diagnostics.favorite_downside_caps,
         "warnings": diagnostics.warnings,
     }

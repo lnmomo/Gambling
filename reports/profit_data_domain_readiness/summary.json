@@ -1,6 +1,6 @@
 {
   "method": "profit historical data domain readiness",
-  "generated_at": "2026-07-05T05:16:43.705465+00:00",
+  "generated_at": "2026-07-05T09:51:52.708580+00:00",
   "root": "data\\historical_csv\\football-data",
   "domain_count": 36,
   "search_ready_domains": 30,
@@ -1907,14 +1907,14 @@
       },
       "best_odds_source": "AVG_CLOSE",
       "best_odds_rows": 1146,
-      "official_pool_matches": 96,
+      "official_pool_matches": 97,
       "official_pool_with_odds": 42,
       "readiness": "REJECTED_BY_EXISTING_STABILITY_GATES",
       "research_priority": "LOW_DO_NOT_LOOSEN",
-      "blocker": "World Cup 1X2 odds are archived, but tournament holdout validation rejected the reusable allocation rule search (REJECT_NO_REUSABLE_WORLD_CUP_RULE; BLOCK_PRODUCTION_WORLD_CUP_SAMPLE_TOO_SMALL)",
+      "blocker": "World Cup 1X2 odds are archived, but no-lookahead validation rejected the reusable allocation rule search (REJECT_GRID_BEST_POSITIVE_BUT_UNSTABLE)",
       "existing_evidence_status": "rejected_by_world_cup_tournament_holdout",
       "evidence_reports": [
-        "reports\\world_cup_tournament_validation_current\\summary.json"
+        "reports\\world_cup_portfolio_grid_current_research\\summary.json"
       ],
       "suggested_commands": [
         "python scripts/world_cup_tournament_validation.py --output-dir reports\\world_cup_tournament_validation_current",

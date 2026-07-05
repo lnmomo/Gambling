@@ -1,6 +1,6 @@
 {
   "method": "market-bias multi-window walk-forward optimizer",
-  "created_at": "2026-06-29T12:59:40.322080+00:00",
+  "created_at": "2026-07-05T09:36:27.608524+00:00",
   "config": {
     "odds_sources": [
       "AVG_OPEN",
@@ -20,44 +20,10 @@
     "max_drawdown_to_profit": 1.5,
     "min_pass_rate": 0.6,
     "min_source_pass_rate": 0.5,
+    "min_active_windows": 6,
     "window_evaluation_mode": "slice_full_no_lookahead_walk_forward_bets"
   },
   "candidate_summaries": [
-    {
-      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
-      "rules": [
-        "league|outcome|odds_bucket=I2|draw|[2.8,3.5)"
-      ],
-      "window_count": 12,
-      "passed_windows": 8,
-      "pass_rate": 0.6667,
-      "source_count": 2,
-      "source_passes": 2,
-      "source_pass_rate": 1.0,
-      "total_bets": 2639,
-      "total_staked": 26390.0,
-      "total_profit": 2335.1,
-      "combined_roi_pct": 8.85,
-      "worst_window_roi_pct": -5.48,
-      "worst_source_roi_pct": 7.62,
-      "source_summary": [
-        {
-          "odds_source": "AVG_CLOSE",
-          "windows": 6,
-          "passed_windows": 4,
-          "profit": 1004.1,
-          "roi_pct": 7.62
-        },
-        {
-          "odds_source": "AVG_OPEN",
-          "windows": 6,
-          "passed_windows": 4,
-          "profit": 1331.0,
-          "roi_pct": 10.07
-        }
-      ],
-      "decision": "MULTI_WINDOW_SHADOW_CANDIDATE"
-    },
     {
       "candidate_id": "market-bias-i2-draw-plus-sp1-home-v1",
       "rules": [
@@ -65,31 +31,82 @@
         "league|outcome|market_prob_bucket=SP1|home|[0.55,1.00]"
       ],
       "window_count": 12,
-      "passed_windows": 7,
-      "pass_rate": 0.5833,
+      "passed_windows": 3,
+      "pass_rate": 0.25,
+      "active_window_count": 10,
+      "active_passed_windows": 3,
+      "active_pass_rate": 0.3,
+      "min_active_windows": 6,
       "source_count": 2,
       "source_passes": 2,
       "source_pass_rate": 1.0,
-      "total_bets": 3074,
-      "total_staked": 30740.0,
-      "total_profit": 2707.7,
-      "combined_roi_pct": 8.81,
-      "worst_window_roi_pct": -5.61,
-      "worst_source_roi_pct": 7.28,
+      "total_bets": 1331,
+      "total_staked": 13310.0,
+      "total_profit": 341.9,
+      "combined_roi_pct": 2.57,
+      "worst_window_roi_pct": -18.42,
+      "worst_source_roi_pct": 0.8,
       "source_summary": [
         {
           "odds_source": "AVG_CLOSE",
           "windows": 6,
-          "passed_windows": 4,
-          "profit": 1091.6,
-          "roi_pct": 7.28
+          "active_windows": 5,
+          "passed_windows": 2,
+          "active_passed_windows": 2,
+          "profit": 46.1,
+          "roi_pct": 0.8
         },
         {
           "odds_source": "AVG_OPEN",
           "windows": 6,
-          "passed_windows": 3,
-          "profit": 1616.1,
-          "roi_pct": 10.27
+          "active_windows": 5,
+          "passed_windows": 1,
+          "active_passed_windows": 1,
+          "profit": 295.8,
+          "roi_pct": 3.92
+        }
+      ],
+      "decision": "RESEARCH_ONLY_UNSTABLE_WINDOWS"
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
+      "rules": [
+        "league|outcome|odds_bucket=I2|draw|[2.8,3.5)"
+      ],
+      "window_count": 12,
+      "passed_windows": 3,
+      "pass_rate": 0.25,
+      "active_window_count": 9,
+      "active_passed_windows": 3,
+      "active_pass_rate": 0.3333,
+      "min_active_windows": 6,
+      "source_count": 2,
+      "source_passes": 2,
+      "source_pass_rate": 1.0,
+      "total_bets": 1199,
+      "total_staked": 11990.0,
+      "total_profit": 308.1,
+      "combined_roi_pct": 2.57,
+      "worst_window_roi_pct": -16.03,
+      "worst_source_roi_pct": 1.75,
+      "source_summary": [
+        {
+          "odds_source": "AVG_CLOSE",
+          "windows": 6,
+          "active_windows": 4,
+          "passed_windows": 2,
+          "active_passed_windows": 2,
+          "profit": 92.5,
+          "roi_pct": 1.75
+        },
+        {
+          "odds_source": "AVG_OPEN",
+          "windows": 6,
+          "active_windows": 5,
+          "passed_windows": 1,
+          "active_passed_windows": 1,
+          "profit": 215.6,
+          "roi_pct": 3.22
         }
       ],
       "decision": "RESEARCH_ONLY_UNSTABLE_WINDOWS"
@@ -100,34 +117,42 @@
         "league|outcome|market_prob_bucket=SP1|home|[0.55,1.00]"
       ],
       "window_count": 12,
-      "passed_windows": 2,
-      "pass_rate": 0.1667,
+      "passed_windows": 0,
+      "pass_rate": 0.0,
+      "active_window_count": 6,
+      "active_passed_windows": 0,
+      "active_pass_rate": 0.0,
+      "min_active_windows": 6,
       "source_count": 2,
-      "source_passes": 1,
-      "source_pass_rate": 0.5,
-      "total_bets": 435,
-      "total_staked": 4350.0,
-      "total_profit": 372.6,
-      "combined_roi_pct": 8.57,
-      "worst_window_roi_pct": -6.96,
-      "worst_source_roi_pct": 4.78,
+      "source_passes": 0,
+      "source_pass_rate": 0.0,
+      "total_bets": 132,
+      "total_staked": 1320.0,
+      "total_profit": 33.8,
+      "combined_roi_pct": 2.56,
+      "worst_window_roi_pct": -26.67,
+      "worst_source_roi_pct": -9.67,
       "source_summary": [
         {
           "odds_source": "AVG_CLOSE",
           "windows": 6,
+          "active_windows": 4,
           "passed_windows": 0,
-          "profit": 87.5,
-          "roi_pct": 4.78
+          "active_passed_windows": 0,
+          "profit": -46.4,
+          "roi_pct": -9.67
         },
         {
           "odds_source": "AVG_OPEN",
           "windows": 6,
-          "passed_windows": 2,
-          "profit": 285.1,
-          "roi_pct": 11.31
+          "active_windows": 2,
+          "passed_windows": 0,
+          "active_passed_windows": 0,
+          "profit": 80.2,
+          "roi_pct": 9.55
         }
       ],
-      "decision": "RESEARCH_ONLY_UNSTABLE_WINDOWS"
+      "decision": "REJECT_UNSTABLE"
     }
   ],
   "rows": [
@@ -136,230 +161,6 @@
       "odds_source": "AVG_OPEN",
       "window_start": "2022-08",
       "window_end": "2023-07",
-      "bets": 28,
-      "total_staked": 280.0,
-      "profit": 70.6,
-      "roi_pct": 25.21,
-      "max_drawdown": 10.0,
-      "active_bet_days": 5,
-      "positive_months": 1,
-      "negative_months": 0,
-      "walk_forward_active_months": 1,
-      "passes_window": true,
-      "fail_reasons": []
-    },
-    {
-      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
-      "odds_source": "AVG_OPEN",
-      "window_start": "2023-02",
-      "window_end": "2024-01",
-      "bets": 210,
-      "total_staked": 2100.0,
-      "profit": -3.2,
-      "roi_pct": -0.15,
-      "max_drawdown": 184.4,
-      "active_bet_days": 65,
-      "positive_months": 3,
-      "negative_months": 4,
-      "walk_forward_active_months": 7,
-      "passes_window": false,
-      "fail_reasons": [
-        "profit<=0",
-        "roi<minimum",
-        "positive_month_edge<minimum",
-        "drawdown_to_profit>maximum"
-      ]
-    },
-    {
-      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
-      "odds_source": "AVG_OPEN",
-      "window_start": "2023-08",
-      "window_end": "2024-07",
-      "bets": 249,
-      "total_staked": 2490.0,
-      "profit": -88.7,
-      "roi_pct": -3.56,
-      "max_drawdown": 208.8,
-      "active_bet_days": 80,
-      "positive_months": 3,
-      "negative_months": 5,
-      "walk_forward_active_months": 8,
-      "passes_window": false,
-      "fail_reasons": [
-        "profit<=0",
-        "roi<minimum",
-        "positive_month_edge<minimum",
-        "drawdown_to_profit>maximum"
-      ]
-    },
-    {
-      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
-      "odds_source": "AVG_OPEN",
-      "window_start": "2024-02",
-      "window_end": "2025-01",
-      "bets": 233,
-      "total_staked": 2330.0,
-      "profit": 518.8,
-      "roi_pct": 22.27,
-      "max_drawdown": 115.5,
-      "active_bet_days": 71,
-      "positive_months": 5,
-      "negative_months": 2,
-      "walk_forward_active_months": 7,
-      "passes_window": true,
-      "fail_reasons": []
-    },
-    {
-      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
-      "odds_source": "AVG_OPEN",
-      "window_start": "2024-08",
-      "window_end": "2025-07",
-      "bets": 290,
-      "total_staked": 2900.0,
-      "profit": 558.0,
-      "roi_pct": 19.24,
-      "max_drawdown": 143.1,
-      "active_bet_days": 85,
-      "positive_months": 7,
-      "negative_months": 2,
-      "walk_forward_active_months": 9,
-      "passes_window": true,
-      "fail_reasons": []
-    },
-    {
-      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
-      "odds_source": "AVG_OPEN",
-      "window_start": "2025-02",
-      "window_end": "2026-01",
-      "bets": 312,
-      "total_staked": 3120.0,
-      "profit": 275.5,
-      "roi_pct": 8.83,
-      "max_drawdown": 143.1,
-      "active_bet_days": 93,
-      "positive_months": 7,
-      "negative_months": 3,
-      "walk_forward_active_months": 10,
-      "passes_window": true,
-      "fail_reasons": []
-    },
-    {
-      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
-      "odds_source": "AVG_CLOSE",
-      "window_start": "2022-08",
-      "window_end": "2023-07",
-      "bets": 29,
-      "total_staked": 290.0,
-      "profit": 60.8,
-      "roi_pct": 20.97,
-      "max_drawdown": 17.9,
-      "active_bet_days": 6,
-      "positive_months": 1,
-      "negative_months": 0,
-      "walk_forward_active_months": 1,
-      "passes_window": true,
-      "fail_reasons": []
-    },
-    {
-      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
-      "odds_source": "AVG_CLOSE",
-      "window_start": "2023-02",
-      "window_end": "2024-01",
-      "bets": 217,
-      "total_staked": 2170.0,
-      "profit": -77.8,
-      "roi_pct": -3.59,
-      "max_drawdown": 247.2,
-      "active_bet_days": 64,
-      "positive_months": 3,
-      "negative_months": 4,
-      "walk_forward_active_months": 7,
-      "passes_window": false,
-      "fail_reasons": [
-        "profit<=0",
-        "roi<minimum",
-        "positive_month_edge<minimum",
-        "drawdown_to_profit>maximum"
-      ]
-    },
-    {
-      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
-      "odds_source": "AVG_CLOSE",
-      "window_start": "2023-08",
-      "window_end": "2024-07",
-      "bets": 256,
-      "total_staked": 2560.0,
-      "profit": -140.3,
-      "roi_pct": -5.48,
-      "max_drawdown": 248.9,
-      "active_bet_days": 78,
-      "positive_months": 3,
-      "negative_months": 5,
-      "walk_forward_active_months": 8,
-      "passes_window": false,
-      "fail_reasons": [
-        "profit<=0",
-        "roi<minimum",
-        "positive_month_edge<minimum",
-        "drawdown_to_profit>maximum"
-      ]
-    },
-    {
-      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
-      "odds_source": "AVG_CLOSE",
-      "window_start": "2024-02",
-      "window_end": "2025-01",
-      "bets": 235,
-      "total_staked": 2350.0,
-      "profit": 402.7,
-      "roi_pct": 17.14,
-      "max_drawdown": 161.9,
-      "active_bet_days": 70,
-      "positive_months": 5,
-      "negative_months": 2,
-      "walk_forward_active_months": 7,
-      "passes_window": true,
-      "fail_reasons": []
-    },
-    {
-      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
-      "odds_source": "AVG_CLOSE",
-      "window_start": "2024-08",
-      "window_end": "2025-07",
-      "bets": 282,
-      "total_staked": 2820.0,
-      "profit": 505.7,
-      "roi_pct": 17.93,
-      "max_drawdown": 126.8,
-      "active_bet_days": 84,
-      "positive_months": 7,
-      "negative_months": 2,
-      "walk_forward_active_months": 9,
-      "passes_window": true,
-      "fail_reasons": []
-    },
-    {
-      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
-      "odds_source": "AVG_CLOSE",
-      "window_start": "2025-02",
-      "window_end": "2026-01",
-      "bets": 298,
-      "total_staked": 2980.0,
-      "profit": 253.0,
-      "roi_pct": 8.49,
-      "max_drawdown": 141.1,
-      "active_bet_days": 92,
-      "positive_months": 7,
-      "negative_months": 3,
-      "walk_forward_active_months": 10,
-      "passes_window": true,
-      "fail_reasons": []
-    },
-    {
-      "candidate_id": "market-bias-sp1-home-market-prob-0.55-1.00-v1",
-      "odds_source": "AVG_OPEN",
-      "window_start": "2022-08",
-      "window_end": "2023-07",
       "bets": 0,
       "total_staked": 0.0,
       "profit": 0.0,
@@ -369,6 +170,8 @@
       "positive_months": 0,
       "negative_months": 0,
       "walk_forward_active_months": 0,
+      "rule_contributions": [],
+      "active_rules": 0,
       "passes_window": false,
       "fail_reasons": [
         "bets<minimum",
@@ -379,158 +182,545 @@
       ]
     },
     {
-      "candidate_id": "market-bias-sp1-home-market-prob-0.55-1.00-v1",
+      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
       "odds_source": "AVG_OPEN",
       "window_start": "2023-02",
       "window_end": "2024-01",
-      "bets": 36,
-      "total_staked": 360.0,
-      "profit": 55.1,
-      "roi_pct": 15.31,
-      "max_drawdown": 22.7,
-      "active_bet_days": 25,
-      "positive_months": 3,
-      "negative_months": 0,
-      "walk_forward_active_months": 3,
-      "passes_window": true,
-      "fail_reasons": []
-    },
-    {
-      "candidate_id": "market-bias-sp1-home-market-prob-0.55-1.00-v1",
-      "odds_source": "AVG_OPEN",
-      "window_start": "2023-08",
-      "window_end": "2024-07",
-      "bets": 78,
-      "total_staked": 780.0,
-      "profit": 95.2,
-      "roi_pct": 12.21,
-      "max_drawdown": 22.7,
-      "active_bet_days": 58,
-      "positive_months": 5,
-      "negative_months": 2,
-      "walk_forward_active_months": 7,
-      "passes_window": true,
-      "fail_reasons": []
-    },
-    {
-      "candidate_id": "market-bias-sp1-home-market-prob-0.55-1.00-v1",
-      "odds_source": "AVG_OPEN",
-      "window_start": "2024-02",
-      "window_end": "2025-01",
-      "bets": 87,
-      "total_staked": 870.0,
-      "profit": 78.7,
-      "roi_pct": 9.05,
-      "max_drawdown": 37.8,
-      "active_bet_days": 64,
-      "positive_months": 4,
-      "negative_months": 5,
-      "walk_forward_active_months": 9,
-      "passes_window": false,
-      "fail_reasons": [
-        "positive_month_edge<minimum"
-      ]
-    },
-    {
-      "candidate_id": "market-bias-sp1-home-market-prob-0.55-1.00-v1",
-      "odds_source": "AVG_OPEN",
-      "window_start": "2024-08",
-      "window_end": "2025-07",
-      "bets": 45,
-      "total_staked": 450.0,
-      "profit": 38.6,
-      "roi_pct": 8.58,
-      "max_drawdown": 20.0,
-      "active_bet_days": 31,
-      "positive_months": 2,
-      "negative_months": 3,
-      "walk_forward_active_months": 5,
-      "passes_window": false,
-      "fail_reasons": [
-        "positive_month_edge<minimum"
-      ]
-    },
-    {
-      "candidate_id": "market-bias-sp1-home-market-prob-0.55-1.00-v1",
-      "odds_source": "AVG_OPEN",
-      "window_start": "2025-02",
-      "window_end": "2026-01",
-      "bets": 6,
-      "total_staked": 60.0,
-      "profit": 17.5,
-      "roi_pct": 29.17,
-      "max_drawdown": 0.0,
-      "active_bet_days": 5,
-      "positive_months": 1,
-      "negative_months": 0,
-      "walk_forward_active_months": 1,
-      "passes_window": false,
-      "fail_reasons": [
-        "bets<minimum"
-      ]
-    },
-    {
-      "candidate_id": "market-bias-sp1-home-market-prob-0.55-1.00-v1",
-      "odds_source": "AVG_CLOSE",
-      "window_start": "2022-08",
-      "window_end": "2023-07",
-      "bets": 0,
-      "total_staked": 0.0,
-      "profit": 0.0,
-      "roi_pct": 0.0,
-      "max_drawdown": 0.0,
-      "active_bet_days": 0,
-      "positive_months": 0,
-      "negative_months": 0,
-      "walk_forward_active_months": 0,
-      "passes_window": false,
-      "fail_reasons": [
-        "bets<minimum",
-        "profit<=0",
-        "roi<minimum",
-        "positive_month_edge<minimum",
-        "drawdown_to_profit>maximum"
-      ]
-    },
-    {
-      "candidate_id": "market-bias-sp1-home-market-prob-0.55-1.00-v1",
-      "odds_source": "AVG_CLOSE",
-      "window_start": "2023-02",
-      "window_end": "2024-01",
-      "bets": 0,
-      "total_staked": 0.0,
-      "profit": 0.0,
-      "roi_pct": 0.0,
-      "max_drawdown": 0.0,
-      "active_bet_days": 0,
-      "positive_months": 0,
-      "negative_months": 0,
-      "walk_forward_active_months": 0,
-      "passes_window": false,
-      "fail_reasons": [
-        "bets<minimum",
-        "profit<=0",
-        "roi<minimum",
-        "positive_month_edge<minimum",
-        "drawdown_to_profit>maximum"
-      ]
-    },
-    {
-      "candidate_id": "market-bias-sp1-home-market-prob-0.55-1.00-v1",
-      "odds_source": "AVG_CLOSE",
-      "window_start": "2023-08",
-      "window_end": "2024-07",
-      "bets": 25,
-      "total_staked": 250.0,
-      "profit": -17.4,
-      "roi_pct": -6.96,
-      "max_drawdown": 30.0,
-      "active_bet_days": 15,
+      "bets": 72,
+      "total_staked": 720.0,
+      "profit": -42.7,
+      "roi_pct": -5.93,
+      "max_drawdown": 197.4,
+      "active_bet_days": 22,
       "positive_months": 0,
       "negative_months": 2,
       "walk_forward_active_months": 2,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|odds_bucket=I2|draw|[2.8,3.5)",
+          "bets": 72,
+          "profit": -42.7,
+          "roi_pct": -5.93
+        }
+      ],
+      "active_rules": 1,
       "passes_window": false,
       "fail_reasons": [
+        "profit<=0",
+        "roi<minimum",
+        "positive_month_edge<minimum",
+        "drawdown_to_profit>maximum"
+      ]
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
+      "odds_source": "AVG_OPEN",
+      "window_start": "2023-08",
+      "window_end": "2024-07",
+      "bets": 72,
+      "total_staked": 720.0,
+      "profit": -42.7,
+      "roi_pct": -5.93,
+      "max_drawdown": 197.4,
+      "active_bet_days": 22,
+      "positive_months": 0,
+      "negative_months": 2,
+      "walk_forward_active_months": 2,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|odds_bucket=I2|draw|[2.8,3.5)",
+          "bets": 72,
+          "profit": -42.7,
+          "roi_pct": -5.93
+        }
+      ],
+      "active_rules": 1,
+      "passes_window": false,
+      "fail_reasons": [
+        "profit<=0",
+        "roi<minimum",
+        "positive_month_edge<minimum",
+        "drawdown_to_profit>maximum"
+      ]
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
+      "odds_source": "AVG_OPEN",
+      "window_start": "2024-02",
+      "window_end": "2025-01",
+      "bets": 70,
+      "total_staked": 700.0,
+      "profit": 63.5,
+      "roi_pct": 9.07,
+      "max_drawdown": 83.7,
+      "active_bet_days": 20,
+      "positive_months": 1,
+      "negative_months": 1,
+      "walk_forward_active_months": 2,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|odds_bucket=I2|draw|[2.8,3.5)",
+          "bets": 70,
+          "profit": 63.5,
+          "roi_pct": 9.07
+        }
+      ],
+      "active_rules": 1,
+      "passes_window": false,
+      "fail_reasons": [
+        "positive_month_edge<minimum"
+      ]
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
+      "odds_source": "AVG_OPEN",
+      "window_start": "2024-08",
+      "window_end": "2025-07",
+      "bets": 194,
+      "total_staked": 1940.0,
+      "profit": 87.8,
+      "roi_pct": 4.53,
+      "max_drawdown": 143.1,
+      "active_bet_days": 54,
+      "positive_months": 4,
+      "negative_months": 2,
+      "walk_forward_active_months": 6,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|odds_bucket=I2|draw|[2.8,3.5)",
+          "bets": 194,
+          "profit": 87.8,
+          "roi_pct": 4.53
+        }
+      ],
+      "active_rules": 1,
+      "passes_window": false,
+      "fail_reasons": [
+        "drawdown_to_profit>maximum"
+      ]
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
+      "odds_source": "AVG_OPEN",
+      "window_start": "2025-02",
+      "window_end": "2026-01",
+      "bets": 262,
+      "total_staked": 2620.0,
+      "profit": 149.7,
+      "roi_pct": 5.71,
+      "max_drawdown": 143.1,
+      "active_bet_days": 76,
+      "positive_months": 5,
+      "negative_months": 3,
+      "walk_forward_active_months": 8,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|odds_bucket=I2|draw|[2.8,3.5)",
+          "bets": 262,
+          "profit": 149.7,
+          "roi_pct": 5.71
+        }
+      ],
+      "active_rules": 1,
+      "passes_window": true,
+      "fail_reasons": []
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
+      "odds_source": "AVG_CLOSE",
+      "window_start": "2022-08",
+      "window_end": "2023-07",
+      "bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "active_bet_days": 0,
+      "positive_months": 0,
+      "negative_months": 0,
+      "walk_forward_active_months": 0,
+      "rule_contributions": [],
+      "active_rules": 0,
+      "passes_window": false,
+      "fail_reasons": [
+        "bets<minimum",
+        "profit<=0",
+        "roi<minimum",
+        "positive_month_edge<minimum",
+        "drawdown_to_profit>maximum"
+      ]
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
+      "odds_source": "AVG_CLOSE",
+      "window_start": "2023-02",
+      "window_end": "2024-01",
+      "bets": 74,
+      "total_staked": 740.0,
+      "profit": -118.6,
+      "roi_pct": -16.03,
+      "max_drawdown": 217.5,
+      "active_bet_days": 22,
+      "positive_months": 0,
+      "negative_months": 2,
+      "walk_forward_active_months": 2,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|odds_bucket=I2|draw|[2.8,3.5)",
+          "bets": 74,
+          "profit": -118.6,
+          "roi_pct": -16.03
+        }
+      ],
+      "active_rules": 1,
+      "passes_window": false,
+      "fail_reasons": [
+        "profit<=0",
+        "roi<minimum",
+        "positive_month_edge<minimum",
+        "drawdown_to_profit>maximum"
+      ]
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
+      "odds_source": "AVG_CLOSE",
+      "window_start": "2023-08",
+      "window_end": "2024-07",
+      "bets": 74,
+      "total_staked": 740.0,
+      "profit": -118.6,
+      "roi_pct": -16.03,
+      "max_drawdown": 217.5,
+      "active_bet_days": 22,
+      "positive_months": 0,
+      "negative_months": 2,
+      "walk_forward_active_months": 2,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|odds_bucket=I2|draw|[2.8,3.5)",
+          "bets": 74,
+          "profit": -118.6,
+          "roi_pct": -16.03
+        }
+      ],
+      "active_rules": 1,
+      "passes_window": false,
+      "fail_reasons": [
+        "profit<=0",
+        "roi<minimum",
+        "positive_month_edge<minimum",
+        "drawdown_to_profit>maximum"
+      ]
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
+      "odds_source": "AVG_CLOSE",
+      "window_start": "2024-02",
+      "window_end": "2025-01",
+      "bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "active_bet_days": 0,
+      "positive_months": 0,
+      "negative_months": 0,
+      "walk_forward_active_months": 0,
+      "rule_contributions": [],
+      "active_rules": 0,
+      "passes_window": false,
+      "fail_reasons": [
+        "bets<minimum",
+        "profit<=0",
+        "roi<minimum",
+        "positive_month_edge<minimum",
+        "drawdown_to_profit>maximum"
+      ]
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
+      "odds_source": "AVG_CLOSE",
+      "window_start": "2024-08",
+      "window_end": "2025-07",
+      "bets": 115,
+      "total_staked": 1150.0,
+      "profit": 101.3,
+      "roi_pct": 8.81,
+      "max_drawdown": 126.8,
+      "active_bet_days": 34,
+      "positive_months": 3,
+      "negative_months": 1,
+      "walk_forward_active_months": 4,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|odds_bucket=I2|draw|[2.8,3.5)",
+          "bets": 115,
+          "profit": 101.3,
+          "roi_pct": 8.81
+        }
+      ],
+      "active_rules": 1,
+      "passes_window": true,
+      "fail_reasons": []
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-2.8-3.5-v1",
+      "odds_source": "AVG_CLOSE",
+      "window_start": "2025-02",
+      "window_end": "2026-01",
+      "bets": 266,
+      "total_staked": 2660.0,
+      "profit": 228.4,
+      "roi_pct": 8.59,
+      "max_drawdown": 165.7,
+      "active_bet_days": 82,
+      "positive_months": 6,
+      "negative_months": 3,
+      "walk_forward_active_months": 9,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|odds_bucket=I2|draw|[2.8,3.5)",
+          "bets": 266,
+          "profit": 228.4,
+          "roi_pct": 8.59
+        }
+      ],
+      "active_rules": 1,
+      "passes_window": true,
+      "fail_reasons": []
+    },
+    {
+      "candidate_id": "market-bias-sp1-home-market-prob-0.55-1.00-v1",
+      "odds_source": "AVG_OPEN",
+      "window_start": "2022-08",
+      "window_end": "2023-07",
+      "bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "active_bet_days": 0,
+      "positive_months": 0,
+      "negative_months": 0,
+      "walk_forward_active_months": 0,
+      "rule_contributions": [],
+      "active_rules": 0,
+      "passes_window": false,
+      "fail_reasons": [
+        "bets<minimum",
+        "profit<=0",
+        "roi<minimum",
+        "positive_month_edge<minimum",
+        "drawdown_to_profit>maximum"
+      ]
+    },
+    {
+      "candidate_id": "market-bias-sp1-home-market-prob-0.55-1.00-v1",
+      "odds_source": "AVG_OPEN",
+      "window_start": "2023-02",
+      "window_end": "2024-01",
+      "bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "active_bet_days": 0,
+      "positive_months": 0,
+      "negative_months": 0,
+      "walk_forward_active_months": 0,
+      "rule_contributions": [],
+      "active_rules": 0,
+      "passes_window": false,
+      "fail_reasons": [
+        "bets<minimum",
+        "profit<=0",
+        "roi<minimum",
+        "positive_month_edge<minimum",
+        "drawdown_to_profit>maximum"
+      ]
+    },
+    {
+      "candidate_id": "market-bias-sp1-home-market-prob-0.55-1.00-v1",
+      "odds_source": "AVG_OPEN",
+      "window_start": "2023-08",
+      "window_end": "2024-07",
+      "bets": 42,
+      "total_staked": 420.0,
+      "profit": 40.1,
+      "roi_pct": 9.55,
+      "max_drawdown": 20.8,
+      "active_bet_days": 33,
+      "positive_months": 2,
+      "negative_months": 2,
+      "walk_forward_active_months": 4,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|market_prob_bucket=SP1|home|[0.55,1.00]",
+          "bets": 42,
+          "profit": 40.1,
+          "roi_pct": 9.55
+        }
+      ],
+      "active_rules": 1,
+      "passes_window": false,
+      "fail_reasons": [
+        "positive_month_edge<minimum"
+      ]
+    },
+    {
+      "candidate_id": "market-bias-sp1-home-market-prob-0.55-1.00-v1",
+      "odds_source": "AVG_OPEN",
+      "window_start": "2024-02",
+      "window_end": "2025-01",
+      "bets": 42,
+      "total_staked": 420.0,
+      "profit": 40.1,
+      "roi_pct": 9.55,
+      "max_drawdown": 20.8,
+      "active_bet_days": 33,
+      "positive_months": 2,
+      "negative_months": 2,
+      "walk_forward_active_months": 4,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|market_prob_bucket=SP1|home|[0.55,1.00]",
+          "bets": 42,
+          "profit": 40.1,
+          "roi_pct": 9.55
+        }
+      ],
+      "active_rules": 1,
+      "passes_window": false,
+      "fail_reasons": [
+        "positive_month_edge<minimum"
+      ]
+    },
+    {
+      "candidate_id": "market-bias-sp1-home-market-prob-0.55-1.00-v1",
+      "odds_source": "AVG_OPEN",
+      "window_start": "2024-08",
+      "window_end": "2025-07",
+      "bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "active_bet_days": 0,
+      "positive_months": 0,
+      "negative_months": 0,
+      "walk_forward_active_months": 0,
+      "rule_contributions": [],
+      "active_rules": 0,
+      "passes_window": false,
+      "fail_reasons": [
+        "bets<minimum",
+        "profit<=0",
+        "roi<minimum",
+        "positive_month_edge<minimum",
+        "drawdown_to_profit>maximum"
+      ]
+    },
+    {
+      "candidate_id": "market-bias-sp1-home-market-prob-0.55-1.00-v1",
+      "odds_source": "AVG_OPEN",
+      "window_start": "2025-02",
+      "window_end": "2026-01",
+      "bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "active_bet_days": 0,
+      "positive_months": 0,
+      "negative_months": 0,
+      "walk_forward_active_months": 0,
+      "rule_contributions": [],
+      "active_rules": 0,
+      "passes_window": false,
+      "fail_reasons": [
+        "bets<minimum",
+        "profit<=0",
+        "roi<minimum",
+        "positive_month_edge<minimum",
+        "drawdown_to_profit>maximum"
+      ]
+    },
+    {
+      "candidate_id": "market-bias-sp1-home-market-prob-0.55-1.00-v1",
+      "odds_source": "AVG_CLOSE",
+      "window_start": "2022-08",
+      "window_end": "2023-07",
+      "bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "active_bet_days": 0,
+      "positive_months": 0,
+      "negative_months": 0,
+      "walk_forward_active_months": 0,
+      "rule_contributions": [],
+      "active_rules": 0,
+      "passes_window": false,
+      "fail_reasons": [
+        "bets<minimum",
+        "profit<=0",
+        "roi<minimum",
+        "positive_month_edge<minimum",
+        "drawdown_to_profit>maximum"
+      ]
+    },
+    {
+      "candidate_id": "market-bias-sp1-home-market-prob-0.55-1.00-v1",
+      "odds_source": "AVG_CLOSE",
+      "window_start": "2023-02",
+      "window_end": "2024-01",
+      "bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "active_bet_days": 0,
+      "positive_months": 0,
+      "negative_months": 0,
+      "walk_forward_active_months": 0,
+      "rule_contributions": [],
+      "active_rules": 0,
+      "passes_window": false,
+      "fail_reasons": [
+        "bets<minimum",
+        "profit<=0",
+        "roi<minimum",
+        "positive_month_edge<minimum",
+        "drawdown_to_profit>maximum"
+      ]
+    },
+    {
+      "candidate_id": "market-bias-sp1-home-market-prob-0.55-1.00-v1",
+      "odds_source": "AVG_CLOSE",
+      "window_start": "2023-08",
+      "window_end": "2024-07",
+      "bets": 6,
+      "total_staked": 60.0,
+      "profit": -16.0,
+      "roi_pct": -26.67,
+      "max_drawdown": 30.0,
+      "active_bet_days": 4,
+      "positive_months": 0,
+      "negative_months": 1,
+      "walk_forward_active_months": 1,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|market_prob_bucket=SP1|home|[0.55,1.00]",
+          "bets": 6,
+          "profit": -16.0,
+          "roi_pct": -26.67
+        }
+      ],
+      "active_rules": 1,
+      "passes_window": false,
+      "fail_reasons": [
+        "bets<minimum",
         "profit<=0",
         "roi<minimum",
         "positive_month_edge<minimum",
@@ -542,18 +732,31 @@
       "odds_source": "AVG_CLOSE",
       "window_start": "2024-02",
       "window_end": "2025-01",
-      "bets": 73,
-      "total_staked": 730.0,
-      "profit": 36.7,
-      "roi_pct": 5.03,
+      "bets": 12,
+      "total_staked": 120.0,
+      "profit": -22.1,
+      "roi_pct": -18.42,
       "max_drawdown": 30.0,
-      "active_bet_days": 47,
-      "positive_months": 3,
-      "negative_months": 4,
-      "walk_forward_active_months": 7,
+      "active_bet_days": 9,
+      "positive_months": 0,
+      "negative_months": 2,
+      "walk_forward_active_months": 2,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|market_prob_bucket=SP1|home|[0.55,1.00]",
+          "bets": 12,
+          "profit": -22.1,
+          "roi_pct": -18.42
+        }
+      ],
+      "active_rules": 1,
       "passes_window": false,
       "fail_reasons": [
-        "positive_month_edge<minimum"
+        "bets<minimum",
+        "profit<=0",
+        "roi<minimum",
+        "positive_month_edge<minimum",
+        "drawdown_to_profit>maximum"
       ]
     },
     {
@@ -561,149 +764,243 @@
       "odds_source": "AVG_CLOSE",
       "window_start": "2024-08",
       "window_end": "2025-07",
-      "bets": 60,
-      "total_staked": 600.0,
-      "profit": 53.0,
-      "roi_pct": 8.83,
-      "max_drawdown": 21.9,
-      "active_bet_days": 39,
+      "bets": 18,
+      "total_staked": 180.0,
+      "profit": -7.2,
+      "roi_pct": -4.0,
+      "max_drawdown": 17.1,
+      "active_bet_days": 12,
+      "positive_months": 0,
+      "negative_months": 2,
+      "walk_forward_active_months": 2,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|market_prob_bucket=SP1|home|[0.55,1.00]",
+          "bets": 18,
+          "profit": -7.2,
+          "roi_pct": -4.0
+        }
+      ],
+      "active_rules": 1,
+      "passes_window": false,
+      "fail_reasons": [
+        "bets<minimum",
+        "profit<=0",
+        "roi<minimum",
+        "positive_month_edge<minimum",
+        "drawdown_to_profit>maximum"
+      ]
+    },
+    {
+      "candidate_id": "market-bias-sp1-home-market-prob-0.55-1.00-v1",
+      "odds_source": "AVG_CLOSE",
+      "window_start": "2025-02",
+      "window_end": "2026-01",
+      "bets": 12,
+      "total_staked": 120.0,
+      "profit": -1.1,
+      "roi_pct": -0.92,
+      "max_drawdown": 17.1,
+      "active_bet_days": 7,
+      "positive_months": 0,
+      "negative_months": 1,
+      "walk_forward_active_months": 1,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|market_prob_bucket=SP1|home|[0.55,1.00]",
+          "bets": 12,
+          "profit": -1.1,
+          "roi_pct": -0.92
+        }
+      ],
+      "active_rules": 1,
+      "passes_window": false,
+      "fail_reasons": [
+        "bets<minimum",
+        "profit<=0",
+        "roi<minimum",
+        "positive_month_edge<minimum",
+        "drawdown_to_profit>maximum"
+      ]
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-plus-sp1-home-v1",
+      "odds_source": "AVG_OPEN",
+      "window_start": "2022-08",
+      "window_end": "2023-07",
+      "bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "active_bet_days": 0,
+      "positive_months": 0,
+      "negative_months": 0,
+      "walk_forward_active_months": 0,
+      "rule_contributions": [],
+      "active_rules": 0,
+      "passes_window": false,
+      "fail_reasons": [
+        "bets<minimum",
+        "profit<=0",
+        "roi<minimum",
+        "positive_month_edge<minimum",
+        "drawdown_to_profit>maximum"
+      ]
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-plus-sp1-home-v1",
+      "odds_source": "AVG_OPEN",
+      "window_start": "2023-02",
+      "window_end": "2024-01",
+      "bets": 72,
+      "total_staked": 720.0,
+      "profit": -42.7,
+      "roi_pct": -5.93,
+      "max_drawdown": 197.4,
+      "active_bet_days": 22,
+      "positive_months": 0,
+      "negative_months": 2,
+      "walk_forward_active_months": 2,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|odds_bucket=I2|draw|[2.8,3.5)",
+          "bets": 72,
+          "profit": -42.7,
+          "roi_pct": -5.93
+        }
+      ],
+      "active_rules": 1,
+      "passes_window": false,
+      "fail_reasons": [
+        "profit<=0",
+        "roi<minimum",
+        "positive_month_edge<minimum",
+        "drawdown_to_profit>maximum"
+      ]
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-plus-sp1-home-v1",
+      "odds_source": "AVG_OPEN",
+      "window_start": "2023-08",
+      "window_end": "2024-07",
+      "bets": 114,
+      "total_staked": 1140.0,
+      "profit": -2.6,
+      "roi_pct": -0.23,
+      "max_drawdown": 197.4,
+      "active_bet_days": 55,
+      "positive_months": 2,
+      "negative_months": 4,
+      "walk_forward_active_months": 6,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|market_prob_bucket=SP1|home|[0.55,1.00]",
+          "bets": 42,
+          "profit": 40.1,
+          "roi_pct": 9.55
+        },
+        {
+          "rule_label": "league|outcome|odds_bucket=I2|draw|[2.8,3.5)",
+          "bets": 72,
+          "profit": -42.7,
+          "roi_pct": -5.93
+        }
+      ],
+      "active_rules": 2,
+      "passes_window": false,
+      "fail_reasons": [
+        "profit<=0",
+        "roi<minimum",
+        "positive_month_edge<minimum",
+        "drawdown_to_profit>maximum"
+      ]
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-plus-sp1-home-v1",
+      "odds_source": "AVG_OPEN",
+      "window_start": "2024-02",
+      "window_end": "2025-01",
+      "bets": 112,
+      "total_staked": 1120.0,
+      "profit": 103.6,
+      "roi_pct": 9.25,
+      "max_drawdown": 83.7,
+      "active_bet_days": 53,
       "positive_months": 3,
       "negative_months": 3,
       "walk_forward_active_months": 6,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|odds_bucket=I2|draw|[2.8,3.5)",
+          "bets": 70,
+          "profit": 63.5,
+          "roi_pct": 9.07
+        },
+        {
+          "rule_label": "league|outcome|market_prob_bucket=SP1|home|[0.55,1.00]",
+          "bets": 42,
+          "profit": 40.1,
+          "roi_pct": 9.55
+        }
+      ],
+      "active_rules": 2,
       "passes_window": false,
       "fail_reasons": [
         "positive_month_edge<minimum"
       ]
     },
     {
-      "candidate_id": "market-bias-sp1-home-market-prob-0.55-1.00-v1",
-      "odds_source": "AVG_CLOSE",
+      "candidate_id": "market-bias-i2-draw-plus-sp1-home-v1",
+      "odds_source": "AVG_OPEN",
+      "window_start": "2024-08",
+      "window_end": "2025-07",
+      "bets": 194,
+      "total_staked": 1940.0,
+      "profit": 87.8,
+      "roi_pct": 4.53,
+      "max_drawdown": 143.1,
+      "active_bet_days": 54,
+      "positive_months": 4,
+      "negative_months": 2,
+      "walk_forward_active_months": 6,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|odds_bucket=I2|draw|[2.8,3.5)",
+          "bets": 194,
+          "profit": 87.8,
+          "roi_pct": 4.53
+        }
+      ],
+      "active_rules": 1,
+      "passes_window": false,
+      "fail_reasons": [
+        "drawdown_to_profit>maximum"
+      ]
+    },
+    {
+      "candidate_id": "market-bias-i2-draw-plus-sp1-home-v1",
+      "odds_source": "AVG_OPEN",
       "window_start": "2025-02",
       "window_end": "2026-01",
-      "bets": 25,
-      "total_staked": 250.0,
-      "profit": 15.2,
-      "roi_pct": 6.08,
-      "max_drawdown": 25.5,
-      "active_bet_days": 18,
-      "positive_months": 1,
-      "negative_months": 2,
-      "walk_forward_active_months": 3,
-      "passes_window": false,
-      "fail_reasons": [
-        "positive_month_edge<minimum",
-        "drawdown_to_profit>maximum"
-      ]
-    },
-    {
-      "candidate_id": "market-bias-i2-draw-plus-sp1-home-v1",
-      "odds_source": "AVG_OPEN",
-      "window_start": "2022-08",
-      "window_end": "2023-07",
-      "bets": 28,
-      "total_staked": 280.0,
-      "profit": 70.6,
-      "roi_pct": 25.21,
-      "max_drawdown": 10.0,
-      "active_bet_days": 5,
-      "positive_months": 1,
-      "negative_months": 0,
-      "walk_forward_active_months": 1,
-      "passes_window": true,
-      "fail_reasons": []
-    },
-    {
-      "candidate_id": "market-bias-i2-draw-plus-sp1-home-v1",
-      "odds_source": "AVG_OPEN",
-      "window_start": "2023-02",
-      "window_end": "2024-01",
-      "bets": 246,
-      "total_staked": 2460.0,
-      "profit": 51.9,
-      "roi_pct": 2.11,
-      "max_drawdown": 137.5,
-      "active_bet_days": 73,
-      "positive_months": 3,
-      "negative_months": 4,
-      "walk_forward_active_months": 7,
-      "passes_window": false,
-      "fail_reasons": [
-        "roi<minimum",
-        "positive_month_edge<minimum",
-        "drawdown_to_profit>maximum"
-      ]
-    },
-    {
-      "candidate_id": "market-bias-i2-draw-plus-sp1-home-v1",
-      "odds_source": "AVG_OPEN",
-      "window_start": "2023-08",
-      "window_end": "2024-07",
-      "bets": 327,
-      "total_staked": 3270.0,
-      "profit": 6.5,
-      "roi_pct": 0.2,
-      "max_drawdown": 137.5,
-      "active_bet_days": 108,
-      "positive_months": 3,
-      "negative_months": 7,
-      "walk_forward_active_months": 10,
-      "passes_window": false,
-      "fail_reasons": [
-        "roi<minimum",
-        "positive_month_edge<minimum",
-        "drawdown_to_profit>maximum"
-      ]
-    },
-    {
-      "candidate_id": "market-bias-i2-draw-plus-sp1-home-v1",
-      "odds_source": "AVG_OPEN",
-      "window_start": "2024-02",
-      "window_end": "2025-01",
-      "bets": 320,
-      "total_staked": 3200.0,
-      "profit": 597.5,
-      "roi_pct": 18.67,
-      "max_drawdown": 80.3,
-      "active_bet_days": 100,
+      "bets": 262,
+      "total_staked": 2620.0,
+      "profit": 149.7,
+      "roi_pct": 5.71,
+      "max_drawdown": 143.1,
+      "active_bet_days": 76,
       "positive_months": 5,
-      "negative_months": 5,
-      "walk_forward_active_months": 10,
-      "passes_window": false,
-      "fail_reasons": [
-        "positive_month_edge<minimum"
-      ]
-    },
-    {
-      "candidate_id": "market-bias-i2-draw-plus-sp1-home-v1",
-      "odds_source": "AVG_OPEN",
-      "window_start": "2024-08",
-      "window_end": "2025-07",
-      "bets": 335,
-      "total_staked": 3350.0,
-      "profit": 596.6,
-      "roi_pct": 17.81,
-      "max_drawdown": 143.1,
-      "active_bet_days": 94,
-      "positive_months": 7,
       "negative_months": 3,
-      "walk_forward_active_months": 10,
-      "passes_window": true,
-      "fail_reasons": []
-    },
-    {
-      "candidate_id": "market-bias-i2-draw-plus-sp1-home-v1",
-      "odds_source": "AVG_OPEN",
-      "window_start": "2025-02",
-      "window_end": "2026-01",
-      "bets": 318,
-      "total_staked": 3180.0,
-      "profit": 293.0,
-      "roi_pct": 9.21,
-      "max_drawdown": 143.1,
-      "active_bet_days": 95,
-      "positive_months": 8,
-      "negative_months": 2,
-      "walk_forward_active_months": 10,
+      "walk_forward_active_months": 8,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|odds_bucket=I2|draw|[2.8,3.5)",
+          "bets": 262,
+          "profit": 149.7,
+          "roi_pct": 5.71
+        }
+      ],
+      "active_rules": 1,
       "passes_window": true,
       "fail_reasons": []
     },
@@ -712,32 +1009,49 @@
       "odds_source": "AVG_CLOSE",
       "window_start": "2022-08",
       "window_end": "2023-07",
-      "bets": 29,
-      "total_staked": 290.0,
-      "profit": 60.8,
-      "roi_pct": 20.97,
-      "max_drawdown": 17.9,
-      "active_bet_days": 6,
-      "positive_months": 1,
+      "bets": 0,
+      "total_staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "active_bet_days": 0,
+      "positive_months": 0,
       "negative_months": 0,
-      "walk_forward_active_months": 1,
-      "passes_window": true,
-      "fail_reasons": []
+      "walk_forward_active_months": 0,
+      "rule_contributions": [],
+      "active_rules": 0,
+      "passes_window": false,
+      "fail_reasons": [
+        "bets<minimum",
+        "profit<=0",
+        "roi<minimum",
+        "positive_month_edge<minimum",
+        "drawdown_to_profit>maximum"
+      ]
     },
     {
       "candidate_id": "market-bias-i2-draw-plus-sp1-home-v1",
       "odds_source": "AVG_CLOSE",
       "window_start": "2023-02",
       "window_end": "2024-01",
-      "bets": 217,
-      "total_staked": 2170.0,
-      "profit": -77.8,
-      "roi_pct": -3.59,
-      "max_drawdown": 247.2,
-      "active_bet_days": 64,
-      "positive_months": 3,
-      "negative_months": 4,
-      "walk_forward_active_months": 7,
+      "bets": 74,
+      "total_staked": 740.0,
+      "profit": -118.6,
+      "roi_pct": -16.03,
+      "max_drawdown": 217.5,
+      "active_bet_days": 22,
+      "positive_months": 0,
+      "negative_months": 2,
+      "walk_forward_active_months": 2,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|odds_bucket=I2|draw|[2.8,3.5)",
+          "bets": 74,
+          "profit": -118.6,
+          "roi_pct": -16.03
+        }
+      ],
+      "active_rules": 1,
       "passes_window": false,
       "fail_reasons": [
         "profit<=0",
@@ -751,15 +1065,30 @@
       "odds_source": "AVG_CLOSE",
       "window_start": "2023-08",
       "window_end": "2024-07",
-      "bets": 281,
-      "total_staked": 2810.0,
-      "profit": -157.7,
-      "roi_pct": -5.61,
-      "max_drawdown": 278.9,
-      "active_bet_days": 93,
-      "positive_months": 3,
-      "negative_months": 7,
-      "walk_forward_active_months": 10,
+      "bets": 80,
+      "total_staked": 800.0,
+      "profit": -134.6,
+      "roi_pct": -16.82,
+      "max_drawdown": 217.5,
+      "active_bet_days": 26,
+      "positive_months": 0,
+      "negative_months": 3,
+      "walk_forward_active_months": 3,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|market_prob_bucket=SP1|home|[0.55,1.00]",
+          "bets": 6,
+          "profit": -16.0,
+          "roi_pct": -26.67
+        },
+        {
+          "rule_label": "league|outcome|odds_bucket=I2|draw|[2.8,3.5)",
+          "bets": 74,
+          "profit": -118.6,
+          "roi_pct": -16.03
+        }
+      ],
+      "active_rules": 2,
       "passes_window": false,
       "fail_reasons": [
         "profit<=0",
@@ -773,32 +1102,62 @@
       "odds_source": "AVG_CLOSE",
       "window_start": "2024-02",
       "window_end": "2025-01",
-      "bets": 308,
-      "total_staked": 3080.0,
-      "profit": 439.4,
-      "roi_pct": 14.27,
-      "max_drawdown": 155.4,
-      "active_bet_days": 95,
-      "positive_months": 6,
-      "negative_months": 4,
-      "walk_forward_active_months": 10,
-      "passes_window": true,
-      "fail_reasons": []
+      "bets": 12,
+      "total_staked": 120.0,
+      "profit": -22.1,
+      "roi_pct": -18.42,
+      "max_drawdown": 30.0,
+      "active_bet_days": 9,
+      "positive_months": 0,
+      "negative_months": 2,
+      "walk_forward_active_months": 2,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|market_prob_bucket=SP1|home|[0.55,1.00]",
+          "bets": 12,
+          "profit": -22.1,
+          "roi_pct": -18.42
+        }
+      ],
+      "active_rules": 1,
+      "passes_window": false,
+      "fail_reasons": [
+        "bets<minimum",
+        "profit<=0",
+        "roi<minimum",
+        "positive_month_edge<minimum",
+        "drawdown_to_profit>maximum"
+      ]
     },
     {
       "candidate_id": "market-bias-i2-draw-plus-sp1-home-v1",
       "odds_source": "AVG_CLOSE",
       "window_start": "2024-08",
       "window_end": "2025-07",
-      "bets": 342,
-      "total_staked": 3420.0,
-      "profit": 558.7,
-      "roi_pct": 16.34,
+      "bets": 133,
+      "total_staked": 1330.0,
+      "profit": 94.1,
+      "roi_pct": 7.08,
       "max_drawdown": 138.3,
-      "active_bet_days": 96,
-      "positive_months": 8,
+      "active_bet_days": 41,
+      "positive_months": 3,
       "negative_months": 2,
-      "walk_forward_active_months": 10,
+      "walk_forward_active_months": 5,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|odds_bucket=I2|draw|[2.8,3.5)",
+          "bets": 115,
+          "profit": 101.3,
+          "roi_pct": 8.81
+        },
+        {
+          "rule_label": "league|outcome|market_prob_bucket=SP1|home|[0.55,1.00]",
+          "bets": 18,
+          "profit": -7.2,
+          "roi_pct": -4.0
+        }
+      ],
+      "active_rules": 2,
       "passes_window": true,
       "fail_reasons": []
     },
@@ -807,15 +1166,30 @@
       "odds_source": "AVG_CLOSE",
       "window_start": "2025-02",
       "window_end": "2026-01",
-      "bets": 323,
-      "total_staked": 3230.0,
-      "profit": 268.2,
-      "roi_pct": 8.3,
-      "max_drawdown": 138.3,
-      "active_bet_days": 99,
-      "positive_months": 7,
+      "bets": 278,
+      "total_staked": 2780.0,
+      "profit": 227.3,
+      "roi_pct": 8.18,
+      "max_drawdown": 165.7,
+      "active_bet_days": 84,
+      "positive_months": 6,
       "negative_months": 3,
-      "walk_forward_active_months": 10,
+      "walk_forward_active_months": 9,
+      "rule_contributions": [
+        {
+          "rule_label": "league|outcome|odds_bucket=I2|draw|[2.8,3.5)",
+          "bets": 266,
+          "profit": 228.4,
+          "roi_pct": 8.59
+        },
+        {
+          "rule_label": "league|outcome|market_prob_bucket=SP1|home|[0.55,1.00]",
+          "bets": 12,
+          "profit": -1.1,
+          "roi_pct": -0.92
+        }
+      ],
+      "active_rules": 2,
       "passes_window": true,
       "fail_reasons": []
     }

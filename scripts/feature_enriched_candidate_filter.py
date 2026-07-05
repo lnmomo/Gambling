@@ -62,7 +62,15 @@ class FeatureFilterConfig:
     @property
     def label(self) -> str:
         ev = str(self.min_predicted_ev).replace("-", "neg").replace(".", "p")
-        rules = "rules" + "_".join(rule.split("_", 1)[0].lower() for rule in self.selected_rules)
+        rules = "rules" + "_".join(
+            rule.lower()
+            .replace("[", "")
+            .replace("]", "")
+            .replace(")", "")
+            .replace(",", "_")
+            .replace(".", "p")
+            for rule in self.selected_rules
+        )
         return (
             f"{self.odds_source}_{rules}_train{self.train_months}_n{self.min_train_rows}"
             f"_ev{ev}_top{self.max_bets_per_day}_ridge{self.ridge:g}_cap{self.residual_cap:g}"

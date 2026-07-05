@@ -1,0 +1,4 @@
+﻿rule,odds_source,walk_forward_bets,walk_forward_profit,walk_forward_roi_pct,portfolio_bets,portfolio_staked,portfolio_profit,portfolio_roi_pct,portfolio_max_drawdown,positive_months,negative_months,positive_seasons,negative_seasons,passes_screen,fail_reasons
+"league|outcome|odds_bucket=USA|home|[2.2,2.8)",AVG_CLOSE,4,2.86,71.5,4,40.0,28.6,71.5,10.0,2,0,1,0,False,['bets<100']
+"league|outcome|odds_bucket=USA|home|[2.2,2.8)",MAX_CLOSE,56,2.37,4.23,56,560.0,23.7,4.23,62.9,4,4,2,1,False,"['bets<100', 'positive_months<=negative_months', 'drawdown>profit']"
+"league|outcome|odds_bucket=USA|home|[2.2,2.8)",PS_CLOSE,47,-8.86,-18.85,47,470.0,-88.6,-18.85,152.5,3,3,1,2,False,"['bets<100', 'profit<=0', 'roi<3%', 'positive_months<=negative_months', 'positive_seasons<=negative_seasons', 'drawdown>profit']"

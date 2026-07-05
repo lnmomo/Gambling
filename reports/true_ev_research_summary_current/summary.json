@@ -1,0 +1,100 @@
+{
+  "method": "true EV research evidence summary",
+  "created_at": "2026-07-05T09:49:49.730050+00:00",
+  "discovery_path": "reports\\batch_profit_domain_discovery_true_ev_current\\summary.json",
+  "selected_domains": [
+    "ARG",
+    "USA",
+    "BRA",
+    "MEX",
+    "ROU"
+  ],
+  "domain_count": 5,
+  "domains_with_diagnostic_hits": 5,
+  "screened_domains": 5,
+  "screen_passed_rules": 0,
+  "multi_window_passed_candidates": 0,
+  "decision": "NO_TRUE_EV_CANDIDATE_FOUND",
+  "screens": [
+    {
+      "domain": "ARG",
+      "path": "reports\\market_bias_candidate_screen_arg_true_ev_current\\summary.json",
+      "candidate_count": 3,
+      "passed_count": 0,
+      "status": "REJECTED_BY_CROSS_SOURCE_SCREEN",
+      "passed_rules": 0,
+      "best_rule": "league|outcome|market_prob_bucket=ARG|home|[0.20,0.28)",
+      "best_combined_roi_pct": 21.59,
+      "best_total_bets": 27,
+      "best_worst_source_roi_pct": -8.69,
+      "reason": "AVG_CLOSE: bets<100; MAX_CLOSE: bets<100; PS_CLOSE: bets<100,profit<=0,roi<3%,drawdown>profit"
+    },
+    {
+      "domain": "USA",
+      "path": "reports\\market_bias_candidate_screen_usa_true_ev_current\\summary.json",
+      "candidate_count": 3,
+      "passed_count": 0,
+      "status": "REJECTED_BY_CROSS_SOURCE_SCREEN",
+      "passed_rules": 0,
+      "best_rule": "league|outcome|odds_bucket=USA|home|[2.2,2.8)",
+      "best_combined_roi_pct": -3.39,
+      "best_total_bets": 107,
+      "best_worst_source_roi_pct": -18.85,
+      "reason": "AVG_CLOSE: bets<100; MAX_CLOSE: bets<100,positive_months<=negative_months,drawdown>profit; PS_CLOSE: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons,drawdown>profit"
+    },
+    {
+      "domain": "BRA",
+      "path": "reports\\market_bias_candidate_screen_bra_true_ev_current\\summary.json",
+      "candidate_count": 0,
+      "passed_count": 0,
+      "status": "NO_SURVIVING_RULE_AFTER_RECENT_FORM_FILTER",
+      "passed_rules": 0,
+      "best_rule": null,
+      "best_combined_roi_pct": 0.0,
+      "best_total_bets": 0,
+      "best_worst_source_roi_pct": 0.0,
+      "reason": "diagnostic positives failed recency/specificity filters before validation"
+    },
+    {
+      "domain": "MEX",
+      "path": "reports\\market_bias_candidate_screen_mex_true_ev_current\\summary.json",
+      "candidate_count": 0,
+      "passed_count": 0,
+      "status": "NO_SURVIVING_RULE_AFTER_RECENT_FORM_FILTER",
+      "passed_rules": 0,
+      "best_rule": null,
+      "best_combined_roi_pct": 0.0,
+      "best_total_bets": 0,
+      "best_worst_source_roi_pct": 0.0,
+      "reason": "diagnostic positives failed recency/specificity filters before validation"
+    },
+    {
+      "domain": "ROU",
+      "path": "reports\\market_bias_candidate_screen_rou_true_ev_current\\summary.json",
+      "candidate_count": 0,
+      "passed_count": 0,
+      "status": "NO_SURVIVING_RULE_AFTER_RECENT_FORM_FILTER",
+      "passed_rules": 0,
+      "best_rule": null,
+      "best_combined_roi_pct": 0.0,
+      "best_total_bets": 0,
+      "best_worst_source_roi_pct": 0.0,
+      "reason": "diagnostic positives failed recency/specificity filters before validation"
+    }
+  ],
+  "multi_window": [
+    {
+      "path": "reports\\market_bias_multi_window_usa_true_ev_current\\summary.json",
+      "available": true,
+      "passed_candidates": 0,
+      "best_candidate_id": "diagnostic-league-outcome-odds-bucket-usa-home-2p2-2p8",
+      "best_decision": "REJECT_UNSTABLE",
+      "best_total_bets": 214,
+      "best_combined_roi_pct": -3.39,
+      "best_active_pass_rate": 0.0,
+      "best_source_pass_rate": 0.0,
+      "best_worst_source_roi_pct": -18.85
+    }
+  ],
+  "interpretation": "A diagnostic positive is not treated as true EV until it survives cross-source prices, 12-month rolling windows, settlement-aware daily allocation, and later official-SP prospective validation."
+}

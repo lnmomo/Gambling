@@ -54,6 +54,15 @@ def test_load_candidate_rules_can_skip_default_baseline(tmp_path):
     assert rules == ["league|outcome|odds_bucket=T1|away|[1.0,1.8)"]
 
 
+def test_load_candidate_rules_handles_empty_diagnostics_file(tmp_path):
+    csv_path = tmp_path / "empty.csv"
+    csv_path.write_text("", encoding="utf-8")
+
+    rules = load_candidate_rules(csv_path, top_n=2, include_rule=None)
+
+    assert rules == []
+
+
 def test_summarize_rules_requires_every_validation_source_to_pass():
     summary = _summarize_rules([
         {

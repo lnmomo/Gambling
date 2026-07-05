@@ -1,0 +1,143 @@
+{
+  "method": "market-bias candidate screen",
+  "diagnostics_csv": [
+    "reports\\batch_profit_domain_discovery_true_ev_current\\domains\\arg_avg_close\\market_bias.csv"
+  ],
+  "min_diagnostic_sources": 1,
+  "seasons": [
+    "ARG"
+  ],
+  "first_month": "2013-03",
+  "last_month": "2026-05",
+  "odds_source": "AVG_CLOSE,PS_CLOSE,MAX_CLOSE",
+  "validation_odds_sources": [
+    "AVG_CLOSE",
+    "PS_CLOSE",
+    "MAX_CLOSE"
+  ],
+  "top_n": 12,
+  "daily_limit": 100.0,
+  "max_single_stake": 10.0,
+  "included_default_rule": false,
+  "candidate_count": 3,
+  "passed_count": 0,
+  "rule_summary": [
+    {
+      "rule": "league|outcome|market_prob_bucket=ARG|home|[0.20,0.28)",
+      "validation_source_count": 3,
+      "passed_validation_sources": 0,
+      "failed_validation_sources": 3,
+      "total_portfolio_bets": 27,
+      "total_portfolio_staked": 270.0,
+      "total_portfolio_profit": 58.3,
+      "combined_roi_pct": 21.59,
+      "worst_source_roi_pct": -8.69,
+      "worst_source_drawdown": 50.0,
+      "source_results": [
+        {
+          "odds_source": "AVG_CLOSE",
+          "passes_screen": false,
+          "portfolio_bets": 4,
+          "portfolio_profit": 28.5,
+          "portfolio_roi_pct": 71.25,
+          "portfolio_max_drawdown": 10.0,
+          "fail_reasons": [
+            "bets<100"
+          ]
+        },
+        {
+          "odds_source": "MAX_CLOSE",
+          "passes_screen": false,
+          "portfolio_bets": 7,
+          "portfolio_profit": 43.7,
+          "portfolio_roi_pct": 62.43,
+          "portfolio_max_drawdown": 30.0,
+          "fail_reasons": [
+            "bets<100"
+          ]
+        },
+        {
+          "odds_source": "PS_CLOSE",
+          "passes_screen": false,
+          "portfolio_bets": 16,
+          "portfolio_profit": -13.9,
+          "portfolio_roi_pct": -8.69,
+          "portfolio_max_drawdown": 50.0,
+          "fail_reasons": [
+            "bets<100",
+            "profit<=0",
+            "roi<3%",
+            "drawdown>profit"
+          ]
+        }
+      ],
+      "passes_all_validation_sources": false
+    }
+  ],
+  "rows": [
+    {
+      "rule": "league|outcome|market_prob_bucket=ARG|home|[0.20,0.28)",
+      "odds_source": "AVG_CLOSE",
+      "walk_forward_bets": 4,
+      "walk_forward_profit": 2.85,
+      "walk_forward_roi_pct": 71.25,
+      "portfolio_bets": 4,
+      "portfolio_staked": 40.0,
+      "portfolio_profit": 28.5,
+      "portfolio_roi_pct": 71.25,
+      "portfolio_max_drawdown": 10.0,
+      "positive_months": 2,
+      "negative_months": 0,
+      "positive_seasons": 2,
+      "negative_seasons": 0,
+      "passes_screen": false,
+      "fail_reasons": [
+        "bets<100"
+      ]
+    },
+    {
+      "rule": "league|outcome|market_prob_bucket=ARG|home|[0.20,0.28)",
+      "odds_source": "MAX_CLOSE",
+      "walk_forward_bets": 7,
+      "walk_forward_profit": 4.37,
+      "walk_forward_roi_pct": 62.43,
+      "portfolio_bets": 7,
+      "portfolio_staked": 70.0,
+      "portfolio_profit": 43.7,
+      "portfolio_roi_pct": 62.43,
+      "portfolio_max_drawdown": 30.0,
+      "positive_months": 2,
+      "negative_months": 1,
+      "positive_seasons": 2,
+      "negative_seasons": 0,
+      "passes_screen": false,
+      "fail_reasons": [
+        "bets<100"
+      ]
+    },
+    {
+      "rule": "league|outcome|market_prob_bucket=ARG|home|[0.20,0.28)",
+      "odds_source": "PS_CLOSE",
+      "walk_forward_bets": 16,
+      "walk_forward_profit": -1.39,
+      "walk_forward_roi_pct": -8.69,
+      "portfolio_bets": 16,
+      "portfolio_staked": 160.0,
+      "portfolio_profit": -13.9,
+      "portfolio_roi_pct": -8.69,
+      "portfolio_max_drawdown": 50.0,
+      "positive_months": 2,
+      "negative_months": 1,
+      "positive_seasons": 2,
+      "negative_seasons": 1,
+      "passes_screen": false,
+      "fail_reasons": [
+        "bets<100",
+        "profit<=0",
+        "roi<3%",
+        "drawdown>profit"
+      ]
+    }
+  ],
+  "next_step": "Run full multi-source robustness and official-SP shadow validation for passed candidates only."
+}

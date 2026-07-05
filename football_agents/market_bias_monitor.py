@@ -184,8 +184,6 @@ class MarketBiasMonitorService:
         _write_json(self.report_paths["official_sp"], official)
         official_funnel = diagnose_market_bias_official_sp_funnel(self.db)
         _write_json(self.report_paths["official_sp_funnel"], official_funnel)
-        pool_relevance = diagnose_market_bias_official_pool_relevance(self.db)
-        _write_json(self.report_paths["official_pool_relevance"], pool_relevance)
 
         promotion = None
         scorecard = None
@@ -222,6 +220,12 @@ class MarketBiasMonitorService:
             metrics_payload["warnings"] = warnings
             _write_json(self.report_paths["shadow_metrics"], metrics_payload)
 
+        pool_relevance = diagnose_market_bias_official_pool_relevance(
+            self.db,
+            scorecard_path=self.report_paths["scorecard"],
+        )
+        _write_json(self.report_paths["official_pool_relevance"], pool_relevance)
+
         return {
             "strategy_id": self.strategy_id,
             "matches": sum(int(run.get("created", 0) or 0) for run in shadow_runs),
@@ -241,8 +245,16 @@ class MarketBiasMonitorService:
             "promotion_decision": promotion.get("decision") if promotion else None,
             "profit_algorithm_score": scorecard.get("score") if scorecard else None,
             "profit_algorithm_tier": scorecard.get("deployment_tier") if scorecard else None,
-            "recommended_for_shadow": promotion.get("recommended_for_shadow") if promotion else None,
-            "recommended_for_production": promotion.get("recommended_for_production") if promotion else None,
+            "recommended_for_shadow": (
+                scorecard.get("recommended_for_shadow")
+                if scorecard
+                else promotion.get("recommended_for_shadow") if promotion else None
+            ),
+            "recommended_for_production": (
+                scorecard.get("recommended_for_production")
+                if scorecard
+                else promotion.get("recommended_for_production") if promotion else None
+            ),
             "official_candidate_count": official.get("candidate_count", 0),
             "warnings": warnings,
         }
