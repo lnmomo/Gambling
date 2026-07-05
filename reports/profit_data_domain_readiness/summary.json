@@ -1,20 +1,20 @@
 {
   "method": "profit historical data domain readiness",
-  "generated_at": "2026-07-02T11:14:06.518286+00:00",
+  "generated_at": "2026-07-05T05:16:43.705465+00:00",
   "root": "data\\historical_csv\\football-data",
   "domain_count": 36,
-  "search_ready_domains": 31,
+  "search_ready_domains": 30,
   "status_counts": [
     {
       "readiness": "SEARCH_READY_NOT_IN_CURRENT_POOL",
-      "domains": 31
-    },
-    {
-      "readiness": "RESEARCH_WATCH_ONLY_EXISTING_GATES",
-      "domains": 2
+      "domains": 30
     },
     {
       "readiness": "REJECTED_BY_EXISTING_STABILITY_GATES",
+      "domains": 3
+    },
+    {
+      "readiness": "RESEARCH_WATCH_ONLY_EXISTING_GATES",
       "domains": 2
     },
     {
@@ -296,39 +296,6 @@
       ]
     },
     {
-      "code": "SWE",
-      "paths": [
-        "data\\historical_csv\\football-data\\new\\SWE.csv"
-      ],
-      "rows": 3465,
-      "first_date": "2012-03-31",
-      "last_date": "2026-05-31",
-      "active_months": 117,
-      "odds_coverage": {
-        "B365_OPEN": 0,
-        "AVG_OPEN": 0,
-        "PS_OPEN": 0,
-        "MAX_OPEN": 0,
-        "B365_CLOSE": 169,
-        "AVG_CLOSE": 3465,
-        "PS_CLOSE": 3366,
-        "MAX_CLOSE": 3465
-      },
-      "best_odds_source": "AVG_CLOSE",
-      "best_odds_rows": 3465,
-      "official_pool_matches": 0,
-      "official_pool_with_odds": 0,
-      "readiness": "SEARCH_READY_NOT_IN_CURRENT_POOL",
-      "research_priority": "MEDIUM_SEARCH",
-      "blocker": "The domain has enough odds-backed history, but is not currently represented in the official pool.",
-      "existing_evidence_status": null,
-      "evidence_reports": [],
-      "suggested_commands": [
-        "python scripts/market_bias_diagnostics.py --seasons SWE --odds-source AVG_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_swe_avg_close",
-        "python scripts/cross_league_rule_search.py --seasons SWE --league-group-scope SWE --output-dir reports\\cross_league_rule_search_swe_next"
-      ]
-    },
-    {
       "code": "RUS",
       "paths": [
         "data\\historical_csv\\football-data\\new\\RUS.csv"
@@ -399,22 +366,22 @@
       "paths": [
         "data\\historical_csv\\football-data\\new\\CHN.csv"
       ],
-      "rows": 2928,
+      "rows": 2936,
       "first_date": "2014-03-07",
-      "last_date": "2026-05-31",
-      "active_months": 99,
+      "last_date": "2026-06-28",
+      "active_months": 100,
       "odds_coverage": {
         "B365_OPEN": 0,
         "AVG_OPEN": 0,
         "PS_OPEN": 0,
         "MAX_OPEN": 0,
-        "B365_CLOSE": 200,
-        "AVG_CLOSE": 2922,
+        "B365_CLOSE": 208,
+        "AVG_CLOSE": 2930,
         "PS_CLOSE": 2759,
-        "MAX_CLOSE": 2922
+        "MAX_CLOSE": 2930
       },
       "best_odds_source": "AVG_CLOSE",
-      "best_odds_rows": 2922,
+      "best_odds_rows": 2930,
       "official_pool_matches": 0,
       "official_pool_with_odds": 0,
       "readiness": "SEARCH_READY_NOT_IN_CURRENT_POOL",
@@ -539,6 +506,39 @@
       ]
     },
     {
+      "code": "IRL",
+      "paths": [
+        "data\\historical_csv\\football-data\\new\\IRL.csv"
+      ],
+      "rows": 2676,
+      "first_date": "2012-03-02",
+      "last_date": "2026-06-27",
+      "active_months": 134,
+      "odds_coverage": {
+        "B365_OPEN": 0,
+        "AVG_OPEN": 0,
+        "PS_OPEN": 0,
+        "MAX_OPEN": 0,
+        "B365_CLOSE": 158,
+        "AVG_CLOSE": 2676,
+        "PS_CLOSE": 2543,
+        "MAX_CLOSE": 2676
+      },
+      "best_odds_source": "AVG_CLOSE",
+      "best_odds_rows": 2676,
+      "official_pool_matches": 0,
+      "official_pool_with_odds": 0,
+      "readiness": "SEARCH_READY_NOT_IN_CURRENT_POOL",
+      "research_priority": "MEDIUM_SEARCH",
+      "blocker": "The domain has enough odds-backed history, but is not currently represented in the official pool.",
+      "existing_evidence_status": null,
+      "evidence_reports": [],
+      "suggested_commands": [
+        "python scripts/market_bias_diagnostics.py --seasons IRL --odds-source AVG_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_irl_avg_close",
+        "python scripts/cross_league_rule_search.py --seasons IRL --league-group-scope IRL --output-dir reports\\cross_league_rule_search_irl_next"
+      ]
+    },
+    {
       "code": "SWZ",
       "paths": [
         "data\\historical_csv\\football-data\\new\\SWZ.csv"
@@ -569,39 +569,6 @@
       "suggested_commands": [
         "python scripts/market_bias_diagnostics.py --seasons SWZ --odds-source AVG_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_swz_avg_close",
         "python scripts/cross_league_rule_search.py --seasons SWZ --league-group-scope SWZ --output-dir reports\\cross_league_rule_search_swz_next"
-      ]
-    },
-    {
-      "code": "IRL",
-      "paths": [
-        "data\\historical_csv\\football-data\\new\\IRL.csv"
-      ],
-      "rows": 2671,
-      "first_date": "2012-03-02",
-      "last_date": "2026-06-22",
-      "active_months": 134,
-      "odds_coverage": {
-        "B365_OPEN": 0,
-        "AVG_OPEN": 0,
-        "PS_OPEN": 0,
-        "MAX_OPEN": 0,
-        "B365_CLOSE": 153,
-        "AVG_CLOSE": 2671,
-        "PS_CLOSE": 2543,
-        "MAX_CLOSE": 2671
-      },
-      "best_odds_source": "AVG_CLOSE",
-      "best_odds_rows": 2671,
-      "official_pool_matches": 0,
-      "official_pool_with_odds": 0,
-      "readiness": "SEARCH_READY_NOT_IN_CURRENT_POOL",
-      "research_priority": "MEDIUM_SEARCH",
-      "blocker": "The domain has enough odds-backed history, but is not currently represented in the official pool.",
-      "existing_evidence_status": null,
-      "evidence_reports": [],
-      "suggested_commands": [
-        "python scripts/market_bias_diagnostics.py --seasons IRL --odds-source AVG_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_irl_avg_close",
-        "python scripts/cross_league_rule_search.py --seasons IRL --league-group-scope IRL --output-dir reports\\cross_league_rule_search_irl_next"
       ]
     },
     {
@@ -709,6 +676,43 @@
       "suggested_commands": [
         "python scripts/market_bias_diagnostics.py --seasons I1 --odds-source B365_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_i1_b365_close",
         "python scripts/cross_league_rule_search.py --seasons I1 --league-group-scope I1 --output-dir reports\\cross_league_rule_search_i1_next"
+      ]
+    },
+    {
+      "code": "E0",
+      "paths": [
+        "data\\historical_csv\\football-data\\2122\\E0.csv",
+        "data\\historical_csv\\football-data\\2223\\E0.csv",
+        "data\\historical_csv\\football-data\\2324\\E0.csv",
+        "data\\historical_csv\\football-data\\2425\\E0.csv",
+        "data\\historical_csv\\football-data\\2526\\E0.csv"
+      ],
+      "rows": 1900,
+      "first_date": "2021-08-13",
+      "last_date": "2026-05-24",
+      "active_months": 50,
+      "odds_coverage": {
+        "B365_OPEN": 1900,
+        "AVG_OPEN": 1900,
+        "PS_OPEN": 1730,
+        "MAX_OPEN": 1900,
+        "B365_CLOSE": 1900,
+        "AVG_CLOSE": 1900,
+        "PS_CLOSE": 1730,
+        "MAX_CLOSE": 1900
+      },
+      "best_odds_source": "B365_OPEN",
+      "best_odds_rows": 1900,
+      "official_pool_matches": 0,
+      "official_pool_with_odds": 0,
+      "readiness": "SEARCH_READY_NOT_IN_CURRENT_POOL",
+      "research_priority": "MEDIUM_SEARCH",
+      "blocker": "The domain has enough odds-backed history, but is not currently represented in the official pool.",
+      "existing_evidence_status": null,
+      "evidence_reports": [],
+      "suggested_commands": [
+        "python scripts/market_bias_diagnostics.py --seasons E0 --odds-source B365_OPEN --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_e0_b365_open",
+        "python scripts/cross_league_rule_search.py --seasons E0 --league-group-scope E0 --output-dir reports\\cross_league_rule_search_e0_next"
       ]
     }
   ],
@@ -986,39 +990,6 @@
       ]
     },
     {
-      "code": "SWE",
-      "paths": [
-        "data\\historical_csv\\football-data\\new\\SWE.csv"
-      ],
-      "rows": 3465,
-      "first_date": "2012-03-31",
-      "last_date": "2026-05-31",
-      "active_months": 117,
-      "odds_coverage": {
-        "B365_OPEN": 0,
-        "AVG_OPEN": 0,
-        "PS_OPEN": 0,
-        "MAX_OPEN": 0,
-        "B365_CLOSE": 169,
-        "AVG_CLOSE": 3465,
-        "PS_CLOSE": 3366,
-        "MAX_CLOSE": 3465
-      },
-      "best_odds_source": "AVG_CLOSE",
-      "best_odds_rows": 3465,
-      "official_pool_matches": 0,
-      "official_pool_with_odds": 0,
-      "readiness": "SEARCH_READY_NOT_IN_CURRENT_POOL",
-      "research_priority": "MEDIUM_SEARCH",
-      "blocker": "The domain has enough odds-backed history, but is not currently represented in the official pool.",
-      "existing_evidence_status": null,
-      "evidence_reports": [],
-      "suggested_commands": [
-        "python scripts/market_bias_diagnostics.py --seasons SWE --odds-source AVG_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_swe_avg_close",
-        "python scripts/cross_league_rule_search.py --seasons SWE --league-group-scope SWE --output-dir reports\\cross_league_rule_search_swe_next"
-      ]
-    },
-    {
       "code": "RUS",
       "paths": [
         "data\\historical_csv\\football-data\\new\\RUS.csv"
@@ -1089,22 +1060,22 @@
       "paths": [
         "data\\historical_csv\\football-data\\new\\CHN.csv"
       ],
-      "rows": 2928,
+      "rows": 2936,
       "first_date": "2014-03-07",
-      "last_date": "2026-05-31",
-      "active_months": 99,
+      "last_date": "2026-06-28",
+      "active_months": 100,
       "odds_coverage": {
         "B365_OPEN": 0,
         "AVG_OPEN": 0,
         "PS_OPEN": 0,
         "MAX_OPEN": 0,
-        "B365_CLOSE": 200,
-        "AVG_CLOSE": 2922,
+        "B365_CLOSE": 208,
+        "AVG_CLOSE": 2930,
         "PS_CLOSE": 2759,
-        "MAX_CLOSE": 2922
+        "MAX_CLOSE": 2930
       },
       "best_odds_source": "AVG_CLOSE",
-      "best_odds_rows": 2922,
+      "best_odds_rows": 2930,
       "official_pool_matches": 0,
       "official_pool_with_odds": 0,
       "readiness": "SEARCH_READY_NOT_IN_CURRENT_POOL",
@@ -1229,6 +1200,39 @@
       ]
     },
     {
+      "code": "IRL",
+      "paths": [
+        "data\\historical_csv\\football-data\\new\\IRL.csv"
+      ],
+      "rows": 2676,
+      "first_date": "2012-03-02",
+      "last_date": "2026-06-27",
+      "active_months": 134,
+      "odds_coverage": {
+        "B365_OPEN": 0,
+        "AVG_OPEN": 0,
+        "PS_OPEN": 0,
+        "MAX_OPEN": 0,
+        "B365_CLOSE": 158,
+        "AVG_CLOSE": 2676,
+        "PS_CLOSE": 2543,
+        "MAX_CLOSE": 2676
+      },
+      "best_odds_source": "AVG_CLOSE",
+      "best_odds_rows": 2676,
+      "official_pool_matches": 0,
+      "official_pool_with_odds": 0,
+      "readiness": "SEARCH_READY_NOT_IN_CURRENT_POOL",
+      "research_priority": "MEDIUM_SEARCH",
+      "blocker": "The domain has enough odds-backed history, but is not currently represented in the official pool.",
+      "existing_evidence_status": null,
+      "evidence_reports": [],
+      "suggested_commands": [
+        "python scripts/market_bias_diagnostics.py --seasons IRL --odds-source AVG_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_irl_avg_close",
+        "python scripts/cross_league_rule_search.py --seasons IRL --league-group-scope IRL --output-dir reports\\cross_league_rule_search_irl_next"
+      ]
+    },
+    {
       "code": "SWZ",
       "paths": [
         "data\\historical_csv\\football-data\\new\\SWZ.csv"
@@ -1259,39 +1263,6 @@
       "suggested_commands": [
         "python scripts/market_bias_diagnostics.py --seasons SWZ --odds-source AVG_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_swz_avg_close",
         "python scripts/cross_league_rule_search.py --seasons SWZ --league-group-scope SWZ --output-dir reports\\cross_league_rule_search_swz_next"
-      ]
-    },
-    {
-      "code": "IRL",
-      "paths": [
-        "data\\historical_csv\\football-data\\new\\IRL.csv"
-      ],
-      "rows": 2671,
-      "first_date": "2012-03-02",
-      "last_date": "2026-06-22",
-      "active_months": 134,
-      "odds_coverage": {
-        "B365_OPEN": 0,
-        "AVG_OPEN": 0,
-        "PS_OPEN": 0,
-        "MAX_OPEN": 0,
-        "B365_CLOSE": 153,
-        "AVG_CLOSE": 2671,
-        "PS_CLOSE": 2543,
-        "MAX_CLOSE": 2671
-      },
-      "best_odds_source": "AVG_CLOSE",
-      "best_odds_rows": 2671,
-      "official_pool_matches": 0,
-      "official_pool_with_odds": 0,
-      "readiness": "SEARCH_READY_NOT_IN_CURRENT_POOL",
-      "research_priority": "MEDIUM_SEARCH",
-      "blocker": "The domain has enough odds-backed history, but is not currently represented in the official pool.",
-      "existing_evidence_status": null,
-      "evidence_reports": [],
-      "suggested_commands": [
-        "python scripts/market_bias_diagnostics.py --seasons IRL --odds-source AVG_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_irl_avg_close",
-        "python scripts/cross_league_rule_search.py --seasons IRL --league-group-scope IRL --output-dir reports\\cross_league_rule_search_irl_next"
       ]
     },
     {
@@ -1920,24 +1891,24 @@
       "paths": [
         "data\\historical_csv\\football-data\\new\\WORLD_CUP.csv"
       ],
-      "rows": 128,
-      "first_date": "2018-06-14",
-      "last_date": "2022-12-18",
-      "active_months": 4,
+      "rows": 1146,
+      "first_date": "2014-06-12",
+      "last_date": "2026-06-28",
+      "active_months": 22,
       "odds_coverage": {
         "B365_OPEN": 0,
         "AVG_OPEN": 0,
         "PS_OPEN": 0,
         "MAX_OPEN": 0,
         "B365_CLOSE": 0,
-        "AVG_CLOSE": 128,
+        "AVG_CLOSE": 1146,
         "PS_CLOSE": 0,
-        "MAX_CLOSE": 0
+        "MAX_CLOSE": 1146
       },
       "best_odds_source": "AVG_CLOSE",
-      "best_odds_rows": 128,
-      "official_pool_matches": 74,
-      "official_pool_with_odds": 33,
+      "best_odds_rows": 1146,
+      "official_pool_matches": 96,
+      "official_pool_with_odds": 42,
       "readiness": "REJECTED_BY_EXISTING_STABILITY_GATES",
       "research_priority": "LOW_DO_NOT_LOOSEN",
       "blocker": "World Cup 1X2 odds are archived, but tournament holdout validation rejected the reusable allocation rule search (REJECT_NO_REUSABLE_WORLD_CUP_RULE; BLOCK_PRODUCTION_WORLD_CUP_SAMPLE_TOO_SMALL)",
@@ -1955,23 +1926,23 @@
       "paths": [
         "data\\historical_csv\\football-data\\new\\FIN.csv"
       ],
-      "rows": 2620,
+      "rows": 2626,
       "first_date": "2012-04-15",
-      "last_date": "2026-06-23",
+      "last_date": "2026-06-27",
       "active_months": 106,
       "odds_coverage": {
         "B365_OPEN": 0,
         "AVG_OPEN": 0,
         "PS_OPEN": 0,
         "MAX_OPEN": 0,
-        "B365_CLOSE": 139,
-        "AVG_CLOSE": 2620,
+        "B365_CLOSE": 145,
+        "AVG_CLOSE": 2626,
         "PS_CLOSE": 2530,
-        "MAX_CLOSE": 2620
+        "MAX_CLOSE": 2626
       },
       "best_odds_source": "AVG_CLOSE",
-      "best_odds_rows": 2620,
-      "official_pool_matches": 24,
+      "best_odds_rows": 2626,
+      "official_pool_matches": 28,
       "official_pool_with_odds": 12,
       "readiness": "REJECTED_BY_EXISTING_STABILITY_GATES",
       "research_priority": "LOW_DO_NOT_LOOSEN",
@@ -1984,6 +1955,40 @@
       ],
       "suggested_commands": [
         "python scripts/cross_league_rule_search.py --seasons FIN --first-month 2015-04 --last-month 2025-10 --league-group-scope FIN --output-dir reports\\cross_league_rule_search_fin_new_model_recheck"
+      ]
+    },
+    {
+      "code": "SWE",
+      "paths": [
+        "data\\historical_csv\\football-data\\new\\SWE.csv"
+      ],
+      "rows": 3465,
+      "first_date": "2012-03-31",
+      "last_date": "2026-05-31",
+      "active_months": 117,
+      "odds_coverage": {
+        "B365_OPEN": 0,
+        "AVG_OPEN": 0,
+        "PS_OPEN": 0,
+        "MAX_OPEN": 0,
+        "B365_CLOSE": 169,
+        "AVG_CLOSE": 3465,
+        "PS_CLOSE": 3366,
+        "MAX_CLOSE": 3465
+      },
+      "best_odds_source": "AVG_CLOSE",
+      "best_odds_rows": 3465,
+      "official_pool_matches": 8,
+      "official_pool_with_odds": 6,
+      "readiness": "REJECTED_BY_EXISTING_STABILITY_GATES",
+      "research_priority": "LOW_DO_NOT_LOOSEN",
+      "blocker": "SWE is present in the current official pool and has historical odds, but the market-anchored feature residual scan failed the hard stability gates",
+      "existing_evidence_status": "rejected_by_current_pool_feature_hard_gates",
+      "evidence_reports": [
+        "reports/official_pool_market_anchored_research_swe_current_fast/summary.json"
+      ],
+      "suggested_commands": [
+        "python scripts/official_pool_market_anchored_research.py --leagues SWE --odds-sources AVG_CLOSE,MAX_CLOSE --first-month 2016-01 --last-month 2025-12 --fast --output-dir reports\\official_pool_market_anchored_research_swe_current_fast"
       ]
     }
   ],

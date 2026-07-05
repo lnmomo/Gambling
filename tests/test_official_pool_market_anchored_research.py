@@ -12,6 +12,7 @@ if str(SCRIPTS_DIR) not in sys.path:
 
 from official_pool_market_anchored_research import (  # noqa: E402
     AnchoredRuleSpec,
+    _config_grid,
     _decision,
     _decision_reasons,
     _matches_spec,
@@ -87,6 +88,10 @@ def test_candidate_decision_requires_stability_not_just_profit() -> None:
         "roi_pct": 5.0,
         "positive_months": 8,
         "negative_months": 6,
+        "positive_seasons": 2,
+        "negative_seasons": 1,
+        "latest_season_bets": 25,
+        "latest_season_profit": 5.0,
         "max_drawdown": 20.0,
         "active_pass_rate": 0.5,
     }
@@ -94,4 +99,14 @@ def test_candidate_decision_requires_stability_not_just_profit() -> None:
     assert _decision(row) == "REJECT_RESEARCH_GATES"
     assert _decision_reasons(row) == ["active_pass_rate<0.6"]
     row["active_pass_rate"] = 0.7
-    assert _decision(row) == "RESEARCH_CANDIDATE_NEEDS_AUDIT"
+    assert _decision(row) == "SHADOW_READY_RESEARCH_CANDIDATE"
+
+
+def test_fast_config_grid_uses_one_representative_config_per_rule() -> None:
+    configs = _config_grid("AVG_CLOSE", ("FIN_home_prob0p55_1p00", "FIN_draw_odds2p8_3p5"), fast=True)
+
+    assert len(configs) == 2
+    assert all(config.train_months == 30 for config in configs)
+    assert all(config.min_train_rows == 120 for config in configs)
+    assert all(config.min_predicted_ev == 0.02 for config in configs)
+    assert all(config.ridge == 10.0 for config in configs)

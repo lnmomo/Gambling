@@ -52,6 +52,9 @@ class ResidualStrategyTests(unittest.TestCase):
             "form_goal_diff_delta",
             "season_points_per_match_delta",
             "rest_days_delta",
+            "combined_recent_draw_rate",
+            "combined_recent_low_score_rate",
+            "draw_market_vs_league",
         ]
         self.assertTrue(original_features[columns].equals(changed_features[columns]))
 
@@ -67,6 +70,7 @@ class ResidualStrategyTests(unittest.TestCase):
 
         self.assertEqual(float(features.loc[0, "form_points_diff"]), 0.0)
         self.assertGreater(float(features.loc[1, "form_points_diff"]), 0.0)
+        self.assertGreater(float(features.loc[1, "combined_recent_low_score_rate"]), 0.0)
         self.assertEqual(float(features.loc[1, "home_rest_days"]), 7.0)
 
     def test_constrained_kelly_respects_daily_and_league_limits(self) -> None:
@@ -117,6 +121,9 @@ class ResidualStrategyTests(unittest.TestCase):
             "lambda_total": 2.45,
             "market_draw": .27,
             "league_draw_rate": .28,
+            "combined_recent_draw_rate": .40,
+            "combined_recent_low_score_rate": .70,
+            "draw_market_vs_league": -.04,
             "probability_home": .70,
             "uncertainty_home": .01,
             "lower_ev_home": .25,
@@ -140,8 +147,86 @@ class ResidualStrategyTests(unittest.TestCase):
         self.assertGreaterEqual(float(candidates.iloc[0]["odds"]), 2.2)
         self.assertEqual(candidates.iloc[0]["market_draw_bucket"], "market_draw_mid")
         self.assertEqual(candidates.iloc[0]["league_draw_rate_bucket"], "league_draw_mid")
+        self.assertEqual(candidates.iloc[0]["recent_draw_bucket"], "recent_draw_high")
+        self.assertEqual(candidates.iloc[0]["recent_low_score_bucket"], "low_score_high")
+        self.assertEqual(candidates.iloc[0]["draw_market_gap_bucket"], "draw_under_league")
         self.assertEqual(candidates.iloc[0]["strength_gap_bucket"], "strength_close")
         self.assertEqual(candidates.iloc[0]["goal_env_bucket"], "goal_env_mid")
+        self.assertIn("model_probability", candidates.columns)
+        self.assertIn("model_lower_ev", candidates.columns)
+
+    def test_simulation_records_model_ev_diagnostic_separately(self) -> None:
+        rows = pd.DataFrame([{
+            "match_date": pd.Timestamp("2025-01-01"),
+            "league": "L",
+            "home_team": "A",
+            "away_team": "B",
+            "actual_result": "home",
+            "probability_home": .55,
+            "model_probability_home": .70,
+            "uncertainty_home": .01,
+            "lower_ev_home": .09,
+            "model_lower_ev_home": .35,
+            "odds_home": 2.0,
+            "probability_draw": .20,
+            "model_probability_draw": .20,
+            "uncertainty_draw": .01,
+            "lower_ev_draw": -.2,
+            "model_lower_ev_draw": -.2,
+            "odds_draw": 3.4,
+            "probability_away": .20,
+            "model_probability_away": .20,
+            "uncertainty_away": .01,
+            "lower_ev_away": -.2,
+            "model_lower_ev_away": -.2,
+            "odds_away": 4.0,
+        }])
+
+        _, bets = simulate(rows, PortfolioConfig(0.0, 3.0, .10))
+
+        self.assertEqual(float(bets.iloc[0]["probability"]), .55)
+        self.assertEqual(float(bets.iloc[0]["model_probability"]), .70)
+        self.assertGreater(float(bets.iloc[0]["model_ev"]), float(bets.iloc[0]["lower_ev"]))
+
+    def test_simulation_can_rank_and_limit_daily_candidates(self) -> None:
+        rows = []
+        for index, score in enumerate([0.1, 0.9, 0.4]):
+            rows.append({
+                "match_date": pd.Timestamp("2025-01-01"),
+                "league": "L",
+                "home_team": f"A{index}",
+                "away_team": f"B{index}",
+                "actual_result": "draw",
+                "probability_home": .30,
+                "uncertainty_home": .01,
+                "lower_ev_home": -.1,
+                "odds_home": 2.0,
+                "probability_draw": .36,
+                "uncertainty_draw": .01,
+                "lower_ev_draw": .02 + index * .001,
+                "odds_draw": 3.0,
+                "probability_away": .30,
+                "uncertainty_away": .01,
+                "lower_ev_away": -.1,
+                "odds_away": 4.0,
+                "quality_score": score,
+            })
+
+        _, bets = simulate(
+            pd.DataFrame(rows),
+            PortfolioConfig(
+                0.0,
+                3.5,
+                .10,
+                min_odds=2.2,
+                allowed_outcomes=("draw",),
+                candidate_limit_per_day=1,
+                ranking_key="quality_score",
+            ),
+        )
+
+        self.assertEqual(len(bets), 1)
+        self.assertEqual(bets.iloc[0]["home_team"], "A1")
 
     def test_draw_regime_profile_uses_feature_buckets(self) -> None:
         profile = EXPERIMENT_PROFILES["draw_regime"]
@@ -220,6 +305,44 @@ class ResidualStrategyTests(unittest.TestCase):
         self.assertEqual(profile["max_odds"], (3.5,))
         self.assertEqual(profile["kelly_fractions"], (0.05,))
         self.assertEqual(profile["quality_quantiles"], (0.50,))
+
+    def test_real_ev_probe_draw_is_research_only_sparse_signal_profile(self) -> None:
+        profile = EXPERIMENT_PROFILES["real_ev_probe_draw"]
+
+        self.assertTrue(profile["research_only"])
+        self.assertLess(profile["validation_min_bets"], EXPERIMENT_PROFILES["draw_quality_pooled_lite"]["validation_min_bets"])
+        self.assertEqual(profile["allowed_outcomes"], (("draw",),))
+        self.assertIn(-0.01, profile["ev_thresholds"])
+
+    def test_real_ev_draw_regime_features_profile_uses_new_draw_buckets(self) -> None:
+        profile = EXPERIMENT_PROFILES["real_ev_draw_regime_features"]
+        bucket_columns = {column for key in profile["bucket_keys"] for column in key}
+
+        self.assertTrue(profile["research_only"])
+        self.assertIn("recent_draw_bucket", bucket_columns)
+        self.assertIn("recent_low_score_bucket", bucket_columns)
+        self.assertIn("draw_market_gap_bucket", bucket_columns)
+
+    def test_real_ev_draw_regime_features_fast_keeps_small_grid(self) -> None:
+        profile = EXPERIMENT_PROFILES["real_ev_draw_regime_features_fast"]
+
+        self.assertTrue(profile["research_only"])
+        self.assertEqual(len(profile["bucket_keys"]), 2)
+        self.assertEqual(profile["ev_thresholds"], (-0.01,))
+
+    def test_real_ev_draw_ranked_profile_limits_daily_candidates(self) -> None:
+        profile = EXPERIMENT_PROFILES["real_ev_draw_ranked"]
+
+        self.assertTrue(profile["research_only"])
+        self.assertEqual(profile["candidate_limits_per_day"], (1, 2))
+        self.assertIn("quality_score", profile["ranking_keys"])
+
+    def test_real_ev_draw_ranked_fast_uses_single_daily_candidate(self) -> None:
+        profile = EXPERIMENT_PROFILES["real_ev_draw_ranked_fast"]
+
+        self.assertTrue(profile["research_only"])
+        self.assertEqual(profile["candidate_limits_per_day"], (1,))
+        self.assertEqual(profile["ranking_keys"], ("lower_ev",))
 
     def test_persistent_bucket_requires_repeated_positive_months(self) -> None:
         rows = []

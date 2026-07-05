@@ -291,6 +291,7 @@ def walk_forward_feature_filter(candidates: pd.DataFrame, config: FeatureFilterC
 
 def _score_config(row: dict[str, Any]) -> tuple[Any, ...]:
     return (
+        row.get("stability_verdict") == "SHADOW_READY_RESEARCH_CANDIDATE",
         row["active_pass_rate"],
         row["passed_windows"],
         row["roi_pct"] > 0,
@@ -299,6 +300,53 @@ def _score_config(row: dict[str, Any]) -> tuple[Any, ...]:
         -row["max_drawdown"],
         row["bets"],
     )
+
+
+def season_summary_from_bets(bets: pd.DataFrame) -> list[dict[str, Any]]:
+    if bets.empty:
+        return []
+    frame = bets.copy()
+    frame["season"] = frame["bet_date"].astype(str).map(_season)
+    rows = []
+    for season, group in frame.groupby("season"):
+        staked = float(group["stake"].sum())
+        profit = float(group["profit"].sum())
+        rows.append({
+            "season": season,
+            "bets": int(len(group)),
+            "staked": round(staked, 2),
+            "profit": round(profit, 2),
+            "roi_pct": round(profit / staked * 100, 2) if staked else 0.0,
+        })
+    return rows
+
+
+def assess_feature_filter_row(row: dict[str, Any], *, min_bets: int = 250,
+                              min_active_pass_rate: float = 0.60) -> tuple[str, list[str]]:
+    reasons: list[str] = []
+    profit = float(row.get("profit") or 0.0)
+    drawdown = float(row.get("max_drawdown") or 0.0)
+    latest_profit = float(row.get("latest_season_profit") or 0.0)
+    if int(row.get("bets") or 0) < min_bets:
+        reasons.append(f"bets<{min_bets}")
+    if profit <= 0:
+        reasons.append("profit<=0")
+    if float(row.get("roi_pct") or 0.0) < 3.0:
+        reasons.append("roi<3%")
+    if drawdown > max(profit, 1.0):
+        reasons.append("drawdown>profit")
+    if int(row.get("positive_months") or 0) <= int(row.get("negative_months") or 0):
+        reasons.append("positive_months<=negative_months")
+    if int(row.get("positive_seasons") or 0) <= int(row.get("negative_seasons") or 0):
+        reasons.append("positive_seasons<=negative_seasons")
+    if int(row.get("latest_season_bets") or 0) < 20:
+        reasons.append("latest_season_bets<20")
+    if latest_profit < 0:
+        reasons.append("latest_season_profit<0")
+    if float(row.get("active_pass_rate") or 0.0) < min_active_pass_rate:
+        reasons.append(f"active_pass_rate<{min_active_pass_rate:g}")
+    verdict = "SHADOW_READY_RESEARCH_CANDIDATE" if not reasons else "RESEARCH_ONLY_UNSTABLE"
+    return verdict, reasons
 
 
 def run_grid(seasons: tuple[str, ...], first_month: str, last_month: str,
@@ -317,6 +365,8 @@ def run_grid(seasons: tuple[str, ...], first_month: str, last_month: str,
         windows = _window_rows(bets, first_month, last_month)
         window_summary = _summarize_windows(windows)
         overall = portfolio["overall"]
+        season_rows = season_summary_from_bets(bets)
+        latest_season = season_rows[-1] if season_rows else {}
         row = {
             "label": config.label,
             "odds_source": config.odds_source,
@@ -335,8 +385,16 @@ def run_grid(seasons: tuple[str, ...], first_month: str, last_month: str,
             "max_drawdown": float(overall["max_drawdown"]),
             "positive_months": int(portfolio.get("positive_months") or 0),
             "negative_months": int(portfolio.get("negative_months") or 0),
+            "positive_seasons": sum(float(item["profit"]) > 0 for item in season_rows),
+            "negative_seasons": sum(float(item["profit"]) < 0 for item in season_rows),
+            "latest_season": latest_season.get("season"),
+            "latest_season_bets": int(latest_season.get("bets") or 0),
+            "latest_season_profit": float(latest_season.get("profit") or 0.0),
             **window_summary,
         }
+        verdict, fail_reasons = assess_feature_filter_row(row)
+        row["stability_verdict"] = verdict
+        row["fail_reasons"] = fail_reasons
         rows.append(row)
         artifacts[config.label] = {
             "selected": selected,

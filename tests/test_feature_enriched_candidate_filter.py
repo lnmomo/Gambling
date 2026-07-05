@@ -6,6 +6,7 @@ import pandas as pd
 from scripts.feature_enriched_candidate_filter import (
     FEATURE_COLUMNS,
     FeatureFilterConfig,
+    assess_feature_filter_row,
     export_scorer_artifact,
     fit_ridge_probability_model,
     formal_i2_configs,
@@ -150,3 +151,45 @@ def test_exported_scorer_artifact_replays_prediction() -> None:
     assert artifact["selection"]["selected_rules"] == ["I2_draw_2p8_3p5"]
     assert scored.loc[0, "predicted_probability"] > 0.60
     assert scored.loc[0, "passes_scorer"]
+
+
+def test_feature_filter_assessment_blocks_recent_losing_candidate() -> None:
+    row = {
+        "bets": 335,
+        "profit": 439.9,
+        "roi_pct": 13.13,
+        "max_drawdown": 115.8,
+        "positive_months": 21,
+        "negative_months": 19,
+        "positive_seasons": 3,
+        "negative_seasons": 1,
+        "latest_season_bets": 47,
+        "latest_season_profit": -72.2,
+        "active_pass_rate": 0.6667,
+    }
+
+    verdict, reasons = assess_feature_filter_row(row)
+
+    assert verdict == "RESEARCH_ONLY_UNSTABLE"
+    assert "latest_season_profit<0" in reasons
+
+
+def test_feature_filter_assessment_accepts_stable_shadow_candidate() -> None:
+    row = {
+        "bets": 334,
+        "profit": 625.7,
+        "roi_pct": 18.73,
+        "max_drawdown": 110.0,
+        "positive_months": 25,
+        "negative_months": 15,
+        "positive_seasons": 4,
+        "negative_seasons": 0,
+        "latest_season_bets": 84,
+        "latest_season_profit": 67.5,
+        "active_pass_rate": 0.6667,
+    }
+
+    verdict, reasons = assess_feature_filter_row(row)
+
+    assert verdict == "SHADOW_READY_RESEARCH_CANDIDATE"
+    assert reasons == []

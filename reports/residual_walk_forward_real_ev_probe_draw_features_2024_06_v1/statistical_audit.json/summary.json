@@ -1,0 +1,94 @@
+{
+  "method": "monthly block bootstrap and sign-flip strategy audit",
+  "created_at": "2026-07-05T04:33:54.944752+00:00",
+  "bets_path": "reports\\residual_walk_forward_real_ev_probe_draw_features_2024_06_v1\\bets.csv",
+  "config": {
+    "iterations": 1000,
+    "seed": 42,
+    "min_bets": 50,
+    "min_months": 6,
+    "resampling_unit": "active betting month"
+  },
+  "overall": {
+    "bets": 15,
+    "active_months": 5,
+    "total_staked": 15.0,
+    "profit": 2.8,
+    "roi_pct": 18.67,
+    "positive_months": 4,
+    "negative_months": 1,
+    "max_negative_month_streak": 1,
+    "max_month_drawdown": 1.1,
+    "drawdown_to_profit": 0.3929
+  },
+  "bootstrap": {
+    "iterations": 1000,
+    "roi_ci_pct": {
+      "p05": -6.25,
+      "p50": 18.67,
+      "p95": 68.89
+    },
+    "profit_ci": {
+      "p05": -1.0,
+      "p50": 2.8,
+      "p95": 6.5
+    },
+    "probability_roi_positive": 0.876,
+    "probability_profit_positive": 0.876
+  },
+  "sign_flip_test": {
+    "iterations": 1000,
+    "one_sided_p_value": 0.223,
+    "null_profit_ci": {
+      "p05": -4.8,
+      "p50": 0.6,
+      "p95": 4.8
+    }
+  },
+  "rule_contributions": [],
+  "monthly": [
+    {
+      "month": "2024-08",
+      "bets": 3,
+      "staked": 3.0,
+      "profit": 0.1,
+      "roi_pct": 3.33
+    },
+    {
+      "month": "2024-09",
+      "bets": 4,
+      "staked": 4.0,
+      "profit": -1.1,
+      "roi_pct": -27.5
+    },
+    {
+      "month": "2024-10",
+      "bets": 5,
+      "staked": 5.0,
+      "profit": 0.7,
+      "roi_pct": 14.0
+    },
+    {
+      "month": "2025-01",
+      "bets": 1,
+      "staked": 1.0,
+      "profit": 2.1,
+      "roi_pct": 210.0
+    },
+    {
+      "month": "2025-02",
+      "bets": 2,
+      "staked": 2.0,
+      "profit": 1.0,
+      "roi_pct": 50.0
+    }
+  ],
+  "decision": "POSITIVE_BUT_NOT_STATISTICALLY_CONFIRMED",
+  "decision_reasons": [
+    "bets<minimum",
+    "active_months<minimum",
+    "bootstrap_roi_p05<=0",
+    "bootstrap_positive_probability<0.95",
+    "sign_flip_p_value>0.05"
+  ]
+}

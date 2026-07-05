@@ -50,6 +50,33 @@ def test_domain_readiness_prioritizes_search_ready_current_pool(tmp_path):
     assert international["readiness"] == "FEATURES_ONLY_NO_1X2_ODDS"
 
 
+def test_domain_readiness_maps_swedish_official_pool(tmp_path):
+    root = tmp_path / "football-data"
+    _write_csv(root / "new" / "SWE.csv", 1200, with_odds=True)
+    database = Database(tmp_path / "domain-swe.db")
+    database.initialize()
+    repo = Repository(database)
+    match_id = repo.create_match({
+        "official_match_id": "sporttery-domain-swe-1",
+        "league": "\u745e\u8d85",
+        "home_team": "A",
+        "away_team": "B",
+        "kickoff_time": "2027-01-01T12:00:00+00:00",
+        "status": "scheduled",
+    })
+    with repo.db.connect() as c:
+        c.execute("UPDATE matches SET source_url=? WHERE id=?", ("test", match_id))
+    repo.add_odds(match_id, {"home": 2.2, "draw": 3.1, "away": 3.3}, "official")
+
+    report = build_profit_data_domain_readiness(root, database)
+
+    domain = report["top_domains"][0]
+    assert domain["code"] == "SWE"
+    assert domain["readiness"] == "SEARCH_READY_CURRENT_OFFICIAL_POOL"
+    assert domain["research_priority"] == "HIGH_CURRENT_POOL"
+    assert domain["official_pool_matches"] == 1
+
+
 def test_domain_readiness_marks_small_odds_domain_as_research_only(tmp_path):
     root = tmp_path / "football-data"
     _write_csv(root / "new" / "WORLD_CUP.csv", 128, with_odds=True)

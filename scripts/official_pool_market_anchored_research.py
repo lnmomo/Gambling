@@ -19,6 +19,8 @@ from cross_league_rule_search import load_seasons  # noqa: E402
 from feature_enriched_candidate_filter import (  # noqa: E402
     FeatureFilterConfig,
     _prepare_candidate_features,
+    assess_feature_filter_row,
+    season_summary_from_bets,
     walk_forward_feature_filter,
 )
 from market_bias_diagnostics import ODDS_SOURCE_COLUMNS, build_market_frame  # noqa: E402
@@ -113,6 +115,13 @@ def _default_specs_for_league(league: str) -> tuple[AnchoredRuleSpec, ...]:
             AnchoredRuleSpec("FIN", "draw", odds_bucket="[2.8,3.5)"),
             AnchoredRuleSpec("FIN", "home", market_prob_bucket="[0.55,1.00]"),
         )
+    if league == "SWE":
+        return (
+            AnchoredRuleSpec("SWE", "away", odds_bucket="[2.2,2.8)"),
+            AnchoredRuleSpec("SWE", "away", market_prob_bucket="[0.28,0.34)"),
+            AnchoredRuleSpec("SWE", "draw", odds_bucket="[2.8,3.5)"),
+            AnchoredRuleSpec("SWE", "home", market_prob_bucket="[0.55,1.00]"),
+        )
     if league == "WORLD_CUP":
         return (
             AnchoredRuleSpec("WORLD_CUP", None, odds_bucket="[4.0,5.0)"),
@@ -122,14 +131,18 @@ def _default_specs_for_league(league: str) -> tuple[AnchoredRuleSpec, ...]:
     return ()
 
 
-def _config_grid(odds_source: str, labels: tuple[str, ...]) -> list[FeatureFilterConfig]:
+def _config_grid(odds_source: str, labels: tuple[str, ...], fast: bool = False) -> list[FeatureFilterConfig]:
     configs: list[FeatureFilterConfig] = []
+    train_month_values = (30,) if fast else (18, 30)
+    min_row_values = (120,) if fast else (80, 120)
+    min_ev_values = (0.02,) if fast else (0.0, 0.02)
+    ridge_values = (10.0,) if fast else (10.0, 35.0)
     for label, train_months, min_rows, min_ev, ridge in itertools.product(
         labels,
-        (18, 30),
-        (80, 120),
-        (0.0, 0.02),
-        (10.0, 35.0),
+        train_month_values,
+        min_row_values,
+        min_ev_values,
+        ridge_values,
     ):
         configs.append(FeatureFilterConfig(
             odds_source=odds_source,
@@ -145,29 +158,20 @@ def _config_grid(odds_source: str, labels: tuple[str, ...]) -> list[FeatureFilte
 
 
 def _decision_reasons(row: dict[str, Any]) -> list[str]:
-    reasons: list[str] = []
-    if row["bets"] < 150:
-        reasons.append("bets<150")
-    if row["profit"] <= 0 or row["roi_pct"] <= 0:
-        reasons.append("profit_or_roi<=0")
-    if row["positive_months"] <= row["negative_months"]:
-        reasons.append("positive_months<=negative_months")
-    if row["max_drawdown"] > row["profit"]:
-        reasons.append("max_drawdown>profit")
-    if row["active_pass_rate"] < 0.6:
-        reasons.append("active_pass_rate<0.6")
+    _, reasons = assess_feature_filter_row(row, min_bets=150, min_active_pass_rate=0.60)
     return reasons
 
 
 def _decision(row: dict[str, Any]) -> str:
-    return "RESEARCH_CANDIDATE_NEEDS_AUDIT" if not _decision_reasons(row) else "REJECT_RESEARCH_GATES"
+    return "SHADOW_READY_RESEARCH_CANDIDATE" if not _decision_reasons(row) else "REJECT_RESEARCH_GATES"
 
 
 def run_official_pool_market_anchored_research(
-    leagues: tuple[str, ...] = ("FIN", "WORLD_CUP"),
+    leagues: tuple[str, ...] = ("FIN", "SWE", "WORLD_CUP"),
     odds_sources: tuple[str, ...] = ("AVG_OPEN", "AVG_CLOSE"),
     first_month: str = "2020-01",
     last_month: str = "2025-12",
+    fast: bool = False,
 ) -> dict[str, Any]:
     results: list[dict[str, Any]] = []
     artifact_frames: dict[str, dict[str, pd.DataFrame]] = {}
@@ -199,12 +203,14 @@ def run_official_pool_market_anchored_research(
                 })
                 continue
             labels = tuple(sorted(candidates["rule_label"].astype(str).unique()))
-            for config in _config_grid(odds_source, labels):
+            for config in _config_grid(odds_source, labels, fast=fast):
                 wf_summary, selected = walk_forward_feature_filter(candidates, config, first_month, last_month)
                 portfolio, daily, bets = simulate_settlement_portfolio(selected, daily_limit=100.0, max_single_stake=10.0)
                 windows = _window_rows(bets, first_month, last_month)
                 window_summary = _summarize_windows(windows)
                 overall = portfolio["overall"]
+                season_rows = season_summary_from_bets(bets)
+                latest_season = season_rows[-1] if season_rows else {}
                 row = {
                     "league": league,
                     "odds_source": odds_source,
@@ -222,6 +228,11 @@ def run_official_pool_market_anchored_research(
                     "max_drawdown": float(overall["max_drawdown"]),
                     "positive_months": int(portfolio.get("positive_months") or 0),
                     "negative_months": int(portfolio.get("negative_months") or 0),
+                    "positive_seasons": sum(float(item["profit"]) > 0 for item in season_rows),
+                    "negative_seasons": sum(float(item["profit"]) < 0 for item in season_rows),
+                    "latest_season": latest_season.get("season"),
+                    "latest_season_bets": int(latest_season.get("bets") or 0),
+                    "latest_season_profit": float(latest_season.get("profit") or 0.0),
                     **window_summary,
                 }
                 row["decision_reasons"] = _decision_reasons(row)
@@ -237,7 +248,7 @@ def run_official_pool_market_anchored_research(
     ranked = sorted(
         results,
         key=lambda row: (
-            row.get("decision") == "RESEARCH_CANDIDATE_NEEDS_AUDIT",
+            row.get("decision") == "SHADOW_READY_RESEARCH_CANDIDATE",
             row.get("active_pass_rate", 0),
             row.get("roi_pct", -999),
             row.get("profit", -999),
@@ -251,20 +262,22 @@ def run_official_pool_market_anchored_research(
         "odds_sources": odds_sources,
         "first_month": first_month,
         "last_month": last_month,
+        "fast": fast,
         "results": ranked,
         "top": ranked[:20],
         "best_label": ranked[0].get("label") if ranked and "label" in ranked[0] else None,
         "artifacts": artifact_frames,
-        "guardrail": "A candidate marked RESEARCH_CANDIDATE_NEEDS_AUDIT still needs statistical audit, edge calibration, and official-SP prospective validation.",
+        "guardrail": "A candidate marked SHADOW_READY_RESEARCH_CANDIDATE still needs statistical audit, edge calibration, and official-SP prospective validation.",
     }
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Research market-anchored residual candidates for leagues present in the official pool.")
-    parser.add_argument("--leagues", default="FIN,WORLD_CUP")
+    parser.add_argument("--leagues", default="FIN,SWE,WORLD_CUP")
     parser.add_argument("--odds-sources", default="AVG_OPEN,AVG_CLOSE")
     parser.add_argument("--first-month", default="2020-01")
     parser.add_argument("--last-month", default="2025-12")
+    parser.add_argument("--fast", action="store_true", help="Run one representative formal config per rule.")
     parser.add_argument("--output-dir", type=Path, default=Path("reports/official_pool_market_anchored_research"))
     args = parser.parse_args()
     report = run_official_pool_market_anchored_research(
@@ -272,6 +285,7 @@ def main() -> None:
         tuple(item.strip().upper() for item in args.odds_sources.split(",") if item.strip()),
         args.first_month,
         args.last_month,
+        args.fast,
     )
     artifacts = report.pop("artifacts")
     args.output_dir.mkdir(parents=True, exist_ok=True)

@@ -18,6 +18,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 
 from football_agents.models import EloModel, EnsembleModel, PoissonModel
 from football_agents.models.ensemble import market_probabilities
+from football_agents.real_ev import anchor_real_probability
 from monthly_shadow_backtest import OUTCOMES, actual_outcome, load_matches
 
 DEFAULT_SEASONS = ("2122", "2223", "2324", "2425", "2526")
@@ -38,6 +39,8 @@ class PortfolioConfig:
     allowed_outcomes: tuple[str, ...] = OUTCOMES
     stop_loss: float | None = None
     quality_gate: dict | None = None
+    candidate_limit_per_day: int | None = None
+    ranking_key: str = "lower_ev"
 
 
 EXPERIMENT_PROFILES = {
@@ -257,6 +260,109 @@ EXPERIMENT_PROFILES = {
         "quality_quantiles": (0.50,),
         "quality_min_samples": 60,
     },
+    "real_ev_probe_draw": {
+        "validation_months": 12,
+        "training_months": 18,
+        "validation_min_bets": 3,
+        "min_positive_validation_months": 1,
+        "min_validation_roi": 0.0,
+        "min_validation_profit": 0.0,
+        "max_drawdown_profit_ratio": 3.0,
+        "uncertainty_scale": 0.75,
+        "ev_thresholds": (-0.01, 0.0),
+        "min_odds": (2.4, 2.8),
+        "max_odds": (3.5, 4.0),
+        "kelly_fractions": (0.05,),
+        "allowed_outcomes": (("draw",),),
+        "research_only": True,
+    },
+    "real_ev_draw_regime_features": {
+        "validation_months": 12,
+        "training_months": 18,
+        "validation_min_bets": 6,
+        "min_positive_validation_months": 2,
+        "min_validation_roi": 0.03,
+        "min_validation_profit": 1.0,
+        "max_drawdown_profit_ratio": 2.0,
+        "uncertainty_scale": 0.75,
+        "ev_thresholds": (-0.01, 0.0),
+        "min_odds": (2.4, 2.8),
+        "max_odds": (3.5, 4.0),
+        "kelly_fractions": (0.05,),
+        "allowed_outcomes": (("draw",),),
+        "bucket_keys": (
+            ("odds_bucket", "recent_draw_bucket"),
+            ("odds_bucket", "recent_low_score_bucket"),
+            ("odds_bucket", "draw_market_gap_bucket"),
+            ("market_draw_bucket", "recent_draw_bucket"),
+            ("league_draw_rate_bucket", "recent_low_score_bucket"),
+        ),
+        "min_bucket_samples": (6, 10),
+        "min_bucket_roi": (0.05,),
+        "research_only": True,
+    },
+    "real_ev_draw_regime_features_fast": {
+        "validation_months": 12,
+        "training_months": 18,
+        "validation_min_bets": 4,
+        "min_positive_validation_months": 1,
+        "min_validation_roi": 0.0,
+        "min_validation_profit": 0.0,
+        "max_drawdown_profit_ratio": 3.0,
+        "uncertainty_scale": 0.75,
+        "ev_thresholds": (-0.01,),
+        "min_odds": (2.4,),
+        "max_odds": (3.5,),
+        "kelly_fractions": (0.05,),
+        "allowed_outcomes": (("draw",),),
+        "bucket_keys": (
+            ("market_draw_bucket", "recent_draw_bucket"),
+            ("league_draw_rate_bucket", "recent_low_score_bucket"),
+        ),
+        "min_bucket_samples": (4,),
+        "min_bucket_roi": (0.0,),
+        "research_only": True,
+    },
+    "real_ev_draw_ranked": {
+        "validation_months": 12,
+        "training_months": 18,
+        "validation_min_bets": 8,
+        "min_positive_validation_months": 2,
+        "min_validation_roi": 0.03,
+        "min_validation_profit": 1.0,
+        "max_drawdown_profit_ratio": 2.0,
+        "uncertainty_scale": 0.75,
+        "ev_thresholds": (-0.01, 0.0),
+        "min_odds": (2.4, 2.8),
+        "max_odds": (3.5,),
+        "kelly_fractions": (0.05,),
+        "allowed_outcomes": (("draw",),),
+        "candidate_limits_per_day": (1, 2),
+        "ranking_keys": ("lower_ev", "quality_score"),
+        "quality_gate": True,
+        "quality_holdout": False,
+        "quality_quantiles": (0.0,),
+        "quality_min_samples": 20,
+        "research_only": True,
+    },
+    "real_ev_draw_ranked_fast": {
+        "validation_months": 12,
+        "training_months": 18,
+        "validation_min_bets": 5,
+        "min_positive_validation_months": 1,
+        "min_validation_roi": 0.0,
+        "min_validation_profit": 0.0,
+        "max_drawdown_profit_ratio": 3.0,
+        "uncertainty_scale": 0.75,
+        "ev_thresholds": (-0.01, 0.0),
+        "min_odds": (2.4, 2.8),
+        "max_odds": (3.5,),
+        "kelly_fractions": (0.05,),
+        "allowed_outcomes": (("draw",),),
+        "candidate_limits_per_day": (1,),
+        "ranking_keys": ("lower_ev",),
+        "research_only": True,
+    },
 }
 
 QUALITY_FEATURE_COLUMNS = (
@@ -266,6 +372,9 @@ QUALITY_FEATURE_COLUMNS = (
     "odds",
     "market_draw",
     "league_draw_rate",
+    "combined_recent_draw_rate",
+    "combined_recent_low_score_rate",
+    "draw_market_vs_league",
     "abs_elo_delta",
     "lambda_total",
 )
@@ -297,9 +406,11 @@ class IsotonicPAV:
 
 
 class ResidualProbabilityModel:
-    def __init__(self, ridge: float = 8.0, uncertainty_scale: float = 1.0) -> None:
+    def __init__(self, ridge: float = 8.0, uncertainty_scale: float = 1.0,
+                 use_real_ev_anchor: bool = True) -> None:
         self.ridge = ridge
         self.uncertainty_scale = uncertainty_scale
+        self.use_real_ev_anchor = use_real_ev_anchor
         self.coefficients: dict[str, np.ndarray] = {}
         self.calibrators: dict[str, IsotonicPAV] = {}
         self.rmse: dict[str, float] = {}
@@ -318,6 +429,9 @@ class ResidualProbabilityModel:
             "season_points_per_match_delta",
             "season_goal_diff_per_match_delta",
             "rest_days_delta",
+            "combined_recent_draw_rate",
+            "combined_recent_low_score_rate",
+            "draw_market_vs_league",
         ]
         extras = [
             frame[column].fillna(0).to_numpy(float)
@@ -349,21 +463,49 @@ class ResidualProbabilityModel:
     def predict(self, frame: pd.DataFrame) -> pd.DataFrame:
         output = frame.copy()
         calibrated: dict[str, np.ndarray] = {}
+        model_probability: dict[str, np.ndarray] = {}
+        uncertainty_by_outcome: dict[str, np.ndarray] = {}
         for outcome in OUTCOMES:
             market = frame[f"market_{outcome}"].to_numpy(float)
             raw = np.clip(market + self.design(frame, outcome) @ self.coefficients[outcome], 0.01, 0.98)
             calibrated[outcome] = self.calibrators[outcome].predict(raw)
         total = sum(calibrated.values())
+        counts = frame["league"].map(self.league_counts).fillna(0).to_numpy(float)
+        reliability = counts / (counts + 200.0)
         for outcome in OUTCOMES:
             market = frame[f"market_{outcome}"].to_numpy(float)
             normalized = calibrated[outcome] / total
-            counts = frame["league"].map(self.league_counts).fillna(0).to_numpy(float)
-            reliability = counts / (counts + 200.0)
             probability = market + reliability * (normalized - market)
             uncertainty = np.maximum(0.0075, self.uncertainty_scale * self.rmse[outcome] / np.sqrt(np.maximum(counts, 30.0)))
-            output[f"probability_{outcome}"] = probability
+            model_probability[outcome] = probability
+            uncertainty_by_outcome[outcome] = uncertainty
+            output[f"model_probability_{outcome}"] = probability
+            output[f"model_lower_ev_{outcome}"] = (probability - uncertainty) * frame[f"odds_{outcome}"].to_numpy(float) - 1
             output[f"uncertainty_{outcome}"] = uncertainty
-            output[f"lower_ev_{outcome}"] = (probability - uncertainty) * frame[f"odds_{outcome}"].to_numpy(float) - 1
+        if self.use_real_ev_anchor:
+            real_rows = {outcome: [] for outcome in OUTCOMES}
+            for row_index in range(len(frame)):
+                model = {outcome: float(model_probability[outcome][row_index]) for outcome in OUTCOMES}
+                market = {outcome: float(frame.iloc[row_index][f"market_{outcome}"]) for outcome in OUTCOMES}
+                odds = {outcome: float(frame.iloc[row_index][f"odds_{outcome}"]) for outcome in OUTCOMES}
+                anchored, _ = anchor_real_probability(
+                    model, market, odds, reliability=float(reliability[row_index])
+                )
+                for outcome in OUTCOMES:
+                    real_rows[outcome].append(anchored[outcome])
+            for outcome in OUTCOMES:
+                probability = np.array(real_rows[outcome], dtype=float)
+                output[f"probability_{outcome}"] = probability
+                output[f"lower_ev_{outcome}"] = (
+                    probability - uncertainty_by_outcome[outcome]
+                ) * frame[f"odds_{outcome}"].to_numpy(float) - 1
+        else:
+            for outcome in OUTCOMES:
+                probability = model_probability[outcome]
+                output[f"probability_{outcome}"] = probability
+                output[f"lower_ev_{outcome}"] = (
+                    probability - uncertainty_by_outcome[outcome]
+                ) * frame[f"odds_{outcome}"].to_numpy(float) - 1
         return output
 
 
@@ -409,6 +551,12 @@ def build_feature_history(matches: pd.DataFrame) -> pd.DataFrame:
                 "league_draw_rate": round(prior_league_draws / prior_league_matches, 6) if prior_league_matches else 0.27,
                 "home_form_points": home_form["points"],
                 "away_form_points": away_form["points"],
+                "home_recent_draw_rate": home_form["draw_rate"],
+                "away_recent_draw_rate": away_form["draw_rate"],
+                "combined_recent_draw_rate": round((home_form["draw_rate"] + away_form["draw_rate"]) / 2, 6),
+                "home_recent_low_score_rate": home_form["low_score_rate"],
+                "away_recent_low_score_rate": away_form["low_score_rate"],
+                "combined_recent_low_score_rate": round((home_form["low_score_rate"] + away_form["low_score_rate"]) / 2, 6),
                 "form_points_diff": round(home_form["points"] - away_form["points"], 6),
                 "form_goals_for_delta": round(home_form["goals_for"] - away_form["goals_for"], 6),
                 "form_goals_against_delta": round(home_form["goals_against"] - away_form["goals_against"], 6),
@@ -418,6 +566,7 @@ def build_feature_history(matches: pd.DataFrame) -> pd.DataFrame:
                 "home_rest_days": home_rest,
                 "away_rest_days": away_rest,
                 "rest_days_delta": round(home_rest - away_rest, 6),
+                "draw_market_vs_league": round(market["draw"] - (prior_league_draws / prior_league_matches if prior_league_matches else 0.27), 6),
                 **{f"odds_{outcome}": odds[outcome] for outcome in OUTCOMES},
                 **{f"market_{outcome}": market[outcome] for outcome in OUTCOMES},
                 **{f"pure_{outcome}": pure[outcome] for outcome in OUTCOMES},
@@ -446,7 +595,14 @@ def _points_for(goals_for: int, goals_against: int) -> int:
 def _recent_team_form(history: list[dict[str, float]], window: int = 5) -> dict[str, float]:
     recent = history[-window:]
     if not recent:
-        return {"points": 1.0, "goals_for": 1.2, "goals_against": 1.2, "goal_diff": 0.0}
+        return {
+            "points": 1.0,
+            "goals_for": 1.2,
+            "goals_against": 1.2,
+            "goal_diff": 0.0,
+            "draw_rate": 0.27,
+            "low_score_rate": 0.50,
+        }
     count = len(recent)
     goals_for = sum(row["goals_for"] for row in recent) / count
     goals_against = sum(row["goals_against"] for row in recent) / count
@@ -455,6 +611,8 @@ def _recent_team_form(history: list[dict[str, float]], window: int = 5) -> dict[
         "goals_for": goals_for,
         "goals_against": goals_against,
         "goal_diff": goals_for - goals_against,
+        "draw_rate": sum(1 for row in recent if row["goals_for"] == row["goals_against"]) / count,
+        "low_score_rate": sum(1 for row in recent if row["goals_for"] + row["goals_against"] <= 2) / count,
     }
 
 
@@ -498,6 +656,8 @@ def choose_candidates(predictions: pd.DataFrame, config: PortfolioConfig) -> pd.
             "outcome": outcome, "probability": float(row[f"probability_{outcome}"]),
             "uncertainty": float(row[f"uncertainty_{outcome}"]), "lower_ev": float(row[f"lower_ev_{outcome}"]),
             "odds": float(row[f"odds_{outcome}"]),
+            "model_probability": float(row.get(f"model_probability_{outcome}", row[f"probability_{outcome}"])),
+            "model_lower_ev": float(row.get(f"model_lower_ev_{outcome}", row[f"lower_ev_{outcome}"])),
         } for outcome in OUTCOMES if outcome in config.allowed_outcomes]
         if not choices:
             continue
@@ -513,13 +673,21 @@ def choose_candidates(predictions: pd.DataFrame, config: PortfolioConfig) -> pd.
             "odds_bucket": odds_bucket,
             "market_draw": float(row.get("market_draw", 0.0)),
             "league_draw_rate": float(row.get("league_draw_rate", 0.0)),
+            "combined_recent_draw_rate": float(row.get("combined_recent_draw_rate", 0.0)),
+            "combined_recent_low_score_rate": float(row.get("combined_recent_low_score_rate", 0.0)),
+            "draw_market_vs_league": float(row.get("draw_market_vs_league", 0.0)),
             "abs_elo_delta": abs(float(row.get("elo_delta", 0.0))),
             "lambda_total": float(row.get("lambda_total", 0.0)),
             "market_draw_bucket": _market_draw_bucket(float(row.get("market_draw", 0.0))),
             "league_draw_rate_bucket": _league_draw_rate_bucket(float(row.get("league_draw_rate", 0.0))),
+            "recent_draw_bucket": _recent_draw_bucket(float(row.get("combined_recent_draw_rate", 0.0))),
+            "recent_low_score_bucket": _recent_low_score_bucket(float(row.get("combined_recent_low_score_rate", 0.0))),
+            "draw_market_gap_bucket": _draw_market_gap_bucket(float(row.get("draw_market_vs_league", 0.0))),
             "strength_gap_bucket": _strength_gap_bucket(float(row.get("elo_delta", 0.0))),
             "goal_env_bucket": _goal_env_bucket(float(row.get("lambda_total", 0.0))),
         }
+        if "quality_score" in row and pd.notna(row["quality_score"]):
+            candidate["quality_score"] = float(row["quality_score"])
         if config.allowed_buckets:
             key = tuple(str(candidate[column]) for column in config.bucket_key)
             if key not in set(config.allowed_buckets):
@@ -566,6 +734,30 @@ def _league_draw_rate_bucket(rate: float) -> str:
     if rate < 0.29:
         return "league_draw_mid"
     return "league_draw_high"
+
+
+def _recent_draw_bucket(rate: float) -> str:
+    if rate < 0.20:
+        return "recent_draw_low"
+    if rate < 0.36:
+        return "recent_draw_mid"
+    return "recent_draw_high"
+
+
+def _recent_low_score_bucket(rate: float) -> str:
+    if rate < 0.40:
+        return "low_score_low"
+    if rate < 0.60:
+        return "low_score_mid"
+    return "low_score_high"
+
+
+def _draw_market_gap_bucket(value: float) -> str:
+    if value < -0.03:
+        return "draw_under_league"
+    if value < 0.03:
+        return "draw_near_league"
+    return "draw_over_league"
 
 
 def _strength_gap_bucket(elo_delta: float) -> str:
@@ -720,7 +912,13 @@ def simulate(predictions: pd.DataFrame, config: PortfolioConfig) -> tuple[pd.Dat
                 "profit": 0.0, "halted_by_stop_loss": True,
             })
             continue
-        day = candidates[candidates["date"] == date].sort_values("lower_ev", ascending=False) if not candidates.empty else candidates
+        if not candidates.empty:
+            ranking_key = config.ranking_key if config.ranking_key in candidates.columns else "lower_ev"
+            day = candidates[candidates["date"] == date].sort_values(ranking_key, ascending=False)
+            if config.candidate_limit_per_day is not None:
+                day = day.head(max(0, int(config.candidate_limit_per_day)))
+        else:
+            day = candidates
         daily_used, league_used = 0.0, {}
         day_profit, day_bets = 0.0, 0
         for _, candidate in day.iterrows():
@@ -746,6 +944,9 @@ def simulate(predictions: pd.DataFrame, config: PortfolioConfig) -> tuple[pd.Dat
                 "outcome": candidate["outcome"], "actual_result": source["actual_result"],
                 "probability": round(probability, 6), "uncertainty": round(float(candidate["uncertainty"]), 6),
                 "lower_ev": round(float(candidate["lower_ev"]), 6), "odds": odds,
+                "model_probability": round(float(candidate.get("model_probability", probability)), 6),
+                "model_lower_ev": round(float(candidate.get("model_lower_ev", candidate["lower_ev"])), 6),
+                "model_ev": round(float(candidate.get("model_probability", probability)) * odds - 1, 6),
                 "stake": round(stake, 2), "won": won, "profit": round(profit, 2),
             })
         cumulative_profit += day_profit
@@ -837,21 +1038,34 @@ def select_portfolio_config(train: pd.DataFrame, validation: pd.DataFrame, profi
     ):
         if float(min_odds) > float(odds):
             continue
-        base = PortfolioConfig(
-            ev, odds, fraction, min_odds=float(min_odds),
-            allowed_outcomes=tuple(allowed_outcomes), stop_loss=stop_loss,
-        )
+        base_variants = [
+            PortfolioConfig(
+                ev,
+                odds,
+                fraction,
+                min_odds=float(min_odds),
+                allowed_outcomes=tuple(allowed_outcomes),
+                stop_loss=stop_loss,
+                candidate_limit_per_day=candidate_limit,
+                ranking_key=str(ranking_key),
+            )
+            for candidate_limit, ranking_key in itertools.product(
+                profile.get("candidate_limits_per_day", (None,)),
+                profile.get("ranking_keys", ("lower_ev",)),
+            )
+        ]
         base_configs: list[PortfolioConfig] = []
         if not profile.get("bucket_keys"):
-            base_configs.append(base)
+            base_configs.extend(base_variants)
         else:
+            predicted_base = base_variants[0]
             for bucket_key, min_samples, min_roi in itertools.product(
                 profile["bucket_keys"], profile["min_bucket_samples"], profile["min_bucket_roi"],
             ):
                 if profile.get("persistent_buckets"):
                     allowed = select_persistent_buckets(
                         predicted,
-                        base,
+                        predicted_base,
                         bucket_key,
                         min_samples,
                         min_roi,
@@ -859,12 +1073,14 @@ def select_portfolio_config(train: pd.DataFrame, validation: pd.DataFrame, profi
                         int(profile.get("min_bucket_positive_months", 1)),
                     )
                 else:
-                    allowed = select_allowed_buckets(predicted, base, bucket_key, min_samples, min_roi)
+                    allowed = select_allowed_buckets(predicted, predicted_base, bucket_key, min_samples, min_roi)
                 if allowed:
-                    base_configs.append(PortfolioConfig(
-                        ev, odds, fraction, bucket_key=tuple(bucket_key), allowed_buckets=allowed,
-                        min_odds=float(min_odds), allowed_outcomes=tuple(allowed_outcomes), stop_loss=stop_loss,
-                    ))
+                    for base in base_variants:
+                        base_configs.append(replace(
+                            base,
+                            bucket_key=tuple(bucket_key),
+                            allowed_buckets=allowed,
+                        ))
         if not use_quality_gate:
             candidates.extend(base_configs)
             continue
@@ -972,8 +1188,10 @@ def nested_walk_forward(features: pd.DataFrame, first_month: str, months: int, p
     )
     drawdown_covered_by_profit = overall["profit"] > overall["max_drawdown"]
     promotion = promotion_decision(overall, calibration, profitable_invested_months, losing_invested_months)
+    if profile.get("research_only") and promotion == "PROMOTE_TO_LARGER_SHADOW":
+        promotion = "RESEARCH_ONLY_NEEDS_CONFIRMATION"
     summary = {
-        "method": "nested monthly walk-forward market residual + isotonic + league shrinkage + constrained Kelly",
+        "method": "nested monthly walk-forward real-EV market anchor + residual isotonic + league shrinkage + constrained Kelly",
         "experiment_profile": profile_name, "profile_config": profile,
         "first_month": first_month, "months": months,
         "training_months": training_months,

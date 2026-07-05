@@ -1,0 +1,118 @@
+{
+  "method": "official-pool-driven profit algorithm research planner",
+  "created_at": "2026-07-05T05:16:44.341030+00:00",
+  "official_matches": 140,
+  "with_latest_odds": 66,
+  "league_count": 5,
+  "status_counts": [
+    {
+      "status": "rejected_by_world_cup_tournament_holdout",
+      "matches": 96
+    },
+    {
+      "status": "rejected_by_existing_market_bias_and_residual_tests",
+      "matches": 28
+    },
+    {
+      "status": "rejected_by_current_pool_feature_hard_gates",
+      "matches": 8
+    },
+    {
+      "status": "unmapped_league",
+      "matches": 6
+    },
+    {
+      "status": "missing_historical_1x2_odds",
+      "matches": 2
+    }
+  ],
+  "leagues": [
+    {
+      "league": "世界杯",
+      "matches": 96,
+      "with_latest_odds": 42,
+      "mapped_history_code": "WORLD_CUP",
+      "historical_odds_available": true,
+      "historical_rows": 1146,
+      "evidence_status": "rejected_by_world_cup_tournament_holdout",
+      "blocker": "World Cup 1X2 odds are archived, but tournament holdout validation rejected the reusable allocation rule search (REJECT_NO_REUSABLE_WORLD_CUP_RULE; BLOCK_PRODUCTION_WORLD_CUP_SAMPLE_TOO_SMALL)",
+      "research_priority": "LOW_DO_NOT_LOOSEN",
+      "suggested_commands": [
+        "python scripts/world_cup_tournament_validation.py --output-dir reports\\world_cup_tournament_validation_current",
+        "Collect broader paid international 1X2 odds history before retrying an international allocation rule."
+      ],
+      "evidence_reports": [
+        "reports\\world_cup_tournament_validation_current\\summary.json"
+      ]
+    },
+    {
+      "league": "芬超",
+      "matches": 28,
+      "with_latest_odds": 12,
+      "mapped_history_code": "FIN",
+      "historical_odds_available": true,
+      "historical_rows": 5252,
+      "evidence_status": "rejected_by_existing_market_bias_and_residual_tests",
+      "blocker": "FIN is covered by historical odds, but simple market-bias and residual searches failed stability gates",
+      "research_priority": "LOW_DO_NOT_LOOSEN",
+      "suggested_commands": [
+        "python scripts/cross_league_rule_search.py --seasons FIN --first-month 2015-04 --last-month 2025-10 --league-group-scope FIN --output-dir reports\\cross_league_rule_search_fin_new_model_recheck"
+      ],
+      "evidence_reports": [
+        "reports/market_bias_robustness_gate_fin_away_prob28_34/summary.json",
+        "reports/market_bias_robustness_gate_fin_away_2p8_3p5/summary.json",
+        "reports/cross_league_rule_search_fin_residual_pool_v1/summary.json"
+      ]
+    },
+    {
+      "league": "瑞超",
+      "matches": 8,
+      "with_latest_odds": 6,
+      "mapped_history_code": "SWE",
+      "historical_odds_available": true,
+      "historical_rows": 6930,
+      "evidence_status": "rejected_by_current_pool_feature_hard_gates",
+      "blocker": "SWE is present in the current official pool and has historical odds, but the market-anchored feature residual scan failed the hard stability gates",
+      "research_priority": "LOW_DO_NOT_LOOSEN",
+      "suggested_commands": [
+        "python scripts/official_pool_market_anchored_research.py --leagues SWE --odds-sources AVG_CLOSE,MAX_CLOSE --first-month 2016-01 --last-month 2025-12 --fast --output-dir reports\\official_pool_market_anchored_research_swe_current_fast"
+      ],
+      "evidence_reports": [
+        "reports/official_pool_market_anchored_research_swe_current_fast/summary.json"
+      ]
+    },
+    {
+      "league": "韩职",
+      "matches": 6,
+      "with_latest_odds": 6,
+      "mapped_history_code": null,
+      "historical_odds_available": false,
+      "historical_rows": 0,
+      "evidence_status": "unmapped_league",
+      "blocker": "league is not mapped to a historical odds validation domain",
+      "research_priority": "MAP_FIRST",
+      "suggested_commands": [
+        "Map this league to a historical odds CSV code, then run diagnostics and walk-forward gates."
+      ],
+      "evidence_reports": []
+    },
+    {
+      "league": "国际赛",
+      "matches": 2,
+      "with_latest_odds": 0,
+      "mapped_history_code": "INTERNATIONAL",
+      "historical_odds_available": false,
+      "historical_rows": 0,
+      "evidence_status": "missing_historical_1x2_odds",
+      "blocker": "International-team results can build features but cannot validate a betting edge without odds history",
+      "research_priority": "DATA_FIRST",
+      "suggested_commands": [
+        "python -m football_agents.cli sync-international-odds-history",
+        "Collect or import historical international 1X2 odds CSV before running profit search."
+      ],
+      "evidence_reports": []
+    }
+  ],
+  "next_algorithmic_action": "Collect historical 1X2 odds for current no-coverage leagues before inventing new betting rules.",
+  "guardrail": "A league may enter allocation only after no-lookahead walk-forward, statistical audit, calibration, and official-SP prospective validation."
+}

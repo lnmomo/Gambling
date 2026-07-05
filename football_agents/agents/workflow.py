@@ -102,15 +102,35 @@ class DecisionWorkflow:
                 "qwen_context": context_metadata,
             })
 
+        true_odds = calculate_true_odds_estimate(match, {
+            "officialSp": official["odds"],
+            "externalOdds": market["odds"],
+            "finalProbability": ensemble_prediction,
+            "pureModelProbability": baseline,
+            "externalMarketProbability": market_prediction,
+            "features": features,
+        }, {
+            "model_disagreement": "HIGH" if disagreement > 0.08 else "MEDIUM" if disagreement > 0.04 else "LOW",
+            "external_market_quality": "MEDIUM",
+            "pure_model_reliability": "LOW" if min(features.get("home_recent_matches", 0), features.get("away_recent_matches", 0)) < 10 else "MEDIUM",
+            "sample_size": "LOW" if min(features.get("home_recent_matches", 0), features.get("away_recent_matches", 0)) < 10 else "MEDIUM",
+        })
         candidates = []
-        for option, probability in ensemble_prediction.items():
+        for option in ensemble_prediction:
             sp = official["odds"][option]
+            edge = true_odds.edge_quality_by_outcome[option.upper()]
+            probability = edge.estimated_probability
             candidates.append({
                 "option": option,
                 "probability": probability,
+                "model_probability": ensemble_prediction[option],
                 "sp": sp,
                 "fair_odds": 1 / probability,
-                "ev": probability * sp - 1,
+                "ev": edge.expected_ev,
+                "model_ev": ensemble_prediction[option] * sp - 1,
+                "lower_bound_ev": edge.lower_bound_ev,
+                "edge_quality_score": edge.edge_quality_score,
+                "passes_true_odds_filter": edge.passes_true_odds_filter,
             })
         best = max(candidates, key=lambda item: item["ev"])
         critic = CriticPolicy(limits).evaluate(
@@ -125,21 +145,6 @@ class DecisionWorkflow:
             weekly_exposure_fraction=features.get("weekly_exposure_fraction", 0),
             consecutive_losses=features.get("consecutive_losses", 0),
         )
-        true_odds = calculate_true_odds_estimate(match, {
-            "officialSp": official["odds"],
-            "externalOdds": market["odds"],
-            "finalProbability": ensemble_prediction,
-            "pureModelProbability": baseline,
-            "externalMarketProbability": market_prediction,
-            "features": features,
-        }, {
-            "selected_outcome": best["option"].upper(),
-            "selected_odds": best["sp"],
-            "model_disagreement": "HIGH" if disagreement > 0.08 else "MEDIUM" if disagreement > 0.04 else "LOW",
-            "external_market_quality": "MEDIUM",
-            "pure_model_reliability": "LOW" if min(features.get("home_recent_matches", 0), features.get("away_recent_matches", 0)) < 10 else "MEDIUM",
-            "sample_size": "LOW" if min(features.get("home_recent_matches", 0), features.get("away_recent_matches", 0)) < 10 else "MEDIUM",
-        })
         true_edge = true_odds.edge_quality_by_outcome.get(best["option"].upper())
         if true_edge and not true_edge.passes_true_odds_filter:
             critic = {
@@ -178,6 +183,8 @@ class DecisionWorkflow:
             "models": component_predictions,
             "ensemble": ensemble_prediction,
             "fair_odds": {option: 1 / probability for option, probability in ensemble_prediction.items()},
+            "true_probability": true_odds.true_probability_estimate,
+            "true_fair_odds": true_odds.true_fair_odds,
             "market_calibrated": True,
             "model_disagreement": disagreement,
             "candidates": candidates,

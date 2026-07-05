@@ -1918,3 +1918,284 @@ Interpretation:
 - Do not promote multi-domain low-correlation market-bucket combinations. The next algorithmic step should move away from hand-picked market buckets toward either:
   - a properly regularized feature model trained only on prior windows, or
   - a frozen I2-style candidate that passes official-SP prospective validation.
+
+Real EV Recalibration Round:
+
+- Problem diagnosed:
+  - The prior EV path used model probability directly: `EV = model_probability * official_sp - 1`.
+  - This created a structural bias where high-odds weak sides often appeared positive EV, even when the market-implied probability did not support that view.
+  - A 2,500-match historical audit found `2060` positive-EV options with odds `>=3.0` under the old model-EV view, which is not a credible long-run betting edge.
+- Code:
+  - Added `football_agents/real_ev.py`.
+  - `football_agents/true_odds_engine.py` now produces `real_ev` and `real_ev_calibration`.
+  - `football_agents/agents/workflow.py` now selects candidates and stores signal EV from True Odds / real EV, while keeping `model_ev` only as diagnostics.
+  - `football_agents/edge_quality_optimizer.py` now uses true probability for true-odds stake and EV reporting.
+  - `scripts/walk_forward_residual_strategy.py` now applies the same real-EV market anchor in the monthly walk-forward residual strategy and writes `model_probability`, `model_lower_ev`, and `model_ev` diagnostics to `bets.csv`.
+- Method:
+  - Market no-vig probability is treated as the prior.
+  - Model residuals are retained only according to data reliability.
+  - Home/away longshot positive residuals receive tight caps and explicit penalties.
+  - Normal draw prices around `2.4-4.0` are not treated as weak-team longshots, but still require enough residual edge to beat margin and uncertainty.
+- Tests:
+  - `pytest tests/test_real_ev.py tests/test_true_odds_engine.py tests/test_walk_forward_residual_strategy.py -q`
+  - Result: `23 passed`.
+
+Historical audit after recalibration:
+
+| Audit | Old model EV positives | New real EV positives | Interpretation |
+| --- | ---: | ---: | --- |
+| Odds `>=3.0`, first 2,500 scanned 2526 historical rows | 2060 | sharply reduced after real-EV anchor | Old longshot/weak-side EV was mostly model overconfidence |
+| 2025-01 residual prediction distribution | home real EV > 0: 0; away real EV > 0: 0; draw real EV > 0: 3 | draw lower-bound EV > 0: 2 | New signal is sparse and mostly draw-specific |
+
+New walk-forward reports:
+
+| Report | Profile | Window | Bets | Profit | ROI | Max drawdown | Month balance | Decision |
+| --- | --- | --- | ---: | ---: | ---: | ---: | --- | --- |
+| `reports/residual_walk_forward_real_ev_guarded_2024_06_v1` | guarded | 2024-06 through 2026-05 | 0 | 0.00 | 0.00% | 0.00 | 0 / 0 | `NEED_MORE_DATA` |
+| `reports/residual_walk_forward_real_ev_draw_quality_pooled_lite_2024_06_v2` | draw_quality_pooled_lite | 2024-06 through 2026-05 | 0 | 0.00 | 0.00% | 0.00 | 0 / 0 | `NEED_MORE_DATA` |
+| `reports/residual_walk_forward_real_ev_probe_draw_2024_06_v1` | real_ev_probe_draw | 2024-06 through 2026-05 | 5 | 1.40 | 28.00% | 2.00 | 1 profitable / 3 losing active months | `NEED_MORE_DATA` |
+
+Statistical audit for `real_ev_probe_draw`:
+
+- Report: `reports/residual_walk_forward_real_ev_probe_draw_2024_06_v1/statistical_audit.json`.
+- Decision: `REJECT_STATISTICALLY_WEAK`.
+- Reasons:
+  - `bets<minimum`.
+  - `active_months<minimum`.
+  - `bootstrap_roi_p05<=0`.
+  - `bootstrap_positive_probability<0.95`.
+  - `sign_flip_p_value>0.05`.
+  - `drawdown_to_profit>0.5`.
+  - `positive_months<=negative_months`.
+
+Interpretation:
+
+- The real-EV change fixed the weak-team longshot EV pathology, but it also shows that most previous apparent edges were not robust enough to survive market anchoring and uncertainty.
+- The remaining signal is sparse and draw-heavy, especially around Spanish leagues in this 24-month window, but the sample is far too small to allocate real daily capital.
+- This is useful progress because it separates two things:
+  - old false edge: model residuals too large versus the betting market;
+  - surviving research lead: a small draw-value residual signal that needs broader data, richer draw-specific features, and more samples.
+- Do not promote `real_ev_probe_draw`.
+- Next algorithmic step:
+  - keep the real-EV anchor as the production EV definition;
+  - expand draw-specific features and validation samples;
+  - search for enough repeated draw-value signals that pass profit-over-drawdown and statistical audit gates before any daily 100 allocation is considered live.
+
+Draw-Specific Feature Expansion Round:
+
+- Motivation:
+  - The first real-EV probe produced only `5` bets. It was positive on paper, but statistically weak.
+  - The surviving signal was draw-heavy, so the next step was to add draw-specific pre-match features instead of loosening weak-side EV.
+- Code:
+  - `scripts/walk_forward_residual_strategy.py` now adds:
+    - `home_recent_draw_rate`, `away_recent_draw_rate`, `combined_recent_draw_rate`.
+    - `home_recent_low_score_rate`, `away_recent_low_score_rate`, `combined_recent_low_score_rate`.
+    - `draw_market_vs_league`, comparing no-vig market draw probability with prior league draw rate.
+    - Buckets: `recent_draw_bucket`, `recent_low_score_bucket`, `draw_market_gap_bucket`.
+  - These features are built only from matches before the current match date.
+  - The residual model design matrix now includes these draw-specific features.
+  - Added research-only profiles:
+    - `real_ev_draw_regime_features`.
+    - `real_ev_draw_regime_features_fast`.
+- Tests:
+  - `pytest tests/test_walk_forward_residual_strategy.py -q`
+  - Result: `21 passed`.
+
+Experiments:
+
+| Report | Profile | Window | Bets | Profit | ROI | Max drawdown | Month balance | Decision |
+| --- | --- | --- | ---: | ---: | ---: | ---: | --- | --- |
+| `reports/residual_walk_forward_real_ev_draw_regime_features_fast_2024_06_v1` | real_ev_draw_regime_features_fast | 2024-06 through 2026-05 | 0 | 0.00 | 0.00% | 0.00 | 0 / 0 | `NEED_MORE_DATA` |
+| `reports/residual_walk_forward_real_ev_probe_draw_features_2024_06_v1` | real_ev_probe_draw with draw features | 2024-06 through 2026-05 | 15 | 2.80 | 18.67% | 4.00 | 4 profitable / 1 losing active months | `NEED_MORE_DATA` |
+
+Statistical audit for `real_ev_probe_draw_features`:
+
+- Report: `reports/residual_walk_forward_real_ev_probe_draw_features_2024_06_v1/statistical_audit.json`.
+- Decision: `POSITIVE_BUT_NOT_STATISTICALLY_CONFIRMED`.
+- Key values:
+  - Bets: `15`.
+  - Active months: `5`.
+  - ROI: `18.67%`.
+  - Bootstrap ROI 5th percentile: `-6.25%`.
+  - Bootstrap positive ROI probability: `0.876`.
+  - Sign-flip p-value: `0.223`.
+- Rejection reasons:
+  - `bets<minimum`.
+  - `active_months<minimum`.
+  - `bootstrap_roi_p05<=0`.
+  - `bootstrap_positive_probability<0.95`.
+  - `sign_flip_p_value>0.05`.
+
+Interpretation:
+
+- The new draw features improved the sparse probe from `5` bets to `15` bets and improved active-month balance from `1 / 3` to `4 / 1`.
+- The bucketed feature regime failed because validation-selected buckets did not recur in the test months; this is still a small-sample instability problem.
+- The unbucketed draw-feature probe is the best current real-EV research lead, but it remains far below the minimum evidence required for a daily 100 yuan allocation strategy.
+- Do not promote this profile. Treat it as a research lead:
+  - broaden the data sample;
+  - add more recurring draw-value markets;
+  - require at least `50` out-of-sample bets and `6` active months before considering it more than exploratory.
+
+Draw Candidate Ranking Round:
+
+- Motivation:
+  - `real_ev_probe_draw_features` improved sample and month balance, but max drawdown still exceeded observed profit.
+  - The next hypothesis was that selecting only the strongest daily draw candidate could reduce drawdown without reintroducing bucket instability.
+- Code:
+  - `PortfolioConfig` now supports:
+    - `candidate_limit_per_day`.
+    - `ranking_key`.
+  - `simulate()` sorts daily candidates by the configured ranking key and limits the number of candidates before staking.
+  - Added research-only profiles:
+    - `real_ev_draw_ranked`.
+    - `real_ev_draw_ranked_fast`.
+- Test:
+  - `pytest tests/test_walk_forward_residual_strategy.py -q`
+  - Result: `24 passed`.
+- Main experiment:
+  - Report: `reports/residual_walk_forward_real_ev_draw_ranked_fast_2024_06_v1`.
+  - Profile: one ranked draw candidate per day, ranked by `lower_ev`.
+  - Window: 2024-06 through 2026-05.
+  - Bets: `9`.
+  - Profit: `2.80`.
+  - ROI: `31.11%`.
+  - Max drawdown: `2.00` in daily equity summary; active-month audit has no negative month.
+  - Active betting months: `2`.
+  - Profitable months: `2`.
+  - Losing months: `0`.
+  - Promotion: `NEED_MORE_DATA`.
+- Statistical audit:
+  - Report: `reports/residual_walk_forward_real_ev_draw_ranked_fast_2024_06_v1/statistical_audit.json`.
+  - Decision: `POSITIVE_BUT_NOT_STATISTICALLY_CONFIRMED`.
+  - Bootstrap ROI 5th percentile: `14.00%`.
+  - Bootstrap positive ROI probability: `1.0`.
+  - Sign-flip p-value: `0.226`.
+  - Rejection reasons:
+    - `bets<minimum`.
+    - `active_months<minimum`.
+    - `sign_flip_p_value>0.05`.
+
+Interpretation:
+
+- Ranking by strongest real-EV lower bound improved drawdown behavior versus the 15-bet unranked probe.
+- It did so by reducing the sample to only `9` bets and `2` active months, so this is not yet a reusable money allocation algorithm.
+- The current best real-EV research lead is now:
+  - draw-only;
+  - market-anchored real EV;
+  - draw-specific features;
+  - daily top-1 ranked candidate.
+- But it remains below the evidence gate. The next step is not to deploy it; it is to broaden the historical/official-SP sample and see whether the same ranked draw signal can reach at least `50` bets and `6` active months while keeping drawdown below profit.
+
+Four-Source I2 Band Recheck:
+
+- Motivation:
+  - After the real-EV fix, the weak-team/longshot model edge was deliberately compressed.
+  - The main remaining historical candidate was the I2 market-bias draw family, so it was rerun under stricter source diversity instead of assuming the old `[2.8,3.5)` band was still reliable.
+- Code:
+  - `scripts/market_bias_i2_band_grid_search.py` now caches `build_market_frame(...)` once per odds source before evaluating candidate bands.
+  - This does not change the validation logic; it removes repeated data construction so four-source band checks can finish in a usable time.
+- Command:
+  - `python scripts/market_bias_i2_band_grid_search.py --odds-sources AVG_OPEN,AVG_CLOSE,B365_OPEN,B365_CLOSE --min-low 2.7 --max-low 2.9 --min-width 0.4 --max-width 0.7 --step 0.1 --top-n 20 --output-dir reports/market_bias_i2_band_grid_search_four_sources_current`
+
+Four-source grid result:
+
+| Band | Passed Windows | Source Passes | Total Bets | Combined ROI | Worst Source ROI | Decision |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `[2.70,3.30)` | 8 / 24 | 3 / 4 | 2067 | 3.55% | -2.31% | `RESEARCH_ONLY_UNSTABLE_WINDOWS` |
+| `[2.80,3.20)` | 7 / 24 | 2 / 4 | 1054 | 8.43% | -12.07% | `RESEARCH_ONLY_UNSTABLE_WINDOWS` |
+| `[2.70,3.20)` | 6 / 24 | 3 / 4 | 971 | 10.33% | -13.13% | `RESEARCH_ONLY_UNSTABLE_WINDOWS` |
+| `[2.90,3.30)` | 6 / 24 | 3 / 4 | 1853 | 4.30% | -2.93% | `RESEARCH_ONLY_UNSTABLE_WINDOWS` |
+| `[2.80,3.30)` | 6 / 24 | 2 / 4 | 1987 | 4.18% | -0.99% | `RESEARCH_ONLY_UNSTABLE_WINDOWS` |
+| `[2.80,3.50)` | 3 / 24 | 2 / 4 | 2169 | 1.57% | -0.52% | `RESEARCH_ONLY_UNSTABLE_WINDOWS` |
+
+Settlement-aware portfolio spot checks, daily limit `100`, max single stake `10`:
+
+| Rule / Source | Bets | Profit | ROI | Max DD | Month Balance | Season Balance | Verdict |
+| --- | ---: | ---: | ---: | ---: | --- | --- | --- |
+| `[2.70,3.30)` / AVG_OPEN | 206 | -13.10 | -0.64% | 366.50 | 3 / 4 | 2 / 1 | Rejected for real-money use |
+| `[2.70,3.30)` / B365_CLOSE | 417 | +287.90 | 6.90% | 156.50 | 11 / 6 | 4 / 0 | Research-only; source-dependent |
+| `[2.80,3.20)` / AVG_OPEN | 246 | +372.30 | 15.13% | 123.90 | 10 / 3 | 2 / 1 | Rejected for production: 2025-26 lost `-72.20` |
+
+Interpretation:
+
+- The four-source recheck weakens the I2 draw thesis. It remains a useful shadow/research candidate, but it is not a deployable daily investment algorithm.
+- The apparent best bands are source-dependent. `[2.70,3.30)` is positive on B365_CLOSE but negative on AVG_OPEN. `[2.80,3.20)` has high AVG_OPEN ROI but fails the latest-season check.
+- This reinforces the current policy: keep market-bias rules in shadow/prospective validation and do not convert them into production staking until Chinese official-SP samples confirm the edge.
+
+Feature-Enriched I2 Scorer Recheck:
+
+- Motivation:
+  - The hand-built odds bands are too source-dependent.
+  - The better algorithmic direction is a market-anchored feature residual scorer: start from market probability, then let a ridge model learn a small bounded residual from pre-match features.
+- Code:
+  - `scripts/feature_enriched_candidate_filter.py` now reports a hard `stability_verdict` for each configuration.
+  - The gate requires enough bets, positive ROI, drawdown below profit, more positive than negative months and seasons, non-negative latest season, enough latest-season bets, and active rolling-window pass rate at least `0.60`.
+  - This prevents high total ROI from being treated as deployable when recent-season or rolling-window evidence is weak.
+- Command:
+  - `python scripts/feature_enriched_candidate_filter.py --formal-i2-only --odds-sources AVG_OPEN,AVG_CLOSE --output-dir reports/feature_enriched_market_anchored_i2_formal_open_close_current`
+
+Formal I2 feature-scorer result:
+
+| Config | Bets | Profit | ROI | Max DD | Months | Seasons | Latest Season | Active Pass Rate | Verdict |
+| --- | ---: | ---: | ---: | ---: | --- | --- | ---: | ---: | --- |
+| AVG_OPEN / train30 / EV >= 2% / top1 | 334 | +625.70 | 18.73% | 110.00 | 25 / 15 | 4 / 0 | +225.70 | 0.6667 | `SHADOW_READY_RESEARCH_CANDIDATE` |
+| AVG_CLOSE / train30 / EV >= 2% / top1 | 335 | +439.90 | 13.13% | 115.80 | 21 / 19 | 4 / 0 | +203.20 | 0.5000 | `RESEARCH_ONLY_UNSTABLE` |
+
+Exported scorer:
+
+- Path: `reports/feature_enriched_market_anchored_i2_avg_open_scorer_current/scorer.json`.
+- Training window: `2023-12-01` through `2026-05-23`.
+- Training rows: `1074`.
+- Strategy label: `AVG_OPEN_rulesi2_train30_n120_ev0p02_top1_ridge10_cap0.08`.
+
+Official-SP checks:
+
+| Report | Scanned / Snapshots | Scored | Selected | Decision / Blocker |
+| --- | ---: | ---: | ---: | --- |
+| `reports/profit_scorer_official_pool_avg_open_current/summary.json` | 140 current official matches | 0 | 0 | Current pool has no usable I2 scorer candidates |
+| `reports/profit_scorer_official_sp_validation_avg_open_current/summary.json` | 49 opening snapshots, 30 settled | 0 | 0 | `OFFICIAL_SP_PROSPECTIVE_BLOCKED` |
+
+Main blockers:
+
+- `league_not_i2`: current official pool is mostly World Cup / international / Nordic / Asian leagues, not Italy Serie B.
+- `draw_sp_outside_[2.8,3.5)`: many official snapshots do not fall into the frozen I2 draw band.
+- Some current official matches still lack live feature columns such as `lambda_home`, `lambda_away`, and weighted team history fields.
+
+Interpretation:
+
+- The AVG_OPEN feature-enriched I2 scorer is the strongest current historical research candidate because it beats the raw hand-built band on stability gates.
+- It is still not a live money allocation algorithm, because official-SP prospective validation has zero selected settled samples.
+- The practical next step is not to bet it immediately; it is to keep collecting official-SP snapshots until an actual I2-style pool appears, while separately searching a similarly feature-enriched scorer for the leagues that are present in the Chinese official pool.
+
+Current Official-Pool Domain Expansion:
+
+- Problem:
+  - The current official pool is dominated by World Cup, FIN, SWE, KOR, and international fixtures.
+  - I2 has the strongest historical scorer but is not present, so the system must not force that scorer onto unrelated leagues.
+- Code:
+  - `football_agents/official_pool_research.py` now maps `瑞超` / Swedish Allsvenskan to `SWE`.
+  - `football_agents/profit_data_domain_readiness.py` now treats `SWE` as a known evidence domain.
+  - `scripts/official_pool_market_anchored_research.py` now supports `SWE` anchored specs and a `--fast` mode for one representative market-anchored feature residual configuration per rule.
+  - The official-pool research script now uses the same hard stability verdict family as the feature-enriched I2 scorer.
+- Command:
+  - `python scripts/official_pool_market_anchored_research.py --leagues SWE --odds-sources AVG_CLOSE,MAX_CLOSE --first-month 2016-01 --last-month 2025-12 --fast --output-dir reports/official_pool_market_anchored_research_swe_current_fast`
+
+SWE result:
+
+| Rule / Source | Bets | Profit | ROI | Max DD | Months | Seasons | Latest Season | Active Pass Rate | Decision |
+| --- | ---: | ---: | ---: | ---: | --- | --- | ---: | ---: | --- |
+| SWE away odds `[2.2,2.8)` / AVG_CLOSE | 206 | +262.10 | 12.72% | 145.00 | 37 / 29 | 6 / 5 | +39.90 from 18 bets | 0.4211 | `REJECT_RESEARCH_GATES` |
+| SWE away odds `[2.2,2.8)` / MAX_CLOSE | 211 | +261.00 | 12.37% | 250.40 | 34 / 27 | 7 / 4 | +41.70 from 15 bets | 0.3158 | `REJECT_RESEARCH_GATES` |
+| SWE home market probability `[0.55,1.00]` / MAX_CLOSE | 322 | +48.40 | 1.50% | 92.50 | 39 / 31 | 7 / 4 | +3.30 from 14 bets | 0.2105 | `REJECT_RESEARCH_GATES` |
+
+Interpretation:
+
+- SWE is now correctly recognized as a current official-pool domain with historical odds.
+- The best-looking SWE candidate has real positive historical profit, but it fails the hard stability gate because active rolling-window pass rate is below `0.60` and latest-season sample is below 20 bets.
+- This is a useful near-miss, not a deployable algorithm. It should not be converted into daily 100 allocation until a stricter or broader SWE model improves rolling-window stability.
+- Updated official-pool planner:
+  - World Cup: rejected by tournament holdout.
+  - FIN: rejected by prior market-bias/residual gates.
+  - SWE: rejected by current feature hard gates.
+  - KOR: unmapped / no local historical 1X2 odds domain yet.
+  - International: odds history missing.

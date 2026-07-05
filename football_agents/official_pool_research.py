@@ -52,6 +52,8 @@ def map_league_to_history_code(league: Any) -> str | None:
         return "JPN"
     if raw == "\u82ac\u8d85" or "finland" in folded or "veikkausliiga" in folded or folded == "fin":
         return "FIN"
+    if raw == "\u745e\u8d85" or "sweden" in folded or "allsvenskan" in folded or folded == "swe":
+        return "SWE"
     if raw == "\u4e16\u754c\u676f" or "world cup" in folded:
         return "WORLD_CUP"
     if raw == "\u56fd\u9645\u8d5b" or "international" in folded:
@@ -187,6 +189,21 @@ def _league_evidence(code: str | None) -> dict[str, Any]:
             ]),
             "commands": [
                 "python scripts/cross_league_rule_search.py --seasons FIN --first-month 2015-04 --last-month 2025-10 --league-group-scope FIN --output-dir reports\\cross_league_rule_search_fin_new_model_recheck",
+            ],
+        }
+    if code == "SWE":
+        return {
+            "status": "rejected_by_current_pool_feature_hard_gates",
+            "blocker": (
+                "SWE is present in the current official pool and has historical odds, but the market-anchored "
+                "feature residual scan failed the hard stability gates"
+            ),
+            "priority": "LOW_DO_NOT_LOOSEN",
+            "reports": _existing([
+                "reports/official_pool_market_anchored_research_swe_current_fast/summary.json",
+            ]),
+            "commands": [
+                "python scripts/official_pool_market_anchored_research.py --leagues SWE --odds-sources AVG_CLOSE,MAX_CLOSE --first-month 2016-01 --last-month 2025-12 --fast --output-dir reports\\official_pool_market_anchored_research_swe_current_fast",
             ],
         }
     if code == "WORLD_CUP":

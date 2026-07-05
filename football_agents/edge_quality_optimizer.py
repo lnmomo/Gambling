@@ -287,7 +287,7 @@ def _records_for_config(base_rows: list[dict[str, Any]], config: TrueOddsFilterC
         baseline_profit = _profit(stake, best["odds"], option, row["outcome"]) if baseline_is_bet and stake > 0 else None
         if baseline_profit is not None:
             bankroll_baseline += baseline_profit
-        true_stake = calculate_stake(bankroll_filter, best["p"], best["odds"], RiskLimits(min_ev=0.0), 0, 0) if true_is_bet else 0
+        true_stake = calculate_stake(bankroll_filter, edge.estimated_probability, best["odds"], RiskLimits(min_ev=0.0), 0, 0) if true_is_bet else 0
         true_profit = _profit(true_stake, best["odds"], option, row["outcome"]) if true_is_bet and true_stake > 0 else None
         if true_profit is not None:
             bankroll_filter += true_profit
@@ -298,7 +298,7 @@ def _records_for_config(base_rows: list[dict[str, Any]], config: TrueOddsFilterC
             baseline_recommendation=row["baseline_recommendation"].upper() if row["baseline_recommendation"] != "NO_BET" else "NO_BET",
             baseline_ev=best["ev"], baseline_profit=baseline_profit, baseline_clv=_clv(option, row["official"], row["closing"]) if baseline_is_bet else None,
             true_odds_recommendation=true_recommendation.upper() if true_recommendation != "NO_BET" else "NO_BET",
-            true_odds_ev=best["ev"] if true_is_bet else 0.0, true_odds_profit=true_profit, true_odds_clv=_clv(option, row["official"], row["closing"]) if true_is_bet else None,
+            true_odds_ev=edge.expected_ev if true_is_bet else 0.0, true_odds_profit=true_profit, true_odds_clv=_clv(option, row["official"], row["closing"]) if true_is_bet else None,
             was_blocked_by_true_odds=blocked, block_reason="; ".join(config_reasons) if blocked else None,
             edge_quality_score=edge.edge_quality_score, edge_quality_level=edge.edge_quality_level, lower_bound_ev=edge.lower_bound_ev,
             adaptive_ev_threshold=edge.adaptive_threshold, method_agreement_score=estimate.market_multi_devig.method_agreement_score,

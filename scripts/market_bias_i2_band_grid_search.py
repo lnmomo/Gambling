@@ -57,7 +57,7 @@ def _parse_rule_tuple(raw: str) -> tuple[str, ...]:
     return tuple(part.strip() for part in raw.split("|"))
 
 
-def evaluate_band(low: float, high: float, odds_sources: tuple[str, ...], args: argparse.Namespace) -> dict[str, Any]:
+def evaluate_band(low: float, high: float, source_frames: dict[str, pd.DataFrame], args: argparse.Namespace) -> dict[str, Any]:
     label = band_label(low, high)
     candidate_id = f"market-bias-i2-draw-{low:.2f}-{high:.2f}"
     rule = _rule_for_band(low, high)
@@ -69,8 +69,8 @@ def evaluate_band(low: float, high: float, odds_sources: tuple[str, ...], args: 
         args.last_month,
     )
     rows: list[dict[str, Any]] = []
-    for odds_source in odds_sources:
-        frame = frame_for_band(build_market_frame(args.seasons, odds_source), low, high)
+    for odds_source, source_frame in source_frames.items():
+        frame = frame_for_band(source_frame, low, high)
         _, _, unit_bets = run_walk_forward_frame(
             frame,
             args.seasons,
@@ -105,7 +105,8 @@ def evaluate_band(low: float, high: float, odds_sources: tuple[str, ...], args: 
 def run_grid_search(args: argparse.Namespace) -> dict[str, Any]:
     bands = generate_bands(args.min_low, args.max_low, args.min_width, args.max_width, args.step)
     odds_sources = tuple(item.strip() for item in args.odds_sources.split(",") if item.strip())
-    summaries = [evaluate_band(low, high, odds_sources, args) for low, high in bands]
+    source_frames = {odds_source: build_market_frame(args.seasons, odds_source) for odds_source in odds_sources}
+    summaries = [evaluate_band(low, high, source_frames, args) for low, high in bands]
     summaries.sort(key=lambda row: (
         row["decision"] == "MULTI_WINDOW_SHADOW_CANDIDATE",
         row["pass_rate"],

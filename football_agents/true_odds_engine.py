@@ -11,6 +11,7 @@ from .edge_quality import EdgeQualityOutput, calculate_edge_quality
 from .market_bias import MarketBiasBucket, apply_market_bias_correction, build_market_bias_buckets
 from .multi_devig import OUTCOMES, MultiDevigResult, Probability, _fair_odds, _normalize, calculate_multi_devig_probabilities
 from .probability_uncertainty import ProbabilityUncertainty, estimate_probability_uncertainty
+from .real_ev import anchor_real_probability, diagnostics_to_dict, real_ev_by_outcome
 
 
 @dataclass
@@ -30,6 +31,8 @@ class TrueOddsEstimate:
     closing_line_proxy: ClosingLineProxy | None
     market_bias_bucket: MarketBiasBucket | None
     draw_calibration: dict[str, Any] | None
+    real_ev: dict[str, float]
+    real_ev_calibration: dict[str, Any]
     warnings: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
@@ -69,11 +72,22 @@ def calculate_true_odds_estimate(match: dict[str, Any], prediction: dict[str, An
     bias_corrected, bias_bucket, bias_warnings = apply_market_bias_correction(draw_calibrated, {"league": match.get("league"), "outcome": context.get("selected_outcome"), "odds": context.get("selected_odds", 2)}, bias_buckets)
     warnings.extend(bias_warnings)
     sample_reliability = min(1.0, max(0.0, float(features.get("source_confidence") or features.get("sample_reliability") or 0.5)))
+    market_prior = market_multi.recommended_probability
+    if external_multi:
+        external = external_multi.recommended_probability
+        market_prior = _normalize({
+            key: 0.55 * market_prior[key] + 0.45 * external[key]
+            for key in OUTCOMES
+        }) or market_prior
+    true_probability, real_diagnostics = anchor_real_probability(
+        bias_corrected, market_prior, market_multi.odds, reliability=sample_reliability
+    )
+    warnings.extend(real_diagnostics.warnings)
     uncertainty = estimate_probability_uncertainty({
         "marketProbability": market_multi.recommended_probability,
         "externalMarketProbability": (external_multi.recommended_probability if external_multi else prediction.get("externalMarketProbability") or prediction.get("external_market_probability")),
         "pureModelProbability": prediction.get("pureModelProbability") or prediction.get("pure_model_probability"),
-        "finalProbability": bias_corrected,
+        "finalProbability": true_probability,
     }, market_multi, {
         "sample_reliability": sample_reliability,
         "lineup_risk": context.get("lineup_risk"),
@@ -100,7 +114,7 @@ def calculate_true_odds_estimate(match: dict[str, Any], prediction: dict[str, An
         edge_by_outcome[outcome] = calculate_edge_quality(
             outcome,
             float(official_sp.get(key, 0) or 0),
-            bias_corrected,
+            true_probability,
             uncertainty,
             closing_proxy,
             {
@@ -127,13 +141,15 @@ def calculate_true_odds_estimate(match: dict[str, Any], prediction: dict[str, An
         base_probability=base,
         bias_corrected_probability=bias_corrected,
         uncertainty=uncertainty,
-        true_probability_estimate=bias_corrected,
-        true_fair_odds=_fair_odds(bias_corrected),
+        true_probability_estimate=true_probability,
+        true_fair_odds=_fair_odds(true_probability),
         edge_quality_by_outcome=edge_by_outcome,
         selected_edge=selected,
         closing_line_proxy=closing_proxy,
         market_bias_bucket=bias_bucket,
         draw_calibration=draw_details,
+        real_ev=real_ev_by_outcome(true_probability, market_multi.odds),
+        real_ev_calibration=diagnostics_to_dict(real_diagnostics),
         warnings=[*warnings, *uncertainty.warnings],
     )
 

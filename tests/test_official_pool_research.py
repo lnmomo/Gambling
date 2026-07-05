@@ -106,6 +106,23 @@ def test_official_pool_profit_research_keeps_fin_rejected(tmp_path):
     assert league["research_priority"] == "LOW_DO_NOT_LOOSEN"
 
 
+def test_official_pool_profit_research_maps_swedish_top_flight(tmp_path):
+    database = Database(tmp_path / "pool-swe.db")
+    database.initialize()
+    repo = Repository(database)
+    match_id = _official_match(repo, "\u745e\u8d85")
+    repo.add_odds(match_id, {"home": 2.4, "draw": 3.2, "away": 3.1}, "official")
+
+    report = plan_official_pool_profit_research(database)
+
+    league = report["leagues"][0]
+    assert league["mapped_history_code"] == "SWE"
+    assert league["historical_odds_available"] is True
+    assert league["historical_rows"] > 0
+    assert league["evidence_status"] == "rejected_by_current_pool_feature_hard_gates"
+    assert league["research_priority"] == "LOW_DO_NOT_LOOSEN"
+
+
 def test_official_pool_profit_research_prioritizes_i2_when_present(tmp_path):
     database = Database(tmp_path / "pool-i2.db")
     database.initialize()
