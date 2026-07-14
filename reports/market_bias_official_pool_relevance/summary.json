@@ -1,6 +1,6 @@
 {
   "method": "market-bias official pool relevance diagnostics",
-  "created_at": "2026-07-05T10:58:02.829621+00:00",
+  "created_at": "2026-07-14T09:12:25.570507+00:00",
   "strategy_id": "market-bias-i2-draw-2.8-3.5-v1",
   "official_matches": 141,
   "with_latest_odds": 66,
@@ -15,13 +15,15 @@
       "with_latest_odds": 42,
       "missing_latest_odds": 55,
       "mapped_history_code": "WORLD_CUP",
-      "strategy_coverage": "NO_MARKET_BIAS_VALIDATION_SOURCE",
+      "strategy_coverage": "REJECTED_WORLD_CUP_RULE",
       "validated_shadow_candidates": 0,
       "research_watch_candidates": 0,
-      "evidence_status": "results history may exist, but no validated 1X2 odds-bias history is available here",
-      "evidence_reports": [],
-      "blocker": "current league has no validated odds-bias history package",
-      "recommended_action": "Collect historical 1X2 odds for World Cup/international matches before creating a market-bias rule."
+      "evidence_status": "rejected_by_world_cup_tournament_holdout",
+      "evidence_reports": [
+        "reports\\world_cup_portfolio_grid_current_research\\summary.json"
+      ],
+      "blocker": "World Cup odds history exists, but no-lookahead portfolio validation rejected allocation rules",
+      "recommended_action": "Do not loosen World Cup into live allocation; use it only for features or broader future research."
     },
     {
       "league": "芬超",
@@ -85,7 +87,7 @@
   ],
   "blocker_summary": [
     {
-      "blocker": "current league has no validated odds-bias history package",
+      "blocker": "World Cup odds history exists, but no-lookahead portfolio validation rejected allocation rules",
       "matches": 97
     },
     {
@@ -101,5 +103,5 @@
       "matches": 2
     }
   ],
-  "recommended_next_experiment": "Do not force NO_BET bypasses. First collect World Cup/international 1X2 odds history, or run a new FIN-specific multi-window search; current validated I2 rule has no live pool coverage."
+  "recommended_next_experiment": "Do not force NO_BET bypasses. World Cup and FIN are rejected by stability gates; map SWE/KOR or collect a broader international/league odds domain, then require the same multi-window portfolio gate."
 }

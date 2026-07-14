@@ -22,7 +22,7 @@ def _screen_status(screen: dict[str, Any]) -> dict[str, Any]:
         status = "REJECTED_BY_CROSS_SOURCE_SCREEN"
         source_results = best.get("source_results") or []
         reason = "; ".join(
-            f"{row.get('odds_source')}: {','.join(row.get('fail_reasons') or [])}"
+            f"{row.get('odds_source')}: {','.join(row.get('fail_reasons') or ['passed'])}"
             for row in source_results
         )
     else:
@@ -68,6 +68,20 @@ def _multi_window_status(report: dict[str, Any] | None) -> dict[str, Any]:
     }
 
 
+def _domain_label(screen: dict[str, Any], path: Path) -> str:
+    seasons = screen.get("seasons") or []
+    if len(seasons) == 1:
+        return str(seasons[0])
+    summaries = screen.get("rule_summary") or []
+    best_rule = str((summaries[0] if summaries else {}).get("rule") or "")
+    if "=" in best_rule:
+        key = best_rule.split("=", 1)[1]
+        first_part = key.split("|", 1)[0].strip()
+        if first_part and not first_part.startswith("["):
+            return first_part
+    return path.parent.name
+
+
 def summarize_true_ev_search(
     *,
     discovery_path: Path,
@@ -78,10 +92,8 @@ def summarize_true_ev_search(
     screens = []
     for path in screen_paths:
         screen = _load(path)
-        seasons = screen.get("seasons") or []
-        domain = str(seasons[0]) if seasons else path.parent.name
         screens.append({
-            "domain": domain,
+            "domain": _domain_label(screen, path),
             "path": str(path),
             "candidate_count": int(screen.get("candidate_count") or 0),
             "passed_count": int(screen.get("passed_count") or 0),

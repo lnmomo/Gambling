@@ -1,0 +1,13 @@
+﻿rule,odds_source,walk_forward_bets,walk_forward_profit,walk_forward_roi_pct,portfolio_bets,portfolio_staked,portfolio_profit,portfolio_roi_pct,portfolio_max_drawdown,positive_months,negative_months,positive_seasons,negative_seasons,passes_screen,fail_reasons
+"league|outcome|odds_bucket=G1|draw|[2.8,3.5)",MAX_OPEN,71,21.35,30.07,71,710.0,213.5,30.07,62.0,5,3,2,0,False,['bets<100']
+"league|outcome|market_prob_bucket=G1|draw|[0.28,0.34)",MAX_OPEN,89,17.1,19.21,89,890.0,171.0,19.21,116.0,6,3,2,0,False,['bets<100']
+"league|outcome|odds_bucket=G1|draw|[2.8,3.5)",AVG_OPEN,88,15.85,18.01,88,880.0,158.5,18.01,89.3,3,4,1,1,False,"['bets<100', 'positive_months<=negative_months', 'positive_seasons<=negative_seasons']"
+"league|outcome|market_prob_bucket=G1|draw|[0.28,0.34)",B365_OPEN,33,5.15,15.61,33,330.0,51.5,15.61,50.0,2,1,2,0,False,['bets<100']
+"league|outcome|market_prob_bucket=G1|draw|[0.28,0.34)",AVG_CLOSE,33,4.14,12.55,33,330.0,41.4,12.55,50.1,1,2,1,1,False,"['bets<100', 'positive_months<=negative_months', 'positive_seasons<=negative_seasons', 'drawdown>profit']"
+"league|outcome|market_prob_bucket=G1|draw|[0.28,0.34)",AVG_OPEN,43,4.27,9.93,43,430.0,42.7,9.93,49.7,3,1,2,0,False,"['bets<100', 'drawdown>profit']"
+"league|outcome|odds_bucket=G1|draw|[2.8,3.5)",B365_OPEN,35,3.15,9.0,35,350.0,31.5,9.0,50.0,1,2,1,1,False,"['bets<100', 'positive_months<=negative_months', 'positive_seasons<=negative_seasons', 'drawdown>profit']"
+"league|outcome|market_prob_bucket=G1|draw|[0.28,0.34)",MAX_CLOSE,117,6.88,5.88,117,1170.0,68.8,5.88,147.2,5,4,2,1,False,['drawdown>profit']
+"league|outcome|odds_bucket=G1|draw|[2.8,3.5)",MAX_CLOSE,16,0.36,2.25,16,160.0,3.6,2.25,38.7,1,1,1,1,False,"['bets<100', 'roi<3%', 'positive_months<=negative_months', 'positive_seasons<=negative_seasons', 'drawdown>profit']"
+"league|outcome|odds_bucket=G1|draw|[2.8,3.5)",AVG_CLOSE,16,0.2,1.25,16,160.0,2.0,1.25,30.0,1,1,1,0,False,"['bets<100', 'roi<3%', 'positive_months<=negative_months', 'drawdown>profit']"
+"league|outcome|market_prob_bucket=G1|draw|[0.28,0.34)",B365_CLOSE,7,-0.6,-8.57,7,70.0,-6.0,-8.57,20.0,0,1,0,1,False,"['bets<100', 'profit<=0', 'roi<3%', 'positive_months<=negative_months', 'positive_seasons<=negative_seasons', 'drawdown>profit']"
+"league|outcome|odds_bucket=G1|draw|[2.8,3.5)",B365_CLOSE,19,-3.1,-16.32,19,190.0,-31.0,-16.32,59.0,0,2,0,2,False,"['bets<100', 'profit<=0', 'roi<3%', 'positive_months<=negative_months', 'positive_seasons<=negative_seasons', 'drawdown>profit']"

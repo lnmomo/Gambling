@@ -1,0 +1,241 @@
+{
+  "method": "nested monthly walk-forward real-EV market anchor + residual isotonic + league shrinkage + constrained Kelly",
+  "experiment_profile": "real_ev_draw_ranked_fast",
+  "profile_config": {
+    "validation_months": 12,
+    "training_months": 18,
+    "validation_min_bets": 5,
+    "min_positive_validation_months": 1,
+    "min_validation_roi": 0.0,
+    "min_validation_profit": 0.0,
+    "max_drawdown_profit_ratio": 3.0,
+    "uncertainty_scale": 0.75,
+    "ev_thresholds": [
+      -0.01,
+      0.0
+    ],
+    "min_odds": [
+      2.4,
+      2.8
+    ],
+    "max_odds": [
+      3.5
+    ],
+    "kelly_fractions": [
+      0.05
+    ],
+    "allowed_outcomes": [
+      [
+        "draw"
+      ]
+    ],
+    "candidate_limits_per_day": [
+      1
+    ],
+    "ranking_keys": [
+      "lower_ev"
+    ],
+    "research_only": true
+  },
+  "first_month": "2024-03",
+  "months": 28,
+  "training_months": 18,
+  "validation_months": 12,
+  "odds_timing": "pre_closing_without_exact_snapshot_timestamp",
+  "same_day_results_hidden_until_settlement": true,
+  "overall": {
+    "bets": 0,
+    "winning_bets": 0,
+    "total_staked": 0.0,
+    "profit": 0.0,
+    "roi_pct": 0.0,
+    "max_drawdown": 0.0,
+    "max_daily_stake": 0.0,
+    "active_days": 0
+  },
+  "probability_metrics": {
+    "matches": 267,
+    "brier_score": 0.158913,
+    "log_loss": 0.808893,
+    "ece": 0.035396
+  },
+  "promotion_decision": "NEED_MORE_DATA",
+  "months_invested": 0,
+  "months_abstained": 28,
+  "months_with_bets": 0,
+  "profitable_invested_months": 0,
+  "losing_invested_months": 0,
+  "drawdown_covered_by_profit": false,
+  "monthly": [
+    {
+      "month": "2024-03",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2024-04",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2024-05",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2024-06",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2024-07",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2024-08",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2024-09",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2024-10",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2024-11",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2024-12",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2025-01",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2025-02",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2025-03",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2025-04",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2025-05",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2025-06",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2025-07",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2025-08",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2025-09",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2025-10",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 5 bets and 1 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 115,
+        "brier_score": 0.148376,
+        "log_loss": 0.761418,
+        "ece": 0.033031
+      }
+    },
+    {
+      "month": "2025-11",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 5 bets and 1 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 64,
+        "brier_score": 0.171681,
+        "log_loss": 0.868841,
+        "ece": 0.067382
+      }
+    },
+    {
+      "month": "2025-12",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2026-01",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2026-02",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2026-03",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 5 bets and 1 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 15,
+        "brier_score": 0.171986,
+        "log_loss": 0.854394,
+        "ece": 0.142172
+      }
+    },
+    {
+      "month": "2026-04",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 5 bets and 1 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 1,
+        "brier_score": 0.255712,
+        "log_loss": 1.251211,
+        "ece": 0.475895
+      }
+    },
+    {
+      "month": "2026-05",
+      "decision": "ABSTAIN",
+      "reason": "Insufficient train/validation/test data"
+    },
+    {
+      "month": "2026-06",
+      "decision": "ABSTAIN",
+      "reason": "No stable configuration with at least 5 bets and 1 positive validation month(s)",
+      "probability_metrics": {
+        "matches": 72,
+        "brier_score": 0.160326,
+        "log_loss": 0.815812,
+        "ece": 0.041484
+      }
+    }
+  ]
+}

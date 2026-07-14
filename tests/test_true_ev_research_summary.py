@@ -123,3 +123,53 @@ def test_true_ev_summary_prefers_nonzero_multi_window_candidate(tmp_path):
 
     assert summary["multi_window"][0]["best_candidate_id"] == "tested-loser"
     assert summary["multi_window"][0]["best_total_bets"] == 214
+
+
+def test_true_ev_summary_labels_multi_season_domain_from_best_rule(tmp_path):
+    discovery = tmp_path / "discovery" / "summary.json"
+    _write_json(discovery, {"selected_domains": ["I1"], "domain_count": 1, "domains_with_diagnostic_hits": 1})
+    screen = tmp_path / "i1" / "summary.json"
+    _write_json(screen, {
+        "seasons": ["2122", "2223", "2324", "2425", "2526"],
+        "candidate_count": 1,
+        "passed_count": 0,
+        "rule_summary": [{
+            "rule": "league|outcome|favorite_relation=I1|away|market_favorite",
+            "combined_roi_pct": 8.68,
+            "total_portfolio_bets": 189,
+            "worst_source_roi_pct": 0.62,
+            "passes_all_validation_sources": False,
+            "source_results": [],
+        }],
+    })
+
+    summary = summarize_true_ev_search(discovery_path=discovery, screen_paths=[screen])
+
+    assert summary["screens"][0]["domain"] == "I1"
+
+
+def test_true_ev_summary_marks_source_passes_in_rejection_reason(tmp_path):
+    discovery = tmp_path / "discovery" / "summary.json"
+    _write_json(discovery, {"selected_domains": ["T1"], "domain_count": 1, "domains_with_diagnostic_hits": 1})
+    screen = tmp_path / "t1" / "summary.json"
+    _write_json(screen, {
+        "seasons": ["2122", "2223"],
+        "candidate_count": 1,
+        "passed_count": 1,
+        "rule_summary": [{
+            "rule": "league|market_prob_bucket=T1|[0.55,1.00]",
+            "combined_roi_pct": 5.07,
+            "total_portfolio_bets": 1037,
+            "worst_source_roi_pct": -1.74,
+            "passes_all_validation_sources": False,
+            "source_results": [
+                {"odds_source": "MAX_CLOSE", "fail_reasons": []},
+                {"odds_source": "AVG_CLOSE", "fail_reasons": ["profit<=0"]},
+            ],
+        }],
+    })
+
+    summary = summarize_true_ev_search(discovery_path=discovery, screen_paths=[screen])
+
+    assert "MAX_CLOSE: passed" in summary["screens"][0]["reason"]
+    assert "AVG_CLOSE: profit<=0" in summary["screens"][0]["reason"]

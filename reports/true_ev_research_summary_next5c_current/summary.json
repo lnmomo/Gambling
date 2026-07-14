@@ -1,0 +1,74 @@
+{
+  "method": "true EV research evidence summary",
+  "created_at": "2026-07-06T07:11:26.892956+00:00",
+  "discovery_path": "reports\\batch_profit_domain_discovery_true_ev_next5c_current\\summary.json",
+  "selected_domains": [
+    "AUT",
+    "SP2",
+    "I1",
+    "E0",
+    "F2"
+  ],
+  "domain_count": 5,
+  "domains_with_diagnostic_hits": 4,
+  "screened_domains": 3,
+  "screen_passed_rules": 0,
+  "multi_window_passed_candidates": 0,
+  "decision": "NO_TRUE_EV_CANDIDATE_FOUND",
+  "screens": [
+    {
+      "domain": "I1",
+      "path": "reports\\market_bias_candidate_screen_i1_true_ev_next5c_current\\summary.json",
+      "candidate_count": 24,
+      "passed_count": 0,
+      "status": "REJECTED_BY_CROSS_SOURCE_SCREEN",
+      "passed_rules": 0,
+      "best_rule": "league|outcome|favorite_relation=I1|away|market_favorite",
+      "best_combined_roi_pct": 8.68,
+      "best_total_bets": 189,
+      "best_worst_source_roi_pct": 0.62,
+      "reason": "B365_OPEN: bets<100; AVG_OPEN: bets<100; B365_CLOSE: bets<100; AVG_CLOSE: bets<100; MAX_OPEN: bets<100,roi<3%,positive_months<=negative_months,drawdown>profit; MAX_CLOSE: bets<100,roi<3%,positive_months<=negative_months,drawdown>profit"
+    },
+    {
+      "domain": "AUT",
+      "path": "reports\\market_bias_candidate_screen_aut_true_ev_next5c_current\\summary.json",
+      "candidate_count": 6,
+      "passed_count": 0,
+      "status": "REJECTED_BY_CROSS_SOURCE_SCREEN",
+      "passed_rules": 0,
+      "best_rule": "league|outcome|odds_bucket=AUT|away|[1.8,2.2)",
+      "best_combined_roi_pct": 0.0,
+      "best_total_bets": 0,
+      "best_worst_source_roi_pct": 0.0,
+      "reason": "AVG_CLOSE: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons; MAX_CLOSE: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons; PS_CLOSE: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons"
+    },
+    {
+      "domain": "E0",
+      "path": "reports\\market_bias_candidate_screen_e0_true_ev_next5c_current\\summary.json",
+      "candidate_count": 12,
+      "passed_count": 0,
+      "status": "REJECTED_BY_CROSS_SOURCE_SCREEN",
+      "passed_rules": 0,
+      "best_rule": "league|outcome|odds_bucket=E0|home|[2.2,2.8)",
+      "best_combined_roi_pct": -11.72,
+      "best_total_bets": 111,
+      "best_worst_source_roi_pct": -53.4,
+      "reason": "B365_OPEN: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons; AVG_OPEN: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons; MAX_CLOSE: bets<100,profit<=0,roi<3%,positive_seasons<=negative_seasons,drawdown>profit; B365_CLOSE: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons,drawdown>profit; AVG_CLOSE: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons,drawdown>profit; MAX_OPEN: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons,drawdown>profit"
+    }
+  ],
+  "multi_window": [
+    {
+      "path": "reports\\market_bias_multi_window_i1_true_ev_next5c_current\\summary.json",
+      "available": true,
+      "passed_candidates": 0,
+      "best_candidate_id": "diagnostic-league-outcome-odds-bucket-i1-away-1p0-1p8",
+      "best_decision": "REJECT_UNSTABLE",
+      "best_total_bets": 123,
+      "best_combined_roi_pct": -2.63,
+      "best_active_pass_rate": 0.0,
+      "best_source_pass_rate": 0.0,
+      "best_worst_source_roi_pct": -19.06
+    }
+  ],
+  "interpretation": "A diagnostic positive is not treated as true EV until it survives cross-source prices, 12-month rolling windows, settlement-aware daily allocation, and later official-SP prospective validation."
+}

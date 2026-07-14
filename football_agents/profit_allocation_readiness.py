@@ -12,6 +12,9 @@ REQUIRED_ACTIVE_MONTHS = 6
 
 
 def _is_historically_supported(strategy: dict[str, Any]) -> bool:
+    status = str(strategy.get("status") or "")
+    if status.startswith("RESEARCH_ONLY") or strategy.get("recommended_for_shadow") is False:
+        return False
     audit = strategy.get("audit") or {}
     calibration = strategy.get("calibration") or {}
     return (

@@ -1,0 +1,48 @@
+{
+  "method": "true EV research evidence summary",
+  "created_at": "2026-07-06T07:11:26.837289+00:00",
+  "discovery_path": "reports\\batch_profit_domain_discovery_true_ev_next5b_current\\summary.json",
+  "selected_domains": [
+    "E1",
+    "E3",
+    "E2",
+    "IRL",
+    "SWZ"
+  ],
+  "domain_count": 5,
+  "domains_with_diagnostic_hits": 4,
+  "screened_domains": 2,
+  "screen_passed_rules": 0,
+  "multi_window_passed_candidates": 0,
+  "decision": "NO_TRUE_EV_CANDIDATE_FOUND",
+  "screens": [
+    {
+      "domain": "E2",
+      "path": "reports\\market_bias_candidate_screen_e2_true_ev_next5b_current\\summary.json",
+      "candidate_count": 36,
+      "passed_count": 0,
+      "status": "REJECTED_BY_CROSS_SOURCE_SCREEN",
+      "passed_rules": 0,
+      "best_rule": "league|market_prob_bucket=E2|[0.55,1.00]",
+      "best_combined_roi_pct": 0.33,
+      "best_total_bets": 15,
+      "best_worst_source_roi_pct": 0.0,
+      "reason": "B365_CLOSE: bets<100,roi<3%,drawdown>profit; B365_OPEN: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons; AVG_OPEN: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons; MAX_OPEN: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons; AVG_CLOSE: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons; MAX_CLOSE: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons"
+    },
+    {
+      "domain": "SWZ",
+      "path": "reports\\market_bias_candidate_screen_swz_true_ev_next5b_current\\summary.json",
+      "candidate_count": 6,
+      "passed_count": 0,
+      "status": "REJECTED_BY_CROSS_SOURCE_SCREEN",
+      "passed_rules": 0,
+      "best_rule": "league|outcome|market_prob_bucket=SWZ|away|[0.42,0.55)",
+      "best_combined_roi_pct": 0.0,
+      "best_total_bets": 0,
+      "best_worst_source_roi_pct": 0.0,
+      "reason": "AVG_CLOSE: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons; MAX_CLOSE: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons; PS_CLOSE: bets<100,profit<=0,roi<3%,positive_months<=negative_months,positive_seasons<=negative_seasons"
+    }
+  ],
+  "multi_window": [],
+  "interpretation": "A diagnostic positive is not treated as true EV until it survives cross-source prices, 12-month rolling windows, settlement-aware daily allocation, and later official-SP prospective validation."
+}

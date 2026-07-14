@@ -71,3 +71,22 @@ def test_allocation_readiness_rejects_weak_historical_strategy(monkeypatch):
 
     assert report["decision"] == "RESEARCH_ONLY_NO_DAILY_ALLOCATION"
     assert report["strategies"][0]["action"] == "RESEARCH_ONLY"
+
+
+def test_allocation_readiness_rejects_scorecard_blocked_strategy(monkeypatch):
+    monkeypatch.setattr(
+        "football_agents.profit_allocation_readiness.list_profit_strategy_packages",
+        lambda: [_strategy(
+            status="RESEARCH_ONLY_UNSTABLE_WINDOWS",
+            recommended_for_shadow=False,
+            deployment_blockers=["latest scorecard blocked shadow promotion"],
+        )],
+    )
+
+    report = build_profit_allocation_readiness(100)
+
+    assert report["decision"] == "RESEARCH_ONLY_NO_DAILY_ALLOCATION"
+    assert report["allocated_budget"] == 0
+    assert report["cash_reserved"] == 100
+    assert report["strategies"][0]["historically_supported"] is False
+    assert report["strategies"][0]["action"] == "RESEARCH_ONLY"

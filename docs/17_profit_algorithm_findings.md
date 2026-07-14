@@ -2368,3 +2368,262 @@ Interpretation:
 - The old weak-team EV problem is now addressed at the EV probability layer, not by hiding results in Critic.
 - The system should now require a model edge to survive market anchoring before it becomes real EV.
 - DNK draw is a genuine research lead, but it is still not live allocation because it narrowly fails the active rolling-window gate. This is exactly the sort of candidate to keep in shadow/research, not to force into daily money allocation yet.
+
+DNK Draw Rolling Quality Filter:
+
+- Problem:
+  - `DNK draw odds [2.8,3.5)` was the strongest non-World-Cup near-miss: high total ROI, positive latest season, but active rolling-window pass rate below the required `0.60`.
+  - Full-sample slicing suggested the raw candidate was weaker when `abs_form_points_diff <= 0.6` and stronger in moderate form-gap ranges, but a full-sample filter would be leakage.
+- Code:
+  - Added `scripts/rolling_candidate_quality_filter.py`.
+  - It reads an existing no-leak selected-candidate file and, for each month, uses only prior selected-candidate outcomes to decide which feature buckets are allowed in the current month.
+  - It reports the same settlement-aware daily portfolio, rolling-window pass rate, season results, and hard-gate decision.
+- Tests:
+  - `tests/test_rolling_candidate_quality_filter.py`.
+  - The tests verify that bucket selection uses prior profitability and does not use the current month to select the current month bucket.
+- Commands:
+  - `python scripts/rolling_candidate_quality_filter.py --input reports/official_pool_market_anchored_research_dnk_draw_grid_current/selected.csv --first-month 2016-01 --last-month 2026-06 --fast --output-dir reports/rolling_candidate_quality_filter_dnk_draw_fast_current`
+  - `python scripts/rolling_candidate_quality_filter.py --input reports/official_pool_market_anchored_research_dnk_draw_grid_current/selected.csv --first-month 2020-01 --last-month 2026-06 --fast --output-dir reports/rolling_candidate_quality_filter_dnk_draw_fast_recent_current`
+
+Results:
+
+| Experiment | Best Filter | Bets | Profit | ROI | Max DD | Seasons | Latest Season | Active Pass Rate | Decision |
+| --- | --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | --- |
+| Full window 2016-2026 | `train36_abs_form_points_bucket_n20_profit1_roi0p05_pm3_ev0p02` | 206 | +446.70 | 21.68% | 90.00 | 9 / 0 | +108.20 from 27 bets | 0.3333 | `RESEARCH_ONLY_UNSTABLE` |
+| Recent window 2020-2026 | same | 169 | +354.10 | 20.95% | 90.00 | 6 / 1 | +108.20 from 27 bets | 0.5000 | `RESEARCH_ONLY_UNSTABLE` |
+
+Interpretation:
+
+- Rolling bucket quality filtering improves headline ROI and drawdown versus the unfiltered DNK near-miss, but it does not solve the stability requirement.
+- The recent-window result is better (`0.50` active pass rate), but still below `0.60`.
+- This is not a reason to relax the gate. It is evidence that DNK draw has a promising but regime-sensitive signal.
+- DNK should remain research-only until a filter passes active rolling windows and then survives cross-source and official-SP prospective validation.
+
+World Cup Real-EV Residual Walk-Forward:
+
+- Problem:
+  - Prior World Cup work used tournament/bucket portfolio validation. That was useful, but it did not run the same real-EV residual model used by the newer live decision path.
+  - `scripts/walk_forward_residual_strategy.py` previously loaded only season directories such as `2425`; it could not load `data/historical_csv/football-data/new/WORLD_CUP.csv`.
+- Code:
+  - `load_season_matches()` now accepts:
+    - normal season directories such as `2425`;
+    - direct CSV paths;
+    - single-file domains under `data/historical_csv/football-data/new/`, e.g. `WORLD_CUP`.
+  - Added sparse event profiles:
+    - `world_cup_sparse`: draw-only, research-only, 120-month training window, 18-month validation window, minimum 150 train rows and 25 validation rows.
+    - `world_cup_sparse_all`: home/draw/away, research-only, stricter validation minimum of 5 bets.
+    - `world_cup_sparse_probe`: home/draw/away, research-only probe with only 1 validation bet required; this exists only to test whether loosening the validation gate creates real out-of-sample value.
+  - Monthly reports now include `evaluated_configs` and `best_failed_validation` when no stable config is selected.
+- Commands:
+  - `python scripts/walk_forward_residual_strategy.py --seasons WORLD_CUP --first-month 2024-03 --months 28 --profile world_cup_sparse --output-dir reports/residual_walk_forward_world_cup_sparse_real_ev_current`
+  - `python scripts/walk_forward_residual_strategy.py --seasons WORLD_CUP --first-month 2024-03 --months 28 --profile world_cup_sparse_all --output-dir reports/residual_walk_forward_world_cup_sparse_all_real_ev_current`
+  - `python scripts/walk_forward_residual_strategy.py --seasons WORLD_CUP --first-month 2024-03 --months 28 --profile world_cup_sparse_probe --output-dir reports/residual_walk_forward_world_cup_sparse_probe_real_ev_current`
+
+Results:
+
+| Profile | Scope | Validation Strictness | Bets | Profit | ROI | Invested Months | Main Result |
+| --- | --- | --- | ---: | ---: | ---: | ---: | --- |
+| `world_cup_sparse` | Draw only | 3 validation bets | 0 | 0.00 | 0.00% | 1 | selected once, but test month had no bet |
+| `world_cup_sparse_all` | Home/draw/away | 5 validation bets | 0 | 0.00 | 0.00% | 0 | no stable validation config |
+| `world_cup_sparse_probe` | Home/draw/away | 1 validation bet | 1 | -1.00 | -100.00% | 4 | only out-of-sample bet lost |
+
+Probe bet:
+
+- Date: `2025-11-15`.
+- Match: Greece vs Scotland.
+- Pick: draw.
+- Actual: home.
+- True probability: `0.325690`.
+- Model probability before real-EV anchor: `0.422869`.
+- Odds: `3.18`.
+- Real lower EV after uncertainty: `-0.001139`.
+- Model lower EV before true-EV anchoring: `0.307890`.
+- Result: stake `1.00`, profit `-1.00`.
+
+Interpretation:
+
+- The real-EV anchor did exactly what it should: the raw model saw a large draw edge, but the anchored true probability reduced it close to break-even.
+- Requiring normal validation stability leads to no deployable World Cup bets.
+- Loosening validation to a single prior winning bet produces one sample-out bet and it loses. That is evidence against relaxing thresholds for World Cup allocation.
+- Current World Cup status remains rejected for money allocation. Keep the data for model calibration and future research, but do not route daily 100 allocation into World Cup from current evidence.
+
+Legacy Residual Promotion Recheck Under Current Real-EV Anchor:
+
+- Problem:
+  - An older five-season residual report (`reports/residual_walk_forward_5season_strict_v1/summary.json`) showed a small positive walk-forward result and `PROMOTE_TO_LARGER_SHADOW`.
+  - That report was generated before the stricter real-EV market anchor, underdog residual discount, and favorite downside cap were added.
+  - It must therefore not be treated as evidence that the current live EV engine has found deployable edge.
+- Command:
+  - `python scripts/walk_forward_residual_strategy.py --seasons 2122,2223,2324,2425,2526 --first-month 2023-08 --months 34 --profile strict --output-dir reports/residual_walk_forward_5season_strict_current_real_ev_recheck`
+- Result:
+  - Method: `nested monthly walk-forward real-EV market anchor + residual isotonic + league shrinkage + constrained Kelly`.
+  - Bets: `0`.
+  - Profit: `0.00`.
+  - Invested months: `0 / 34`.
+  - Decision: `NEED_MORE_DATA`.
+  - Main reason: no monthly configuration passed the current validation gate after the real-EV anchor was applied.
+- Registry / allocation change:
+  - `football_agents/profit_strategy_registry.py` now reads the latest I2 profit scorecard when building the strategy package.
+  - If the scorecard says `RESEARCH_ONLY_UNSTABLE_WINDOWS` and `recommended_for_shadow=false`, the package status is downgraded instead of returning the old `PROMOTE_TO_OFFICIAL_SP_SHADOW_VALIDATION` label.
+  - `football_agents/profit_allocation_readiness.py` now treats `RESEARCH_ONLY*` or `recommended_for_shadow=false` packages as not historically supported for daily allocation.
+
+Interpretation:
+
+- This is an intentional false-positive cleanup. The system should prefer abstaining over manufacturing positive EV from an older model family.
+- Historical profit remains useful for research triage, but current money allocation requires the edge to survive the latest real-EV anchor, multi-window gate, and official-SP prospective validation.
+
+True-EV Broad-Domain Recheck, English / European Batch:
+
+- Purpose:
+  - Continue the true-EV search after World Cup, Nordic, and broad new-domain candidates failed.
+  - This batch intentionally included stronger-team / market-favorite structures, not only weak-team high-odds outcomes, to test whether the system can find an edge that does not reduce to "bet underdogs".
+- Domain readiness:
+  - Current report: `reports/profit_data_domain_readiness_current/summary.json`.
+  - World Cup remains `REJECTED_BY_EXISTING_STABILITY_GATES`.
+  - `INTERNATIONAL_ODDS_API.csv` still has no usable 1X2 odds rows, so it cannot validate EV.
+- Discovery batch B:
+  - Report: `reports/batch_profit_domain_discovery_true_ev_next5b_current/summary.json`.
+  - Domains: `E1`, `E3`, `E2`, `IRL`, `SWZ`.
+  - Diagnostic hits: `4 / 5`.
+  - Best surfaces:
+    - `E2` low-odds / high-market-probability favorites.
+    - `SWZ` away favorite / market-probability structures.
+  - Cross-source summary: `reports/true_ev_research_summary_next5b_current/summary.json`.
+  - Decision: `NO_TRUE_EV_CANDIDATE_FOUND`.
+- Discovery batch C:
+  - Report: `reports/batch_profit_domain_discovery_true_ev_next5c_current/summary.json`.
+  - Domains: `AUT`, `SP2`, `I1`, `E0`, `F2`.
+  - Diagnostic hits: `4 / 5`.
+  - Best surfaces:
+    - `I1 away market_favorite`: cross-source screen total 189 bets, +164.00, ROI `8.68%`, but every source failed the screen; four sources had fewer than 100 bets, and MAX prices failed ROI/month/drawdown checks.
+    - `AUT away [1.8,2.2)`: diagnostic positive, but no no-lookahead cross-source portfolio bets.
+    - `E0 home [2.2,2.8)`: 111 cross-source portfolio bets, ROI `-11.72%`.
+  - Multi-window I1 report: `reports/market_bias_multi_window_i1_true_ev_next5c_current/summary.json`.
+  - Cross-source summary: `reports/true_ev_research_summary_next5c_current/summary.json`.
+  - Decision: `NO_TRUE_EV_CANDIDATE_FOUND`.
+
+I1 near-miss details:
+
+| Candidate | Screen Bets | Screen ROI | Multi-window Bets | Multi-window ROI | Active Pass Rate | Source Pass Rate | Decision |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| `I1 away market_favorite` | 189 | 8.68% | 149 | -7.56% | 0.0000 | 0.0000 | `REJECT_UNSTABLE` |
+| `I1 away [1.0,1.8)` | 88 | -2.68% | 123 | -2.63% | 0.0000 | 0.0000 | `REJECT_UNSTABLE` |
+
+Interpretation:
+
+- The stronger-team / favorite direction is not automatically profitable either. It can look good in a diagnostic slice, but no-lookahead rolling selection and cross-source validation remove the apparent edge.
+- This reinforces the current true-EV rule: do not allocate the daily 100 budget from diagnostic ROI, and do not treat a combined positive cross-source screen as enough when each source has low sample or unstable windows.
+- The next useful search should be either:
+  - continue through the remaining search-ready domains (`T1`, `F1`, `B1`, `D2`, `P1`, `D1`, `N1`, `G1`, `SC0`), or
+  - move beyond coarse market-bucket rules into a feature-residual scorer for the best near-miss shapes, while preserving the same cross-source and multi-window gates.
+
+True-EV Broad-Domain Recheck, Batch D:
+
+- Purpose:
+  - Test another block of search-ready domains, including a stronger-team / favorite-heavy shape, under the stricter true-EV standard.
+  - This batch is especially useful for diagnosing false EV caused by assuming we can obtain the most favorable market price.
+- Discovery batch D:
+  - Report: `reports/batch_profit_domain_discovery_true_ev_next5d_current/summary.json`.
+  - Domains: `T1`, `F1`, `B1`, `D2`, `P1`.
+  - Diagnostic hits: `5 / 5`.
+  - Best diagnostic surface: `T1 market_prob [0.55,1.00]`.
+- Cross-source T1 screen:
+  - Report: `reports/market_bias_candidate_screen_t1_true_ev_next5d_current/summary.json`.
+  - Best rule: `league|market_prob_bucket=T1|[0.55,1.00]`.
+  - Combined result: 1,037 portfolio bets, `+525.40`, ROI `5.07%`.
+  - Passing sources: `MAX_CLOSE`, `MAX_OPEN`, `B365_OPEN`.
+  - Failing sources: `AVG_OPEN`, `AVG_CLOSE`, `B365_CLOSE`.
+  - Reason for rejection: the rule depends too much on best/early prices. Average and closing prices are near-flat or negative, which means the apparent edge is not robustly obtainable.
+- Frozen T1 multi-window check:
+  - Report: `reports/market_bias_multi_window_t1_true_ev_next5d_frozen_current/summary.json`.
+  - Best candidate: `t1-market-prob-0p55-1p00`.
+  - Total result: 3,889 bets, `+1870.10`, ROI `4.81%`.
+  - Active pass rate: `0.4286`, below the required `0.60`.
+  - Worst window ROI: `-46.20%`.
+  - Source weakness: `AVG_CLOSE` ROI `-1.46%`, `B365_CLOSE` ROI `-2.11%`, `AVG_OPEN` ROI only `0.15%`.
+  - Decision: `RESEARCH_ONLY_UNSTABLE_WINDOWS`.
+- Other batch-D screens:
+  - `P1`: no cross-source rule passed; best screen had zero portfolio bets.
+  - `B1`: no cross-source rule passed; best combined ROI only `1.23%`.
+  - `F1`: no cross-source rule passed.
+  - `D2`: no cross-source rule passed.
+- Summary report:
+  - `reports/true_ev_research_summary_next5d_current/summary.json`.
+  - Decision: `NO_TRUE_EV_CANDIDATE_FOUND`.
+
+Interpretation:
+
+- T1 is the clearest example so far of why the new true-EV definition must include price availability. It looks profitable under maximum/open prices, but it loses the signal under realistic average/closing prices.
+- This directly addresses the earlier "weak teams always have positive EV" concern: the system must not treat a model-market probability gap as real EV unless it survives cross-source price tests, no-lookahead windows, and settlement-aware staking.
+- Batch D should not feed the live daily 100 allocation. Its useful contribution is diagnostic: it identifies price-source sensitivity as a major false-EV mechanism.
+
+True-EV Broad-Domain Recheck, Batch E:
+
+- Purpose:
+  - Finish the current readiness-ranked search block after batch D.
+  - Test the remaining large classic domains with the same true-EV standard.
+- Discovery batch E:
+  - Report: `reports/batch_profit_domain_discovery_true_ev_next4e_current/summary.json`.
+  - Domains: `D1`, `N1`, `G1`, `SC0`.
+  - Diagnostic hits: `4 / 4`.
+  - Best diagnostic surfaces:
+    - `N1 draw [5.0,7.0)`: 229 diagnostic bets, `+46.50`, ROI `20.31%`.
+    - `G1 draw [2.8,3.5) / market_prob [0.28,0.34)`: 552 diagnostic bets, `+18.69`, ROI `3.39%`.
+    - `SC0 home [1.0,1.8)`: 317 diagnostic bets, `+15.63`, ROI `4.93%`.
+    - `D1 draw / market_prob [0.20,0.28)`: 1,084 diagnostic bets, `+67.85`, ROI `6.26%`.
+- Cross-source screens:
+  - Summary: `reports/true_ev_research_summary_next4e_current/summary.json`.
+  - Decision: `NO_TRUE_EV_CANDIDATE_FOUND`.
+  - `D1`: best rule `league|market_prob_bucket=D1|[0.20,0.28)` had combined ROI `5.67%`, but only 86 best-source portfolio bets and drawdown greater than profit.
+  - `N1`: best rule `league|odds_bucket=N1|[4.0,5.0)` had combined ROI `18.98%`, but failed every validation source; B365 open was negative and average sources lacked enough usable bets.
+  - `G1`: best rule `league|outcome|odds_bucket=G1|draw|[2.8,3.5)` had combined ROI `15.43%`, but failed every validation source; B365 close was `-16.32%` and most sources had fewer than 100 bets.
+  - `SC0`: best surviving screen was negative (`-45.71%`) and rejected.
+
+Interpretation:
+
+- N1 and G1 are tempting research leads, but they are not true EV yet. Their apparent edge is too concentrated in sparse windows or favorable price sources.
+- This reinforces the updated algorithmic rule: a profitable-looking bucket is not allowed into live staking unless it survives realistic available prices and enough settled no-lookahead bets.
+- The current live money policy should remain conservative: no forced daily allocation from D1/N1/G1/SC0.
+
+Multi-Source Discovery Upgrade:
+
+- Problem:
+  - The earlier discovery flow could start from one attractive price source and only later reject it during cross-source validation.
+  - That is useful, but it wastes search effort on rules that were probably price-source artifacts from the start.
+- Code:
+  - Added `scripts/multi_source_market_bias_discovery.py`.
+  - It runs market-bias diagnostics across multiple odds sources first, then keeps only rules that pass source-level discovery checks in at least `N` sources.
+  - Default sources: `B365_OPEN`, `AVG_OPEN`, `MAX_OPEN`, `B365_CLOSE`, `AVG_CLOSE`, `MAX_CLOSE`.
+  - The script writes:
+    - `market_candidates.csv`;
+    - `market_bias.csv`, containing only multi-source discovery rows;
+    - `market_bias_with_sources.json`, preserving per-source evidence;
+    - `summary.json`.
+- Tests:
+  - `tests/test_multi_source_market_bias_discovery.py`.
+  - The tests verify that a single-source positive rule is rejected when `min_sources=2`, and that the optional latest-period filter can reject stale candidates.
+- Command:
+  - `python scripts/multi_source_market_bias_discovery.py --seasons 2122,2223,2324,2425,2526 --min-samples 100 --min-active-months 12 --max-combo-size 3 --min-sources 3 --min-source-roi-pct 3 --output-dir reports/multi_source_market_bias_discovery_all_classic_current`
+- Discovery result:
+  - Raw diagnostic rows: `1306`.
+  - Multi-source robust discovery rows: `37`.
+  - Strongest discovery rows:
+    - `I1 away [1.0,1.8)`: 6 / 6 discovery sources, 1,395 source-combined diagnostic bets, ROI `9.70%`.
+    - `I1 away market_prob [0.55,1.00]`: 6 / 6 discovery sources, ROI `9.13%`.
+    - `SP1 away market_prob [0.42,0.55)`: 6 / 6 discovery sources, ROI `11.27%`.
+    - `G1 draw market_prob [0.28,0.34)`: 6 / 6 discovery sources, ROI `7.93%`.
+- No-lookahead cross-source screen:
+  - Command:
+    - `python scripts/market_bias_candidate_screen.py --diagnostics-csv reports/multi_source_market_bias_discovery_all_classic_current/market_bias.csv --no-include-default-rule --seasons 2122,2223,2324,2425,2526 --first-month 2022-08 --last-month 2026-05 --validation-odds-source B365_OPEN --validation-odds-source AVG_OPEN --validation-odds-source MAX_OPEN --validation-odds-source B365_CLOSE --validation-odds-source AVG_CLOSE --validation-odds-source MAX_CLOSE --top-n 12 --output-dir reports/market_bias_candidate_screen_multi_source_classic_current`
+  - Summary: `reports/true_ev_research_summary_multi_source_classic_current/summary.json`.
+  - Candidate source rows screened: `72`.
+  - Individual source passes: `4`.
+  - Rules passing all validation sources: `0`.
+  - Decision: `NO_TRUE_EV_CANDIDATE_FOUND`.
+  - Best rule after screening: `SP1 home [1.0,1.8)`, combined 461 portfolio bets, `+471.80`, ROI `10.23%`, but it passed only `MAX_CLOSE` and `MAX_OPEN`; B365/AVG open failed and the worst source ROI was `-4.76%`.
+
+Interpretation:
+
+- Multi-source discovery is a useful upgrade because it removes many single-source artifacts before walk-forward validation.
+- However, discovery consistency is still not enough. The best remaining rules lose stability once month-by-month no-lookahead selection, settlement-aware staking, and realistic non-MAX prices are applied.
+- The next algorithmic step should move beyond static market buckets into a time-aware feature scorer, but it must preserve this same rule: no live allocation without cross-source and rolling-window survival.

@@ -363,6 +363,66 @@ EXPERIMENT_PROFILES = {
         "ranking_keys": ("lower_ev",),
         "research_only": True,
     },
+    "world_cup_sparse": {
+        "validation_months": 18,
+        "training_months": 120,
+        "min_train_rows": 150,
+        "min_validation_rows": 25,
+        "validation_min_bets": 3,
+        "min_positive_validation_months": 1,
+        "min_validation_roi": 0.0,
+        "min_validation_profit": 0.0,
+        "max_drawdown_profit_ratio": 3.0,
+        "uncertainty_scale": 0.90,
+        "ev_thresholds": (-0.01, 0.0, 0.01),
+        "min_odds": (2.2, 2.8),
+        "max_odds": (3.5, 4.0, 5.0),
+        "kelly_fractions": (0.05,),
+        "allowed_outcomes": (("draw",),),
+        "candidate_limits_per_day": (1,),
+        "ranking_keys": ("lower_ev",),
+        "research_only": True,
+    },
+    "world_cup_sparse_all": {
+        "validation_months": 18,
+        "training_months": 120,
+        "min_train_rows": 150,
+        "min_validation_rows": 25,
+        "validation_min_bets": 5,
+        "min_positive_validation_months": 1,
+        "min_validation_roi": 0.0,
+        "min_validation_profit": 0.0,
+        "max_drawdown_profit_ratio": 2.5,
+        "uncertainty_scale": 0.90,
+        "ev_thresholds": (-0.005, 0.0, 0.01),
+        "min_odds": (1.5, 1.8, 2.2),
+        "max_odds": (3.5, 4.0, 5.0),
+        "kelly_fractions": (0.05,),
+        "allowed_outcomes": (OUTCOMES,),
+        "candidate_limits_per_day": (1,),
+        "ranking_keys": ("lower_ev",),
+        "research_only": True,
+    },
+    "world_cup_sparse_probe": {
+        "validation_months": 18,
+        "training_months": 120,
+        "min_train_rows": 150,
+        "min_validation_rows": 25,
+        "validation_min_bets": 1,
+        "min_positive_validation_months": 1,
+        "min_validation_roi": 0.0,
+        "min_validation_profit": 0.0,
+        "max_drawdown_profit_ratio": 5.0,
+        "uncertainty_scale": 0.90,
+        "ev_thresholds": (-0.005, 0.0, 0.01),
+        "min_odds": (1.5, 1.8, 2.2),
+        "max_odds": (3.5, 4.0, 5.0),
+        "kelly_fractions": (0.05,),
+        "allowed_outcomes": (OUTCOMES,),
+        "candidate_limits_per_day": (1,),
+        "ranking_keys": ("lower_ev",),
+        "research_only": True,
+    },
 }
 
 QUALITY_FEATURE_COLUMNS = (
@@ -407,10 +467,11 @@ class IsotonicPAV:
 
 class ResidualProbabilityModel:
     def __init__(self, ridge: float = 8.0, uncertainty_scale: float = 1.0,
-                 use_real_ev_anchor: bool = True) -> None:
+                 use_real_ev_anchor: bool = True, min_fit_rows: int = 300) -> None:
         self.ridge = ridge
         self.uncertainty_scale = uncertainty_scale
         self.use_real_ev_anchor = use_real_ev_anchor
+        self.min_fit_rows = int(min_fit_rows)
         self.coefficients: dict[str, np.ndarray] = {}
         self.calibrators: dict[str, IsotonicPAV] = {}
         self.rmse: dict[str, float] = {}
@@ -441,8 +502,8 @@ class ResidualProbabilityModel:
         return np.column_stack([np.ones(len(frame)), pure - market, market - 1 / 3, np.log(odds), *extras])
 
     def fit(self, frame: pd.DataFrame) -> "ResidualProbabilityModel":
-        if len(frame) < 300:
-            raise ValueError("Residual model requires at least 300 prior matches")
+        if len(frame) < self.min_fit_rows:
+            raise ValueError(f"Residual model requires at least {self.min_fit_rows} prior matches")
         self.league_counts = frame.groupby("league").size().astype(int).to_dict()
         for outcome in OUTCOMES:
             x = self.design(frame, outcome)
@@ -1013,7 +1074,10 @@ def promotion_decision(
 
 
 def select_portfolio_config(train: pd.DataFrame, validation: pd.DataFrame, profile: dict) -> tuple[PortfolioConfig | None, dict]:
-    model = ResidualProbabilityModel(uncertainty_scale=profile["uncertainty_scale"]).fit(train)
+    model = ResidualProbabilityModel(
+        uncertainty_scale=profile["uncertainty_scale"],
+        min_fit_rows=int(profile.get("min_train_rows", 300)),
+    ).fit(train)
     predicted = model.predict(validation)
     use_quality_gate = bool(profile.get("quality_gate"))
     quality_train = predicted
@@ -1110,19 +1174,24 @@ def select_portfolio_config(train: pd.DataFrame, validation: pd.DataFrame, profi
     max_drawdown_profit_ratio = profile.get("max_drawdown_profit_ratio")
     eligible = []
     for row in rows:
-        if row["bets"] < profile["validation_min_bets"]:
-            continue
-        if row["roi_pct"] < min_validation_roi * 100:
-            continue
-        if row["profit"] < min_validation_profit:
-            continue
-        if row["positive_validation_months"] < profile["min_positive_validation_months"]:
-            continue
-        if max_drawdown_profit_ratio is not None and row["max_drawdown"] > row["profit"] * float(max_drawdown_profit_ratio):
+        row["rejection_reasons"] = _validation_rejection_reasons(
+            row,
+            profile,
+            min_validation_roi=min_validation_roi,
+            min_validation_profit=min_validation_profit,
+            max_drawdown_profit_ratio=max_drawdown_profit_ratio,
+        )
+        if row["rejection_reasons"]:
             continue
         eligible.append(row)
     if not eligible:
-        return None, {"decision": "ABSTAIN", "reason": f"No stable configuration with at least {profile['validation_min_bets']} bets and {profile['min_positive_validation_months']} positive validation month(s)"}
+        best_failed = _best_failed_validation_row(rows)
+        return None, {
+            "decision": "ABSTAIN",
+            "reason": f"No stable configuration with at least {profile['validation_min_bets']} bets and {profile['min_positive_validation_months']} positive validation month(s)",
+            "evaluated_configs": len(rows),
+            "best_failed_validation": best_failed,
+        }
     best = max(eligible, key=lambda row: (row["roi_pct"] - row["max_drawdown"] / max(row["total_staked"], 1) * 10, row["profit"]))
     selected_config = best["config"]
     if use_quality_gate:
@@ -1137,10 +1206,58 @@ def select_portfolio_config(train: pd.DataFrame, validation: pd.DataFrame, profi
     return selected_config, {key: value for key, value in best.items() if key not in {"config", "base_config"}}
 
 
+def _validation_rejection_reasons(
+    row: dict,
+    profile: dict,
+    *,
+    min_validation_roi: float,
+    min_validation_profit: float,
+    max_drawdown_profit_ratio: float | None,
+) -> list[str]:
+    reasons: list[str] = []
+    if row["bets"] < profile["validation_min_bets"]:
+        reasons.append("validation_bets<minimum")
+    if row["roi_pct"] < min_validation_roi * 100:
+        reasons.append("validation_roi<threshold")
+    if row["profit"] < min_validation_profit:
+        reasons.append("validation_profit<threshold")
+    if row["positive_validation_months"] < profile["min_positive_validation_months"]:
+        reasons.append("positive_validation_months<minimum")
+    if max_drawdown_profit_ratio is not None and row["max_drawdown"] > row["profit"] * float(max_drawdown_profit_ratio):
+        reasons.append("validation_drawdown>allowed_profit_ratio")
+    return reasons
+
+
+def _best_failed_validation_row(rows: list[dict]) -> dict | None:
+    if not rows:
+        return None
+    best = max(rows, key=lambda row: (
+        row.get("profit", 0.0),
+        row.get("roi_pct", -999.0),
+        row.get("positive_validation_months", 0),
+        row.get("bets", 0),
+    ))
+    config = best.get("config")
+    return {
+        "config": config.__dict__ if isinstance(config, PortfolioConfig) else None,
+        "rejection_reasons": best.get("rejection_reasons", []),
+        "positive_validation_months": int(best.get("positive_validation_months") or 0),
+        "bets": int(best.get("bets") or 0),
+        "winning_bets": int(best.get("winning_bets") or 0),
+        "total_staked": float(best.get("total_staked") or 0.0),
+        "profit": float(best.get("profit") or 0.0),
+        "roi_pct": float(best.get("roi_pct") or 0.0),
+        "max_drawdown": float(best.get("max_drawdown") or 0.0),
+        "active_days": int(best.get("active_days") or 0),
+    }
+
+
 def nested_walk_forward(features: pd.DataFrame, first_month: str, months: int, profile_name: str = "strict") -> tuple[dict, pd.DataFrame, pd.DataFrame]:
     profile = EXPERIMENT_PROFILES[profile_name]
     validation_months = int(profile.get("validation_months", 3))
     training_months = int(profile.get("training_months", 18))
+    min_train_rows = int(profile.get("min_train_rows", 300))
+    min_validation_rows = int(profile.get("min_validation_rows", 100))
     all_days: list[pd.DataFrame] = []
     all_bets: list[pd.DataFrame] = []
     all_predictions: list[pd.DataFrame] = []
@@ -1152,12 +1269,15 @@ def nested_walk_forward(features: pd.DataFrame, first_month: str, months: int, p
         inner_train = features[(features.match_date >= training_start) & (features.match_date < validation_start)]
         validation = features[(features.match_date >= validation_start) & (features.match_date < test_start)]
         test = features[(features.match_date >= test_start) & (features.match_date <= test_end)]
-        if len(inner_train) < 300 or len(validation) < 100 or test.empty:
+        if len(inner_train) < min_train_rows or len(validation) < min_validation_rows or test.empty:
             month_reports.append({"month": str(period), "decision": "ABSTAIN", "reason": "Insufficient train/validation/test data"})
             continue
         config, validation_report = select_portfolio_config(inner_train, validation, profile)
         outer_train = features[(features.match_date >= test_start - pd.DateOffset(months=training_months)) & (features.match_date < test_start)]
-        predicted = ResidualProbabilityModel(uncertainty_scale=profile["uncertainty_scale"]).fit(outer_train).predict(test)
+        predicted = ResidualProbabilityModel(
+            uncertainty_scale=profile["uncertainty_scale"],
+            min_fit_rows=min_train_rows,
+        ).fit(outer_train).predict(test)
         model_metrics = probability_metrics(predicted)
         all_predictions.append(predicted.assign(month=str(period)))
         if config is None:
@@ -1196,6 +1316,8 @@ def nested_walk_forward(features: pd.DataFrame, first_month: str, months: int, p
         "first_month": first_month, "months": months,
         "training_months": training_months,
         "validation_months": validation_months,
+        "min_train_rows": min_train_rows,
+        "min_validation_rows": min_validation_rows,
         "odds_timing": "pre_closing_without_exact_snapshot_timestamp",
         "same_day_results_hidden_until_settlement": True,
         "overall": overall, "probability_metrics": calibration, "promotion_decision": promotion,
@@ -1210,18 +1332,32 @@ def nested_walk_forward(features: pd.DataFrame, first_month: str, months: int, p
     return summary, days, bets
 
 
+def _season_source_candidates(season: str) -> tuple[Path, ...]:
+    token = str(season).strip()
+    if not token:
+        return ()
+    direct = Path(token)
+    base = Path("data") / "historical_csv" / "football-data"
+    return (
+        direct,
+        base / token,
+        base / "new" / f"{token}.csv",
+        base / "new" / token,
+    )
+
+
 def load_season_matches(seasons: tuple[str, ...]) -> pd.DataFrame:
     frames: list[pd.DataFrame] = []
     for season in seasons:
         season = str(season).strip()
         if not season:
             continue
-        path = Path("data") / "historical_csv" / "football-data" / season
-        if not path.exists():
+        path = next((candidate for candidate in _season_source_candidates(season) if candidate.exists()), None)
+        if path is None:
             continue
         frames.append(load_matches(path))
     if not frames:
-        raise ValueError(f"No usable season directories found for: {', '.join(seasons)}")
+        raise ValueError(f"No usable season directories or CSV files found for: {', '.join(seasons)}")
     return pd.concat(frames, ignore_index=True).sort_values("match_date").reset_index(drop=True)
 
 

@@ -96,9 +96,31 @@ def test_decision_reasons_require_walk_forward_stability() -> None:
         "roi_pct": 5.0,
         "positive_months": 10,
         "negative_months": 6,
+        "positive_seasons": 3,
+        "negative_seasons": 1,
+        "latest_season_bets": 30,
+        "latest_season_profit": 4.0,
         "max_drawdown": 20.0,
         "active_pass_rate": 0.5,
     }
     assert _decision_reasons(row) == ["active_pass_rate<0.6"]
     row["active_pass_rate"] = 0.7
     assert _decision_reasons(row) == []
+
+
+def test_decision_reasons_block_recent_season_failure() -> None:
+    row = {
+        "bets": 200,
+        "profit": 50.0,
+        "roi_pct": 5.0,
+        "positive_months": 10,
+        "negative_months": 6,
+        "positive_seasons": 3,
+        "negative_seasons": 1,
+        "latest_season_bets": 30,
+        "latest_season_profit": -1.0,
+        "max_drawdown": 20.0,
+        "active_pass_rate": 0.7,
+    }
+
+    assert _decision_reasons(row) == ["latest_season_profit<0"]

@@ -8,6 +8,7 @@ from typing import Any
 
 MARKET_ANCHORED_I2_DRAWS_STRATEGY_ID = "profit-i2-draw-market-anchored-stop3-cool3-v1"
 MARKET_ANCHORED_I2_AVG_CLOSE_RESEARCH_ID = "profit-i2-draw-market-anchored-avg-close-stop3-cool14-v1"
+MARKET_BIAS_I2_SCORECARD_REPORT = Path("reports/market_bias_profit_algorithm_scorecard_i2_draw/summary.json")
 
 
 @dataclass(frozen=True)
@@ -19,11 +20,14 @@ class ProfitStrategyPackage:
     statistical_audit_report: str
     edge_calibration_report: str
     scorer_artifact_report: str | None
+    profit_scorecard_report: str | None
     selection: dict[str, Any]
     risk_control: dict[str, Any]
     historical_metrics: dict[str, Any]
     audit: dict[str, Any]
     calibration: dict[str, Any]
+    profit_scorecard: dict[str, Any] | None
+    recommended_for_shadow: bool | None
     deployment_blockers: tuple[str, ...]
     next_validation: tuple[str, ...]
 
@@ -49,6 +53,7 @@ def build_market_anchored_i2_strategy_package(
     statistical_audit_report: Path | str = Path("reports/strategy_statistical_audit_market_anchored_i2_stop3_cool3_v1/summary.json"),
     edge_calibration_report: Path | str = Path("reports/strategy_edge_calibration_market_anchored_i2_stop3_cool3_v1/summary.json"),
     scorer_artifact_report: Path | str = Path("reports/feature_enriched_market_anchored_i2_scorer_v1/scorer.json"),
+    scorecard_report: Path | str | None = MARKET_BIAS_I2_SCORECARD_REPORT,
 ) -> ProfitStrategyPackage:
     historical_path = Path(historical_report)
     statistical_path = Path(statistical_audit_report)
@@ -61,15 +66,29 @@ def build_market_anchored_i2_strategy_package(
     historical = _read_json(historical_path)
     statistical = _read_json(statistical_path)
     calibration = _read_json(calibration_path)
+    scorecard_path = Path(scorecard_report) if scorecard_report else None
+    scorecard = _read_json(scorecard_path) if scorecard_path and scorecard_path.exists() else None
     historical_overall = historical.get("overall", {})
     window_summary = historical.get("window_summary", {})
     audit_overall = statistical.get("overall", {})
     calibration_overall = calibration.get("overall", {})
     status = "PROMOTE_TO_OFFICIAL_SP_SHADOW_VALIDATION"
+    recommended_for_shadow: bool | None = True
     blockers = [
         "historical validation uses football-data AVG_OPEN, not collected China Sporttery official SP snapshots",
         "first rolling annual window remains weak, so production allocation is blocked until prospective official-SP evidence accumulates",
     ]
+    if scorecard:
+        status = str(scorecard.get("deployment_tier") or status)
+        recommended_for_shadow = bool(scorecard.get("recommended_for_shadow"))
+        if not recommended_for_shadow:
+            blockers.insert(
+                0,
+                (
+                    "latest profit scorecard does not recommend shadow promotion "
+                    f"({status}); treat this package as research-only until multi-window evidence improves"
+                ),
+            )
     if not scorer_path.exists():
         blockers.append("live deployment still needs an exported residual model or equivalent no-leak feature scorer")
     else:
@@ -86,6 +105,7 @@ def build_market_anchored_i2_strategy_package(
         statistical_audit_report=str(statistical_path),
         edge_calibration_report=str(calibration_path),
         scorer_artifact_report=str(scorer_path) if scorer_path.exists() else None,
+        profit_scorecard_report=str(scorecard_path) if scorecard_path and scorecard_path.exists() else None,
         selection={
             "league_family": "I2",
             "outcome": "DRAW",
@@ -128,6 +148,15 @@ def build_market_anchored_i2_strategy_package(
             "avg_implied_probability": calibration_overall.get("avg_implied_probability"),
             "conservative_edge_vs_implied": calibration_overall.get("conservative_edge_vs_implied"),
         },
+        profit_scorecard={
+            "deployment_tier": scorecard.get("deployment_tier"),
+            "score": scorecard.get("score"),
+            "recommended_for_shadow": scorecard.get("recommended_for_shadow"),
+            "recommended_for_production": scorecard.get("recommended_for_production"),
+            "multi_window_validation": scorecard.get("components", {}).get("multi_window_validation"),
+            "interpretation": scorecard.get("interpretation"),
+        } if scorecard else None,
+        recommended_for_shadow=recommended_for_shadow,
         deployment_blockers=tuple(blockers),
         next_validation=(
             "Replay the same candidate rule on official_odds_observations using only pre-match snapshots.",

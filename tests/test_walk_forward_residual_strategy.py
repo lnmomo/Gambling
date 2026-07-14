@@ -15,6 +15,8 @@ from scripts.walk_forward_residual_strategy import (
     IsotonicPAV,
     PortfolioConfig,
     EXPERIMENT_PROFILES,
+    ResidualProbabilityModel,
+    _best_failed_validation_row,
     build_feature_history,
     choose_candidates,
     fit_quality_gate,
@@ -96,6 +98,20 @@ class ResidualStrategyTests(unittest.TestCase):
         self.assertLess(matches["match_date"].max(), pd.Timestamp("2026-01-01"))
         self.assertGreaterEqual(matches["match_date"].dt.year.nunique(), 2)
 
+    def test_load_season_matches_can_read_new_single_csv_domains(self) -> None:
+        matches = load_season_matches(("WORLD_CUP",))
+
+        self.assertFalse(matches.empty)
+        self.assertEqual(set(matches["league"]), {"WORLD_CUP"})
+        self.assertGreaterEqual(len(matches), 100)
+        self.assertTrue({"odds_home", "odds_draw", "odds_away"}.issubset(matches.columns))
+
+    def test_load_season_matches_accepts_direct_csv_path(self) -> None:
+        matches = load_season_matches(("data/historical_csv/football-data/new/WORLD_CUP.csv",))
+
+        self.assertFalse(matches.empty)
+        self.assertEqual(set(matches["league"]), {"WORLD_CUP"})
+
     def test_stability_profile_requires_larger_validation_sample(self) -> None:
         profile = EXPERIMENT_PROFILES["stability"]
 
@@ -109,6 +125,62 @@ class ResidualStrategyTests(unittest.TestCase):
         self.assertEqual(profile["kelly_fractions"], (0.10,))
         self.assertLess(profile["max_drawdown_profit_ratio"], 1.0)
         self.assertGreater(profile["min_validation_roi"], EXPERIMENT_PROFILES["relaxed"].get("min_validation_roi", 0))
+
+    def test_world_cup_sparse_profile_uses_sparse_event_thresholds(self) -> None:
+        profile = EXPERIMENT_PROFILES["world_cup_sparse"]
+        all_profile = EXPERIMENT_PROFILES["world_cup_sparse_all"]
+        probe_profile = EXPERIMENT_PROFILES["world_cup_sparse_probe"]
+
+        self.assertLess(profile["min_train_rows"], 300)
+        self.assertLess(profile["min_validation_rows"], 100)
+        self.assertEqual(profile["allowed_outcomes"], (("draw",),))
+        self.assertTrue(profile["research_only"])
+        self.assertEqual(all_profile["allowed_outcomes"], (("home", "draw", "away"),))
+        self.assertTrue(all_profile["research_only"])
+        self.assertEqual(probe_profile["validation_min_bets"], 1)
+        self.assertTrue(probe_profile["research_only"])
+
+    def test_residual_model_min_fit_rows_is_configurable(self) -> None:
+        rows = []
+        for index in range(20):
+            actual = ("home", "draw", "away")[index % 3]
+            rows.append({
+                "league": "L",
+                "actual_result": actual,
+                "market_home": 0.45,
+                "market_draw": 0.28,
+                "market_away": 0.27,
+                "pure_home": 0.46,
+                "pure_draw": 0.27,
+                "pure_away": 0.27,
+                "odds_home": 2.0,
+                "odds_draw": 3.2,
+                "odds_away": 3.6,
+            })
+
+        model = ResidualProbabilityModel(min_fit_rows=20)
+
+        self.assertIs(model.fit(pd.DataFrame(rows)), model)
+
+    def test_best_failed_validation_row_is_serializable(self) -> None:
+        row = {
+            "config": PortfolioConfig(0.01, 4.0, 0.05),
+            "rejection_reasons": ["validation_bets<minimum"],
+            "positive_validation_months": 1,
+            "bets": 2,
+            "winning_bets": 1,
+            "total_staked": 2.0,
+            "profit": 1.2,
+            "roi_pct": 60.0,
+            "max_drawdown": 1.0,
+            "active_days": 2,
+        }
+
+        best = _best_failed_validation_row([row])
+
+        self.assertEqual(best["config"]["min_lower_ev"], 0.01)
+        self.assertEqual(best["rejection_reasons"], ["validation_bets<minimum"])
+        self.assertEqual(best["profit"], 1.2)
 
     def test_candidate_selection_can_restrict_outcomes_and_odds_floor(self) -> None:
         rows = pd.DataFrame([{
