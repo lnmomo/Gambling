@@ -2752,20 +2752,21 @@ Current Official-SP Truth:
 
 Official-SP Evidence Quality Gate (2026-07-16):
 
-- Added `official-sp-evidence-quality` and `reports/official_sp_evidence_quality/summary.json` to audit the observation dataset at its true grain: one immutable three-way SP per match and fetch timestamp.
-- The gate checks collector freshness, collector-era pre-match coverage, closing prices captured within one hour, settlement coverage, price validity, timestamp integrity, and grain uniqueness.
+- Added `official-sp-evidence-quality` and `reports/official_sp_evidence_quality/summary.json` to audit two immutable grains per fetch: every official market card and its optional three-way SP observation.
+- Migration `0009_official_market_availability.sql` records the raw sale status, normalized match status, whether a valid three-way SP was present, and the reason when it was absent. This distinguishes `待开售` from an `已开售` parser/storage failure.
+- The operational gate checks collector freshness, sold-card SP capture, closing prices within one hour, settlement coverage, price validity, timestamp integrity, and grain uniqueness over a rolling 30-day window.
+- Each coverage check remains `PENDING` until at least 10 eligible operational matches exist. Any pending check produces `EVIDENCE_COLLECTING`; only `EVIDENCE_READY` can pass the capital gate.
+- Pre-monitoring outages remain in `historical_baseline` for diagnosis but no longer permanently depress the forward operational gate.
 - It runs after each official SP sync and writes its own `official_sp_evidence_quality` task record. Official capture and this child check now use `OFFICIAL_SP_REFRESH_MINUTES` (15 minutes by default); heavy data, history, backtest, and governance agents remain hourly.
 - Capital allocation independently requires `EVIDENCE_READY`. A strategy cannot receive paper capital if the official-SP validation report says PASS while the underlying price or settlement chain is degraded.
 - Each scheduled official-SP prospective validation now triggers `profit_allocation_readiness` as an ordered child task and refreshes `reports/profit_allocation_readiness_current/summary.json`; drawdown and evidence controls no longer depend on a manual CLI run.
 - `/health` and Agent / Workflow monitoring expose the decision, observations, matches, freshness lag, pre-match coverage, one-hour closing coverage, settlement coverage, and each failed check.
 - The health calculation now treats only the latest provider run as the current failure state. A historical failure no longer makes a provider permanently FAILED after later successful runs.
 
-Current production profile:
+Current production profile after availability monitoring started:
 
-- After service recovery, 253 immutable observations were archived across 60 matches; 53 matches have usable pre-match observations.
-- Collector-era pre-match SP coverage: 53/126 matches (42.1%).
-- Closing price within one hour: 5/53 matches (9.4%).
-- Settlement coverage among finished matches with SP: 30/30 (100%).
-- Invalid prices, temporal conflicts, and duplicate observation grain: 0.
-- The stale collector was restarted and the next successful fetch completed at `2026-07-16T02:46:43.731267+00:00`.
-- Decision improved from `EVIDENCE_CRITICAL` to `EVIDENCE_DEGRADED`: freshness recovered, while pre-match and one-hour closing coverage still fail. The API service must stay alive and future 15-minute captures must improve both coverage metrics before official-SP evidence is research-usable.
+- First fetch archived 40 market cards: 23 completed, 7 waiting to open, and 10 sold with valid three-way SP.
+- The rolling pre-match window contains 17 cards. All 10 sold matches have a matching immutable SP observation, so sold-card capture coverage is 100%.
+- No monitored sold match has kicked off yet; one-hour closing coverage and settlement coverage are both `PENDING` with denominator 0/10 required.
+- Collector freshness, sold-card capture, price validity, temporal integrity, and observation uniqueness pass.
+- Decision: `EVIDENCE_COLLECTING`. Historical baseline remains 53/80 pre-discovered matches with SP and 5/53 one-hour closing observations, but those pre-monitoring gaps do not decide future readiness.

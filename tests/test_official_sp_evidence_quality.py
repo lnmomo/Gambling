@@ -63,6 +63,16 @@ def test_official_sp_evidence_quality_passes_complete_fresh_chain(tmp_path) -> N
     database.initialize()
     now = datetime(2026, 2, 1, 12, tzinfo=timezone.utc)
     _seed_complete_evidence(database, now)
+    repository = Repository(database)
+    for index in range(20):
+        repository.upsert_official_match({
+            "official_match_id": f"sporttery-pre-monitoring-{index}",
+            "match_no": f"OLD{index}", "league": "西甲",
+            "home_team": f"Old Home {index}", "away_team": f"Old Away {index}",
+            "kickoff_time": "2025-01-01T12:00:00+00:00", "status": "finished",
+            "source_url": "https://example.test", "data_quality_score": 1.0,
+            "raw_hash": f"old-{index}",
+        })
 
     report = build_official_sp_evidence_quality(database, now)
 
@@ -74,6 +84,42 @@ def test_official_sp_evidence_quality_passes_complete_fresh_chain(tmp_path) -> N
     assert report["summary"]["pre_match_sp_coverage"] == pytest.approx(1.0)
     assert report["summary"]["closing_1h_coverage"] == pytest.approx(1.0)
     assert report["summary"]["settlement_coverage"] == pytest.approx(1.0)
+
+
+def test_official_sp_evidence_quality_fails_sold_cards_without_archived_sp(tmp_path) -> None:
+    database = Database(tmp_path / "quality-parser-gap.db")
+    database.initialize()
+    now = datetime(2026, 2, 1, 12, tzinfo=timezone.utc)
+    repository = Repository(database)
+    for index in range(10):
+        kickoff = now - timedelta(days=10 - index)
+        match_id, _, _ = repository.upsert_official_match({
+            "official_match_id": f"sporttery-parser-gap-{index}",
+            "match_no": f"G{index}", "league": "西甲",
+            "home_team": f"Gap Home {index}", "away_team": f"Gap Away {index}",
+            "kickoff_time": kickoff.isoformat(), "status": "finished",
+            "source_url": "https://example.test", "data_quality_score": 1.0,
+            "raw_hash": f"gap-{index}",
+        })
+        repository.archive_official_market_availability(
+            match_id, f"sporttery-parser-gap-{index}",
+            (kickoff - timedelta(hours=2)).isoformat(), kickoff.isoformat(),
+            "已开售", "scheduled", False, "invalid_or_incomplete_three_way_sp",
+            "中国竞彩网", "https://example.test", f"gap-availability-{index}",
+        )
+        repository.upsert_result(match_id, 1, 0, (kickoff + timedelta(hours=2)).isoformat())
+    with database.connect() as connection:
+        connection.execute("""INSERT INTO official_fetch_logs
+            (source_name,source_url,fetched_at,success,status_code,raw_hash,record_count,error_message)
+            VALUES('中国竞彩网','https://example.test',?,1,200,'latest',10,NULL)""",
+            ((now - timedelta(minutes=15)).isoformat(),))
+
+    report = build_official_sp_evidence_quality(database, now)
+    checks = {item["id"]: item for item in report["checks"]}
+
+    assert report["decision"] == "EVIDENCE_DEGRADED"
+    assert checks["pre_match_sp_coverage"]["status"] == "FAIL"
+    assert checks["pre_match_sp_coverage"]["value"] == 0.0
 
 
 def test_official_sp_evidence_quality_blocks_stale_and_non_closing_chain(tmp_path) -> None:

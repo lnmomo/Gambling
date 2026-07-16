@@ -51,6 +51,10 @@ class OfficialDataTests(unittest.TestCase):
         self.assertEqual([tuple(row) for row in availability], [
             ("已开售", 1, None), ("已完成", 0, "post_match"),
         ])
+        with self.assertRaises(sqlite3.IntegrityError), self.repository.db.connect() as connection:
+            connection.execute("""UPDATE official_market_availability_observations
+                SET raw_sale_status='待开售' WHERE id=(
+                    SELECT MIN(id) FROM official_market_availability_observations)""")
 
     def test_duplicate_snapshot_is_not_inserted_twice(self):
         self.service.sync(force=True)

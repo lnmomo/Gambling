@@ -54,6 +54,16 @@ def map_league_to_history_code(league: Any) -> str | None:
         return "FIN"
     if raw == "\u745e\u8d85" or "sweden" in folded or "allsvenskan" in folded or folded == "swe":
         return "SWE"
+    if raw == "美职" or "major league soccer" in folded or folded in {"mls", "usa"}:
+        return "USA"
+    if raw == "巴甲" or "brasileirao" in folded or "brazil" in folded or folded == "bra":
+        return "BRA"
+    if raw == "挪超" or "eliteserien" in folded or "norway" in folded or folded == "nor":
+        return "NOR"
+    if raw == "阿甲" or "argentina" in folded or folded == "arg":
+        return "ARG"
+    if raw == "中超" or "china super league" in folded or folded == "chn":
+        return "CHN"
     if raw == "\u4e16\u754c\u676f" or "world cup" in folded:
         return "WORLD_CUP"
     if raw == "\u56fd\u9645\u8d5b" or "international" in folded:

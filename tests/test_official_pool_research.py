@@ -2,7 +2,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from football_agents.db import Database
-from football_agents.official_pool_research import plan_official_pool_profit_research
+from football_agents.official_pool_research import map_league_to_history_code, plan_official_pool_profit_research
 from football_agents.official_pool_research import _world_cup_validation_evidence
 from football_agents.repository import Repository
 
@@ -139,6 +139,14 @@ def test_official_pool_profit_research_maps_swedish_top_flight(tmp_path):
     assert league["historical_rows"] > 0
     assert league["evidence_status"] == "rejected_by_current_pool_feature_hard_gates"
     assert league["research_priority"] == "LOW_DO_NOT_LOOSEN"
+
+
+def test_current_official_pool_leagues_map_to_worldwide_history_codes():
+    assert map_league_to_history_code("美职") == "USA"
+    assert map_league_to_history_code("巴甲") == "BRA"
+    assert map_league_to_history_code("挪超") == "NOR"
+    assert map_league_to_history_code("阿甲") == "ARG"
+    assert map_league_to_history_code("中超") == "CHN"
 
 
 def test_official_pool_profit_research_prioritizes_i2_when_present(tmp_path):

@@ -140,7 +140,7 @@ export default function AgentMonitorPage() {
       <section className="summary-strip" style={{padding: 16, margin: 0}}>
         <span>结论<b>{evidence?.decision ?? "NOT_RUN"}</b></span>
         <span>观测数<b>{evidence?.summary.observations ?? 0}</b></span>
-        <span>赛事卡观测<b>{evidence?.summary.availability_observations ?? 0}</b></span>
+        <span>赛前赛事卡观测<b>{evidence?.summary.availability_observations ?? 0}</b></span>
         <span>已开售比赛<b>{evidence?.summary.offered_matches ?? 0}</b></span>
         <span>赛前比赛<b>{evidence?.summary.pre_match_matches ?? 0}</b></span>
         <span>已开赛临盘样本<b>{evidence?.summary.closing_eligible_matches ?? 0}</b></span>

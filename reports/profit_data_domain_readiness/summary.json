@@ -1,13 +1,17 @@
 {
   "method": "profit historical data domain readiness",
-  "generated_at": "2026-07-05T09:51:52.708580+00:00",
+  "generated_at": "2026-07-16T03:16:21.637744+00:00",
   "root": "data\\historical_csv\\football-data",
   "domain_count": 36,
   "search_ready_domains": 30,
   "status_counts": [
     {
       "readiness": "SEARCH_READY_NOT_IN_CURRENT_POOL",
-      "domains": 30
+      "domains": 27
+    },
+    {
+      "readiness": "SEARCH_READY_CURRENT_OFFICIAL_POOL",
+      "domains": 3
     },
     {
       "readiness": "REJECTED_BY_EXISTING_STABILITY_GATES",
@@ -23,6 +27,105 @@
     }
   ],
   "top_domains": [
+    {
+      "code": "NOR",
+      "paths": [
+        "data\\historical_csv\\football-data\\new\\NOR.csv"
+      ],
+      "rows": 3479,
+      "first_date": "2012-03-23",
+      "last_date": "2026-07-12",
+      "active_months": 128,
+      "odds_coverage": {
+        "B365_OPEN": 0,
+        "AVG_OPEN": 0,
+        "PS_OPEN": 0,
+        "MAX_OPEN": 0,
+        "B365_CLOSE": 198,
+        "AVG_CLOSE": 3479,
+        "PS_CLOSE": 3346,
+        "MAX_CLOSE": 3479
+      },
+      "best_odds_source": "AVG_CLOSE",
+      "best_odds_rows": 3479,
+      "official_pool_matches": 9,
+      "official_pool_with_odds": 1,
+      "readiness": "SEARCH_READY_CURRENT_OFFICIAL_POOL",
+      "research_priority": "HIGH_CURRENT_POOL",
+      "blocker": "The domain has enough odds-backed history and is currently represented in the official pool.",
+      "existing_evidence_status": null,
+      "evidence_reports": [],
+      "suggested_commands": [
+        "python scripts/market_bias_diagnostics.py --seasons NOR --odds-source AVG_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_nor_avg_close",
+        "python scripts/cross_league_rule_search.py --seasons NOR --league-group-scope NOR --output-dir reports\\cross_league_rule_search_nor_next"
+      ]
+    },
+    {
+      "code": "USA",
+      "paths": [
+        "data\\historical_csv\\football-data\\new\\USA.csv"
+      ],
+      "rows": 6034,
+      "first_date": "2012-03-10",
+      "last_date": "2026-05-25",
+      "active_months": 143,
+      "odds_coverage": {
+        "B365_OPEN": 0,
+        "AVG_OPEN": 0,
+        "PS_OPEN": 0,
+        "MAX_OPEN": 0,
+        "B365_CLOSE": 380,
+        "AVG_CLOSE": 6033,
+        "PS_CLOSE": 5800,
+        "MAX_CLOSE": 6034
+      },
+      "best_odds_source": "MAX_CLOSE",
+      "best_odds_rows": 6034,
+      "official_pool_matches": 5,
+      "official_pool_with_odds": 4,
+      "readiness": "SEARCH_READY_CURRENT_OFFICIAL_POOL",
+      "research_priority": "HIGH_CURRENT_POOL",
+      "blocker": "The domain has enough odds-backed history and is currently represented in the official pool.",
+      "existing_evidence_status": null,
+      "evidence_reports": [],
+      "suggested_commands": [
+        "python scripts/market_bias_diagnostics.py --seasons USA --odds-source MAX_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_usa_max_close",
+        "python scripts/cross_league_rule_search.py --seasons USA --league-group-scope USA --output-dir reports\\cross_league_rule_search_usa_next"
+      ]
+    },
+    {
+      "code": "BRA",
+      "paths": [
+        "data\\historical_csv\\football-data\\new\\BRA.csv"
+      ],
+      "rows": 5497,
+      "first_date": "2012-05-19",
+      "last_date": "2026-06-01",
+      "active_months": 124,
+      "odds_coverage": {
+        "B365_OPEN": 0,
+        "AVG_OPEN": 0,
+        "PS_OPEN": 0,
+        "MAX_OPEN": 0,
+        "B365_CLOSE": 379,
+        "AVG_CLOSE": 5497,
+        "PS_CLOSE": 5275,
+        "MAX_CLOSE": 5496
+      },
+      "best_odds_source": "AVG_CLOSE",
+      "best_odds_rows": 5497,
+      "official_pool_matches": 5,
+      "official_pool_with_odds": 2,
+      "readiness": "SEARCH_READY_CURRENT_OFFICIAL_POOL",
+      "research_priority": "HIGH_CURRENT_POOL",
+      "blocker": "The domain has enough odds-backed history and is currently represented in the official pool.",
+      "existing_evidence_status": null,
+      "evidence_reports": [],
+      "suggested_commands": [
+        "python scripts/market_bias_diagnostics.py --seasons BRA --odds-source AVG_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_bra_avg_close",
+        "python scripts/cross_league_rule_search.py --seasons BRA --league-group-scope BRA --output-dir reports\\cross_league_rule_search_bra_next"
+      ]
+    },
     {
       "code": "I2",
       "paths": [
@@ -95,72 +198,6 @@
       "suggested_commands": [
         "python scripts/market_bias_diagnostics.py --seasons ARG --odds-source AVG_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_arg_avg_close",
         "python scripts/cross_league_rule_search.py --seasons ARG --league-group-scope ARG --output-dir reports\\cross_league_rule_search_arg_next"
-      ]
-    },
-    {
-      "code": "USA",
-      "paths": [
-        "data\\historical_csv\\football-data\\new\\USA.csv"
-      ],
-      "rows": 6034,
-      "first_date": "2012-03-10",
-      "last_date": "2026-05-25",
-      "active_months": 143,
-      "odds_coverage": {
-        "B365_OPEN": 0,
-        "AVG_OPEN": 0,
-        "PS_OPEN": 0,
-        "MAX_OPEN": 0,
-        "B365_CLOSE": 380,
-        "AVG_CLOSE": 6033,
-        "PS_CLOSE": 5800,
-        "MAX_CLOSE": 6034
-      },
-      "best_odds_source": "MAX_CLOSE",
-      "best_odds_rows": 6034,
-      "official_pool_matches": 0,
-      "official_pool_with_odds": 0,
-      "readiness": "SEARCH_READY_NOT_IN_CURRENT_POOL",
-      "research_priority": "MEDIUM_SEARCH",
-      "blocker": "The domain has enough odds-backed history, but is not currently represented in the official pool.",
-      "existing_evidence_status": null,
-      "evidence_reports": [],
-      "suggested_commands": [
-        "python scripts/market_bias_diagnostics.py --seasons USA --odds-source MAX_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_usa_max_close",
-        "python scripts/cross_league_rule_search.py --seasons USA --league-group-scope USA --output-dir reports\\cross_league_rule_search_usa_next"
-      ]
-    },
-    {
-      "code": "BRA",
-      "paths": [
-        "data\\historical_csv\\football-data\\new\\BRA.csv"
-      ],
-      "rows": 5497,
-      "first_date": "2012-05-19",
-      "last_date": "2026-06-01",
-      "active_months": 124,
-      "odds_coverage": {
-        "B365_OPEN": 0,
-        "AVG_OPEN": 0,
-        "PS_OPEN": 0,
-        "MAX_OPEN": 0,
-        "B365_CLOSE": 379,
-        "AVG_CLOSE": 5497,
-        "PS_CLOSE": 5275,
-        "MAX_CLOSE": 5496
-      },
-      "best_odds_source": "AVG_CLOSE",
-      "best_odds_rows": 5497,
-      "official_pool_matches": 0,
-      "official_pool_with_odds": 0,
-      "readiness": "SEARCH_READY_NOT_IN_CURRENT_POOL",
-      "research_priority": "MEDIUM_SEARCH",
-      "blocker": "The domain has enough odds-backed history, but is not currently represented in the official pool.",
-      "existing_evidence_status": null,
-      "evidence_reports": [],
-      "suggested_commands": [
-        "python scripts/market_bias_diagnostics.py --seasons BRA --odds-source AVG_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_bra_avg_close",
-        "python scripts/cross_league_rule_search.py --seasons BRA --league-group-scope BRA --output-dir reports\\cross_league_rule_search_bra_next"
       ]
     },
     {
@@ -263,39 +300,6 @@
       ]
     },
     {
-      "code": "NOR",
-      "paths": [
-        "data\\historical_csv\\football-data\\new\\NOR.csv"
-      ],
-      "rows": 3471,
-      "first_date": "2012-03-23",
-      "last_date": "2026-05-30",
-      "active_months": 127,
-      "odds_coverage": {
-        "B365_OPEN": 0,
-        "AVG_OPEN": 0,
-        "PS_OPEN": 0,
-        "MAX_OPEN": 0,
-        "B365_CLOSE": 190,
-        "AVG_CLOSE": 3471,
-        "PS_CLOSE": 3346,
-        "MAX_CLOSE": 3471
-      },
-      "best_odds_source": "AVG_CLOSE",
-      "best_odds_rows": 3471,
-      "official_pool_matches": 0,
-      "official_pool_with_odds": 0,
-      "readiness": "SEARCH_READY_NOT_IN_CURRENT_POOL",
-      "research_priority": "MEDIUM_SEARCH",
-      "blocker": "The domain has enough odds-backed history, but is not currently represented in the official pool.",
-      "existing_evidence_status": null,
-      "evidence_reports": [],
-      "suggested_commands": [
-        "python scripts/market_bias_diagnostics.py --seasons NOR --odds-source AVG_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_nor_avg_close",
-        "python scripts/cross_league_rule_search.py --seasons NOR --league-group-scope NOR --output-dir reports\\cross_league_rule_search_nor_next"
-      ]
-    },
-    {
       "code": "RUS",
       "paths": [
         "data\\historical_csv\\football-data\\new\\RUS.csv"
@@ -366,22 +370,22 @@
       "paths": [
         "data\\historical_csv\\football-data\\new\\CHN.csv"
       ],
-      "rows": 2936,
+      "rows": 2948,
       "first_date": "2014-03-07",
-      "last_date": "2026-06-28",
-      "active_months": 100,
+      "last_date": "2026-07-14",
+      "active_months": 101,
       "odds_coverage": {
         "B365_OPEN": 0,
         "AVG_OPEN": 0,
         "PS_OPEN": 0,
         "MAX_OPEN": 0,
-        "B365_CLOSE": 208,
-        "AVG_CLOSE": 2930,
+        "B365_CLOSE": 220,
+        "AVG_CLOSE": 2942,
         "PS_CLOSE": 2759,
-        "MAX_CLOSE": 2930
+        "MAX_CLOSE": 2942
       },
       "best_odds_source": "AVG_CLOSE",
-      "best_odds_rows": 2930,
+      "best_odds_rows": 2942,
       "official_pool_matches": 0,
       "official_pool_with_odds": 0,
       "readiness": "SEARCH_READY_NOT_IN_CURRENT_POOL",
@@ -510,22 +514,22 @@
       "paths": [
         "data\\historical_csv\\football-data\\new\\IRL.csv"
       ],
-      "rows": 2676,
+      "rows": 2684,
       "first_date": "2012-03-02",
-      "last_date": "2026-06-27",
-      "active_months": 134,
+      "last_date": "2026-07-11",
+      "active_months": 135,
       "odds_coverage": {
         "B365_OPEN": 0,
         "AVG_OPEN": 0,
         "PS_OPEN": 0,
         "MAX_OPEN": 0,
-        "B365_CLOSE": 158,
-        "AVG_CLOSE": 2676,
+        "B365_CLOSE": 166,
+        "AVG_CLOSE": 2684,
         "PS_CLOSE": 2543,
-        "MAX_CLOSE": 2676
+        "MAX_CLOSE": 2684
       },
       "best_odds_source": "AVG_CLOSE",
-      "best_odds_rows": 2676,
+      "best_odds_rows": 2684,
       "official_pool_matches": 0,
       "official_pool_with_odds": 0,
       "readiness": "SEARCH_READY_NOT_IN_CURRENT_POOL",
@@ -718,6 +722,105 @@
   ],
   "domains": [
     {
+      "code": "NOR",
+      "paths": [
+        "data\\historical_csv\\football-data\\new\\NOR.csv"
+      ],
+      "rows": 3479,
+      "first_date": "2012-03-23",
+      "last_date": "2026-07-12",
+      "active_months": 128,
+      "odds_coverage": {
+        "B365_OPEN": 0,
+        "AVG_OPEN": 0,
+        "PS_OPEN": 0,
+        "MAX_OPEN": 0,
+        "B365_CLOSE": 198,
+        "AVG_CLOSE": 3479,
+        "PS_CLOSE": 3346,
+        "MAX_CLOSE": 3479
+      },
+      "best_odds_source": "AVG_CLOSE",
+      "best_odds_rows": 3479,
+      "official_pool_matches": 9,
+      "official_pool_with_odds": 1,
+      "readiness": "SEARCH_READY_CURRENT_OFFICIAL_POOL",
+      "research_priority": "HIGH_CURRENT_POOL",
+      "blocker": "The domain has enough odds-backed history and is currently represented in the official pool.",
+      "existing_evidence_status": null,
+      "evidence_reports": [],
+      "suggested_commands": [
+        "python scripts/market_bias_diagnostics.py --seasons NOR --odds-source AVG_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_nor_avg_close",
+        "python scripts/cross_league_rule_search.py --seasons NOR --league-group-scope NOR --output-dir reports\\cross_league_rule_search_nor_next"
+      ]
+    },
+    {
+      "code": "USA",
+      "paths": [
+        "data\\historical_csv\\football-data\\new\\USA.csv"
+      ],
+      "rows": 6034,
+      "first_date": "2012-03-10",
+      "last_date": "2026-05-25",
+      "active_months": 143,
+      "odds_coverage": {
+        "B365_OPEN": 0,
+        "AVG_OPEN": 0,
+        "PS_OPEN": 0,
+        "MAX_OPEN": 0,
+        "B365_CLOSE": 380,
+        "AVG_CLOSE": 6033,
+        "PS_CLOSE": 5800,
+        "MAX_CLOSE": 6034
+      },
+      "best_odds_source": "MAX_CLOSE",
+      "best_odds_rows": 6034,
+      "official_pool_matches": 5,
+      "official_pool_with_odds": 4,
+      "readiness": "SEARCH_READY_CURRENT_OFFICIAL_POOL",
+      "research_priority": "HIGH_CURRENT_POOL",
+      "blocker": "The domain has enough odds-backed history and is currently represented in the official pool.",
+      "existing_evidence_status": null,
+      "evidence_reports": [],
+      "suggested_commands": [
+        "python scripts/market_bias_diagnostics.py --seasons USA --odds-source MAX_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_usa_max_close",
+        "python scripts/cross_league_rule_search.py --seasons USA --league-group-scope USA --output-dir reports\\cross_league_rule_search_usa_next"
+      ]
+    },
+    {
+      "code": "BRA",
+      "paths": [
+        "data\\historical_csv\\football-data\\new\\BRA.csv"
+      ],
+      "rows": 5497,
+      "first_date": "2012-05-19",
+      "last_date": "2026-06-01",
+      "active_months": 124,
+      "odds_coverage": {
+        "B365_OPEN": 0,
+        "AVG_OPEN": 0,
+        "PS_OPEN": 0,
+        "MAX_OPEN": 0,
+        "B365_CLOSE": 379,
+        "AVG_CLOSE": 5497,
+        "PS_CLOSE": 5275,
+        "MAX_CLOSE": 5496
+      },
+      "best_odds_source": "AVG_CLOSE",
+      "best_odds_rows": 5497,
+      "official_pool_matches": 5,
+      "official_pool_with_odds": 2,
+      "readiness": "SEARCH_READY_CURRENT_OFFICIAL_POOL",
+      "research_priority": "HIGH_CURRENT_POOL",
+      "blocker": "The domain has enough odds-backed history and is currently represented in the official pool.",
+      "existing_evidence_status": null,
+      "evidence_reports": [],
+      "suggested_commands": [
+        "python scripts/market_bias_diagnostics.py --seasons BRA --odds-source AVG_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_bra_avg_close",
+        "python scripts/cross_league_rule_search.py --seasons BRA --league-group-scope BRA --output-dir reports\\cross_league_rule_search_bra_next"
+      ]
+    },
+    {
       "code": "I2",
       "paths": [
         "data\\historical_csv\\football-data\\2122\\I2.csv",
@@ -789,72 +892,6 @@
       "suggested_commands": [
         "python scripts/market_bias_diagnostics.py --seasons ARG --odds-source AVG_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_arg_avg_close",
         "python scripts/cross_league_rule_search.py --seasons ARG --league-group-scope ARG --output-dir reports\\cross_league_rule_search_arg_next"
-      ]
-    },
-    {
-      "code": "USA",
-      "paths": [
-        "data\\historical_csv\\football-data\\new\\USA.csv"
-      ],
-      "rows": 6034,
-      "first_date": "2012-03-10",
-      "last_date": "2026-05-25",
-      "active_months": 143,
-      "odds_coverage": {
-        "B365_OPEN": 0,
-        "AVG_OPEN": 0,
-        "PS_OPEN": 0,
-        "MAX_OPEN": 0,
-        "B365_CLOSE": 380,
-        "AVG_CLOSE": 6033,
-        "PS_CLOSE": 5800,
-        "MAX_CLOSE": 6034
-      },
-      "best_odds_source": "MAX_CLOSE",
-      "best_odds_rows": 6034,
-      "official_pool_matches": 0,
-      "official_pool_with_odds": 0,
-      "readiness": "SEARCH_READY_NOT_IN_CURRENT_POOL",
-      "research_priority": "MEDIUM_SEARCH",
-      "blocker": "The domain has enough odds-backed history, but is not currently represented in the official pool.",
-      "existing_evidence_status": null,
-      "evidence_reports": [],
-      "suggested_commands": [
-        "python scripts/market_bias_diagnostics.py --seasons USA --odds-source MAX_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_usa_max_close",
-        "python scripts/cross_league_rule_search.py --seasons USA --league-group-scope USA --output-dir reports\\cross_league_rule_search_usa_next"
-      ]
-    },
-    {
-      "code": "BRA",
-      "paths": [
-        "data\\historical_csv\\football-data\\new\\BRA.csv"
-      ],
-      "rows": 5497,
-      "first_date": "2012-05-19",
-      "last_date": "2026-06-01",
-      "active_months": 124,
-      "odds_coverage": {
-        "B365_OPEN": 0,
-        "AVG_OPEN": 0,
-        "PS_OPEN": 0,
-        "MAX_OPEN": 0,
-        "B365_CLOSE": 379,
-        "AVG_CLOSE": 5497,
-        "PS_CLOSE": 5275,
-        "MAX_CLOSE": 5496
-      },
-      "best_odds_source": "AVG_CLOSE",
-      "best_odds_rows": 5497,
-      "official_pool_matches": 0,
-      "official_pool_with_odds": 0,
-      "readiness": "SEARCH_READY_NOT_IN_CURRENT_POOL",
-      "research_priority": "MEDIUM_SEARCH",
-      "blocker": "The domain has enough odds-backed history, but is not currently represented in the official pool.",
-      "existing_evidence_status": null,
-      "evidence_reports": [],
-      "suggested_commands": [
-        "python scripts/market_bias_diagnostics.py --seasons BRA --odds-source AVG_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_bra_avg_close",
-        "python scripts/cross_league_rule_search.py --seasons BRA --league-group-scope BRA --output-dir reports\\cross_league_rule_search_bra_next"
       ]
     },
     {
@@ -957,39 +994,6 @@
       ]
     },
     {
-      "code": "NOR",
-      "paths": [
-        "data\\historical_csv\\football-data\\new\\NOR.csv"
-      ],
-      "rows": 3471,
-      "first_date": "2012-03-23",
-      "last_date": "2026-05-30",
-      "active_months": 127,
-      "odds_coverage": {
-        "B365_OPEN": 0,
-        "AVG_OPEN": 0,
-        "PS_OPEN": 0,
-        "MAX_OPEN": 0,
-        "B365_CLOSE": 190,
-        "AVG_CLOSE": 3471,
-        "PS_CLOSE": 3346,
-        "MAX_CLOSE": 3471
-      },
-      "best_odds_source": "AVG_CLOSE",
-      "best_odds_rows": 3471,
-      "official_pool_matches": 0,
-      "official_pool_with_odds": 0,
-      "readiness": "SEARCH_READY_NOT_IN_CURRENT_POOL",
-      "research_priority": "MEDIUM_SEARCH",
-      "blocker": "The domain has enough odds-backed history, but is not currently represented in the official pool.",
-      "existing_evidence_status": null,
-      "evidence_reports": [],
-      "suggested_commands": [
-        "python scripts/market_bias_diagnostics.py --seasons NOR --odds-source AVG_CLOSE --min-samples 150 --min-active-months 18 --output-dir reports\\market_bias_diagnostics_nor_avg_close",
-        "python scripts/cross_league_rule_search.py --seasons NOR --league-group-scope NOR --output-dir reports\\cross_league_rule_search_nor_next"
-      ]
-    },
-    {
       "code": "RUS",
       "paths": [
         "data\\historical_csv\\football-data\\new\\RUS.csv"
@@ -1060,22 +1064,22 @@
       "paths": [
         "data\\historical_csv\\football-data\\new\\CHN.csv"
       ],
-      "rows": 2936,
+      "rows": 2948,
       "first_date": "2014-03-07",
-      "last_date": "2026-06-28",
-      "active_months": 100,
+      "last_date": "2026-07-14",
+      "active_months": 101,
       "odds_coverage": {
         "B365_OPEN": 0,
         "AVG_OPEN": 0,
         "PS_OPEN": 0,
         "MAX_OPEN": 0,
-        "B365_CLOSE": 208,
-        "AVG_CLOSE": 2930,
+        "B365_CLOSE": 220,
+        "AVG_CLOSE": 2942,
         "PS_CLOSE": 2759,
-        "MAX_CLOSE": 2930
+        "MAX_CLOSE": 2942
       },
       "best_odds_source": "AVG_CLOSE",
-      "best_odds_rows": 2930,
+      "best_odds_rows": 2942,
       "official_pool_matches": 0,
       "official_pool_with_odds": 0,
       "readiness": "SEARCH_READY_NOT_IN_CURRENT_POOL",
@@ -1204,22 +1208,22 @@
       "paths": [
         "data\\historical_csv\\football-data\\new\\IRL.csv"
       ],
-      "rows": 2676,
+      "rows": 2684,
       "first_date": "2012-03-02",
-      "last_date": "2026-06-27",
-      "active_months": 134,
+      "last_date": "2026-07-11",
+      "active_months": 135,
       "odds_coverage": {
         "B365_OPEN": 0,
         "AVG_OPEN": 0,
         "PS_OPEN": 0,
         "MAX_OPEN": 0,
-        "B365_CLOSE": 158,
-        "AVG_CLOSE": 2676,
+        "B365_CLOSE": 166,
+        "AVG_CLOSE": 2684,
         "PS_CLOSE": 2543,
-        "MAX_CLOSE": 2676
+        "MAX_CLOSE": 2684
       },
       "best_odds_source": "AVG_CLOSE",
-      "best_odds_rows": 2676,
+      "best_odds_rows": 2684,
       "official_pool_matches": 0,
       "official_pool_with_odds": 0,
       "readiness": "SEARCH_READY_NOT_IN_CURRENT_POOL",
@@ -1907,8 +1911,8 @@
       },
       "best_odds_source": "AVG_CLOSE",
       "best_odds_rows": 1146,
-      "official_pool_matches": 97,
-      "official_pool_with_odds": 42,
+      "official_pool_matches": 101,
+      "official_pool_with_odds": 44,
       "readiness": "REJECTED_BY_EXISTING_STABILITY_GATES",
       "research_priority": "LOW_DO_NOT_LOOSEN",
       "blocker": "World Cup 1X2 odds are archived, but no-lookahead validation rejected the reusable allocation rule search (REJECT_GRID_BEST_POSITIVE_BUT_UNSTABLE)",
@@ -1926,23 +1930,23 @@
       "paths": [
         "data\\historical_csv\\football-data\\new\\FIN.csv"
       ],
-      "rows": 2626,
+      "rows": 2634,
       "first_date": "2012-04-15",
-      "last_date": "2026-06-27",
-      "active_months": 106,
+      "last_date": "2026-07-11",
+      "active_months": 107,
       "odds_coverage": {
         "B365_OPEN": 0,
         "AVG_OPEN": 0,
         "PS_OPEN": 0,
         "MAX_OPEN": 0,
-        "B365_CLOSE": 145,
-        "AVG_CLOSE": 2626,
+        "B365_CLOSE": 153,
+        "AVG_CLOSE": 2634,
         "PS_CLOSE": 2530,
-        "MAX_CLOSE": 2626
+        "MAX_CLOSE": 2634
       },
       "best_odds_source": "AVG_CLOSE",
-      "best_odds_rows": 2626,
-      "official_pool_matches": 28,
+      "best_odds_rows": 2634,
+      "official_pool_matches": 30,
       "official_pool_with_odds": 12,
       "readiness": "REJECTED_BY_EXISTING_STABILITY_GATES",
       "research_priority": "LOW_DO_NOT_LOOSEN",
@@ -1962,23 +1966,23 @@
       "paths": [
         "data\\historical_csv\\football-data\\new\\SWE.csv"
       ],
-      "rows": 3465,
+      "rows": 3481,
       "first_date": "2012-03-31",
-      "last_date": "2026-05-31",
-      "active_months": 117,
+      "last_date": "2026-07-13",
+      "active_months": 118,
       "odds_coverage": {
         "B365_OPEN": 0,
         "AVG_OPEN": 0,
         "PS_OPEN": 0,
         "MAX_OPEN": 0,
-        "B365_CLOSE": 169,
-        "AVG_CLOSE": 3465,
+        "B365_CLOSE": 185,
+        "AVG_CLOSE": 3481,
         "PS_CLOSE": 3366,
-        "MAX_CLOSE": 3465
+        "MAX_CLOSE": 3481
       },
       "best_odds_source": "AVG_CLOSE",
-      "best_odds_rows": 3465,
-      "official_pool_matches": 8,
+      "best_odds_rows": 3481,
+      "official_pool_matches": 17,
       "official_pool_with_odds": 6,
       "readiness": "REJECTED_BY_EXISTING_STABILITY_GATES",
       "research_priority": "LOW_DO_NOT_LOOSEN",
@@ -1992,6 +1996,6 @@
       ]
     }
   ],
-  "next_algorithmic_action": "Run no-lookahead diagnostics on the highest-ranked search-ready domains not already rejected.",
+  "next_algorithmic_action": "Run no-lookahead diagnostics on HIGH_CURRENT_POOL domains first.",
   "guardrail": "Domain readiness only prioritizes data for research; it does not promote any strategy without walk-forward, audit, calibration, and official-SP validation."
 }
