@@ -1,28 +1,121 @@
-import {useMemo, useState} from "react";
-import {buildDailyAllocationPlan} from "../algorithm/dailyAllocation";
+import useApi from "../hooks/useApi";
 import type {OfficialMatch} from "../types";
 
-const pct = (value: number) => `${(value * 100).toFixed(2)}%`;
-const outcomeLabel = {HOME: "主胜", DRAW: "平", AWAY: "客胜"} as const;
+type PaperRun = {
+  run_id: string;
+  decision_at: string;
+  allocation_date: string;
+  daily_budget: number;
+  readiness_decision: string;
+  allocated_budget: number;
+  cash_reserved: number;
+  status: "HOLD" | "ALLOCATED" | "NO_ELIGIBLE_POSITIONS";
+};
 
-export default function DailyAllocationPanel({matches}: {matches: OfficialMatch[]}) {
-  const [budget, setBudget] = useState(100);
-  const plan = useMemo(() => buildDailyAllocationPlan(matches, budget), [matches, budget]);
+type PaperPosition = {
+  position_id: string;
+  official_match_id: string;
+  home_team: string;
+  away_team: string;
+  league: string;
+  selected_outcome: "HOME" | "DRAW" | "AWAY";
+  selected_sp: number;
+  predicted_probability: number;
+  predicted_ev: number;
+  stake: number;
+  placed_at: string;
+  kickoff_time: string;
+  actual_outcome: "HOME" | "DRAW" | "AWAY" | null;
+  closing_sp: number | null;
+  clv: number | null;
+  profit: number | null;
+  settled_at: string | null;
+};
+
+type PaperPortfolio = {
+  method: string;
+  runs: number;
+  hold_runs: number;
+  positions: number;
+  open_positions: number;
+  settled_positions: number;
+  total_staked: number;
+  profit: number;
+  roi_pct: number;
+  max_drawdown: number;
+  closing_sp_coverage: number;
+  average_clv: number | null;
+  positive_clv_rate: number | null;
+  recent_runs: PaperRun[];
+  recent_positions: PaperPosition[];
+  guardrail: string;
+};
+
+const empty: PaperPortfolio = {
+  method: "immutable official-SP paper portfolio ledger",
+  runs: 0,
+  hold_runs: 0,
+  positions: 0,
+  open_positions: 0,
+  settled_positions: 0,
+  total_staked: 0,
+  profit: 0,
+  roi_pct: 0,
+  max_drawdown: 0,
+  closing_sp_coverage: 0,
+  average_clv: null,
+  positive_clv_rate: null,
+  recent_runs: [],
+  recent_positions: [],
+  guardrail: "仅进行纸面记账，不连接真实下单或支付接口。",
+};
+
+const outcomeLabel = {HOME: "主胜", DRAW: "平", AWAY: "客胜"} as const;
+const pct = (value: number | null) => value === null ? "-" : `${(value * 100).toFixed(2)}%`;
+const time = (value: string | null) => value ? new Date(value).toLocaleString("zh-CN", {hour12: false}) : "-";
+
+export default function DailyAllocationPanel({matches: _matches}: {matches: OfficialMatch[]}) {
+  const {data, loading, error} = useApi<PaperPortfolio>("/api/profit/paper-portfolio", empty);
+  const latest = data.recent_runs[0];
   return <section className="panel" style={{marginTop: 16}}>
     <div className="panel-heading">
-      <div><h2>每日定额资金方案</h2><p>每日预算是风险上限，不是必须投入金额；系统不会自动下注，也不保证收益。</p></div>
-      <label>每日预算 ¥ <input type="number" min="0" max="100" step="10" value={budget} onChange={event => setBudget(Math.min(100, Math.max(0, Number(event.target.value) || 0)))} style={{width: 100}}/></label>
+      <div>
+        <h2>每日纸面投资组合账本</h2>
+        <p>组合只来自后端不可变冻结记录。每日预算是风险上限，不要求必须投入，也不会自动真实下单。</p>
+      </div>
+      <span className={`status-tag ${latest?.status === "ALLOCATED" ? "success" : "warning"}`}>
+        {latest?.status === "ALLOCATED" ? "已纸面建仓" : latest?.status === "HOLD" ? "保留现金" : "暂无合格持仓"}
+      </span>
     </div>
+    {loading && <p className="empty-state">正在读取纸面组合账本...</p>}
+    {error && <p style={{padding: "0 16px", color: "var(--danger)"}}>账本读取失败：{error}</p>}
     <div className="summary-strip" style={{padding: 16, margin: 0}}>
-      <span>预算上限<b>¥{plan.budget.toFixed(2)}</b></span>
-      <span>实际候选分配<b>¥{plan.executableAllocated.toFixed(2)}</b></span>
-      <span>现金保留<b>¥{plan.cashReserve.toFixed(2)}</b></span>
-      <span>实际候选<b>{plan.executable.length}</b></span>
-      <span>影子候选<b>{plan.shadowSimulated.length}</b></span>
+      <span>每日上限<b>¥{(latest?.daily_budget ?? 100).toFixed(2)}</b></span>
+      <span>本批纸面投入<b>¥{(latest?.allocated_budget ?? 0).toFixed(2)}</b></span>
+      <span>现金保留<b>¥{(latest?.cash_reserved ?? 100).toFixed(2)}</b></span>
+      <span>持仓 / 已结算<b>{data.positions} / {data.settled_positions}</b></span>
+      <span>累计收益<b>¥{data.profit.toFixed(2)}</b></span>
+      <span>ROI<b>{data.roi_pct.toFixed(2)}%</b></span>
+      <span>最大回撤<b>¥{data.max_drawdown.toFixed(2)}</b></span>
+      <span>平均 CLV<b>{pct(data.average_clv)}</b></span>
     </div>
-    {plan.warnings.map(warning => <p key={warning} style={{padding: "0 16px", color: "var(--warning)"}}>{warning}</p>)}
-    {plan.executable.length > 0 && <div className="table-scroll"><table className="data-table"><thead><tr><th>实际候选</th><th>方向</th><th>概率</th><th>官方赔率</th><th>预期收益率</th><th>风险</th><th>建议额度</th></tr></thead><tbody>{plan.executable.map(row => <tr key={row.matchId}><td>{row.match}<br/><code>{row.officialMatchId}</code></td><td>{outcomeLabel[row.outcome]}</td><td>{pct(row.probability)}</td><td>{row.officialSp.toFixed(2)}</td><td>{pct(row.ev)}</td><td>{row.riskLevel}</td><td>¥{row.amount.toFixed(2)}</td></tr>)}</tbody></table></div>}
-    <div className="panel-heading" style={{paddingTop: 16}}><div><h3>影子模拟组合</h3><p>按最高 EV 生成每日研究样本，仅用于跟踪、回测和验证，不是实际推荐。</p></div></div>
-    {plan.shadowSimulated.length ? <div className="table-scroll"><table className="data-table"><thead><tr><th>模拟候选</th><th>方向</th><th>概率</th><th>官方赔率</th><th>预期收益率</th><th>风险</th><th>模拟额度</th><th>未通过原因</th></tr></thead><tbody>{plan.shadowSimulated.map(row => <tr key={row.matchId}><td>{row.match}<br/><code>{row.officialMatchId}</code></td><td>{outcomeLabel[row.outcome]}</td><td>{pct(row.probability)}</td><td>{row.officialSp.toFixed(2)}</td><td style={{color: row.ev <= 0 ? "var(--danger)" : undefined}}>{pct(row.ev)}</td><td>{row.riskLevel}</td><td>¥{row.amount.toFixed(2)}</td><td>{row.reasons.join("；") || "未通过生产硬规则"}</td></tr>)}</tbody></table></div> : <p className="empty-state">当前没有赔率和概率均有效的影子候选。</p>}
+    {latest && <p style={{padding: "0 16px"}}>
+      最新决策：<code>{latest.readiness_decision}</code>，时间 {time(latest.decision_at)}。
+    </p>}
+    {data.recent_positions.length ? <div className="table-scroll"><table className="data-table">
+      <thead><tr><th>比赛</th><th>方向</th><th>冻结概率</th><th>建仓 SP</th><th>当时 EV</th><th>纸面金额</th><th>结算</th><th>收益</th><th>CLV</th></tr></thead>
+      <tbody>{data.recent_positions.map(row => <tr key={row.position_id}>
+        <td>{row.home_team} vs {row.away_team}<br/><code>{row.official_match_id}</code></td>
+        <td>{outcomeLabel[row.selected_outcome]}</td>
+        <td>{pct(row.predicted_probability)}</td>
+        <td>{row.selected_sp.toFixed(2)}</td>
+        <td>{pct(row.predicted_ev)}</td>
+        <td>¥{row.stake.toFixed(2)}</td>
+        <td>{row.settled_at ? `${outcomeLabel[row.actual_outcome!]} / ${time(row.settled_at)}` : `待结算 / ${time(row.kickoff_time)}`}</td>
+        <td>{row.profit === null ? "-" : `¥${row.profit.toFixed(2)}`}</td>
+        <td>{pct(row.clv)}</td>
+      </tr>)}</tbody>
+    </table></div> : <p className="empty-state">资金门尚未通过，账本没有伪造持仓，当前全部保留现金。</p>}
+    <p style={{padding: "0 16px", color: "var(--muted)"}}>{data.guardrail}</p>
   </section>;
 }

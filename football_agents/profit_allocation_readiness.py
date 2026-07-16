@@ -12,10 +12,13 @@ REQUIRED_OFFICIAL_SETTLED_SELECTED = 200
 REQUIRED_ACTIVE_MONTHS = 6
 REQUIRED_CLOSING_SP_COVERAGE = 0.80
 REQUIRED_POSITIVE_CLV_RATE = 0.50
+REQUIRED_SETTLEMENT_DAYS = 30
 MAX_STRATEGY_SHARE = 0.60
 
 
 def _is_historically_supported(strategy: dict[str, Any]) -> bool:
+    if strategy.get("evidence_basis") == "PRE_REGISTERED_PROSPECTIVE":
+        return True
     status = str(strategy.get("status") or "")
     if status.startswith("RESEARCH_ONLY") or strategy.get("recommended_for_shadow") is False:
         return False
@@ -61,19 +64,20 @@ def _official_monthly(official: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _active_months(official: dict[str, Any]) -> int:
-    try:
-        reported = int(official.get("active_months") or 0)
-    except (TypeError, ValueError):
-        reported = 0
-    return max(reported, len(_official_monthly(official)))
+    return len({str(row.get("month")) for row in _official_monthly(official) if row.get("month")})
 
 
-def _current_drawdown(monthly: list[dict[str, Any]]) -> float:
+def _official_daily(official: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = [row for row in (official.get("daily") or []) if isinstance(row, dict)]
+    return sorted(rows, key=lambda row: str(row.get("date") or ""))
+
+
+def _current_drawdown(rows: list[dict[str, Any]]) -> tuple[float, float, float]:
     equity = peak = 0.0
-    for row in monthly:
+    for row in rows:
         equity += _number(row.get("profit"))
         peak = max(peak, equity)
-    return max(0.0, peak - equity)
+    return max(0.0, peak - equity), peak, equity
 
 
 def _negative_month_streak(monthly: list[dict[str, Any]]) -> int:
@@ -88,10 +92,10 @@ def _negative_month_streak(monthly: list[dict[str, Any]]) -> int:
 
 def _risk_control(official: dict[str, Any]) -> dict[str, Any]:
     monthly = _official_monthly(official)
+    path = _official_daily(official) or monthly
     negative_streak = _negative_month_streak(monthly)
-    current_drawdown = _current_drawdown(monthly)
-    profit = _number(official.get("profit"))
-    drawdown_ratio = current_drawdown / max(profit, 1.0) if profit > 0 else 1.0
+    current_drawdown, peak_equity, current_equity = _current_drawdown(path)
+    drawdown_ratio = current_drawdown / max(peak_equity, 1.0) if peak_equity > 0 else 1.0
     if not monthly:
         state = "WAITING_FOR_EVIDENCE"
         multiplier = 0.0
@@ -104,7 +108,7 @@ def _risk_control(official: dict[str, Any]) -> dict[str, Any]:
     elif drawdown_ratio >= 0.50:
         state = "REDUCED"
         multiplier = 0.50
-        reason = "Current drawdown is at least 50% of cumulative official-SP profit."
+        reason = "Current daily-path drawdown is at least 50% of peak official-SP profit."
     elif negative_streak == 1 or drawdown_ratio >= 0.25:
         state = "REDUCED"
         multiplier = 0.75
@@ -118,7 +122,10 @@ def _risk_control(official: dict[str, Any]) -> dict[str, Any]:
         "multiplier": multiplier,
         "negative_month_streak": negative_streak,
         "current_drawdown": round(current_drawdown, 2),
-        "current_drawdown_to_profit": round(drawdown_ratio, 4),
+        "current_drawdown_to_peak": round(drawdown_ratio, 4),
+        "peak_equity": round(peak_equity, 2),
+        "current_equity": round(current_equity, 2),
+        "path_grain": "daily" if _official_daily(official) else "monthly",
         "reason": reason,
     }
 
@@ -130,13 +137,26 @@ def _official_evidence_failures(official: dict[str, Any], settled_selected: int)
     max_drawdown = _number(official.get("max_drawdown"))
     positive_months = int(_number(official.get("positive_months")))
     negative_months = int(_number(official.get("negative_months")))
+    monthly = _official_monthly(official)
+    derived_profit = round(sum(_number(row.get("profit")) for row in monthly), 2)
+    derived_positive_months = sum(_number(row.get("profit")) > 0 for row in monthly)
+    derived_negative_months = sum(_number(row.get("profit")) < 0 for row in monthly)
     closing_coverage = _number(official.get("closing_sp_coverage"))
     average_clv = _number(official.get("average_clv"), -1.0)
     positive_clv_rate = _number(official.get("positive_clv_rate"), -1.0)
+    statistical = official.get("statistical_evidence") or {}
+    point = statistical.get("point_estimates") or {}
+    bootstrap = statistical.get("bootstrap") or {}
     if settled_selected < REQUIRED_OFFICIAL_SETTLED_SELECTED:
         failures.append("settled_selected<200")
     if active_months < REQUIRED_ACTIVE_MONTHS:
         failures.append("active_months<6")
+    if monthly and abs(derived_profit - profit) > 0.01:
+        failures.append("official_profit_inconsistent_with_monthly")
+    if monthly and (
+        derived_positive_months != positive_months or derived_negative_months != negative_months
+    ):
+        failures.append("month_counts_inconsistent_with_monthly")
     if profit <= 0:
         failures.append("official_profit<=0")
     if max_drawdown > max(profit, 1.0):
@@ -149,6 +169,24 @@ def _official_evidence_failures(official: dict[str, Any], settled_selected: int)
         failures.append("average_clv<=0")
     if positive_clv_rate < REQUIRED_POSITIVE_CLV_RATE:
         failures.append("positive_clv_rate<0.5")
+    if settled_selected >= REQUIRED_OFFICIAL_SETTLED_SELECTED and active_months >= REQUIRED_ACTIVE_MONTHS:
+        if int(_number(bootstrap.get("settlement_days"))) < REQUIRED_SETTLEMENT_DAYS:
+            failures.append("settlement_days<30")
+        if _number((bootstrap.get("roi_ci_pct") or {}).get("p05"), -1.0) <= 0:
+            failures.append("bootstrap_roi_p05<=0")
+        if (
+            closing_coverage >= REQUIRED_CLOSING_SP_COVERAGE
+            and _number((bootstrap.get("average_clv_ci") or {}).get("p05"), -1.0) <= 0
+        ):
+            failures.append("bootstrap_clv_p05<=0")
+        if _number(point.get("brier_improvement"), -1.0) < 0:
+            failures.append("model_brier_worse_than_market")
+        if _number(point.get("log_loss_improvement"), -1.0) < 0:
+            failures.append("model_log_loss_worse_than_market")
+        brier_p05 = _number((bootstrap.get("brier_improvement_ci") or {}).get("p05"), -1.0)
+        log_loss_p05 = _number((bootstrap.get("log_loss_improvement_ci") or {}).get("p05"), -1.0)
+        if brier_p05 <= 0 and log_loss_p05 <= 0:
+            failures.append("relative_calibration_confidence_not_positive")
     return failures
 
 
@@ -204,6 +242,7 @@ def _strategy_status(strategy: dict[str, Any]) -> dict[str, Any]:
         "closing_sp_coverage": _number(official.get("closing_sp_coverage")),
         "average_clv": _number(official.get("average_clv"), -1.0),
         "positive_clv_rate": _number(official.get("positive_clv_rate"), -1.0),
+        "statistical_evidence": official.get("statistical_evidence") or {},
         "official_evidence_failures": evidence_failures,
         "portfolio_risk_control": risk_control,
         "action": action,
@@ -319,6 +358,12 @@ def build_profit_allocation_readiness(daily_budget: float | None = None) -> dict
             "min_closing_sp_coverage": REQUIRED_CLOSING_SP_COVERAGE,
             "min_positive_clv_rate": REQUIRED_POSITIVE_CLV_RATE,
             "average_clv": ">0",
+            "min_settlement_days": REQUIRED_SETTLEMENT_DAYS,
+            "bootstrap_roi_p05": ">0",
+            "bootstrap_average_clv_p05": ">0",
+            "relative_market_calibration": (
+                "model Brier and log loss no worse than de-vig market; at least one paired bootstrap p05 >0"
+            ),
         },
         "allocations": allocations,
         "official_sp_evidence_quality": {

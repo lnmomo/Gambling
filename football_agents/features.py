@@ -39,6 +39,23 @@ TEAM_ALIASES = {
     "HJK Helsinki": "HJK", "FF Jaro": "Jaro",
     "TPS\u56fe\u5c14": "TPS", "\u5e93\u5965\u76ae\u5965": "KuPS", "\u62c9\u8d6b\u8482": "Lahti",
     "\u585e\u4f0a\u5948": "SJK", "\u74e6\u8428": "VPS", "\u8d6b\u5c14\u706b\u82b1": "Haka",
+    "\u74e6\u52d2\u4f26\u52a0": "Valerenga", "\u5965\u52d2\u677e": "Aalesund",
+    "\u535a\u5854\u5f17\u6208": "Botafogo RJ", "\u6851\u6258\u65af": "Santos",
+    "\u7ef4\u591a\u5229\u4e9a": "Vitoria", "\u8fbe\u4f3d\u9a6c": "Vasco",
+    "\u8499\u7279\u5229\u5c14": "CF Montreal", "\u591a\u4f26\u591a": "Toronto FC",
+    "\u829d\u52a0\u54e5": "Chicago Fire", "\u6e29\u54e5\u534e": "Vancouver Whitecaps",
+    "\u5723\u8def\u6613\u57ce": "St. Louis City", "\u582a\u8428\u65af\u57ce": "Sporting Kansas City",
+    "\u897f\u96c5\u56fe": "Seattle Sounders", "\u6ce2\u7279\u5170": "Portland Timbers",
+    "\u54e5\u5fb7\u5821": "Goteborg", "\u5e03\u9c81\u9a6c\u6ce2": "Brommapojkarna",
+    "\u7c73\u4e9a\u5c14\u6bd4": "Mjallby", "\u97e6\u65af\u7279\u7f57": "Vasteras SK",
+    "\u535a\u5fb7\u95ea\u8000": "Bodo/Glimt", "\u8153\u7279\u70c8": "Fredrikstad",
+    "\u5df4\u4f0a\u4e9a": "Bahia", "\u6c99\u4f69\u79d1": "Chapecoense-SC",
+    "\u5f17\u9c81\u7c73\u5ae9": "Fluminense", "\u5e03\u62c9\u5e72RB": "Bragantino",
+    "\u7c73\u62c9\u7d22\u5c14": "Mirassol", "\u683c\u96f7\u7c73\u5965": "Gremio",
+    "\u7eb3\u4ec0\u7ef4\u5c14": "Nashville SC", "\u4e9a\u7279\u8054": "Atlanta Utd",
+    "\u5fb7\u91cc\u57ce": "Derry City", "\u8d39\u4f26\u8328": "Ferencvaros",
+    "\u4f0f\u4f0a\u4f0f\u4e01": "Vojvodina", "\u65e5\u5229\u7eb3": "Zilina",
+    "\u65af\u6d77\u675c\u514b": "Hajduk Split",
 }
 
 
@@ -133,12 +150,18 @@ def build_features_for_official_matches(repository: Repository | None = None, li
                                         league: str | None = None) -> dict[str, Any]:
     repository = repository or Repository()
     builder = HistoricalFeatureBuilder(repository, min_matches=min_matches)
-    statuses = {"scheduled", "live"} if not include_finished else {"scheduled", "live", "finished", "closed"}
-    matches = [row for row in repository.list_official_matches() if row["status"] in statuses]
+    if include_finished:
+        statuses = {"scheduled", "not_started", "live", "finished", "closed"}
+        matches = [
+            row for row in repository.list_official_matches()
+            if str(row.get("status") or "").strip().lower() in statuses
+        ]
+    else:
+        matches = repository.list_active_official_matches(limit)
     if league:
         target = league.strip().casefold()
         matches = [row for row in matches if target in str(row.get("league") or "").casefold()]
-    matches = sorted(matches, key=lambda row: (row["status"] not in {"scheduled", "live"}, row["kickoff_time"]))[:limit]
+    matches = sorted(matches, key=lambda row: row["kickoff_time"])[:limit]
     report: dict[str, Any] = {"matches": len(matches), "built": 0, "skipped": 0, "league": league, "sources": []}
     for match in matches:
         result = builder.build(match)

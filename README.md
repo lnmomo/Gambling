@@ -116,6 +116,28 @@ Do not commit real keys or local runtime paths. Important settings:
 - `ENABLE_REAL_SYNC=false`: user-controlled real data sync switch.
 - `DATABASE_URL=sqlite:///./data/runtime/football_agents.db`: local runtime DB path.
 - `OFFICIAL_SP_REFRESH_MINUTES=15`: official fixture/SP capture and its evidence-quality check cadence.
+- The same 15-minute chain independently reads the public official result archive, settles exact
+  `sporttery-{matchId}` matches without overwriting conflicts, and freezes a critical-window
+  prospective prediction after the latest SP observation.
+- `OFFICIAL_RESULTS_SOURCE_URL` configures the public result page and
+  `OFFICIAL_RESULTS_LOOKBACK_DAYS=60` controls incremental result backfill coverage.
+- After the official-SP promotion gate, `paper_portfolio_allocation` can create immutable paper
+  positions from the latest non-stale executable SP. It recalculates EV from the frozen probability,
+  applies quarter-Kelly, daily/strategy/league caps, and prevents duplicate exposure to one match.
+- Mature official-SP evidence is promoted only when a deterministic settlement-day block bootstrap
+  puts the 95% lower bounds of ROI and average CLV above zero. The frozen model must also be no worse
+  than the paired de-vig market baseline on both Brier score and Log Loss, with statistically positive
+  improvement on at least one of those calibration metrics.
+- `paper_portfolio_settlement` runs after the official result collector and records profit, closing
+  SP, CLV, equity, and drawdown. Before promotion it records an auditable cash HOLD and never invents
+  a position. No real order-placement integration exists.
+- `PAPER_PORTFOLIO_REPORT_PATH` controls the generated ledger summary location.
+- `external_consensus_challenger_capture` runs after the hourly frozen-model capture. It archives an
+  immutable policy and one decision for every aligned official-SP/external-bookmaker snapshot. The
+  policy requires at least 10 fresh bookmakers, shrinks and caps the model residual, subtracts a
+  bookmaker-dispersion uncertainty margin, and records honest `NO_BET` decisions when executable EV
+  is absent. It cannot enter allocation before 200 settlements, six active months, and 180 calendar days.
+- `EXTERNAL_CONSENSUS_CHALLENGER_REPORT_PATH` controls its prospective report location.
 - `BACKGROUND_AGENT_INTERVAL_SECONDS=3600`: cadence for heavier enrichment, history, backtest, and governance agents.
 
 The API process must remain running for these in-process agents to execute. The scheduler runs immediately on startup; official SP capture then runs every 15 minutes, while the heavier agents run hourly.

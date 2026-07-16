@@ -1,0 +1,105 @@
+{
+  "method": "market odds bias diagnostics",
+  "seasons": [
+    "USA"
+  ],
+  "odds_source": "AVG_CLOSE",
+  "candidate_count": 18099,
+  "diagnostic_rows": 7,
+  "top": [
+    {
+      "columns": "odds_bucket|market_prob_bucket",
+      "key": "[2.2,2.8)|[0.28,0.34)",
+      "bets": 127,
+      "profit": 28.22,
+      "roi_pct": 22.22,
+      "active_months": 70,
+      "positive_months": 38,
+      "negative_months": 32,
+      "latest_month": "2026-05",
+      "latest_profit": -3.0,
+      "score": 14.4443
+    },
+    {
+      "columns": "league|odds_bucket|market_prob_bucket",
+      "key": "USA|[2.2,2.8)|[0.28,0.34)",
+      "bets": 127,
+      "profit": 28.22,
+      "roi_pct": 22.22,
+      "active_months": 70,
+      "positive_months": 38,
+      "negative_months": 32,
+      "latest_month": "2026-05",
+      "latest_profit": -3.0,
+      "score": 14.4443
+    },
+    {
+      "columns": "odds_bucket|market_prob_bucket|favorite_relation",
+      "key": "[2.2,2.8)|[0.28,0.34)|market_non_favorite",
+      "bets": 127,
+      "profit": 28.22,
+      "roi_pct": 22.22,
+      "active_months": 70,
+      "positive_months": 38,
+      "negative_months": 32,
+      "latest_month": "2026-05",
+      "latest_profit": -3.0,
+      "score": 14.4443
+    },
+    {
+      "columns": "outcome|odds_bucket|favorite_relation",
+      "key": "home|[2.2,2.8)|market_non_favorite",
+      "bets": 272,
+      "profit": 15.35,
+      "roi_pct": 5.64,
+      "active_months": 107,
+      "positive_months": 56,
+      "negative_months": 51,
+      "latest_month": "2026-05",
+      "latest_profit": -0.77,
+      "score": 10.6208
+    },
+    {
+      "columns": "outcome|market_prob_bucket",
+      "key": "home|[0.28,0.34)",
+      "bets": 382,
+      "profit": 8.16,
+      "roi_pct": 2.14,
+      "active_months": 114,
+      "positive_months": 58,
+      "negative_months": 56,
+      "latest_month": "2026-05",
+      "latest_profit": -6.0,
+      "score": 4.235
+    },
+    {
+      "columns": "league|outcome|market_prob_bucket",
+      "key": "USA|home|[0.28,0.34)",
+      "bets": 382,
+      "profit": 8.16,
+      "roi_pct": 2.14,
+      "active_months": 114,
+      "positive_months": 58,
+      "negative_months": 56,
+      "latest_month": "2026-05",
+      "latest_profit": -6.0,
+      "score": 4.235
+    },
+    {
+      "columns": "outcome|market_prob_bucket|favorite_relation",
+      "key": "home|[0.28,0.34)|market_non_favorite",
+      "bets": 382,
+      "profit": 8.16,
+      "roi_pct": 2.14,
+      "active_months": 114,
+      "positive_months": 58,
+      "negative_months": 56,
+      "latest_month": "2026-05",
+      "latest_profit": -6.0,
+      "score": 4.235
+    }
+  ],
+  "notes": [
+    "This is market-bias discovery only. Any pattern must be converted into no-lookahead walk-forward rules."
+  ]
+}

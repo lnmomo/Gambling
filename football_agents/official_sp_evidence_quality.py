@@ -91,7 +91,22 @@ def build_official_sp_evidence_quality(
             MIN(observed_at) first_observed_at,MAX(observed_at) last_observed_at
             FROM official_odds_observations""").fetchone())
         latest_fetch = connection.execute("""SELECT fetched_at,record_count FROM official_fetch_logs
-            WHERE success=1 ORDER BY fetched_at DESC LIMIT 1""").fetchone()
+            WHERE success=1 AND source_name<>'sporttery_official_results'
+            ORDER BY fetched_at DESC LIMIT 1""").fetchone()
+        result_evidence = dict(connection.execute("""SELECT COUNT(*) observations,
+            SUM(resolution_status='SETTLED') settled,
+            SUM(resolution_status='CONFIRMED') confirmed,
+            SUM(resolution_status='CONFLICT') conflicts,
+            SUM(resolution_status='UNMATCHED') unmatched,
+            SUM(resolution_status='AMBIGUOUS') ambiguous,
+            MAX(observed_at) last_observed_at
+            FROM official_result_observations""").fetchone())
+        stale_unsettled = int(connection.execute("""SELECT COUNT(*) FROM matches m
+            WHERE m.official_match_id LIKE 'sporttery-%'
+              AND unixepoch(m.kickoff_time)<=unixepoch(?)-14400
+              AND lower(m.status) NOT IN ('cancelled','postponed')
+              AND NOT EXISTS(SELECT 1 FROM results r WHERE r.match_id=m.id)""",
+            (now_text,)).fetchone()[0])
         availability_start_row = connection.execute(
             "SELECT MIN(observed_at) started_at FROM official_market_availability_observations"
         ).fetchone()
@@ -287,6 +302,16 @@ def build_official_sp_evidence_quality(
             "Duplicate grain overweights prices in downstream analyses.",
             "Keep the database uniqueness constraint and reject duplicate inserts.",
         ),
+        _check(
+            "official_result_conflicts",
+            int(result_evidence.get("conflicts") or 0) == 0,
+            "CRITICAL",
+            int(result_evidence.get("conflicts") or 0),
+            "0 conflicting official result rows",
+            "Conflicting scores are quarantined and never overwrite an existing settlement.",
+            "A score conflict invalidates ROI, drawdown, and model-promotion evidence for that match.",
+            "Compare the archived raw official rows and resolve the conflict explicitly.",
+        ),
     ]
     failed = [item for item in checks if item["status"] == "FAIL"]
     pending = [item for item in checks if item["status"] == "PENDING"]
@@ -323,6 +348,12 @@ def build_official_sp_evidence_quality(
             "pre_match_sp_coverage": round(pre_match_coverage, 4),
             "closing_1h_coverage": round(closing_1h_coverage, 4),
             "settlement_coverage": round(settlement_coverage, 4),
+            "stale_unsettled_matches": stale_unsettled,
+            "official_result_observations": int(result_evidence.get("observations") or 0),
+            "official_result_last_observed_at": result_evidence.get("last_observed_at"),
+            "official_result_conflicts": int(result_evidence.get("conflicts") or 0),
+            "archived_result_rows_outside_local_pool": int(result_evidence.get("unmatched") or 0),
+            "official_result_ambiguous": int(result_evidence.get("ambiguous") or 0),
             "average_observations_per_match": float(depth.get("average_observations") or 0),
         },
         "checks": checks,

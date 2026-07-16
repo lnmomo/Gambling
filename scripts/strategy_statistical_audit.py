@@ -112,7 +112,10 @@ def _decision(overall: dict[str, Any], bootstrap: dict[str, Any],
         reasons.append("bootstrap_positive_probability<0.95")
     if sign_flip["one_sided_p_value"] > 0.05:
         reasons.append("sign_flip_p_value>0.05")
-    if overall["drawdown_to_profit"] > 0.5:
+    drawdown_to_profit = overall.get("drawdown_to_profit")
+    if drawdown_to_profit is None:
+        reasons.append("drawdown_to_profit_unavailable")
+    elif drawdown_to_profit > 0.5:
         reasons.append("drawdown_to_profit>0.5")
     if overall["positive_months"] <= overall["negative_months"]:
         reasons.append("positive_months<=negative_months")

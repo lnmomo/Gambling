@@ -10,6 +10,8 @@ from scripts.feature_enriched_candidate_filter import (
     export_scorer_artifact,
     fit_ridge_probability_model,
     formal_i2_configs,
+    multiclass_probability_metrics,
+    normalize_complete_three_way_probabilities,
     predict_probability,
     score_with_scorer_artifact,
     training_window,
@@ -104,6 +106,49 @@ def test_ridge_probability_model_learns_directional_feature() -> None:
     high = pd.DataFrame([_base_row("2024-02-02", True, market_probability=0.55)])
 
     assert predict_probability(high, coefficients, means, stds)[0] > predict_probability(low, coefficients, means, stds)[0]
+
+
+def test_complete_three_way_probabilities_are_normalized() -> None:
+    frame = pd.DataFrame([
+        {"date": "2024-01-01", "league": "USA", "home_team": "A", "away_team": "B", "outcome": outcome}
+        for outcome in ("home", "draw", "away")
+    ])
+
+    normalized = normalize_complete_three_way_probabilities(frame, np.array([0.60, 0.30, 0.30]))
+
+    assert np.isclose(normalized.sum(), 1.0)
+    assert np.allclose(normalized, np.array([0.50, 0.25, 0.25]))
+
+
+def test_incomplete_outcome_set_is_not_artificially_normalized() -> None:
+    frame = pd.DataFrame([{
+        "date": "2024-01-01", "league": "I2", "home_team": "A", "away_team": "B", "outcome": "draw"
+    }])
+
+    normalized = normalize_complete_three_way_probabilities(frame, np.array([0.37]))
+
+    assert np.allclose(normalized, np.array([0.37]))
+
+
+def test_multiclass_metrics_reward_better_normalized_probabilities() -> None:
+    frame = pd.DataFrame([
+        {
+            "date": "2024-01-01", "league": "USA", "home_team": "A", "away_team": "B",
+            "outcome": outcome, "won": outcome == "home", "market_probability": market,
+            "model_probability": model,
+        }
+        for outcome, market, model in zip(
+            ("home", "draw", "away"),
+            (0.34, 0.33, 0.33),
+            (0.60, 0.22, 0.18),
+        )
+    ])
+
+    market = multiclass_probability_metrics(frame, "market_probability")
+    model = multiclass_probability_metrics(frame, "model_probability")
+
+    assert model["log_loss"] < market["log_loss"]
+    assert model["brier"] < market["brier"]
 
 
 def test_walk_forward_filter_uses_prior_rows_and_selects_positive_ev() -> None:

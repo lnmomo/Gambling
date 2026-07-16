@@ -1,0 +1,64 @@
+{
+  "method": "pooled current-pool market-anchored residual no-lookahead research",
+  "first_month": "2017-01",
+  "last_month": "2025-12",
+  "config": {
+    "odds_source": "AVG_CLOSE",
+    "train_months": 30,
+    "min_train_rows": 360,
+    "min_predicted_ev": 0.02,
+    "max_bets_per_day": 1,
+    "ridge": 10.0,
+    "residual_cap": 0.03,
+    "selected_rules": [
+      "USA",
+      "NOR",
+      "BRA"
+    ],
+    "validation_months": 6,
+    "min_validation_rows": 360,
+    "require_probability_improvement": true,
+    "min_odds": 1.8,
+    "max_odds": 4.0,
+    "min_validation_selections": 30,
+    "require_validation_tail_edge": true
+  },
+  "result": {
+    "leagues": [
+      "USA",
+      "NOR",
+      "BRA"
+    ],
+    "odds_source": "AVG_CLOSE",
+    "label": "AVG_CLOSE_rulesusa_nor_bra_train30_n360_ev0p02_top1_ridge10_cap0.03_val6_tail30_odds1.8_4",
+    "candidate_count": 45024,
+    "selected_candidates": 0,
+    "bets": 0,
+    "profit": 0.0,
+    "roi_pct": 0.0,
+    "max_drawdown": 0.0,
+    "positive_months": 0,
+    "negative_months": 0,
+    "positive_seasons": 0,
+    "negative_seasons": 0,
+    "latest_season": null,
+    "latest_season_bets": 0,
+    "latest_season_profit": 0.0,
+    "window_count": 0,
+    "passed_windows": 0,
+    "active_window_count": 0,
+    "active_passed_windows": 0,
+    "active_pass_rate": 0.0,
+    "decision": "RESEARCH_ONLY_UNSTABLE",
+    "decision_reasons": [
+      "bets<200",
+      "profit<=0",
+      "roi<3%",
+      "positive_months<=negative_months",
+      "positive_seasons<=negative_seasons",
+      "latest_season_bets<20",
+      "active_pass_rate<0.6"
+    ]
+  },
+  "guardrail": "This is representative historical market evidence. Promotion still requires an independent price source, statistical audit, calibration, and prospective official-SP validation."
+}

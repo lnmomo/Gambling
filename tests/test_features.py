@@ -55,6 +55,9 @@ class HistoricalFeatureBuilderTests(unittest.TestCase):
 
     def test_alias_is_canonical(self):
         self.assertEqual(canonical_team_name("\u7f8e\u56fd"), "United States")
+        self.assertEqual(canonical_team_name("\u535a\u5854\u5f17\u6208"), "Botafogo RJ")
+        self.assertEqual(canonical_team_name("\u8499\u7279\u5229\u5c14"), "CF Montreal")
+        self.assertEqual(canonical_team_name("\u74e6\u52d2\u4f26\u52a0"), "Valerenga")
 
     def test_large_raw_history_keeps_source_confidence_usable(self):
         rows = []

@@ -41,6 +41,24 @@ def _strategy(**overrides):
         "deployment_blockers": ["official-SP validation required"],
     }
     base.update(overrides)
+    official = base.get("official_validation") or {}
+    if (
+        official.get("decision") == "OFFICIAL_SP_PROSPECTIVE_PASS"
+        and "statistical_evidence" not in official
+    ):
+        official["statistical_evidence"] = {
+            "point_estimates": {
+                "brier_improvement": 0.01,
+                "log_loss_improvement": 0.01,
+            },
+            "bootstrap": {
+                "settlement_days": 120,
+                "roi_ci_pct": {"p05": 1.0},
+                "average_clv_ci": {"p05": 0.005},
+                "brier_improvement_ci": {"p05": 0.001},
+                "log_loss_improvement_ci": {"p05": 0.001},
+            },
+        }
     return base
 
 
@@ -99,6 +117,82 @@ def test_allocation_readiness_allocates_paper_budget_after_official_sp_pass(monk
     assert report["allocations"][0]["strategy_id"] == "profit-i2-test"
     assert report["allocations"][0]["paper_budget"] == 100
     assert report["allocations"][0]["risk_multiplier"] == 1.0
+
+
+def test_allocation_readiness_rejects_legacy_pass_without_uncertainty_evidence(monkeypatch):
+    official = {
+        "decision": "OFFICIAL_SP_PROSPECTIVE_PASS",
+        "pool_passed_scorer": 12,
+        "settled_selected_snapshots": 240,
+        "profit": 28.0,
+        "roi_pct": 5.0,
+        "max_drawdown": 8.0,
+        "closing_sp_coverage": 0.95,
+        "average_clv": 0.02,
+        "positive_clv_rate": 0.58,
+        "positive_months": 4,
+        "negative_months": 2,
+        "monthly": [
+            {"month": "2026-01", "profit": 4.0}, {"month": "2026-02", "profit": -2.0},
+            {"month": "2026-03", "profit": 8.0}, {"month": "2026-04", "profit": 5.0},
+            {"month": "2026-05", "profit": -1.0}, {"month": "2026-06", "profit": 14.0},
+        ],
+        "statistical_evidence": {},
+    }
+    monkeypatch.setattr(
+        "football_agents.profit_allocation_readiness.list_profit_strategy_packages",
+        lambda: [_strategy(official_validation=official)],
+    )
+
+    report = build_profit_allocation_readiness(100)
+
+    assert report["allocated_budget"] == 0
+    failures = report["strategies"][0]["official_evidence_failures"]
+    assert "bootstrap_roi_p05<=0" in failures
+    assert "bootstrap_clv_p05<=0" in failures
+    assert "relative_calibration_confidence_not_positive" in failures
+
+
+def test_allocation_readiness_rejects_model_that_is_worse_than_market(monkeypatch):
+    official = {
+        "decision": "OFFICIAL_SP_PROSPECTIVE_PASS",
+        "pool_passed_scorer": 12,
+        "settled_selected_snapshots": 240,
+        "profit": 28.0,
+        "roi_pct": 5.0,
+        "max_drawdown": 8.0,
+        "closing_sp_coverage": 0.95,
+        "average_clv": 0.02,
+        "positive_clv_rate": 0.58,
+        "positive_months": 4,
+        "negative_months": 2,
+        "monthly": [
+            {"month": "2026-01", "profit": 4.0}, {"month": "2026-02", "profit": -2.0},
+            {"month": "2026-03", "profit": 8.0}, {"month": "2026-04", "profit": 5.0},
+            {"month": "2026-05", "profit": -1.0}, {"month": "2026-06", "profit": 14.0},
+        ],
+        "statistical_evidence": {
+            "point_estimates": {"brier_improvement": -0.01, "log_loss_improvement": -0.02},
+            "bootstrap": {
+                "settlement_days": 120,
+                "roi_ci_pct": {"p05": 1.0},
+                "average_clv_ci": {"p05": 0.005},
+                "brier_improvement_ci": {"p05": -0.02},
+                "log_loss_improvement_ci": {"p05": -0.03},
+            },
+        },
+    }
+    monkeypatch.setattr(
+        "football_agents.profit_allocation_readiness.list_profit_strategy_packages",
+        lambda: [_strategy(official_validation=official)],
+    )
+
+    report = build_profit_allocation_readiness(100)
+
+    failures = report["strategies"][0]["official_evidence_failures"]
+    assert "model_brier_worse_than_market" in failures
+    assert "model_log_loss_worse_than_market" in failures
+    assert report["allocated_budget"] == 0
 
 
 def test_allocation_readiness_holds_cash_when_official_sp_evidence_is_degraded(monkeypatch):
@@ -198,6 +292,70 @@ def test_allocation_readiness_enforces_active_months_even_when_report_claims_pas
     assert "active_months<6" in report["strategies"][0]["official_evidence_failures"]
 
 
+def test_allocation_readiness_does_not_trust_claimed_month_count(monkeypatch):
+    official = {
+        "decision": "OFFICIAL_SP_PROSPECTIVE_PASS",
+        "pool_passed_scorer": 20,
+        "settled_selected_snapshots": 240,
+        "active_months": 6,
+        "profit": 30.0,
+        "roi_pct": 6.0,
+        "max_drawdown": 8.0,
+        "closing_sp_coverage": 0.95,
+        "average_clv": 0.02,
+        "positive_clv_rate": 0.60,
+        "positive_months": 1,
+        "negative_months": 0,
+        "monthly": [{"month": "2026-06", "profit": 30.0}],
+    }
+    monkeypatch.setattr(
+        "football_agents.profit_allocation_readiness.list_profit_strategy_packages",
+        lambda: [_strategy(official_validation=official)],
+    )
+
+    report = build_profit_allocation_readiness(100)
+
+    assert report["allocated_budget"] == 0
+    assert report["strategies"][0]["active_months"] == 1
+    assert "active_months<6" in report["strategies"][0]["official_evidence_failures"]
+
+
+def test_allocation_readiness_uses_daily_path_for_intra_month_drawdown(monkeypatch):
+    monthly = [{"month": f"2026-0{month}", "profit": 5.0} for month in range(1, 7)]
+    official = {
+        "decision": "OFFICIAL_SP_PROSPECTIVE_PASS",
+        "pool_passed_scorer": 20,
+        "settled_selected_snapshots": 240,
+        "active_months": 6,
+        "profit": 30.0,
+        "roi_pct": 6.0,
+        "max_drawdown": 12.0,
+        "closing_sp_coverage": 0.95,
+        "average_clv": 0.02,
+        "positive_clv_rate": 0.60,
+        "positive_months": 6,
+        "negative_months": 0,
+        "monthly": monthly,
+        "daily": [
+            {"date": "2026-06-01", "profit": 30.0},
+            {"date": "2026-06-02", "profit": -6.0},
+            {"date": "2026-06-03", "profit": -6.0},
+        ],
+    }
+    monkeypatch.setattr(
+        "football_agents.profit_allocation_readiness.list_profit_strategy_packages",
+        lambda: [_strategy(official_validation=official)],
+    )
+
+    report = build_profit_allocation_readiness(100)
+
+    control = report["strategies"][0]["portfolio_risk_control"]
+    assert control["path_grain"] == "daily"
+    assert control["current_drawdown"] == 12.0
+    assert control["current_drawdown_to_peak"] == 0.4
+    assert report["allocated_budget"] == 75.0
+
+
 def test_allocation_readiness_enters_cooldown_after_two_losing_months(monkeypatch):
     monthly = [
         {"month": "2026-01", "profit": 20.0},
@@ -248,9 +406,29 @@ def test_allocation_readiness_caps_multi_strategy_concentration(monkeypatch):
         "positive_clv_rate": 0.60,
         "positive_months": 5,
         "negative_months": 1,
-        "monthly": [{"month": f"2026-0{month}", "profit": 5.0} for month in range(1, 7)],
+        "monthly": [
+            {"month": "2026-01", "profit": 10.0},
+            {"month": "2026-02", "profit": -1.0},
+            {"month": "2026-03", "profit": 8.0},
+            {"month": "2026-04", "profit": 7.0},
+            {"month": "2026-05", "profit": 6.0},
+            {"month": "2026-06", "profit": 10.0},
+        ],
     }
-    weaker = {**common, "profit": 10.0, "roi_pct": 1.0, "average_clv": 0.001}
+    weaker = {
+        **common,
+        "profit": 10.0,
+        "roi_pct": 1.0,
+        "average_clv": 0.001,
+        "monthly": [
+            {"month": "2026-01", "profit": 3.0},
+            {"month": "2026-02", "profit": -1.0},
+            {"month": "2026-03", "profit": 2.0},
+            {"month": "2026-04", "profit": 2.0},
+            {"month": "2026-05", "profit": 2.0},
+            {"month": "2026-06", "profit": 2.0},
+        ],
+    }
     monkeypatch.setattr(
         "football_agents.profit_allocation_readiness.list_profit_strategy_packages",
         lambda: [

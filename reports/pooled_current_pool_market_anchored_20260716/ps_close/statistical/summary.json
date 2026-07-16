@@ -1,0 +1,192 @@
+{
+  "method": "monthly block bootstrap and sign-flip strategy audit",
+  "created_at": "2026-07-16T03:54:15.990402+00:00",
+  "bets_path": "reports\\pooled_current_pool_market_anchored_20260716\\ps_close\\bets.csv",
+  "config": {
+    "iterations": 5000,
+    "seed": 42,
+    "min_bets": 200,
+    "min_months": 12,
+    "resampling_unit": "active betting month"
+  },
+  "overall": {
+    "bets": 189,
+    "active_months": 15,
+    "total_staked": 1890.0,
+    "profit": 232.8,
+    "roi_pct": 12.32,
+    "positive_months": 10,
+    "negative_months": 5,
+    "max_negative_month_streak": 2,
+    "max_month_drawdown": 133.8,
+    "drawdown_to_profit": 0.5747
+  },
+  "bootstrap": {
+    "iterations": 5000,
+    "roi_ci_pct": {
+      "p05": -4.23,
+      "p50": 12.41,
+      "p95": 30.51
+    },
+    "profit_ci": {
+      "p05": -85.9,
+      "p50": 232.7,
+      "p95": 548.92
+    },
+    "probability_roi_positive": 0.8846,
+    "probability_profit_positive": 0.8846
+  },
+  "sign_flip_test": {
+    "iterations": 5000,
+    "one_sided_p_value": 0.1352,
+    "null_profit_ci": {
+      "p05": -338.02,
+      "p50": 0.9,
+      "p95": 338.05
+    }
+  },
+  "rule_contributions": [
+    {
+      "rule_label": "PS_CLOSE_rulesusa_nor_bra_train30_n360_ev0p02_top1_ridge10_cap0.03_val6_tail30_odds1.8_4|USA",
+      "bets": 85,
+      "staked": 850.0,
+      "profit": 209.6,
+      "roi_pct": 24.66,
+      "positive_months": 10,
+      "negative_months": 5
+    },
+    {
+      "rule_label": "PS_CLOSE_rulesusa_nor_bra_train30_n360_ev0p02_top1_ridge10_cap0.03_val6_tail30_odds1.8_4|NOR",
+      "bets": 46,
+      "staked": 460.0,
+      "profit": 71.9,
+      "roi_pct": 15.63,
+      "positive_months": 5,
+      "negative_months": 4
+    },
+    {
+      "rule_label": "PS_CLOSE_rulesusa_nor_bra_train30_n360_ev0p02_top1_ridge10_cap0.03_val6_tail30_odds1.8_4|BRA",
+      "bets": 58,
+      "staked": 580.0,
+      "profit": -48.7,
+      "roi_pct": -8.4,
+      "positive_months": 6,
+      "negative_months": 5
+    }
+  ],
+  "monthly": [
+    {
+      "month": "2017-03",
+      "bets": 7,
+      "staked": 70.0,
+      "profit": -24.3,
+      "roi_pct": -34.71
+    },
+    {
+      "month": "2017-04",
+      "bets": 17,
+      "staked": 170.0,
+      "profit": 125.2,
+      "roi_pct": 73.65
+    },
+    {
+      "month": "2017-05",
+      "bets": 17,
+      "staked": 170.0,
+      "profit": 12.3,
+      "roi_pct": 7.24
+    },
+    {
+      "month": "2017-06",
+      "bets": 19,
+      "staked": 190.0,
+      "profit": 5.2,
+      "roi_pct": 2.74
+    },
+    {
+      "month": "2017-07",
+      "bets": 24,
+      "staked": 240.0,
+      "profit": -91.2,
+      "roi_pct": -38.0
+    },
+    {
+      "month": "2018-03",
+      "bets": 8,
+      "staked": 80.0,
+      "profit": 6.3,
+      "roi_pct": 7.88
+    },
+    {
+      "month": "2018-04",
+      "bets": 13,
+      "staked": 130.0,
+      "profit": -48.9,
+      "roi_pct": -37.62
+    },
+    {
+      "month": "2022-03",
+      "bets": 7,
+      "staked": 70.0,
+      "profit": 40.2,
+      "roi_pct": 57.43
+    },
+    {
+      "month": "2025-06",
+      "bets": 8,
+      "staked": 80.0,
+      "profit": 14.6,
+      "roi_pct": 18.25
+    },
+    {
+      "month": "2025-07",
+      "bets": 15,
+      "staked": 150.0,
+      "profit": 31.0,
+      "roi_pct": 20.67
+    },
+    {
+      "month": "2025-08",
+      "bets": 13,
+      "staked": 130.0,
+      "profit": 60.6,
+      "roi_pct": 46.62
+    },
+    {
+      "month": "2025-09",
+      "bets": 14,
+      "staked": 140.0,
+      "profit": 74.9,
+      "roi_pct": 53.5
+    },
+    {
+      "month": "2025-10",
+      "bets": 18,
+      "staked": 180.0,
+      "profit": -16.1,
+      "roi_pct": -8.94
+    },
+    {
+      "month": "2025-11",
+      "bets": 5,
+      "staked": 50.0,
+      "profit": -2.0,
+      "roi_pct": -4.0
+    },
+    {
+      "month": "2025-12",
+      "bets": 4,
+      "staked": 40.0,
+      "profit": 45.0,
+      "roi_pct": 112.5
+    }
+  ],
+  "decision": "POSITIVE_BUT_NOT_STATISTICALLY_CONFIRMED",
+  "decision_reasons": [
+    "bets<minimum",
+    "bootstrap_roi_p05<=0",
+    "bootstrap_positive_probability<0.95",
+    "sign_flip_p_value>0.05",
+    "drawdown_to_profit>0.5"
+  ]
+}

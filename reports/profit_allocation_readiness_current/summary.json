@@ -1,6 +1,6 @@
 {
   "method": "profit daily allocation readiness",
-  "generated_at": "2026-07-16T03:10:58.216721+00:00",
+  "generated_at": "2026-07-16T06:41:18.774252+00:00",
   "daily_budget": 100.0,
   "allocated_budget": 0,
   "cash_reserved": 100.0,
@@ -15,34 +15,44 @@
     "min_active_months": 6,
     "min_closing_sp_coverage": 0.8,
     "min_positive_clv_rate": 0.5,
-    "average_clv": ">0"
+    "average_clv": ">0",
+    "min_settlement_days": 30,
+    "bootstrap_roi_p05": ">0",
+    "bootstrap_average_clv_p05": ">0",
+    "relative_market_calibration": "model Brier and log loss no worse than de-vig market; at least one paired bootstrap p05 >0"
   },
   "allocations": [],
   "official_sp_evidence_quality": {
-    "decision": "EVIDENCE_COLLECTING",
+    "decision": "EVIDENCE_DEGRADED",
     "research_usable": false,
-    "failed_checks": 0,
-    "pending_checks": 3,
+    "failed_checks": 1,
+    "pending_checks": 2,
     "critical_checks": 0,
     "summary": {
-      "observations": 277,
-      "observed_matches": 63,
-      "pre_match_matches": 63,
-      "pre_match_observations": 277,
+      "observations": 549,
+      "observed_matches": 69,
+      "pre_match_matches": 69,
+      "pre_match_observations": 549,
       "first_observed_at": "2026-06-19T13:11:45.392010+00:00",
-      "last_observed_at": "2026-07-16T03:09:15.117986+00:00",
-      "last_successful_fetch_at": "2026-07-16T03:09:15.833108+00:00",
+      "last_observed_at": "2026-07-16T06:39:23.213553+00:00",
+      "last_successful_fetch_at": "2026-07-16T06:39:24.551174+00:00",
       "freshness_hours": 0.03,
-      "measurement_start": "2026-06-16T03:10:58.206171+00:00",
-      "availability_observations": 0,
-      "offered_matches": 0,
-      "captured_offered_matches": 0,
+      "measurement_start": "2026-07-16T03:10:59.705959+00:00",
+      "availability_observations": 391,
+      "offered_matches": 17,
+      "captured_offered_matches": 16,
       "closing_eligible_matches": 0,
       "settlement_eligible_matches": 0,
-      "pre_match_sp_coverage": 0.0,
+      "pre_match_sp_coverage": 0.9412,
       "closing_1h_coverage": 0.0,
       "settlement_coverage": 0.0,
-      "average_observations_per_match": 4.4
+      "stale_unsettled_matches": 0,
+      "official_result_observations": 433,
+      "official_result_last_observed_at": "2026-07-16T05:08:48.291588+00:00",
+      "official_result_conflicts": 0,
+      "archived_result_rows_outside_local_pool": 265,
+      "official_result_ambiguous": 0,
+      "average_observations_per_match": 7.96
     }
   },
   "strategies": [
@@ -63,6 +73,7 @@
       "closing_sp_coverage": 0.0,
       "average_clv": -1.0,
       "positive_clv_rate": -1.0,
+      "statistical_evidence": {},
       "official_evidence_failures": [
         "settled_selected<200",
         "active_months<6",
@@ -77,7 +88,10 @@
         "multiplier": 0.0,
         "negative_month_streak": 0,
         "current_drawdown": 0.0,
-        "current_drawdown_to_profit": 0.0,
+        "current_drawdown_to_peak": 0.0,
+        "peak_equity": 0.0,
+        "current_equity": 0.0,
+        "path_grain": "monthly",
         "reason": "No settled official-SP monthly return series is available yet."
       },
       "action": "RESEARCH_ONLY",
@@ -122,6 +136,7 @@
       "closing_sp_coverage": 0.0,
       "average_clv": -1.0,
       "positive_clv_rate": -1.0,
+      "statistical_evidence": {},
       "official_evidence_failures": [
         "settled_selected<200",
         "active_months<6",
@@ -136,7 +151,10 @@
         "multiplier": 0.0,
         "negative_month_streak": 0,
         "current_drawdown": 0.0,
-        "current_drawdown_to_profit": 0.0,
+        "current_drawdown_to_peak": 0.0,
+        "peak_equity": 0.0,
+        "current_equity": 0.0,
+        "path_grain": "monthly",
         "reason": "No settled official-SP monthly return series is available yet."
       },
       "action": "WAIT_FOR_ELIGIBLE_OFFICIAL_POOL",
@@ -203,6 +221,53 @@
       "closing_sp_coverage": 0.0,
       "average_clv": -1.0,
       "positive_clv_rate": -1.0,
+      "statistical_evidence": {
+        "method": "deterministic settlement-day block bootstrap with paired market calibration",
+        "point_estimates": {
+          "bets": 0,
+          "clv_samples": 0,
+          "probability_samples": 0,
+          "roi_pct": null,
+          "average_clv": null,
+          "model_brier": null,
+          "market_brier": null,
+          "brier_improvement": null,
+          "model_log_loss": null,
+          "market_log_loss": null,
+          "log_loss_improvement": null
+        },
+        "bootstrap": {
+          "iterations": 5000,
+          "seed": 42,
+          "resampling_unit": "settlement_day",
+          "settlement_days": 0,
+          "roi_ci_pct": {
+            "p05": null,
+            "p50": null,
+            "p95": null
+          },
+          "average_clv_ci": {
+            "p05": null,
+            "p50": null,
+            "p95": null
+          },
+          "brier_improvement_ci": {
+            "p05": null,
+            "p50": null,
+            "p95": null
+          },
+          "log_loss_improvement_ci": {
+            "p05": null,
+            "p50": null,
+            "p95": null
+          },
+          "probability_roi_positive": null,
+          "probability_clv_positive": null,
+          "probability_brier_improvement_positive": null,
+          "probability_log_loss_improvement_positive": null
+        },
+        "guardrail": "Each resample draws whole settlement-day cohorts. Model and de-vig market losses are paired on the same immutable selected outcomes."
+      },
       "official_evidence_failures": [
         "settled_selected<200",
         "active_months<6",
@@ -217,7 +282,10 @@
         "multiplier": 0.0,
         "negative_month_streak": 0,
         "current_drawdown": 0.0,
-        "current_drawdown_to_profit": 0.0,
+        "current_drawdown_to_peak": 0.0,
+        "peak_equity": 0.0,
+        "current_equity": 0.0,
+        "path_grain": "monthly",
         "reason": "No settled official-SP monthly return series is available yet."
       },
       "action": "WAIT_FOR_ELIGIBLE_OFFICIAL_POOL",
@@ -248,6 +316,127 @@
         "ridge": 35.0,
         "market_residual_cap": 0.08,
         "max_bets_per_day": 1
+      },
+      "risk_control": {
+        "daily_budget_cap": 100.0,
+        "max_single_stake": 10.0,
+        "max_bets_per_day": 1,
+        "uses_only_settled_results": true,
+        "two_negative_months_trigger_cooldown": true
+      }
+    },
+    {
+      "strategy_id": "profit-external-consensus-official-sp-quarter-residual-v1",
+      "name": "Pre-registered external consensus versus executable official-SP challenger",
+      "status": "EXTERNAL_CONSENSUS_PROSPECTIVE_COLLECTING",
+      "historically_supported": true,
+      "official_decision": "OFFICIAL_SP_PROSPECTIVE_BLOCKED",
+      "pool_passed_scorer": 0,
+      "settled_selected_snapshots": 0,
+      "required_settled_selected_snapshots": 200,
+      "active_months": 0,
+      "required_active_months": 6,
+      "official_profit": 0.0,
+      "official_roi_pct": 0.0,
+      "official_max_drawdown": 0.0,
+      "closing_sp_coverage": 0.0,
+      "average_clv": -1.0,
+      "positive_clv_rate": -1.0,
+      "statistical_evidence": {
+        "method": "deterministic settlement-day block bootstrap with paired market calibration",
+        "point_estimates": {
+          "bets": 0,
+          "clv_samples": 0,
+          "probability_samples": 0,
+          "roi_pct": null,
+          "average_clv": null,
+          "model_brier": null,
+          "market_brier": null,
+          "brier_improvement": null,
+          "model_log_loss": null,
+          "market_log_loss": null,
+          "log_loss_improvement": null
+        },
+        "bootstrap": {
+          "iterations": 5000,
+          "seed": 42,
+          "resampling_unit": "settlement_day",
+          "settlement_days": 0,
+          "roi_ci_pct": {
+            "p05": null,
+            "p50": null,
+            "p95": null
+          },
+          "average_clv_ci": {
+            "p05": null,
+            "p50": null,
+            "p95": null
+          },
+          "brier_improvement_ci": {
+            "p05": null,
+            "p50": null,
+            "p95": null
+          },
+          "log_loss_improvement_ci": {
+            "p05": null,
+            "p50": null,
+            "p95": null
+          },
+          "probability_roi_positive": null,
+          "probability_clv_positive": null,
+          "probability_brier_improvement_positive": null,
+          "probability_log_loss_improvement_positive": null
+        },
+        "guardrail": "Each resample draws whole settlement-day cohorts. Model and de-vig market losses are paired on the same immutable selected outcomes."
+      },
+      "official_evidence_failures": [
+        "settled_selected<200",
+        "active_months<6",
+        "official_profit<=0",
+        "positive_months<=negative_months",
+        "closing_sp_coverage<0.8",
+        "average_clv<=0",
+        "positive_clv_rate<0.5"
+      ],
+      "portfolio_risk_control": {
+        "state": "WAITING_FOR_EVIDENCE",
+        "multiplier": 0.0,
+        "negative_month_streak": 0,
+        "current_drawdown": 0.0,
+        "current_drawdown_to_peak": 0.0,
+        "peak_equity": 0.0,
+        "current_equity": 0.0,
+        "path_grain": "monthly",
+        "reason": "No settled official-SP monthly return series is available yet."
+      },
+      "action": "WAIT_FOR_ELIGIBLE_OFFICIAL_POOL",
+      "reason": "The strategy is historically supported, but the current official pool has no eligible scored selections.",
+      "top_blockers": [
+        {
+          "reason": "expected_ev<0.03",
+          "decisions": 50
+        },
+        {
+          "reason": "conservative_ev<0",
+          "decisions": 50
+        },
+        {
+          "reason": "selected_sp_outside_[1.5,6.0]",
+          "decisions": 10
+        }
+      ],
+      "deployment_blockers": [
+        "settled_selections<200",
+        "active_months<6",
+        "elapsed_days<180"
+      ],
+      "selection": {
+        "outcome": "DYNAMIC",
+        "odds_source": "OFFICIAL_SP_EXECUTABLE",
+        "min_predicted_ev": 0.0,
+        "max_bets_per_day": 1,
+        "primary_horizon_minutes": 60,
+        "horizon_tolerance_minutes": 60
       },
       "risk_control": {
         "daily_budget_cap": 100.0,

@@ -114,6 +114,18 @@ def test_fast_config_grid_uses_one_representative_config_per_rule() -> None:
     assert all(config.ridge == 10.0 for config in configs)
 
 
+def test_broad_current_pool_config_requires_prior_market_improvement() -> None:
+    config = _config_grid("AVG_CLOSE", ("USA",), fast=True)[0]
+
+    assert config.residual_cap == 0.03
+    assert config.validation_months == 6
+    assert config.require_probability_improvement is True
+    assert config.min_odds == 1.8
+    assert config.max_odds == 4.0
+    assert config.min_validation_selections == 20
+    assert config.require_validation_tail_edge is True
+
+
 def test_default_specs_include_diagnostic_driven_true_ev_domains() -> None:
     rus = _default_specs_for_league("RUS")
     dnk = _default_specs_for_league("DNK")
@@ -122,6 +134,11 @@ def test_default_specs_include_diagnostic_driven_true_ev_domains() -> None:
     assert AnchoredRuleSpec("RUS", "home", odds_bucket="[2.2,2.8)") in rus
     assert AnchoredRuleSpec("DNK", "draw", odds_bucket="[2.8,3.5)") in dnk
     assert AnchoredRuleSpec("CHN", "draw", market_prob_bucket="[0.28,0.34)") in chn
+
+
+def test_current_pool_specs_are_broad_and_result_independent() -> None:
+    for league in ("USA", "NOR", "BRA"):
+        assert _default_specs_for_league(league) == (AnchoredRuleSpec(league),)
 
 
 def test_run_research_can_filter_rule_labels(monkeypatch) -> None:

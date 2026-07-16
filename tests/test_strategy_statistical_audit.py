@@ -38,3 +38,16 @@ def test_statistical_audit_rejects_tiny_positive_sample(tmp_path):
     assert report["decision"] != "STATISTICALLY_SUPPORTED_RESEARCH_CANDIDATE"
     assert "bets<minimum" in report["decision_reasons"]
     assert "active_months<minimum" in report["decision_reasons"]
+
+
+def test_statistical_audit_rejects_loss_without_crashing(tmp_path):
+    path = tmp_path / "bets.csv"
+    pd.DataFrame([
+        {"bet_date": "2026-01-01", "month": "2026-01", "stake": 10.0, "profit": -10.0},
+        {"bet_date": "2026-02-01", "month": "2026-02", "stake": 10.0, "profit": -10.0},
+    ]).to_csv(path, index=False)
+
+    report = audit_bets_csv(path, iterations=100, seed=7, min_bets=1, min_months=1)
+
+    assert report["decision"] == "REJECT_STATISTICALLY_WEAK"
+    assert "drawdown_to_profit_unavailable" in report["decision_reasons"]

@@ -1,0 +1,99 @@
+{
+  "method": "official-pool-driven market-anchored residual research",
+  "leagues": [
+    "BRA"
+  ],
+  "odds_sources": [
+    "AVG_CLOSE"
+  ],
+  "first_month": "2017-01",
+  "last_month": "2025-12",
+  "fast": true,
+  "rule_labels": [],
+  "results": [
+    {
+      "league": "BRA",
+      "odds_source": "AVG_CLOSE",
+      "rule_spec": "BRA",
+      "label": "AVG_CLOSE_rulesbra_train30_n120_ev0p02_top1_ridge10_cap0.03_val6",
+      "candidate_count": 16488,
+      "selected_candidates": 9,
+      "train_months": 30,
+      "min_train_rows": 120,
+      "min_predicted_ev": 0.02,
+      "ridge": 10.0,
+      "bets": 9,
+      "profit": -54.6,
+      "roi_pct": -60.67,
+      "max_drawdown": 60.0,
+      "positive_months": 2,
+      "negative_months": 5,
+      "positive_seasons": 0,
+      "negative_seasons": 3,
+      "latest_season": "2024-25",
+      "latest_season_bets": 5,
+      "latest_season_profit": -14.6,
+      "window_count": 17,
+      "passed_windows": 0,
+      "active_window_count": 6,
+      "active_passed_windows": 0,
+      "active_pass_rate": 0.0,
+      "decision_reasons": [
+        "bets<150",
+        "profit<=0",
+        "roi<3%",
+        "drawdown>profit",
+        "positive_months<=negative_months",
+        "positive_seasons<=negative_seasons",
+        "latest_season_bets<20",
+        "latest_season_profit<0",
+        "active_pass_rate<0.6"
+      ],
+      "decision": "REJECT_RESEARCH_GATES"
+    }
+  ],
+  "top": [
+    {
+      "league": "BRA",
+      "odds_source": "AVG_CLOSE",
+      "rule_spec": "BRA",
+      "label": "AVG_CLOSE_rulesbra_train30_n120_ev0p02_top1_ridge10_cap0.03_val6",
+      "candidate_count": 16488,
+      "selected_candidates": 9,
+      "train_months": 30,
+      "min_train_rows": 120,
+      "min_predicted_ev": 0.02,
+      "ridge": 10.0,
+      "bets": 9,
+      "profit": -54.6,
+      "roi_pct": -60.67,
+      "max_drawdown": 60.0,
+      "positive_months": 2,
+      "negative_months": 5,
+      "positive_seasons": 0,
+      "negative_seasons": 3,
+      "latest_season": "2024-25",
+      "latest_season_bets": 5,
+      "latest_season_profit": -14.6,
+      "window_count": 17,
+      "passed_windows": 0,
+      "active_window_count": 6,
+      "active_passed_windows": 0,
+      "active_pass_rate": 0.0,
+      "decision_reasons": [
+        "bets<150",
+        "profit<=0",
+        "roi<3%",
+        "drawdown>profit",
+        "positive_months<=negative_months",
+        "positive_seasons<=negative_seasons",
+        "latest_season_bets<20",
+        "latest_season_profit<0",
+        "active_pass_rate<0.6"
+      ],
+      "decision": "REJECT_RESEARCH_GATES"
+    }
+  ],
+  "best_label": "AVG_CLOSE_rulesbra_train30_n120_ev0p02_top1_ridge10_cap0.03_val6",
+  "guardrail": "A candidate marked SHADOW_READY_RESEARCH_CANDIDATE still needs statistical audit, edge calibration, and official-SP prospective validation."
+}

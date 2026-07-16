@@ -9,19 +9,53 @@ type AgentRun = {id: string; status: string; trigger_name: string; started_at: s
 type AgentStatus = {qwen: {configured: boolean; provider: string; model: string; base_host: string}; runs: AgentRun[]};
 type TaskRun = NonNullable<SystemHealth["recentTaskRuns"]>[number];
 type WorkflowItem = {task: string; title: string; description: string; dependsOn?: string};
+type AllocationReadiness = {
+  decision: string;
+  strategies: Array<{
+    strategy_id: string;
+    statistical_evidence?: {
+      point_estimates?: {brier_improvement?: number | null; log_loss_improvement?: number | null};
+      bootstrap?: {
+        settlement_days?: number;
+        roi_ci_pct?: {p05?: number | null};
+        average_clv_ci?: {p05?: number | null};
+      };
+    };
+  }>;
+};
+type ExternalConsensusChallenger = {
+  decision: string;
+  policy: {policy_id: string; registered_at: string};
+  decisions: number;
+  candidate_decisions: number;
+  positive_expected_ev_decisions: number;
+  best_expected_ev: number | null;
+  best_conservative_ev: number | null;
+  expected_ev_gap_to_entry: number | null;
+  primary_horizon_candidates: number;
+  settled_selections: number;
+  elapsed_days: number;
+  decision_reasons: string[];
+  blocker_counts: Array<{reason: string; decisions: number}>;
+};
 
 const WORKFLOW: WorkflowItem[] = [
   {task: "official_sp_sync", title: "官方赛事/SP", description: "中国竞彩网赛事池、状态、官方赔率"},
-  {task: "official_sp_evidence_quality", title: "SP 证据质量", description: "采集新鲜度、临盘覆盖、赛果完整性与时间一致性", dependsOn: "official_sp_sync"},
-  {task: "historical_data_sync", title: "历史库扩充", description: "联赛、全球、国家队历史 CSV 增量归档", dependsOn: "official_sp_sync"},
+  {task: "official_results_sync", title: "官方赛果回填", description: "独立赛果页、90分钟比分、冲突隔离与不可变证据", dependsOn: "official_sp_sync"},
+  {task: "paper_portfolio_settlement", title: "纸面组合结算", description: "用官方赛果和临场SP结算不可变持仓、收益与CLV", dependsOn: "official_results_sync"},
+  {task: "official_sp_evidence_quality", title: "SP 证据质量", description: "采集新鲜度、临盘覆盖、赛果完整性与时间一致性", dependsOn: "paper_portfolio_settlement"},
+  {task: "prospective_research_critical_capture", title: "关键窗口冻结", description: "每15分钟冻结最新可得SP和模型输入，覆盖T-120至T-60主窗口", dependsOn: "official_sp_evidence_quality"},
   {task: "external_odds_news_weather_sync", title: "外部赔率/新闻/天气", description: "The Odds API、新闻、天气与场地元数据", dependsOn: "official_sp_sync"},
+  {task: "historical_data_sync", title: "历史库扩充", description: "联赛、全球、国家队历史 CSV 增量归档", dependsOn: "external_odds_news_weather_sync"},
   {task: "feature_build", title: "球队特征", description: "历史样本、Elo、lambda、source confidence", dependsOn: "historical_data_sync"},
-  {task: "prospective_research_capture", title: "前瞻研究归档", description: "冻结模型、赛前赔率与不可覆盖赛前预测", dependsOn: "feature_build"},
+  {task: "prospective_research_capture", title: "完整前瞻研究归档", description: "小时级特征刷新后冻结模型、赛前赔率与不可覆盖赛前预测", dependsOn: "feature_build"},
+  {task: "external_consensus_challenger_capture", title: "外部共识 Challenger", description: "冻结多家公司去水共识、官方SP、保守EV与真实NO_BET，禁止赛后改规则", dependsOn: "prospective_research_capture"},
   {task: "qwen_news_analysis", title: "Qwen 情报", description: "新闻摘要、伤停与上下文因子", dependsOn: "external_odds_news_weather_sync"},
   {task: "market_bias_shadow_monitor", title: "市场偏差影子验证", description: "冻结规则、影子预测、赛后评估与晋级门", dependsOn: "feature_build"},
   {task: "profit_scorer_official_pool_diagnosis", title: "盈利评分池诊断", description: "检查当前官方比赛是否进入冻结盈利评分器", dependsOn: "feature_build"},
-  {task: "profit_scorer_official_sp_validation", title: "官方 SP 前瞻验证", description: "只用最早赛前 SP，结算 ROI、CLV 与回撤", dependsOn: "profit_scorer_official_pool_diagnosis"},
-  {task: "profit_allocation_readiness", title: "每日资金质量门", description: "证据、CLV、月份、回撤通过后才分配每日预算", dependsOn: "profit_scorer_official_sp_validation"},
+  {task: "profit_scorer_official_sp_validation", title: "官方 SP 前瞻验证", description: "冻结赛前决策；按结算日 Bootstrap ROI/CLV，并与去水市场校准对比", dependsOn: "profit_scorer_official_pool_diagnosis"},
+  {task: "profit_allocation_readiness", title: "每日资金质量门", description: "样本、月份、ROI/CLV 置信下界、相对市场校准与回撤全部通过后才分配预算", dependsOn: "profit_scorer_official_sp_validation"},
+  {task: "paper_portfolio_allocation", title: "纸面组合建仓", description: "按最新可执行SP、四分之一Kelly和每日风险上限写入不可变账本", dependsOn: "profit_allocation_readiness"},
   {task: "backtest_run", title: "自动回测", description: "默认 CSV 回测与指标落库", dependsOn: "feature_build"},
   {task: "model_governance_check", title: "模型治理", description: "Champion/Challenger 检查，不自动替换模型", dependsOn: "backtest_run"},
 ];
@@ -89,6 +123,14 @@ function TaskCards({tasks}:{tasks: Map<string, TaskRun>}) {
 export default function AgentMonitorPage() {
   const {matches, loading, error} = useOfficialMatches();
   const agentStatus = useApi<AgentStatus>("/api/agents/status", {qwen: {configured: false, provider: "", model: "", base_host: ""}, runs: []});
+  const allocationReadiness = useApi<AllocationReadiness>("/api/profit/allocation-readiness", {decision: "NOT_RUN", strategies: []});
+  const consensusChallenger = useApi<ExternalConsensusChallenger>(
+    "/api/research/external-consensus-challenger",
+    {decision: "NOT_RUN", policy: {policy_id: "-", registered_at: ""}, decisions: 0, candidate_decisions: 0,
+      positive_expected_ev_decisions: 0, best_expected_ev: null, best_conservative_ev: null,
+      expected_ev_gap_to_entry: null,
+      primary_horizon_candidates: 0, settled_selections: 0, elapsed_days: 0, decision_reasons: [], blocker_counts: []},
+  );
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [running, setRunning] = useState(false), [message, setMessage] = useState("");
 
@@ -102,6 +144,15 @@ export default function AgentMonitorPage() {
   const failed = WORKFLOW.filter(item => tasks.get(item.task)?.status === "FAILED").length;
   const runningCount = WORKFLOW.filter(item => tasks.get(item.task)?.status === "RUNNING").length;
   const evidence = health?.officialSpEvidenceQuality;
+  const scorerEvidence = health?.profitScorerOfficialSp;
+  const scorerStrategy = allocationReadiness.data.strategies.find(
+    strategy => strategy.statistical_evidence?.bootstrap,
+  ) ?? allocationReadiness.data.strategies[0];
+  const scorerStatistics = scorerStrategy?.statistical_evidence;
+  const scorerBootstrap = scorerStatistics?.bootstrap;
+  const scorerPoint = scorerStatistics?.point_estimates;
+  const pct = (value?: number | null) => value == null ? "-" : `${value.toFixed(2)}%`;
+  const decimal = (value?: number | null) => value == null ? "-" : value.toFixed(4);
 
   const runAgents = async () => {
     setRunning(true); setMessage("正在运行完整 Agent 链路...");
@@ -120,7 +171,7 @@ export default function AgentMonitorPage() {
     <PageHeader title="Agent / Workflow 监控" subtitle="自动化后台服务链路、每一步状态、最近运行记录与 Critic 诊断" />
     <section className="panel" style={{marginBottom: 16}}>
       <div className="panel-heading">
-        <div><h2>自动化服务工作链路</h2><p>服务启动后立即执行；官方 SP 每 15 分钟，其余重任务每小时执行，每一步都写入 task_runs。</p></div>
+        <div><h2>自动化服务工作链路</h2><p>服务启动后立即执行；官方 SP、赛果、证据检查和关键窗口冻结每 15 分钟执行，其余重任务每小时执行，每一步都写入 task_runs。</p></div>
         <button onClick={() => void refreshHealth()}>刷新状态</button>
       </div>
       <section className="summary-strip" style={{padding: 16, margin: 0}}>
@@ -154,6 +205,29 @@ export default function AgentMonitorPage() {
     </section>
 
     <section className="panel" style={{marginBottom: 16}}>
+      <div className="panel-heading"><div><h2>冻结盈利评分决策账本</h2><p>每个开盘快照与 scorer 版本只能冻结一次；阻塞或错过赛前窗口后禁止追溯重算。</p></div></div>
+      <section className="summary-strip" style={{padding: 16, margin: 0}}>
+        <span>任务状态<b>{scorerEvidence?.status ?? "NOT_RUN"}</b></span>
+        <span>统计策略<b>{scorerStrategy?.strategy_id ?? "-"}</b></span>
+        <span>冻结尝试<b>{scorerEvidence?.frozenAttempts ?? 0}</b></span>
+        <span>成功评分<b>{scorerEvidence?.frozenScoredAttempts ?? 0}</b></span>
+        <span>赛前阻塞<b>{scorerEvidence?.frozenBlockedAttempts ?? 0}</b></span>
+        <span>错过赛前<b>{scorerEvidence?.missedPreMatchAttempts ?? 0}</b></span>
+        <span>时间违规<b>{scorerEvidence?.frozenEvidenceTemporalViolations ?? 0}</b></span>
+        <span>通过评分器<b>{scorerEvidence?.selectedSnapshots ?? 0}</b></span>
+        <span>已结算选择<b>{scorerEvidence?.settledSelectedSnapshots ?? 0}</b></span>
+        <span>剩余结算样本<b>{scorerEvidence?.remainingSettledSelected ?? 200}</b></span>
+        <span>结算日组数<b>{scorerBootstrap?.settlement_days ?? 0}</b></span>
+        <span>ROI 95% 下界<b>{pct(scorerBootstrap?.roi_ci_pct?.p05)}</b></span>
+        <span>CLV 95% 下界<b>{decimal(scorerBootstrap?.average_clv_ci?.p05)}</b></span>
+        <span>Brier 相对市场改善<b>{decimal(scorerPoint?.brier_improvement)}</b></span>
+        <span>Log Loss 相对市场改善<b>{decimal(scorerPoint?.log_loss_improvement)}</b></span>
+        <span>准入结论<b>{scorerEvidence?.decision ?? "等待证据"}</b></span>
+      </section>
+      {(scorerEvidence?.decisionReasons?.length ?? 0) > 0 && <p style={{padding: "0 16px", color: "var(--muted)"}}>阻塞原因：{scorerEvidence?.decisionReasons.join("；")}</p>}
+    </section>
+
+    <section className="panel" style={{marginBottom: 16}}>
       <div className="panel-heading"><div><h2>前瞻确认研究</h2><p>算法冻结后只追加赛前预测；达到注册样本与时间门槛后仅检验一次。</p></div></div>
       <section className="summary-strip" style={{padding: 16, margin: 0}}>
         <span>状态<b>{health?.prospectiveResearch?.status ?? "NOT_REGISTERED"}</b></span>
@@ -163,6 +237,25 @@ export default function AgentMonitorPage() {
         <span>剩余天数<b>{health?.prospectiveResearch?.remainingDays ?? 0}</b></span>
         <span>确认结论<b>{health?.prospectiveResearch?.confirmationDecision ?? "尚未执行"}</b></span>
       </section>
+    </section>
+
+    <section className="panel" style={{marginBottom: 16}}>
+      <div className="panel-heading"><div><h2>外部市场共识 Challenger</h2><p>用同一赛前时刻的多家公司去水概率评估官方 SP；政策和每次 CANDIDATE / NO_BET 均不可变。</p></div></div>
+      <section className="summary-strip" style={{padding: 16, margin: 0}}>
+        <span>状态<b>{consensusChallenger.data.decision}</b></span>
+        <span>冻结决策<b>{consensusChallenger.data.decisions}</b></span>
+        <span>候选决策<b>{consensusChallenger.data.candidate_decisions}</b></span>
+        <span>点估计正 EV<b>{consensusChallenger.data.positive_expected_ev_decisions}</b></span>
+        <span>最佳点估计 EV<b>{pct(consensusChallenger.data.best_expected_ev == null ? null : consensusChallenger.data.best_expected_ev * 100)}</b></span>
+        <span>最佳保守 EV<b>{pct(consensusChallenger.data.best_conservative_ev == null ? null : consensusChallenger.data.best_conservative_ev * 100)}</b></span>
+        <span>距准入门槛<b>{pct(consensusChallenger.data.expected_ev_gap_to_entry == null ? null : consensusChallenger.data.expected_ev_gap_to_entry * 100)}</b></span>
+        <span>主窗口候选<b>{consensusChallenger.data.primary_horizon_candidates}</b></span>
+        <span>已结算选择<b>{consensusChallenger.data.settled_selections}</b></span>
+        <span>注册天数<b>{consensusChallenger.data.elapsed_days} / 180</b></span>
+      </section>
+      <p style={{padding: "0 16px", color: "var(--muted)"}}>
+        当前主要阻断：{consensusChallenger.data.blocker_counts.slice(0, 4).map(item => `${item.reason} (${item.decisions})`).join("；") || "等待首次采集"}
+      </p>
     </section>
 
     <section className="panel" style={{marginBottom: 16}}>

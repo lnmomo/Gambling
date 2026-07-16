@@ -19,6 +19,78 @@ TEAM_ALIASES = {
     "墨西哥":"mexico", "韩国":"southkorea", "比利时":"belgium", "乌拉圭":"uruguay",
 }
 
+# Source pages use abbreviated Chinese club names while The Odds API uses the
+# clubs' international names. Unicode escapes keep this mapping encoding-safe.
+TEAM_ALIASES.update({
+    "\u74e6\u52d2\u4f26\u52a0": "valerenga",
+    "\u5965\u52d2\u677e": "alesund",
+    "\u535a\u5854\u5f17\u6208": "botafogo",
+    "\u6851\u6258\u65af": "santos",
+    "\u7ef4\u591a\u5229\u4e9a": "vitoria",
+    "\u8fbe\u4f3d\u9a6c": "vascodagama",
+    "\u8499\u7279\u5229\u5c14": "cfmontreal",
+    "\u591a\u4f26\u591a": "torontofc",
+    "\u829d\u52a0\u54e5": "chicagofire",
+    "\u6e29\u54e5\u534e": "vancouverwhitecaps",
+    "\u5723\u8def\u6613\u57ce": "stlouiscitysc",
+    "\u582a\u8428\u65af\u57ce": "sportingkansascity",
+    "\u897f\u96c5\u56fe": "seattlesounders",
+    "\u6ce2\u7279\u5170": "portlandtimbers",
+    "\u54e5\u5fb7\u5821": "ifkgoteborg",
+    "\u5e03\u9c81\u9a6c\u6ce2": "brommapojkarna",
+    "\u7c73\u4e9a\u5c14\u6bd4": "mjallby",
+    "\u97e6\u65af\u7279\u7f57": "vasterassk",
+    "\u535a\u5fb7\u95ea\u8000": "bodoglimt",
+    "\u8153\u7279\u70c8": "fredrikstad",
+    "\u5df4\u4f0a\u4e9a": "bahia",
+    "\u6c99\u4f69\u79d1": "chapecoense",
+    "\u5f17\u9c81\u7c73\u5ae9": "fluminense",
+    "\u5e03\u62c9\u5e72rb": "redbullbragantino",
+    "\u7c73\u62c9\u7d22\u5c14": "mirassol",
+    "\u683c\u96f7\u7c73\u5965": "gremio",
+    "\u7eb3\u4ec0\u7ef4\u5c14": "nashvillesc",
+    "\u4e9a\u7279\u8054": "atlantaunited",
+})
+
+LEAGUE_SPORT_KEYS = {
+    "\u4e16\u754c\u676f": "soccer_fifa_world_cup",
+    "\u5df4\u7532": "soccer_brazil_campeonato",
+    "\u5df4\u897f\u7532": "soccer_brazil_campeonato",
+    "\u7f8e\u804c": "soccer_usa_mls",
+    "mls": "soccer_usa_mls",
+    "\u632a\u8d85": "soccer_norway_eliteserien",
+    "\u745e\u8d85": "soccer_sweden_allsvenskan",
+    "\u82ac\u8d85": "soccer_finland_veikkausliiga",
+    "\u97e9\u804c": "soccer_korea_kleague1",
+    "\u82f1\u8d85": "soccer_epl",
+    "\u82f1\u51a0": "soccer_efl_champ",
+    "\u82f1\u7532": "soccer_england_league1",
+    "\u82f1\u4e59": "soccer_england_league2",
+    "\u82f1\u8054\u676f": "soccer_england_efl_cup",
+    "\u897f\u7532": "soccer_spain_la_liga",
+    "\u5fb7\u7532": "soccer_germany_bundesliga",
+    "\u5fb7\u4e59": "soccer_germany_bundesliga2",
+    "\u5fb7\u4e19": "soccer_germany_liga3",
+    "\u5fb7\u56fd\u676f": "soccer_germany_dfb_pokal",
+    "\u610f\u7532": "soccer_italy_serie_a",
+    "\u6cd5\u7532": "soccer_france_ligue_one",
+    "\u8377\u7532": "soccer_netherlands_eredivisie",
+    "\u82cf\u8d85": "soccer_spl",
+    "\u6bd4\u7532": "soccer_belgium_first_div",
+    "\u5965\u7532": "soccer_austria_bundesliga",
+    "\u4e39\u8d85": "soccer_denmark_superliga",
+    "\u745e\u58eb\u8d85": "soccer_switzerland_superleague",
+    "\u4fc4\u8d85": "soccer_russia_premier_league",
+    "\u58a8\u8d85": "soccer_mexico_ligamx",
+    "\u4e2d\u8d85": "soccer_china_superleague",
+    "\u963f\u7532": "soccer_argentina_primera_division",
+    "\u5df4\u4e59": "soccer_brazil_serie_b",
+    "\u667a\u7532": "soccer_chile_campeonato",
+    "\u745e\u5178\u7532": "soccer_sweden_superettan",
+    "\u89e3\u653e\u8005\u676f": "soccer_conmebol_copa_libertadores",
+    "\u5357\u7f8e\u676f": "soccer_conmebol_copa_sudamericana",
+}
+
 
 def normalize_team(name: str) -> str:
     compact = re.sub(r"[^a-z0-9\u4e00-\u9fff]", "", name.lower())
@@ -32,7 +104,16 @@ class OddsApiClient:
     def configured(self) -> bool:
         return bool(settings.odds_api_key)
 
-    def events(self) -> tuple[list[dict[str, Any]], dict[str, str]]:
+    @staticmethod
+    def sport_keys_for_leagues(leagues: set[str]) -> tuple[str, ...]:
+        keys = {
+            LEAGUE_SPORT_KEYS[compact]
+            for league in leagues
+            if (compact := re.sub(r"\s+", "", str(league).strip().lower())) in LEAGUE_SPORT_KEYS
+        }
+        return tuple(sorted(keys))
+
+    def events(self, leagues: set[str] | None = None) -> tuple[list[dict[str, Any]], dict[str, str]]:
         if not self.configured():
             return [], {}
         self.warnings = []
@@ -43,8 +124,11 @@ class OddsApiClient:
             settings.enrichment_timeout_seconds,
         )
         active_keys = {item.get("key") for item in sports if item.get("active")}
-        selected = [sport for sport in settings.odds_api_sport_keys if sport in active_keys]
-        missing = [sport for sport in settings.odds_api_sport_keys if sport not in active_keys]
+        configured = settings.odds_api_sport_keys
+        derived = self.sport_keys_for_leagues(leagues or set())
+        requested = derived if settings.odds_api_auto_sport_keys and derived else configured
+        selected = [sport for sport in requested if sport in active_keys]
+        missing = [sport for sport in requested if sport not in active_keys]
         if missing:
             self.warnings.append("The Odds API 当前无可用项目: " + ", ".join(missing))
         if not selected:

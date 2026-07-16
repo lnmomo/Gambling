@@ -1,0 +1,196 @@
+{
+  "method": "current-pool representative-price multi-source evidence gate",
+  "generated_at": "2026-07-16T03:57:05.545439+00:00",
+  "root": "reports\\current_pool_no_leak_20260716",
+  "required_price_sources": [
+    "AVG_CLOSE",
+    "PS_CLOSE"
+  ],
+  "excluded_promotion_sources": [
+    "MAX_CLOSE"
+  ],
+  "historical_price_semantics": "AVG_CLOSE and PS_CLOSE are representative historical market prices, not proof that the official SP was executable at decision time.",
+  "thresholds": {
+    "min_bets": 200,
+    "min_active_windows": 5,
+    "min_active_pass_rate": 0.5,
+    "min_roi_pct": 3.0
+  },
+  "official_sp_quality_decision": "EVIDENCE_COLLECTING",
+  "domain_count": 3,
+  "promoted_domains": [],
+  "awaiting_official_sp_domains": [],
+  "domains": [
+    {
+      "league": "BRA",
+      "decision": "REJECTED_HISTORICAL_EVIDENCE",
+      "historical_passed": false,
+      "official_sp_evidence_ready": false,
+      "missing_sources": [],
+      "sources": [
+        {
+          "source": "AVG_CLOSE",
+          "passed": false,
+          "reasons": [
+            "bets<minimum",
+            "active_windows<minimum",
+            "active_pass_rate<minimum",
+            "profit<=0",
+            "roi<minimum",
+            "statistical_audit_not_supported",
+            "calibrated_edge_not_confirmed"
+          ],
+          "walk_forward": {
+            "bets": 182,
+            "profit": -5.63,
+            "roi_pct": -3.09,
+            "active_window_count": 2,
+            "active_passed_windows": 0,
+            "active_pass_rate": 0.0
+          },
+          "statistical_decision": "REJECT_STATISTICALLY_WEAK",
+          "bootstrap_roi_p05": -10.95,
+          "calibration_decision": "NO_CALIBRATED_EDGE",
+          "conservative_edge": -0.0851
+        },
+        {
+          "source": "PS_CLOSE",
+          "passed": false,
+          "reasons": [
+            "active_windows<minimum",
+            "active_pass_rate<minimum",
+            "roi<minimum",
+            "statistical_audit_not_supported",
+            "calibrated_edge_not_confirmed"
+          ],
+          "walk_forward": {
+            "bets": 296,
+            "profit": 4.83,
+            "roi_pct": 1.63,
+            "active_window_count": 4,
+            "active_passed_windows": 1,
+            "active_pass_rate": 0.25
+          },
+          "statistical_decision": "REJECT_STATISTICALLY_WEAK",
+          "bootstrap_roi_p05": -8.76,
+          "calibration_decision": "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE",
+          "conservative_edge": -0.0466
+        }
+      ]
+    },
+    {
+      "league": "NOR",
+      "decision": "REJECTED_HISTORICAL_EVIDENCE",
+      "historical_passed": false,
+      "official_sp_evidence_ready": false,
+      "missing_sources": [],
+      "sources": [
+        {
+          "source": "AVG_CLOSE",
+          "passed": false,
+          "reasons": [
+            "bets<minimum",
+            "active_windows<minimum",
+            "active_pass_rate<minimum",
+            "profit<=0",
+            "roi<minimum",
+            "statistical_audit_not_supported",
+            "calibrated_edge_not_confirmed"
+          ],
+          "walk_forward": {
+            "bets": 119,
+            "profit": -19.97,
+            "roi_pct": -16.78,
+            "active_window_count": 3,
+            "active_passed_windows": 0,
+            "active_pass_rate": 0.0
+          },
+          "statistical_decision": "REJECT_STATISTICALLY_WEAK",
+          "bootstrap_roi_p05": -39.17,
+          "calibration_decision": "NO_CALIBRATED_EDGE",
+          "conservative_edge": -0.1259
+        },
+        {
+          "source": "PS_CLOSE",
+          "passed": false,
+          "reasons": [
+            "bets<minimum",
+            "active_windows<minimum",
+            "active_pass_rate<minimum",
+            "statistical_audit_not_supported",
+            "calibrated_edge_not_confirmed"
+          ],
+          "walk_forward": {
+            "bets": 139,
+            "profit": 17.76,
+            "roi_pct": 12.78,
+            "active_window_count": 3,
+            "active_passed_windows": 1,
+            "active_pass_rate": 0.3333
+          },
+          "statistical_decision": "POSITIVE_BUT_NOT_STATISTICALLY_CONFIRMED",
+          "bootstrap_roi_p05": -2.05,
+          "calibration_decision": "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE",
+          "conservative_edge": -0.0175
+        }
+      ]
+    },
+    {
+      "league": "USA",
+      "decision": "REJECTED_HISTORICAL_EVIDENCE",
+      "historical_passed": false,
+      "official_sp_evidence_ready": false,
+      "missing_sources": [],
+      "sources": [
+        {
+          "source": "AVG_CLOSE",
+          "passed": false,
+          "reasons": [
+            "bets<minimum",
+            "active_windows<minimum",
+            "active_pass_rate<minimum",
+            "profit<=0",
+            "roi<minimum",
+            "statistical_audit_not_supported",
+            "calibrated_edge_not_confirmed"
+          ],
+          "walk_forward": {
+            "bets": 88,
+            "profit": -21.0,
+            "roi_pct": -23.86,
+            "active_window_count": 3,
+            "active_passed_windows": 0,
+            "active_pass_rate": 0.0
+          },
+          "statistical_decision": "REJECT_STATISTICALLY_WEAK",
+          "bootstrap_roi_p05": -43.25,
+          "calibration_decision": "NO_CALIBRATED_EDGE",
+          "conservative_edge": -0.173
+        },
+        {
+          "source": "PS_CLOSE",
+          "passed": false,
+          "reasons": [
+            "active_pass_rate<minimum",
+            "roi<minimum",
+            "statistical_audit_not_supported",
+            "calibrated_edge_not_confirmed"
+          ],
+          "walk_forward": {
+            "bets": 599,
+            "profit": 2.18,
+            "roi_pct": 0.36,
+            "active_window_count": 6,
+            "active_passed_windows": 1,
+            "active_pass_rate": 0.1667
+          },
+          "statistical_decision": "REJECT_STATISTICALLY_WEAK",
+          "bootstrap_roi_p05": -6.06,
+          "calibration_decision": "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE",
+          "conservative_edge": -0.0339
+        }
+      ]
+    }
+  ],
+  "guardrail": "A domain must pass independent AVG_CLOSE and PS_CLOSE no-lookahead, statistical, and calibration checks before official-SP shadow validation. MAX_CLOSE is never promotion evidence."
+}

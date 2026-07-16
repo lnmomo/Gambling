@@ -48,6 +48,45 @@ def test_official_sp_tasks_use_fast_refresh_without_accelerating_heavy_agents(tm
     assert scheduler._interval_for("historical_data_sync") == 3600
 
 
+def test_hourly_pipeline_runs_dependencies_before_prospective_capture(tmp_path, monkeypatch):
+    database = Database(Path(tmp_path) / "scheduler-pipeline.db")
+    database.initialize()
+    scheduler = BackgroundAgentScheduler(
+        Repository(database), TaskRunnerService(database), interval_seconds=60
+    )
+    seen: list[str] = []
+    scheduler.stop_event.wait = lambda _seconds: True
+    monkeypatch.setattr(
+        scheduler,
+        "_run_task",
+        lambda task_name, _action: seen.append(task_name),
+    )
+    tasks = [item for item in scheduler._tasks() if item[0] != "official_sp_sync"]
+
+    scheduler._pipeline_loop(tasks, 60)
+
+    assert seen.index("external_odds_news_weather_sync") < seen.index("historical_data_sync")
+    assert seen.index("historical_data_sync") < seen.index("feature_build")
+    assert seen.index("feature_build") < seen.index("prospective_research_capture")
+    assert seen.index("prospective_research_capture") < seen.index("external_consensus_challenger_capture")
+    assert seen.index("external_consensus_challenger_capture") < seen.index("profit_scorer_official_sp_validation")
+    assert seen.index("prospective_research_capture") < seen.index("profit_scorer_official_sp_validation")
+
+
+def test_qwen_terminal_auth_and_quota_errors_trip_circuit_breaker(tmp_path):
+    database = Database(Path(tmp_path) / "scheduler-qwen-breaker.db")
+    database.initialize()
+    scheduler = BackgroundAgentScheduler(
+        Repository(database), TaskRunnerService(database), interval_seconds=60
+    )
+
+    assert scheduler._terminal_qwen_error(
+        "Qwen API HTTP 403: AllocationQuota.FreeTierOnly"
+    )
+    assert scheduler._terminal_qwen_error("Qwen API HTTP 401: Unauthorized")
+    assert not scheduler._terminal_qwen_error("temporary connection timeout")
+
+
 def test_official_sp_quality_runs_after_each_official_sync(tmp_path, monkeypatch):
     database = Database(Path(tmp_path) / "scheduler-quality-order.db")
     database.initialize()
@@ -60,6 +99,10 @@ def test_official_sp_quality_runs_after_each_official_sync(tmp_path, monkeypatch
         lambda _repository: SimpleNamespace(sync=lambda: {"status": "success", "records": 3}),
     )
     monkeypatch.setattr(
+        "football_agents.scheduler.OfficialResultService",
+        lambda _repository: SimpleNamespace(sync=lambda: {"status": "success", "records": 2}),
+    )
+    monkeypatch.setattr(
         scheduler,
         "_run_task",
         lambda task_name, _action: child_tasks.append(task_name),
@@ -68,7 +111,12 @@ def test_official_sp_quality_runs_after_each_official_sync(tmp_path, monkeypatch
     report = scheduler._sync_official()
 
     assert report["status"] == "success"
-    assert child_tasks == ["official_sp_evidence_quality"]
+    assert child_tasks == [
+        "official_results_sync",
+        "paper_portfolio_settlement",
+        "official_sp_evidence_quality",
+        "prospective_research_critical_capture",
+    ]
 
 
 def test_background_profit_scorer_validation_uses_configured_artifact(tmp_path, monkeypatch):

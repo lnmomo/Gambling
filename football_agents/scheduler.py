@@ -9,14 +9,16 @@ from typing import Any, Callable
 from .backtesting import BacktestEngine
 from .config import settings
 from .features import build_features_for_official_matches
+from .external_consensus_challenger import ExternalConsensusChallengerService
 from .historical_agent import HistoricalCollectionAgent
 from .integrations import DataEnrichmentService
 from .international_history_agent import InternationalHistoryAgent
 from .llm import LLMNewsAgent
 from .market_bias_monitor import MarketBiasMonitorService
-from .official_data import OfficialDataService
+from .official_data import OfficialDataService, OfficialResultService
 from .official_sp_evidence_quality import build_official_sp_evidence_quality
 from .profit_allocation_readiness import build_profit_allocation_readiness
+from .paper_portfolio import PaperPortfolioService
 from .profit_scorer_official import diagnose_official_profit_scorer_pool
 from .profit_scorer_prospective import validate_profit_scorer_on_official_sp
 from .repository import Repository
@@ -44,16 +46,26 @@ class BackgroundAgentScheduler:
     def start(self) -> None:
         if self.threads:
             return
-        for task_name, action in self._tasks():
-            interval_seconds = self._interval_for(task_name)
-            thread = threading.Thread(
-                target=self._loop,
-                name=f"background-{task_name}",
-                args=(task_name, action, interval_seconds),
-                daemon=True,
-            )
-            thread.start()
-            self.threads.append(thread)
+        tasks = self._tasks()
+        official_task = next(item for item in tasks if item[0] == "official_sp_sync")
+        official_thread = threading.Thread(
+            target=self._loop,
+            name="background-official_sp_sync",
+            args=(*official_task, self._interval_for(official_task[0])),
+            daemon=True,
+        )
+        official_thread.start()
+        self.threads.append(official_thread)
+
+        hourly_tasks = [item for item in tasks if item[0] != "official_sp_sync"]
+        hourly_thread = threading.Thread(
+            target=self._pipeline_loop,
+            name="background-hourly-agent-pipeline",
+            args=(hourly_tasks, self.interval_seconds),
+            daemon=True,
+        )
+        hourly_thread.start()
+        self.threads.append(hourly_thread)
 
     def stop(self) -> None:
         self.stop_event.set()
@@ -61,6 +73,15 @@ class BackgroundAgentScheduler:
     def _loop(self, task_name: str, action: TaskAction, interval_seconds: int) -> None:
         while not self.stop_event.is_set():
             self._run_task(task_name, action)
+            if self.stop_event.wait(interval_seconds):
+                break
+
+    def _pipeline_loop(self, tasks: list[tuple[str, TaskAction]], interval_seconds: int) -> None:
+        while not self.stop_event.is_set():
+            for task_name, action in tasks:
+                if self.stop_event.is_set():
+                    return
+                self._run_task(task_name, action)
             if self.stop_event.wait(interval_seconds):
                 break
 
@@ -94,23 +115,42 @@ class BackgroundAgentScheduler:
         tasks = [
             ("official_sp_sync", self._sync_official),
             ("external_odds_news_weather_sync", self._sync_external_news_weather),
-            ("feature_build", self._build_features),
-            ("qwen_news_analysis", self._analyze_news),
             ("historical_data_sync", self._sync_history),
-            ("backtest_run", self._run_backtest),
-            ("model_governance_check", self._check_model_governance),
-            ("market_bias_shadow_monitor", self._refresh_market_bias_monitor),
-            ("profit_scorer_official_pool_diagnosis", self._diagnose_profit_scorer_official_pool),
-            ("profit_scorer_official_sp_validation", self._validate_profit_scorer_official_sp),
+            ("feature_build", self._build_features),
         ]
         if settings.enable_prospective_research:
             tasks.append(("prospective_research_capture", self._capture_prospective_research))
+            tasks.append(("external_consensus_challenger_capture", self._capture_external_consensus_challenger))
+        tasks.extend([
+            ("qwen_news_analysis", self._analyze_news),
+            ("market_bias_shadow_monitor", self._refresh_market_bias_monitor),
+            ("profit_scorer_official_pool_diagnosis", self._diagnose_profit_scorer_official_pool),
+            ("profit_scorer_official_sp_validation", self._validate_profit_scorer_official_sp),
+            ("backtest_run", self._run_backtest),
+            ("model_governance_check", self._check_model_governance),
+        ])
         return tasks
 
     def _sync_official(self) -> dict[str, Any]:
         report = OfficialDataService(self.repository).sync()
+        self._run_task("official_results_sync", self._sync_official_results)
+        self._run_task("paper_portfolio_settlement", self._settle_paper_portfolio)
         self._run_task("official_sp_evidence_quality", self._check_official_sp_evidence_quality)
+        if settings.enable_prospective_research:
+            self._run_task("prospective_research_critical_capture", self._capture_prospective_research)
         return report
+
+    def _sync_official_results(self) -> dict[str, Any]:
+        report = OfficialResultService(self.repository).sync()
+        local_rows = sum(int(report.get(key, 0) or 0) for key in (
+            "settled", "confirmed", "duplicates", "conflicts", "unmatched", "ambiguous", "skipped",
+        ))
+        return {
+            "matches": local_rows,
+            "evaluated": report.get("settled", 0) + report.get("confirmed", 0),
+            "warnings": report.get("warnings", []),
+            **report,
+        }
 
     def _check_official_sp_evidence_quality(self) -> dict[str, Any]:
         report = build_official_sp_evidence_quality(self.repository.db)
@@ -153,8 +193,19 @@ class BackgroundAgentScheduler:
                 result = agent.analyze(match["id"], force=False)
                 summary["cached" if result["status"] == "cached" else "analyzed"] += 1
             except Exception as exc:
-                summary["errors"].append(f'{match["official_match_id"]}: {exc}')
+                message = f'{match["official_match_id"]}: {exc}'
+                summary["errors"].append(message)
+                if self._terminal_qwen_error(str(exc)):
+                    raise RuntimeError(f"Qwen authentication or quota unavailable; {message}") from exc
         return summary
+
+    @staticmethod
+    def _terminal_qwen_error(message: str) -> bool:
+        return any(marker in message for marker in (
+            "AllocationQuota.",
+            "Qwen API HTTP 401",
+            "Qwen API HTTP 403",
+        ))
 
     def _sync_history(self) -> dict[str, Any]:
         history = HistoricalCollectionAgent(self.repository)
@@ -239,6 +290,7 @@ class BackgroundAgentScheduler:
     def _refresh_profit_allocation_readiness(self) -> dict[str, Any]:
         report = build_profit_allocation_readiness(settings.profit_daily_budget)
         self._write_report(settings.profit_allocation_readiness_report_path, report)
+        self._run_task("paper_portfolio_allocation", self._allocate_paper_portfolio)
         return {
             "matches": len(report.get("strategies", [])),
             "predictions": len(report.get("allocations", [])),
@@ -247,14 +299,38 @@ class BackgroundAgentScheduler:
             "report": report,
         }
 
+    def _allocate_paper_portfolio(self) -> dict[str, Any]:
+        service = PaperPortfolioService(self.repository.db)
+        report = service.allocate(daily_budget=settings.profit_daily_budget)
+        self._write_report(settings.paper_portfolio_report_path, service.summary())
+        return {
+            "matches": report.get("positions_created", 0),
+            "predictions": report.get("positions_created", 0),
+            "warnings": [] if report.get("status") in {"allocated", "duplicate"} else [str(report.get("status"))],
+            **report,
+        }
+
+    def _settle_paper_portfolio(self) -> dict[str, Any]:
+        service = PaperPortfolioService(self.repository.db)
+        report = service.settle()
+        self._write_report(settings.paper_portfolio_report_path, service.summary())
+        return report
+
     def _capture_prospective_research(self) -> dict[str, Any]:
         return ProspectiveResearchService(self.repository.db, self.repository).capture(settings.agent_match_limit)
 
+    def _capture_external_consensus_challenger(self) -> dict[str, Any]:
+        result = ExternalConsensusChallengerService(self.repository.db, self.repository).capture(
+            settings.agent_match_limit
+        )
+        self._write_report(settings.external_consensus_challenger_report_path, result["report"])
+        return {
+            **result,
+            "snapshots": result.get("decisions", 0),
+        }
+
     def _target_matches(self, limit: int) -> list[dict[str, Any]]:
-        rows = self.repository.list_official_matches()
-        return sorted(rows, key=lambda item: (
-            item["status"] not in {"scheduled", "live"}, item["kickoff_time"]
-        ))[:max(1, min(limit, 100))]
+        return self.repository.list_active_official_matches(max(1, min(limit, 100)))
 
     @staticmethod
     def _write_report(path_text: str, report: dict[str, Any]) -> None:

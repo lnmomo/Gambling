@@ -6,6 +6,7 @@ from football_agents.profit_strategy_registry import (
     MARKET_ANCHORED_I2_AVG_CLOSE_RESEARCH_ID,
     MARKET_ANCHORED_I2_DRAWS_STRATEGY_ID,
     MARKET_ANCHORED_SP1_HOME_RESEARCH_ID,
+    EXTERNAL_CONSENSUS_CHALLENGER_STRATEGY_ID,
     build_market_anchored_i2_avg_close_research_package,
     build_market_anchored_i2_strategy_package,
     build_market_anchored_sp1_home_research_package,
@@ -221,6 +222,7 @@ def test_list_profit_strategy_packages_includes_registered_candidates():
     assert MARKET_ANCHORED_I2_DRAWS_STRATEGY_ID in strategy_ids
     assert MARKET_ANCHORED_I2_AVG_CLOSE_RESEARCH_ID in strategy_ids
     assert MARKET_ANCHORED_SP1_HOME_RESEARCH_ID in strategy_ids
+    assert EXTERNAL_CONSENSUS_CHALLENGER_STRATEGY_ID in strategy_ids
 
 
 def test_build_sp1_home_package_preserves_shadow_only_calibration_state(tmp_path):

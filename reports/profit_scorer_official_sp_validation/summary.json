@@ -1,13 +1,20 @@
 {
   "method": "prospective official-SP validation for market-anchored profit scorer",
-  "created_at": "2026-07-16T03:10:58.034338+00:00",
+  "created_at": "2026-07-16T06:41:18.728542+00:00",
   "scorer_artifact": "reports\\market_anchored_sp1_home_avg_close_shadow_scorer_v1\\scorer.json",
   "scorer_artifact_sha256": "dfb6d7d487a9fe68240a1e9d6c112241a7b15563db8407489481c33df831ef0d",
   "feature_engine": "market-anchored-research-parity-v1",
+  "capture_as_of": "2026-07-16T06:41:18.716012+00:00",
+  "immutable_attempts_written": 0,
   "immutable_evidence_written": 0,
-  "opening_pre_match_snapshots": 63,
-  "valid_three_way_snapshots": 63,
-  "settled_opening_snapshots": 34,
+  "opening_pre_match_snapshots": 69,
+  "valid_three_way_snapshots": 69,
+  "settled_opening_snapshots": 53,
+  "frozen_attempts": 69,
+  "frozen_scored_attempts": 0,
+  "frozen_blocked_attempts": 16,
+  "missed_pre_match_attempts": 53,
+  "frozen_evidence_temporal_violations": 0,
   "scored_snapshots": 0,
   "selected_snapshots": 0,
   "settled_selected_snapshots": 0,
@@ -17,6 +24,53 @@
   "closing_sp_coverage": 0.0,
   "average_clv": null,
   "positive_clv_rate": null,
+  "statistical_evidence": {
+    "method": "deterministic settlement-day block bootstrap with paired market calibration",
+    "point_estimates": {
+      "bets": 0,
+      "clv_samples": 0,
+      "probability_samples": 0,
+      "roi_pct": null,
+      "average_clv": null,
+      "model_brier": null,
+      "market_brier": null,
+      "brier_improvement": null,
+      "model_log_loss": null,
+      "market_log_loss": null,
+      "log_loss_improvement": null
+    },
+    "bootstrap": {
+      "iterations": 5000,
+      "seed": 42,
+      "resampling_unit": "settlement_day",
+      "settlement_days": 0,
+      "roi_ci_pct": {
+        "p05": null,
+        "p50": null,
+        "p95": null
+      },
+      "average_clv_ci": {
+        "p05": null,
+        "p50": null,
+        "p95": null
+      },
+      "brier_improvement_ci": {
+        "p05": null,
+        "p50": null,
+        "p95": null
+      },
+      "log_loss_improvement_ci": {
+        "p05": null,
+        "p50": null,
+        "p95": null
+      },
+      "probability_roi_positive": null,
+      "probability_clv_positive": null,
+      "probability_brier_improvement_positive": null,
+      "probability_log_loss_improvement_positive": null
+    },
+    "guardrail": "Each resample draws whole settlement-day cohorts. Model and de-vig market losses are paired on the same immutable selected outcomes."
+  },
   "winning_count": 0,
   "profit": 0,
   "roi_pct": 0.0,
@@ -25,22 +79,27 @@
   "positive_months": 0,
   "negative_months": 0,
   "monthly": [],
+  "daily": [],
   "blocker_counts": [
     {
-      "reason": "league_not_sp1",
-      "snapshots": 63
+      "reason": "capture_started_at_or_after_kickoff",
+      "snapshots": 53
     },
     {
-      "reason": "home_market_probability_below_0.55",
-      "snapshots": 43
+      "reason": "league_not_sp1",
+      "snapshots": 16
     },
     {
       "reason": "home_history<10:0",
-      "snapshots": 24
+      "snapshots": 11
     },
     {
       "reason": "away_history<10:0",
-      "snapshots": 24
+      "snapshots": 11
+    },
+    {
+      "reason": "home_market_probability_below_0.55",
+      "snapshots": 9
     }
   ],
   "decision": "OFFICIAL_SP_PROSPECTIVE_BLOCKED",
@@ -51,5 +110,5 @@
     "positive_months<=negative_months"
   ],
   "selected": [],
-  "guardrail": "Selection uses only the earliest pre-match official SP snapshot; outcome is used only after settlement."
+  "guardrail": "Each opening snapshot and scorer artifact receives one immutable pre-match freeze attempt. Settlement reads frozen evidence only; blocked or missed snapshots can never be rescored retrospectively."
 }

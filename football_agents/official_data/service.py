@@ -26,7 +26,7 @@ class OfficialDataService:
 
     def sync(self, force: bool = False) -> dict[str, Any]:
         with self._lock:
-            latest = self.repository.latest_fetch_log()
+            latest = self.repository.latest_fetch_log(settings.official_source_url)
             if latest and latest["success"] and not force:
                 age = datetime.now(timezone.utc) - datetime.fromisoformat(latest["fetched_at"])
                 if age.total_seconds() < settings.official_min_sync_interval_seconds:
@@ -106,7 +106,7 @@ class OfficialDataService:
         }
 
     def status(self) -> dict[str, Any]:
-        latest = self.repository.latest_fetch_log()
+        latest = self.repository.latest_fetch_log(settings.official_source_url)
         return {"source": "中国竞彩网", "source_url": settings.official_source_url,
                 "browser_path": settings.official_browser_path, "latest": latest,
                 "recent_logs": self.repository.list_fetch_logs(10),

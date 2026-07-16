@@ -47,7 +47,18 @@ export type SystemHealth = {
   };
   profitScorerOfficialSp?: {
     status: string;
+    poolDiagnosisStatus?: string;
+    poolScannedMatches?: number;
+    poolScoredMatches?: number;
+    poolPassedScorer?: number;
+    poolBlockers?: string[];
+    poolLastRunAt?: string | null;
     openingPreMatchSnapshots: number;
+    frozenAttempts: number;
+    frozenScoredAttempts: number;
+    frozenBlockedAttempts: number;
+    missedPreMatchAttempts: number;
+    frozenEvidenceTemporalViolations: number;
     scoredSnapshots: number;
     selectedSnapshots: number;
     settledSelectedSnapshots: number;

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 from datetime import datetime, timezone, timedelta
+from pathlib import Path
 from typing import Any
 
 from .config import settings
@@ -28,6 +30,13 @@ def _sync_status(last_success_at: str | None, refresh_minutes: int, failed: bool
     if not parsed:
         return "UNKNOWN"
     return "STALE" if datetime.now(timezone.utc) - parsed > timedelta(minutes=max(1, refresh_minutes * 2)) else "OK"
+
+
+def _current_profit_scorer_sha256() -> str | None:
+    path = Path(settings.profit_scorer_artifact_path)
+    if not path.is_absolute():
+        path = settings.project_dir / path
+    return hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else None
 
 
 def build_health_report(database: Database = db) -> dict[str, Any]:
@@ -67,6 +76,11 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
         "poolBlockers": [],
         "poolLastRunAt": None,
         "openingPreMatchSnapshots": 0,
+        "frozenAttempts": 0,
+        "frozenScoredAttempts": 0,
+        "frozenBlockedAttempts": 0,
+        "missedPreMatchAttempts": 0,
+        "frozenEvidenceTemporalViolations": 0,
         "scoredSnapshots": 0,
         "selectedSnapshots": 0,
         "settledSelectedSnapshots": 0,
@@ -87,9 +101,11 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
             c.execute("SELECT 1").fetchone()
             connected = True
             official = c.execute("""SELECT fetched_at FROM official_fetch_logs
-                WHERE success=1 ORDER BY fetched_at DESC LIMIT 1""").fetchone()
+                WHERE success=1 AND source_name<>'sporttery_official_results'
+                ORDER BY fetched_at DESC LIMIT 1""").fetchone()
             official_last_success = official["fetched_at"] if official else None
             official_latest = c.execute("""SELECT success FROM official_fetch_logs
+                WHERE source_name<>'sporttery_official_results'
                 ORDER BY fetched_at DESC LIMIT 1""").fetchone()
             official_failed = bool(official_latest and not official_latest["success"])
             external = c.execute("""SELECT synced_at FROM provider_sync_logs
@@ -182,6 +198,38 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
                     "decisionReasons": reasons,
                     "lastRunAt": validation_run["finished_at"] or validation_run["started_at"],
                 })
+            scorer_sha256 = _current_profit_scorer_sha256()
+            if scorer_sha256:
+                freeze_counts = c.execute("""SELECT COUNT(*) total,
+                    SUM(CASE WHEN status='SCORED' THEN 1 ELSE 0 END) scored,
+                    SUM(CASE WHEN status='BLOCKED' THEN 1 ELSE 0 END) blocked,
+                    SUM(CASE WHEN status='MISSED_PRE_MATCH' THEN 1 ELSE 0 END) missed
+                    FROM profit_scorer_freeze_attempts WHERE scorer_artifact_sha256=?""",
+                    (scorer_sha256,)).fetchone()
+                frozen_total = int(freeze_counts["total"] or 0)
+                if frozen_total:
+                    evidence_counts = c.execute("""SELECT COUNT(*) scored,
+                        SUM(CASE WHEN e.passes_scorer=1 THEN 1 ELSE 0 END) selected,
+                        SUM(CASE WHEN e.passes_scorer=1 AND r.outcome IN ('home','draw','away') THEN 1 ELSE 0 END) settled_selected,
+                        SUM(CASE WHEN unixepoch(e.scored_at)>=unixepoch(m.kickoff_time)
+                            OR unixepoch(e.scored_at)<unixepoch(o.observed_at) THEN 1 ELSE 0 END) temporal_violations
+                        FROM profit_scorer_evidence e
+                        JOIN matches m ON m.id=e.match_id
+                        JOIN official_odds_observations o ON o.id=e.official_odds_observation_id
+                        LEFT JOIN results r ON r.match_id=e.match_id
+                        WHERE e.scorer_artifact_sha256=?""", (scorer_sha256,)).fetchone()
+                    settled_selected = int(evidence_counts["settled_selected"] or 0)
+                    profit_scorer_official_sp.update({
+                        "frozenAttempts": frozen_total,
+                        "frozenScoredAttempts": int(freeze_counts["scored"] or 0),
+                        "frozenBlockedAttempts": int(freeze_counts["blocked"] or 0),
+                        "missedPreMatchAttempts": int(freeze_counts["missed"] or 0),
+                        "frozenEvidenceTemporalViolations": int(evidence_counts["temporal_violations"] or 0),
+                        "scoredSnapshots": int(evidence_counts["scored"] or 0),
+                        "selectedSnapshots": int(evidence_counts["selected"] or 0),
+                        "settledSelectedSnapshots": settled_selected,
+                        "remainingSettledSelected": max(0, 200 - settled_selected),
+                    })
         official_sp_evidence_quality = build_official_sp_evidence_quality(database)
         scheduler = SchedulerHealthService()
         recent_task_runs = scheduler.list_recent_task_runs(20)

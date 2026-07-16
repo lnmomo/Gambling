@@ -275,6 +275,7 @@ def run_rolling_selector(
     periods = list(pd.period_range(first_validation_month, last_validation_month, freq="M"))
     rows: list[dict[str, Any]] = []
     selected_rule_rows: list[dict[str, Any]] = []
+    validation_bet_rows: list[dict[str, Any]] = []
     for start_idx in range(0, len(periods), step_months):
         validation_start = periods[start_idx]
         validation_end_idx = start_idx + validation_months - 1
@@ -335,6 +336,14 @@ def run_rolling_selector(
             continue
         rule_keys = list(chosen["rules"])
         validation_bets = _combo_bets(_materialize_rule_bets(validation, rule_keys), tuple(rule_keys))
+        if not validation_bets.empty:
+            validation_bets = validation_bets.assign(
+                validation_start=str(validation_start),
+                validation_end=str(validation_end),
+                train_start=str(train_start),
+                train_end=str(train_end),
+            )
+            validation_bet_rows.extend(validation_bets.to_dict(orient="records"))
         window = _evaluate_windows(
             validation_bets,
             first_month=str(validation_start),
@@ -391,6 +400,9 @@ def run_rolling_selector(
         "summary": _summarize_validation(rows),
         "windows": rows,
         "selected_rules": selected_rule_rows,
+        "validation_windows_overlap": step_months < validation_months,
+        "selection_uses_validation_data": False,
+        "validation_bets": validation_bet_rows,
     }
 
 
@@ -448,10 +460,16 @@ def main() -> None:
         max_drawdown_to_profit=args.max_drawdown_to_profit,
     )
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    (args.output_dir / "summary.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    serializable_result = {key: value for key, value in result.items() if key != "validation_bets"}
+    (args.output_dir / "summary.json").write_text(
+        json.dumps(serializable_result, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     pd.DataFrame(result["windows"]).to_csv(args.output_dir / "windows.csv", index=False, encoding="utf-8-sig")
     pd.DataFrame(result["selected_rules"]).to_csv(
         args.output_dir / "selected_rules.csv", index=False, encoding="utf-8-sig"
+    )
+    pd.DataFrame(result["validation_bets"]).to_csv(
+        args.output_dir / "bets.csv", index=False, encoding="utf-8-sig"
     )
     print(json.dumps({key: result[key] for key in ("method", "summary", "config")}, ensure_ascii=False, indent=2))
 

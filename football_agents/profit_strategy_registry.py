@@ -9,6 +9,7 @@ from typing import Any
 MARKET_ANCHORED_I2_DRAWS_STRATEGY_ID = "profit-i2-draw-market-anchored-stop3-cool3-v1"
 MARKET_ANCHORED_I2_AVG_CLOSE_RESEARCH_ID = "profit-i2-draw-market-anchored-avg-close-stop3-cool14-v1"
 MARKET_ANCHORED_SP1_HOME_RESEARCH_ID = "profit-sp1-home-market-prob-55-market-anchored-v1"
+EXTERNAL_CONSENSUS_CHALLENGER_STRATEGY_ID = "profit-external-consensus-official-sp-quarter-residual-v1"
 MARKET_BIAS_I2_SCORECARD_REPORT = Path("reports/market_bias_profit_algorithm_scorecard_i2_draw/summary.json")
 
 
@@ -228,6 +229,18 @@ def build_market_anchored_i2_avg_close_research_package(
         "scored_snapshots": (official_sp or {}).get("scored_snapshots"),
         "selected_snapshots": (official_sp or {}).get("selected_snapshots"),
         "settled_selected_snapshots": (official_sp or {}).get("settled_selected_snapshots"),
+        "active_months": (official_sp or {}).get("active_months", len((official_sp or {}).get("monthly", []))),
+        "profit": (official_sp or {}).get("profit"),
+        "roi_pct": (official_sp or {}).get("roi_pct"),
+        "max_drawdown": (official_sp or {}).get("max_drawdown"),
+        "average_clv": (official_sp or {}).get("average_clv"),
+        "positive_clv_rate": (official_sp or {}).get("positive_clv_rate"),
+        "closing_sp_coverage": (official_sp or {}).get("closing_sp_coverage"),
+        "positive_months": (official_sp or {}).get("positive_months"),
+        "negative_months": (official_sp or {}).get("negative_months"),
+        "monthly": (official_sp or {}).get("monthly", []),
+        "daily": (official_sp or {}).get("daily", []),
+        "statistical_evidence": (official_sp or {}).get("statistical_evidence", {}),
         "decision": (official_sp or {}).get("decision", "PENDING_OFFICIAL_SP_VALIDATION"),
         "decision_reasons": (official_sp or {}).get("decision_reasons", []),
         "top_pool_blockers": (official_pool or {}).get("blocker_counts", [])[:5],
@@ -335,6 +348,8 @@ def build_market_anchored_sp1_home_research_package(
         "positive_months": (official_sp or {}).get("positive_months"),
         "negative_months": (official_sp or {}).get("negative_months"),
         "monthly": (official_sp or {}).get("monthly", []),
+        "daily": (official_sp or {}).get("daily", []),
+        "statistical_evidence": (official_sp or {}).get("statistical_evidence", {}),
         "decision": (official_sp or {}).get("decision", "PENDING_OFFICIAL_SP_VALIDATION"),
         "decision_reasons": (official_sp or {}).get("decision_reasons", []),
         "top_pool_blockers": (official_pool or {}).get("blocker_counts", [])[:5],
@@ -414,6 +429,82 @@ def build_market_anchored_sp1_home_research_package(
     }
 
 
+def build_external_consensus_challenger_package(
+    report_path: Path | str = Path("reports/external_consensus_challenger/summary.json"),
+) -> dict[str, Any]:
+    path = Path(report_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Missing external consensus challenger report: {path}")
+    report = _read_json(path)
+    policy = report.get("policy") or {}
+    config = policy.get("config") or {}
+    source_decision = str(report.get("decision") or "EXTERNAL_CONSENSUS_PROSPECTIVE_COLLECTING")
+    canonical_decision = (
+        "OFFICIAL_SP_PROSPECTIVE_PASS"
+        if source_decision == "EXTERNAL_CONSENSUS_PROSPECTIVE_PASS"
+        else "OFFICIAL_SP_PROSPECTIVE_BLOCKED"
+    )
+    monthly = report.get("monthly") or []
+    official_validation = {
+        "source_decision": source_decision,
+        "policy_id": policy.get("policy_id"),
+        "policy_hash": policy.get("policy_hash"),
+        "pool_passed_scorer": report.get("candidate_decisions", 0),
+        "selected_snapshots": report.get("primary_horizon_candidates", 0),
+        "settled_selected_snapshots": report.get("settled_selections", 0),
+        "active_months": report.get("active_months", len(monthly)),
+        "profit": report.get("profit", 0),
+        "roi_pct": report.get("roi_pct", 0),
+        "max_drawdown": report.get("max_drawdown", 0),
+        "average_clv": report.get("average_clv"),
+        "positive_clv_rate": report.get("positive_clv_rate"),
+        "closing_sp_coverage": report.get("closing_sp_coverage", 0),
+        "positive_months": report.get("positive_months", 0),
+        "negative_months": report.get("negative_months", 0),
+        "monthly": monthly,
+        "daily": report.get("daily") or [],
+        "statistical_evidence": report.get("statistical_evidence") or {},
+        "decision": canonical_decision,
+        "decision_reasons": report.get("decision_reasons") or [],
+        "top_snapshot_blockers": (report.get("blocker_counts") or [])[:5],
+    }
+    return {
+        "strategy_id": EXTERNAL_CONSENSUS_CHALLENGER_STRATEGY_ID,
+        "name": "Pre-registered external consensus versus executable official-SP challenger",
+        "status": source_decision,
+        "evidence_basis": "PRE_REGISTERED_PROSPECTIVE",
+        "recommended_for_shadow": True,
+        "source_type": "EXTERNAL_CONSENSUS",
+        "policy_id": policy.get("policy_id"),
+        "policy_hash": policy.get("policy_hash"),
+        "research_manifest_report": str(path),
+        "selection": {
+            "outcome": "DYNAMIC",
+            "odds_source": "OFFICIAL_SP_EXECUTABLE",
+            "min_predicted_ev": config.get("minimum_conservative_ev", 0.0),
+            "max_bets_per_day": config.get("maximum_bets_per_day", 1),
+            "primary_horizon_minutes": config.get("primary_horizon_minutes", 60),
+            "horizon_tolerance_minutes": config.get("horizon_tolerance_minutes", 60),
+        },
+        "risk_control": {
+            "daily_budget_cap": 100.0,
+            "max_single_stake": 10.0,
+            "max_bets_per_day": config.get("maximum_bets_per_day", 1),
+            "uses_only_settled_results": True,
+            "two_negative_months_trigger_cooldown": True,
+        },
+        "audit": {"decision": "PRE_REGISTERED_PROSPECTIVE_ONLY"},
+        "calibration": {"decision": "PENDING_PROSPECTIVE_EXTERNAL_MARKET_CALIBRATION"},
+        "official_validation": official_validation,
+        "deployment_blockers": tuple(report.get("decision_reasons") or ()),
+        "next_validation": (
+            "Do not alter the registered policy while its 180-day prospective cohort is collecting.",
+            "Require positive ROI/CLV lower bounds and paired calibration superiority to external consensus.",
+            "Permit paper allocation only after the immutable prospective report passes.",
+        ),
+    }
+
+
 def list_profit_strategy_packages() -> list[dict[str, Any]]:
     packages: list[dict[str, Any]] = []
     try:
@@ -438,6 +529,14 @@ def list_profit_strategy_packages() -> list[dict[str, Any]]:
         packages.append({
             "strategy_id": MARKET_ANCHORED_SP1_HOME_RESEARCH_ID,
             "status": "MISSING_EVIDENCE_REPORTS",
+            "error": str(exc),
+        })
+    try:
+        packages.append(build_external_consensus_challenger_package())
+    except FileNotFoundError as exc:
+        packages.append({
+            "strategy_id": EXTERNAL_CONSENSUS_CHALLENGER_STRATEGY_ID,
+            "status": "MISSING_PROSPECTIVE_REPORT",
             "error": str(exc),
         })
     return packages

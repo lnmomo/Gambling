@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import uuid
 import hashlib
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Iterable
 
 from .db import Database, db
@@ -182,10 +182,148 @@ class Repository:
                 VALUES(?,?,?,?,?,?,?,?)""", (source_name, source_url, utcnow(), int(success), status_code,
                                                 raw_hash, record_count, error_message))
 
-    def latest_fetch_log(self) -> dict[str, Any] | None:
+    def latest_fetch_log(self, source_url: str | None = None) -> dict[str, Any] | None:
+        query = "SELECT * FROM official_fetch_logs"
+        params: tuple[Any, ...] = ()
+        if source_url:
+            query += " WHERE source_url=?"
+            params = (source_url,)
+        query += " ORDER BY id DESC LIMIT 1"
         with self.db.connect() as c:
-            row = c.execute("SELECT * FROM official_fetch_logs ORDER BY id DESC LIMIT 1").fetchone()
+            row = c.execute(query, params).fetchone()
         return dict(row) if row else None
+
+    def settle_official_result(
+        self,
+        item: dict[str, Any],
+        observed_at: str,
+        source_url: str,
+        raw_hash: str,
+    ) -> dict[str, Any]:
+        """Settle an exact official match ID without ever overwriting a conflict."""
+        official_match_id = str(item["official_match_id"])
+        raw_json = json.dumps(item, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        with self.db.connect() as c:
+            duplicate = c.execute(
+                "SELECT resolution_status FROM official_result_observations WHERE raw_hash=?",
+                (raw_hash,),
+            ).fetchone()
+            if duplicate:
+                return {"status": "DUPLICATE", "resolution_status": duplicate["resolution_status"]}
+
+            match = c.execute(
+                "SELECT * FROM matches WHERE official_match_id=?", (official_match_id,)
+            ).fetchone()
+            match_id = int(match["id"]) if match else None
+            resolution = "UNMATCHED"
+            reason = "official_match_id_not_found"
+            existing = None
+
+            if match:
+                kickoff = datetime.fromisoformat(str(match["kickoff_time"]).replace("Z", "+00:00"))
+                if kickoff.tzinfo is None:
+                    kickoff = kickoff.replace(tzinfo=timezone.utc)
+                local_date = kickoff.astimezone(timezone(timedelta(hours=8))).date().isoformat()
+                if str(item.get("match_date") or "") != local_date:
+                    resolution = "AMBIGUOUS"
+                    reason = f"match_date_mismatch:{local_date}"
+                else:
+                    existing = c.execute(
+                        "SELECT * FROM results WHERE match_id=?", (match_id,)
+                    ).fetchone()
+                    scores = (int(item["home_score"]), int(item["away_score"]))
+                    if existing and (int(existing["home_score"]), int(existing["away_score"])) != scores:
+                        resolution = "CONFLICT"
+                        reason = (
+                            f"stored_score={existing['home_score']}:{existing['away_score']};"
+                            f"official_score={scores[0]}:{scores[1]}"
+                        )
+                    elif existing:
+                        resolution = "CONFIRMED"
+                        reason = "same_score_already_settled"
+                    else:
+                        outcome = "home" if scores[0] > scores[1] else "draw" if scores[0] == scores[1] else "away"
+                        c.execute(
+                            "INSERT INTO results(match_id,home_score,away_score,outcome,settled_at) VALUES(?,?,?,?,?)",
+                            (match_id, scores[0], scores[1], outcome, observed_at),
+                        )
+                        resolution = "SETTLED"
+                        reason = "exact_official_match_id_and_local_date"
+
+                    if resolution in {"SETTLED", "CONFIRMED"}:
+                        old_status = str(match["status"])
+                        if old_status.lower() != "finished":
+                            c.execute("UPDATE matches SET status='finished' WHERE id=?", (match_id,))
+                            c.execute(
+                                """INSERT INTO match_status_events
+                                (match_id,old_status,new_status,detected_at,reason)
+                                VALUES(?,?,?,?,?)""",
+                                (match_id, old_status, "finished", observed_at, "official_results_sync"),
+                            )
+
+            c.execute(
+                """INSERT INTO official_result_observations(
+                    match_id,official_match_id,observed_at,match_date,match_no,league,
+                    home_team,away_team,home_score,away_score,source_result_status,
+                    resolution_status,resolution_reason,source_url,raw_hash,raw_json
+                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    match_id, official_match_id, observed_at, item.get("match_date"),
+                    item.get("match_no"), item.get("league"), item.get("home_team"),
+                    item.get("away_team"), item.get("home_score"), item.get("away_score"),
+                    item.get("source_result_status"), resolution, reason, source_url,
+                    raw_hash, raw_json,
+                ),
+            )
+        return {"status": resolution, "reason": reason, "match_id": match_id}
+
+    def archive_skipped_official_result(
+        self,
+        item: dict[str, Any],
+        observed_at: str,
+        source_url: str,
+        raw_hash: str,
+        reason: str,
+    ) -> dict[str, Any]:
+        normalized = dict(item)
+        normalized.setdefault("official_match_id", f"sporttery-{item.get('match_id', 'unknown')}")
+        raw_json = json.dumps(normalized, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        with self.db.connect() as c:
+            if c.execute("SELECT 1 FROM official_result_observations WHERE raw_hash=?", (raw_hash,)).fetchone():
+                return {"status": "DUPLICATE"}
+            match = c.execute(
+                "SELECT id FROM matches WHERE official_match_id=?", (normalized["official_match_id"],)
+            ).fetchone()
+            c.execute(
+                """INSERT INTO official_result_observations(
+                    match_id,official_match_id,observed_at,match_date,match_no,league,
+                    home_team,away_team,home_score,away_score,source_result_status,
+                    resolution_status,resolution_reason,source_url,raw_hash,raw_json
+                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    int(match["id"]) if match else None, normalized["official_match_id"], observed_at,
+                    normalized.get("match_date"), normalized.get("match_no"), normalized.get("league"),
+                    normalized.get("home_team"), normalized.get("away_team"),
+                    normalized.get("home_score"), normalized.get("away_score"),
+                    normalized.get("source_result_status"), "SKIPPED", reason,
+                    source_url, raw_hash, raw_json,
+                ),
+            )
+        return {"status": "SKIPPED", "reason": reason}
+
+    def official_result_evidence_status(self) -> dict[str, Any]:
+        with self.db.connect() as c:
+            row = c.execute("""SELECT COUNT(*) observations,
+                SUM(resolution_status='SETTLED') settled,
+                SUM(resolution_status='CONFIRMED') confirmed,
+                SUM(resolution_status='CONFLICT') conflicts,
+                SUM(resolution_status='UNMATCHED') unmatched,
+                SUM(resolution_status='AMBIGUOUS') ambiguous,
+                SUM(resolution_status='SKIPPED') skipped,
+                MAX(observed_at) last_observed_at
+                FROM official_result_observations""").fetchone()
+        return {key: (int(value or 0) if key != "last_observed_at" else value)
+                for key, value in dict(row).items()}
 
     def list_fetch_logs(self, limit: int = 20) -> list[dict[str, Any]]:
         with self.db.connect() as c:
@@ -256,6 +394,67 @@ class Repository:
                 str(evidence.get("scored_at") or utcnow()),
             ))
             return cursor.rowcount > 0
+
+    def freeze_profit_scorer_attempt(self, attempt: dict[str, Any],
+                                     evidence: dict[str, Any] | None = None) -> bool:
+        status = str(attempt["status"]).upper()
+        if status == "SCORED" and evidence is None:
+            raise ValueError("SCORED freeze attempt requires immutable evidence")
+        with self.db.connect() as c:
+            cursor = c.execute("""INSERT OR IGNORE INTO profit_scorer_freeze_attempts(
+                match_id,official_odds_observation_id,scorer_artifact_sha256,strategy_label,
+                status,blocker_json,attempted_at,kickoff_time
+            ) VALUES(?,?,?,?,?,?,?,?)""", (
+                int(attempt["match_id"]),
+                int(attempt["official_odds_observation_id"]),
+                str(attempt["scorer_artifact_sha256"]),
+                str(attempt["strategy_label"]),
+                status,
+                json.dumps(attempt.get("blockers") or [], ensure_ascii=False, sort_keys=True),
+                str(attempt.get("attempted_at") or utcnow()),
+                str(attempt["kickoff_time"]),
+            ))
+            if cursor.rowcount == 0:
+                return False
+            if evidence is not None:
+                evidence_cursor = c.execute("""INSERT INTO profit_scorer_evidence(
+                    match_id,official_odds_observation_id,scorer_artifact_sha256,strategy_label,
+                    selected_outcome,feature_engine,feature_json,market_probability,
+                    predicted_probability,predicted_ev,passes_scorer,scored_at
+                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", (
+                    int(evidence["match_id"]),
+                    int(evidence["official_odds_observation_id"]),
+                    str(evidence["scorer_artifact_sha256"]),
+                    str(evidence["strategy_label"]),
+                    str(evidence["selected_outcome"]).upper(),
+                    str(evidence["feature_engine"]),
+                    json.dumps(evidence["features"], ensure_ascii=False, sort_keys=True),
+                    float(evidence["market_probability"]),
+                    float(evidence["predicted_probability"]),
+                    float(evidence["predicted_ev"]),
+                    int(bool(evidence["passes_scorer"])),
+                    str(evidence.get("scored_at") or attempt.get("attempted_at") or utcnow()),
+                ))
+                if evidence_cursor.rowcount != 1:
+                    raise RuntimeError("failed to persist immutable profit scorer evidence")
+            return True
+
+    def list_profit_scorer_freeze_attempts(self, scorer_artifact_sha256: str | None = None,
+                                           limit: int = 100_000) -> list[dict[str, Any]]:
+        where = " WHERE scorer_artifact_sha256=?" if scorer_artifact_sha256 else ""
+        params: tuple[Any, ...] = (scorer_artifact_sha256,) if scorer_artifact_sha256 else ()
+        with self.db.connect() as c:
+            rows = c.execute(
+                "SELECT * FROM profit_scorer_freeze_attempts" + where
+                + " ORDER BY attempted_at ASC,id ASC LIMIT ?",
+                (*params, max(1, min(limit, 100_000))),
+            ).fetchall()
+        output: list[dict[str, Any]] = []
+        for row in rows:
+            item = dict(row)
+            item["blockers"] = json.loads(item.pop("blocker_json"))
+            output.append(item)
+        return output
 
     def list_profit_scorer_evidence(self, strategy_label: str | None = None,
                                     limit: int = 1000) -> list[dict[str, Any]]:
@@ -331,6 +530,35 @@ class Repository:
                 params,
             ).fetchall()
             return [dict(row) for row in rows]
+
+    def official_match_ids(self) -> set[str]:
+        with self.db.connect() as c:
+            return {str(row[0]) for row in c.execute(
+                "SELECT official_match_id FROM matches WHERE official_match_id LIKE 'sporttery-%'"
+            ).fetchall()}
+
+    def list_active_official_matches(self, limit: int = 100,
+                                     as_of: datetime | None = None) -> list[dict[str, Any]]:
+        """Return only live or genuinely future official matches.
+
+        Some upstream rows can remain ``scheduled`` after their kickoff. They
+        must not consume enrichment limits ahead of the current official pool.
+        """
+        now = as_of or datetime.now(timezone.utc)
+        if now.tzinfo is None:
+            now = now.replace(tzinfo=timezone.utc)
+        active: list[dict[str, Any]] = []
+        for match in self.list_official_matches():
+            status = str(match.get("status") or "").strip().lower()
+            kickoff = datetime.fromisoformat(str(match["kickoff_time"]).replace("Z", "+00:00"))
+            if kickoff.tzinfo is None:
+                kickoff = kickoff.replace(tzinfo=timezone.utc)
+            upcoming = status in {"scheduled", "not_started"} and kickoff > now
+            recently_live = status == "live" and kickoff > now - timedelta(hours=4)
+            if upcoming or recently_live:
+                active.append(match)
+        active.sort(key=lambda item: item["kickoff_time"])
+        return active[:max(1, min(limit, 5000))]
 
     def latest_odds(self, match_id: int, external: bool = False) -> dict[str, Any]:
         table = "market_odds_snapshots" if external else "odds_snapshots"

@@ -1,28 +1,34 @@
 {
   "method": "official SP evidence-chain data quality",
-  "generated_at": "2026-07-16T03:11:01.163725+00:00",
-  "decision": "EVIDENCE_COLLECTING",
+  "generated_at": "2026-07-16T06:54:41.594649+00:00",
+  "decision": "EVIDENCE_DEGRADED",
   "research_usable": false,
   "dataset_grain": "one immutable market-availability card and zero-or-one immutable official three-way SP observation per match and fetch timestamp",
   "summary": {
-    "observations": 287,
-    "observed_matches": 63,
-    "pre_match_matches": 63,
-    "pre_match_observations": 287,
+    "observations": 565,
+    "observed_matches": 69,
+    "pre_match_matches": 69,
+    "pre_match_observations": 565,
     "first_observed_at": "2026-06-19T13:11:45.392010+00:00",
-    "last_observed_at": "2026-07-16T03:10:59.705959+00:00",
-    "last_successful_fetch_at": "2026-07-16T03:11:01.154209+00:00",
+    "last_observed_at": "2026-07-16T06:54:35.566653+00:00",
+    "last_successful_fetch_at": "2026-07-16T06:54:36.777549+00:00",
     "freshness_hours": 0.0,
     "measurement_start": "2026-07-16T03:10:59.705959+00:00",
-    "availability_observations": 17,
-    "offered_matches": 10,
-    "captured_offered_matches": 10,
+    "availability_observations": 408,
+    "offered_matches": 17,
+    "captured_offered_matches": 16,
     "closing_eligible_matches": 0,
     "settlement_eligible_matches": 0,
-    "pre_match_sp_coverage": 1.0,
+    "pre_match_sp_coverage": 0.9412,
     "closing_1h_coverage": 0.0,
     "settlement_coverage": 0.0,
-    "average_observations_per_match": 4.56
+    "stale_unsettled_matches": 0,
+    "official_result_observations": 433,
+    "official_result_last_observed_at": "2026-07-16T05:08:48.291588+00:00",
+    "official_result_conflicts": 0,
+    "archived_result_rows_outside_local_pool": 265,
+    "official_result_ambiguous": 0,
+    "average_observations_per_match": 8.19
   },
   "checks": [
     {
@@ -31,17 +37,17 @@
       "severity": "NONE",
       "value": 0.0,
       "threshold": "<=0.5 hours",
-      "evidence": "Latest successful fetch: 2026-07-16T03:11:01.154209+00:00.",
+      "evidence": "Latest successful fetch: 2026-07-16T06:54:36.777549+00:00.",
       "impact": "A stopped collector creates permanent gaps in opening and closing prices.",
       "remediation": "Keep the API service running continuously and alert after two missed capture cycles."
     },
     {
       "id": "pre_match_sp_coverage",
-      "status": "PASS",
-      "severity": "NONE",
-      "value": 1.0,
+      "status": "FAIL",
+      "severity": "HIGH",
+      "value": 0.9412,
       "threshold": ">=0.95 across >=10 offered matches",
-      "evidence": "10/10 offered matches satisfy the requirement.",
+      "evidence": "16/17 offered matches satisfy the requirement.",
       "impact": "Missing prices bias strategy selection and reduce the auditable sample.",
       "remediation": "Investigate sold cards with invalid or missing three-way SP before using ROI estimates."
     },
@@ -94,25 +100,36 @@
       "evidence": "Each fetch time is one immutable observation per match.",
       "impact": "Duplicate grain overweights prices in downstream analyses.",
       "remediation": "Keep the database uniqueness constraint and reject duplicate inserts."
+    },
+    {
+      "id": "official_result_conflicts",
+      "status": "PASS",
+      "severity": "NONE",
+      "value": 0,
+      "threshold": "0 conflicting official result rows",
+      "evidence": "Conflicting scores are quarantined and never overwrite an existing settlement.",
+      "impact": "A score conflict invalidates ROI, drawdown, and model-promotion evidence for that match.",
+      "remediation": "Compare the archived raw official rows and resolve the conflict explicitly."
     }
   ],
-  "failed_checks": 0,
+  "failed_checks": 1,
   "pending_checks": 2,
   "critical_checks": 0,
   "warnings": [
+    "pre_match_sp_coverage: 16/17 offered matches satisfy the requirement.",
     "closing_sp_within_1h: 0/0 offered kicked-off matches; waiting for 10 more.",
     "settlement_coverage: 0/0 offered matches at least four hours after kickoff; waiting for 10 more."
   ],
   "capture_stages": [
     {
       "capture_stage": "T_MINUS_24H",
-      "observations": 141,
+      "observations": 371,
       "matches": 44
     },
     {
       "capture_stage": "EARLY",
-      "observations": 117,
-      "matches": 28
+      "observations": 165,
+      "matches": 34
     },
     {
       "capture_stage": "T_MINUS_6H",
@@ -129,20 +146,26 @@
     {
       "raw_sale_status": "已完成",
       "reason": "post_match",
-      "observations": 23,
+      "observations": 552,
       "matches": 23
     },
     {
       "raw_sale_status": "已开售",
       "reason": "valid_three_way_sp",
-      "observations": 10,
-      "matches": 10
+      "observations": 288,
+      "matches": 16
     },
     {
       "raw_sale_status": "待开售",
       "reason": "not_on_sale",
-      "observations": 7,
+      "observations": 112,
       "matches": 7
+    },
+    {
+      "raw_sale_status": "已开售",
+      "reason": "invalid_or_incomplete_three_way_sp",
+      "observations": 8,
+      "matches": 1
     }
   ],
   "league_coverage": [
@@ -151,56 +174,56 @@
       "matches": 33,
       "observations": 164,
       "within_1h": 0,
-      "settled": 24
-    },
-    {
-      "league": "瑞超",
-      "matches": 6,
-      "observations": 36,
-      "within_1h": 2,
-      "settled": 1
-    },
-    {
-      "league": "芬超",
-      "matches": 6,
-      "observations": 24,
-      "within_1h": 0,
-      "settled": 4
-    },
-    {
-      "league": "韩职",
-      "matches": 6,
-      "observations": 20,
-      "within_1h": 3,
-      "settled": 3
+      "settled": 33
     },
     {
       "league": "美职",
-      "matches": 4,
-      "observations": 20,
+      "matches": 5,
+      "observations": 120,
       "within_1h": 0,
       "settled": 0
     },
     {
       "league": "巴甲",
-      "matches": 2,
-      "observations": 10,
+      "matches": 5,
+      "observations": 80,
       "within_1h": 0,
       "settled": 0
     },
     {
       "league": "欧罗巴",
       "matches": 3,
-      "observations": 6,
+      "observations": 75,
       "within_1h": 0,
       "settled": 0
     },
     {
+      "league": "瑞超",
+      "matches": 8,
+      "observations": 52,
+      "within_1h": 2,
+      "settled": 6
+    },
+    {
       "league": "挪超",
       "matches": 1,
-      "observations": 5,
+      "observations": 28,
       "within_1h": 0,
       "settled": 0
+    },
+    {
+      "league": "芬超",
+      "matches": 6,
+      "observations": 24,
+      "within_1h": 0,
+      "settled": 6
+    },
+    {
+      "league": "韩职",
+      "matches": 6,
+      "observations": 20,
+      "within_1h": 3,
+      "settled": 6
     },
     {
       "league": "欧冠",

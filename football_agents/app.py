@@ -2,11 +2,12 @@
 
 import csv
 import io
+import json
 from datetime import date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -23,7 +24,9 @@ from .historical_agent import HistoricalCollectionAgent
 from .health import build_health_report
 from .international_history_agent import InternationalHistoryAgent
 from .features import build_features_for_official_matches
+from .external_consensus_challenger import ExternalConsensusChallengerService
 from .profit_allocation_readiness import build_profit_allocation_readiness
+from .paper_portfolio import PaperPortfolioService
 from .profit_data_domain_readiness import build_profit_data_domain_readiness
 from .repository import Repository
 from .schemas import BacktestRequest, EvaluateRequest, FeatureCreate, MatchCreate, MatchMetadataCreate, OddsCreate, ResultCreate, SettingsUpdate
@@ -39,6 +42,19 @@ app = FastAPI(
     description="概率研究、赔率比较、风险控制与复盘；不保证收益，不自动下单。",
 )
 app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
+
+
+@app.middleware("http")
+async def disable_frontend_asset_cache(request: Request, call_next):
+    response = await call_next(request)
+    content_type = response.headers.get("content-type", "")
+    if request.url.path.startswith("/static/") or content_type.startswith("text/html"):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
+
 repository = Repository()
 workflow = DecisionWorkflow(repository)
 official_data = OfficialDataService(repository)
@@ -52,6 +68,7 @@ agent_orchestrator = AgentOrchestrator(repository)
 task_runner = TaskRunnerService()
 background_scheduler = BackgroundAgentScheduler(repository, task_runner)
 prospective_research = ProspectiveResearchService(repository.db, repository, workflow)
+external_consensus_challenger = ExternalConsensusChallengerService(repository.db, repository)
 
 
 @app.on_event("startup")
@@ -163,6 +180,11 @@ def profit_allocation_readiness(daily_budget: float | None = None) -> dict:
     return build_profit_allocation_readiness(daily_budget)
 
 
+@app.get("/api/profit/paper-portfolio")
+def paper_portfolio() -> dict:
+    return PaperPortfolioService(db).summary()
+
+
 @app.get("/api/profit/data-domain-readiness")
 def profit_data_domain_readiness() -> dict:
     return build_profit_data_domain_readiness(database=db)
@@ -221,6 +243,25 @@ def confirm_prospective_research(study_id: str | None = None) -> dict:
         return prospective_research.run_confirmation_once(study_id)
     except RuntimeError as exc:
         raise HTTPException(409, str(exc)) from exc
+
+
+@app.get("/api/research/external-consensus-challenger")
+def external_consensus_challenger_status(policy_id: str | None = None) -> dict:
+    try:
+        return external_consensus_challenger.report(policy_id)
+    except KeyError as exc:
+        raise HTTPException(404, f"Unknown external consensus policy: {exc}") from exc
+
+
+@app.post("/api/research/external-consensus-challenger/capture")
+def capture_external_consensus_challenger(limit: int = 100) -> dict:
+    result = external_consensus_challenger.capture(limit)
+    path = Path(settings.external_consensus_challenger_report_path)
+    if not path.is_absolute():
+        path = settings.project_dir / path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(result["report"], ensure_ascii=False, indent=2), encoding="utf-8")
+    return result
 
 
 @app.post("/api/matches/{match_id}/result")
@@ -366,7 +407,7 @@ def analyze_match_news(match_id: int, force: bool = False) -> dict:
 def system_overview() -> dict:
     counts = repository.data_counts()
     providers = repository.provider_status()
-    official = repository.latest_fetch_log()
+    official = repository.latest_fetch_log(settings.official_source_url)
     agents = [
         {"id": "official", "name": "瀹樻柟璧涚▼Agent", "state": "RUNNING" if official and official["success"] else "WARNING",
          "success_rate": 100 if official and official["success"] else 0, "latency": "鎸夐渶鍚屾",

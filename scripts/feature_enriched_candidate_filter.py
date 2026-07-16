@@ -58,6 +58,13 @@ class FeatureFilterConfig:
     ridge: float
     residual_cap: float = 0.08
     selected_rules: tuple[str, ...] = (I2_DRAW_RULE, SP1_HOME_RULE)
+    validation_months: int = 0
+    min_validation_rows: int = 120
+    require_probability_improvement: bool = False
+    min_odds: float = 1.01
+    max_odds: float = 100.0
+    min_validation_selections: int = 0
+    require_validation_tail_edge: bool = False
 
     @property
     def label(self) -> str:
@@ -71,9 +78,14 @@ class FeatureFilterConfig:
             .replace(".", "p")
             for rule in self.selected_rules
         )
+        validation = f"_val{self.validation_months}" if self.require_probability_improvement else ""
+        tail = (
+            f"_tail{self.min_validation_selections}_odds{self.min_odds:g}_{self.max_odds:g}"
+            if self.require_validation_tail_edge else ""
+        )
         return (
             f"{self.odds_source}_{rules}_train{self.train_months}_n{self.min_train_rows}"
-            f"_ev{ev}_top{self.max_bets_per_day}_ridge{self.ridge:g}_cap{self.residual_cap:g}"
+            f"_ev{ev}_top{self.max_bets_per_day}_ridge{self.ridge:g}_cap{self.residual_cap:g}{validation}{tail}"
         )
 
 
@@ -179,6 +191,137 @@ def predict_probability(frame: pd.DataFrame, coefficients: np.ndarray, means: pd
     return np.clip(frame["market_probability"].astype(float).to_numpy() + residual, 0.01, 0.98)
 
 
+def normalize_complete_three_way_probabilities(frame: pd.DataFrame, probabilities: np.ndarray) -> np.ndarray:
+    """Project complete home/draw/away candidate sets back onto the probability simplex."""
+    output = pd.Series(probabilities, index=frame.index, dtype=float)
+    match_columns = ["date", "league", "home_team", "away_team"]
+    if any(column not in frame.columns for column in match_columns) or "outcome" not in frame.columns:
+        return output.to_numpy()
+    work = frame.loc[:, match_columns + ["outcome"]].copy()
+    work["_probability"] = output
+    for _, group in work.groupby(match_columns, sort=False):
+        if len(group) != 3 or set(group["outcome"].astype(str)) != {"home", "draw", "away"}:
+            continue
+        total = float(group["_probability"].sum())
+        if total > 0:
+            output.loc[group.index] = group["_probability"] / total
+    return output.to_numpy()
+
+
+def multiclass_probability_metrics(frame: pd.DataFrame, probability_column: str) -> dict[str, float | int]:
+    match_columns = ["date", "league", "home_team", "away_team"]
+    if frame.empty:
+        return {"matches": 0, "log_loss": 0.0, "brier": 0.0}
+    work = frame.loc[:, match_columns + ["outcome", "won", probability_column]].copy()
+    grouped = work.groupby(match_columns, sort=False)
+    complete = grouped["outcome"].transform("size").eq(3) & grouped["outcome"].transform("nunique").eq(3)
+    work = work[complete].copy()
+    if work.empty:
+        return {"matches": 0, "log_loss": 0.0, "brier": 0.0}
+    probabilities = work[probability_column].astype(float).clip(0.001, 0.999)
+    probabilities = probabilities / probabilities.groupby(
+        [work[column] for column in match_columns], sort=False
+    ).transform("sum")
+    outcomes = work["won"].astype(float)
+    matches = int(work.groupby(match_columns, sort=False).ngroups)
+    log_loss = float(-(outcomes * np.log(probabilities)).sum() / matches)
+    brier = float(((probabilities - outcomes) ** 2).sum() / matches)
+    return {
+        "matches": matches,
+        "log_loss": round(log_loss, 6),
+        "brier": round(brier, 6),
+    }
+
+
+def select_scored_candidates(frame: pd.DataFrame, config: FeatureFilterConfig) -> pd.DataFrame:
+    selected = frame[
+        frame["rule_label"].isin(config.selected_rules)
+        & (frame["predicted_ev"] >= config.min_predicted_ev)
+        & (frame["odds"].astype(float) >= config.min_odds)
+        & (frame["odds"].astype(float) <= config.max_odds)
+    ].copy()
+    if config.max_bets_per_day > 0 and not selected.empty:
+        selected = (
+            selected.sort_values(["date", "predicted_ev"], ascending=[True, False])
+            .groupby("date", as_index=False, group_keys=False)
+            .head(config.max_bets_per_day)
+        )
+    return selected
+
+
+def prior_probability_improvement_gate(
+    train: pd.DataFrame,
+    period: pd.Period,
+    config: FeatureFilterConfig,
+) -> dict[str, Any]:
+    if not config.require_probability_improvement or config.validation_months <= 0:
+        return {"passed": True, "reason": "disabled"}
+    validation_start = period.start_time.normalize() - pd.DateOffset(months=config.validation_months)
+    fit = train[train["bet_date"] < validation_start].copy()
+    validation = train[train["bet_date"] >= validation_start].copy()
+    if len(fit) < config.min_train_rows or len(validation) < config.min_validation_rows:
+        return {
+            "passed": False,
+            "reason": "insufficient_prior_validation_rows",
+            "fit_rows": int(len(fit)),
+            "validation_rows": int(len(validation)),
+        }
+    coefficients, means, stds = fit_ridge_probability_model(fit, ridge=config.ridge)
+    validation["model_probability"] = normalize_complete_three_way_probabilities(
+        validation,
+        predict_probability(validation, coefficients, means, stds, residual_cap=config.residual_cap),
+    )
+    market = multiclass_probability_metrics(validation, "market_probability")
+    model = multiclass_probability_metrics(validation, "model_probability")
+    probability_passed = (
+        model["matches"] > 0
+        and model["log_loss"] < market["log_loss"]
+        and model["brier"] < market["brier"]
+    )
+    validation["predicted_probability"] = validation["model_probability"]
+    validation["predicted_ev"] = (
+        validation["predicted_probability"] * validation["odds"].astype(float) - 1.0
+    )
+    tail = select_scored_candidates(validation, config)
+    tail_profit = float(tail["unit_profit"].sum()) if not tail.empty else 0.0
+    tail_hit_rate = float(tail["won"].astype(float).mean()) if not tail.empty else 0.0
+    tail_market_probability = float(tail["market_probability"].mean()) if not tail.empty else 0.0
+    tail_edge = tail_hit_rate - tail_market_probability
+    tail_passed = (
+        not config.require_validation_tail_edge
+        or (
+            len(tail) >= config.min_validation_selections
+            and tail_profit > 0
+            and tail_edge > 0
+        )
+    )
+    passed = probability_passed and tail_passed
+    if not probability_passed:
+        reason = "model_did_not_beat_market_on_prior_validation"
+    elif not tail_passed:
+        reason = "selected_tail_did_not_show_prior_edge"
+    else:
+        reason = None
+    return {
+        "passed": passed,
+        "reason": reason,
+        "fit_rows": int(len(fit)),
+        "validation_rows": int(len(validation)),
+        "market": market,
+        "model": model,
+        "log_loss_improvement": round(float(market["log_loss"] - model["log_loss"]), 6),
+        "brier_improvement": round(float(market["brier"] - model["brier"]), 6),
+        "selected_tail": {
+            "bets": int(len(tail)),
+            "profit_units": round(tail_profit, 2),
+            "hit_rate": round(tail_hit_rate, 6),
+            "average_market_probability": round(tail_market_probability, 6),
+            "edge_vs_market_probability": round(tail_edge, 6),
+            "passed": tail_passed,
+        },
+    }
+
+
 def export_scorer_artifact(candidates: pd.DataFrame, config: FeatureFilterConfig,
                            prediction_month: str) -> dict[str, Any]:
     """Freeze the no-leak residual scorer available before a future prediction month."""
@@ -188,6 +331,9 @@ def export_scorer_artifact(candidates: pd.DataFrame, config: FeatureFilterConfig
         raise ValueError(
             f"Insufficient prior candidates for scorer export: {len(train)} < {config.min_train_rows}"
         )
+    validation_gate = prior_probability_improvement_gate(train, period, config)
+    if not validation_gate["passed"]:
+        raise ValueError(f"Prior probability improvement gate failed: {validation_gate['reason']}")
     coefficients, means, stds = fit_ridge_probability_model(train, ridge=config.ridge)
     return {
         "artifact_type": "market_anchored_feature_residual_scorer",
@@ -207,6 +353,9 @@ def export_scorer_artifact(candidates: pd.DataFrame, config: FeatureFilterConfig
             "max_bets_per_day": config.max_bets_per_day,
             "residual_cap": config.residual_cap,
             "ridge": config.ridge,
+            "min_odds": config.min_odds,
+            "max_odds": config.max_odds,
+            "prior_probability_improvement_gate": validation_gate,
             "feature_columns": list(FEATURE_COLUMNS),
         },
         "model": {
@@ -231,18 +380,20 @@ def score_with_scorer_artifact(frame: pd.DataFrame, artifact: dict[str, Any]) ->
     means = pd.Series(model["feature_means"], dtype=float)
     stds = pd.Series(model["feature_stds"], dtype=float)
     output = frame.copy()
-    output["predicted_probability"] = predict_probability(
+    output["predicted_probability"] = normalize_complete_three_way_probabilities(output, predict_probability(
         output,
         coefficients,
         means,
         stds,
         feature_columns=feature_columns,
         residual_cap=float(selection["residual_cap"]),
-    )
+    ))
     output["predicted_ev"] = output["predicted_probability"] * output["odds"].astype(float) - 1.0
     output["passes_scorer"] = (
         output["rule_label"].isin(selection["selected_rules"])
         & (output["predicted_ev"] >= float(selection["min_predicted_ev"]))
+        & (output["odds"].astype(float) >= float(selection.get("min_odds", 1.01)))
+        & (output["odds"].astype(float) <= float(selection.get("max_odds", 100.0)))
     )
     return output
 
@@ -266,17 +417,24 @@ def walk_forward_feature_filter(candidates: pd.DataFrame, config: FeatureFilterC
                 "candidate_count": int(len(test)),
             })
             continue
+        validation_gate = prior_probability_improvement_gate(train, period, config)
+        if not validation_gate["passed"]:
+            month_reports.append({
+                "month": str(period),
+                "decision": "ABSTAIN",
+                "reason": validation_gate["reason"],
+                "prior_candidates": int(len(train)),
+                "candidate_count": int(len(test)),
+                "probability_validation": validation_gate,
+            })
+            continue
         coefficients, means, stds = fit_ridge_probability_model(train, ridge=config.ridge)
-        test["predicted_probability"] = predict_probability(test, coefficients, means, stds, residual_cap=config.residual_cap)
+        test["predicted_probability"] = normalize_complete_three_way_probabilities(
+            test,
+            predict_probability(test, coefficients, means, stds, residual_cap=config.residual_cap),
+        )
         test["predicted_ev"] = test["predicted_probability"] * test["odds"].astype(float) - 1.0
-        test = test[test["rule_label"].isin(config.selected_rules)].copy()
-        selected = test[test["predicted_ev"] >= config.min_predicted_ev].copy()
-        if config.max_bets_per_day > 0 and not selected.empty:
-            selected = (
-                selected.sort_values(["date", "predicted_ev"], ascending=[True, False])
-                .groupby("date", as_index=False, group_keys=False)
-                .head(config.max_bets_per_day)
-            )
+        selected = select_scored_candidates(test, config)
         selected["rule_label"] = config.label + "|" + selected["rule_label"].astype(str)
         selected_months.append(selected)
         month_reports.append({
@@ -287,6 +445,7 @@ def walk_forward_feature_filter(candidates: pd.DataFrame, config: FeatureFilterC
             "candidate_count": int(len(test)),
             "selected": int(len(selected)),
             "mean_predicted_ev": round(float(selected["predicted_ev"].mean()), 4) if not selected.empty else 0.0,
+            "probability_validation": validation_gate,
         })
     selected_all = pd.concat(selected_months, ignore_index=True) if selected_months else pd.DataFrame()
     summary = {

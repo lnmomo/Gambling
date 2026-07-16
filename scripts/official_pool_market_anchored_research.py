@@ -147,6 +147,10 @@ def _default_specs_for_league(league: str) -> tuple[AnchoredRuleSpec, ...]:
             AnchoredRuleSpec("CHN", "draw", odds_bucket="[2.8,3.5)", market_prob_bucket="[0.28,0.34)"),
             AnchoredRuleSpec("CHN", "draw", odds_bucket="[2.8,3.5)"),
         )
+    if league in {"USA", "NOR", "BRA"}:
+        # A broad, result-independent domain lets the rolling residual model decide
+        # among all three outcomes using only information available before each month.
+        return (AnchoredRuleSpec(league),)
     return ()
 
 
@@ -163,6 +167,7 @@ def _config_grid(odds_source: str, labels: tuple[str, ...], fast: bool = False) 
         min_ev_values,
         ridge_values,
     ):
+        broad_current_pool = label in {"USA", "NOR", "BRA"}
         configs.append(FeatureFilterConfig(
             odds_source=odds_source,
             train_months=train_months,
@@ -170,8 +175,15 @@ def _config_grid(odds_source: str, labels: tuple[str, ...], fast: bool = False) 
             min_predicted_ev=min_ev,
             max_bets_per_day=1,
             ridge=ridge,
-            residual_cap=0.08,
+            residual_cap=0.03 if broad_current_pool else 0.08,
             selected_rules=(label,),
+            validation_months=6 if broad_current_pool else 0,
+            min_validation_rows=120,
+            require_probability_improvement=broad_current_pool,
+            min_odds=1.8 if broad_current_pool else 1.01,
+            max_odds=4.0 if broad_current_pool else 100.0,
+            min_validation_selections=20 if broad_current_pool else 0,
+            require_validation_tail_edge=broad_current_pool,
         ))
     return configs
 

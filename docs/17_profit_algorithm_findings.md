@@ -2770,3 +2770,156 @@ Current production profile after availability monitoring started:
 - No monitored sold match has kicked off yet; one-hour closing coverage and settlement coverage are both `PENDING` with denominator 0/10 required.
 - Collector freshness, sold-card capture, price validity, temporal integrity, and observation uniqueness pass.
 - Decision: `EVIDENCE_COLLECTING`. Historical baseline remains 53/80 pre-discovered matches with SP and 5/53 one-hour closing observations, but those pre-monitoring gaps do not decide future readiness.
+## Current-pool representative-price no-lookahead gate (2026-07-16)
+
+- Current official-pool league mapping now includes `USA`, `BRA`, and `NOR`. Their historical 1X2 archives have long `AVG_CLOSE` / `PS_CLOSE` coverage, while `B365_CLOSE` only covers roughly 8-11 recent months and the archived opening-price fields are empty.
+- `scripts/rolling_low_correlation_rule_selector.py` now persists the exact future-window selections to `bets.csv`, along with immutable train/validation boundaries. This closes the audit gap between rolling-window summaries and the downstream bootstrap/calibration reports.
+- The preregistered screen uses 48 prior months for training, non-overlapping 12-month future windows, structured league/outcome/price rules, at least 80 training bets and 18 active training months, and a 50% internal train-window pass rate.
+- `MAX_CLOSE` is explicitly excluded from promotion evidence. `AVG_CLOSE` and `PS_CLOSE` are treated as representative historical market prices, not as proof of an executable official price.
+
+| League / source | Future bets | Active windows | Passed windows | ROI | Statistical audit | Calibration |
+|---|---:|---:|---:|---:|---|---|
+| USA / AVG_CLOSE | 88 | 3 | 0 | -23.86% | rejected | no calibrated edge |
+| USA / PS_CLOSE | 599 | 6 | 1 | 0.36% | rejected | positive, not conservative |
+| NOR / AVG_CLOSE | 119 | 3 | 0 | -16.78% | rejected | no calibrated edge |
+| NOR / PS_CLOSE | 139 | 3 | 1 | 12.78% | positive, not confirmed | positive, not conservative |
+| BRA / AVG_CLOSE | 182 | 2 | 0 | -3.09% | rejected | no calibrated edge |
+| BRA / PS_CLOSE | 296 | 4 | 1 | 1.63% | rejected | positive, not conservative |
+
+- Consolidated evidence: `reports/current_pool_no_leak_20260716/summary.json`.
+- Decision: `USA`, `NOR`, and `BRA` are all `REJECTED_HISTORICAL_EVIDENCE`. None may enter the official-SP shadow registry.
+- The positive `NOR / PS_CLOSE` slice is not promotable: it has only 139 future bets, three active windows, a bootstrap ROI 5th percentile of -2.05%, sign-flip p-value 0.0986, and a negative Wilson conservative edge. Its corresponding `AVG_CLOSE` run loses heavily.
+- `scripts/current_pool_execution_evidence_gate.py` now requires both representative price sources to independently pass no-lookahead, sample-size, statistical, and calibration checks. A historically supported domain must still wait for `EVIDENCE_READY` official-SP data before it can become `OFFICIAL_SP_SHADOW_CANDIDATE`.
+
+## Current-pool market-anchored residual experiments (2026-07-16)
+
+- The broad residual candidate domain is result-independent: every home/draw/away outcome in `USA`, `NOR`, and `BRA` is eligible before training. Each test month uses only prior rows.
+- Complete three-way model probabilities are now projected back to a sum of one. This prevents independent residual estimates from manufacturing probability mass and false EV.
+- The broad model uses a 3 percentage-point residual cap. Before a future month can invest, its prior six-month validation slice must improve both multiclass Log Loss and Brier score over the de-vigged market baseline.
+- The v3 gate additionally replays the exact high-EV selection tail on the prior validation slice. It requires at least 20 prior selections, positive realized profit, positive hit-rate edge over market probability, odds from 1.8 through 4.0, and at most one selection per day.
+
+| Experiment | Source | Bets | Profit | ROI | Active window pass rate | Decision |
+|---|---|---:|---:|---:|---:|---|
+| Per-league v2 USA | AVG_CLOSE | 114 | 191.2 | 16.77% | 1 / 13 | rejected; bootstrap p05 -0.73% |
+| Per-league v2 USA | PS_CLOSE | 300 | 248.8 | 8.29% | 2 / 16 | rejected; bootstrap p05 -3.82% |
+| Per-league v3 USA | AVG_CLOSE | 20 | -3.2 | -1.60% | 0 / 2 | rejected |
+| Per-league v3 USA | PS_CLOSE | 115 | 284.8 | 24.77% | 1 / 12 | rejected; too small and cross-source failure |
+| Per-league v3 NOR | AVG_CLOSE | 26 | 9.7 | 3.73% | 0 / 6 | rejected |
+| Per-league v3 NOR | PS_CLOSE | 23 | -64.0 | -27.83% | 0 / 6 | rejected |
+| Per-league v3 BRA | AVG_CLOSE | 0 | 0.0 | 0.00% | 0 / 0 | rejected |
+| Per-league v3 BRA | PS_CLOSE | 3 | 42.3 | 141.00% | 0 / 2 | rejected; three bets only |
+| Pooled USA/NOR/BRA | AVG_CLOSE | 0 | 0.0 | 0.00% | 0 / 0 | rejected |
+| Pooled USA/NOR/BRA | PS_CLOSE | 189 | 232.8 | 12.32% | 1 / 7 | rejected; single-source only |
+
+- Pooled PS_CLOSE statistical audit: bootstrap ROI p05 `-4.23%`, probability of positive ROI `0.8846`, sign-flip `p=0.1352`, drawdown/profit `0.5747`, Wilson conservative edge `-0.0298`.
+- The pooled result is also concentrated: its five largest wins contribute 62.2% of total profit.
+- Reports: `reports/current_pool_market_anchored_residual_v2_20260716`, `reports/current_pool_market_anchored_residual_v3_20260716`, and `reports/pooled_current_pool_market_anchored_20260716`.
+- Decision: none of the current-pool residual candidates may be registered for official-SP shadow allocation. The next proof source remains prospective official SP, not another threshold relaxation on these rejected histories.
+
+## Immutable official-SP scorer freeze and settlement boundary (2026-07-16)
+
+- Migration `0010_profit_scorer_freeze_attempts.sql` adds one immutable freeze attempt per opening observation and scorer artifact.
+- Every attempt is permanently classified as `SCORED`, `BLOCKED`, or `MISSED_PRE_MATCH`. A blocked or missed observation cannot be rescored after results or historical backfills arrive.
+- Scorer features now use the official opening observation timestamp as their cutoff, rather than the later kickoff timestamp. The cutoff is stored inside immutable `feature_json` evidence.
+- Settlement reports no longer recompute probabilities, EV, or feature eligibility. They join the frozen evidence to the later closing observation and result only to calculate CLV, profit, ROI, month balance, and drawdown.
+- Evidence with `scored_at` outside `observed_at <= scored_at < kickoff_time` is quarantined from the prospective sample and blocks promotion.
+- The live migration classified the 63 existing opening snapshots as 53 `MISSED_PRE_MATCH` and 10 `BLOCKED`; it created zero retrospective selections and found zero temporal violations.
+- The Agent monitor now exposes frozen attempts, successful scores, blocked attempts, missed windows, temporal violations, selected snapshots, settled selections, and remaining promotion samples.
+
+## Prospective coverage pipeline repair (2026-07-16)
+
+- The prospective collector was silently rejecting the normalized official status `NOT_STARTED` because it only accepted the legacy lowercase value `scheduled`. Capture now normalizes status and reports structured skip reasons for ineligible status, expired kickoff, missing official SP, workflow failure, and missing ensemble output.
+- The enrichment and feature agents were spending their limits on old rows that still said `scheduled` after kickoff. `Repository.list_active_official_matches()` now supplies one shared pool: genuinely future `scheduled` / `NOT_STARTED` matches plus `LIVE` matches no more than four hours after kickoff.
+- The Odds API client now derives active sport keys from the current official leagues instead of requesting the fixed World Cup and Finland pair every hour. The current mapping covers Brazil Serie A, MLS, Norway Eliteserien, Sweden Allsvenskan, Finland Veikkausliiga, and the World Cup, while retaining explicit configured keys as fallback.
+- Encoding-safe Chinese club aliases now connect the official pool to both The Odds API names and the historical database. The first corrected live run fetched 51 market events and matched 14 of 17 active official matches, up from 0 of 20 stale targets.
+- Historical aliases raised current-pool feature coverage from 0 of 17 to 14 of 17. The covered clubs have real historical depth; examples include Valerenga 404 rows, Botafogo RJ 473, and most MLS clubs roughly 480-525.
+- The hourly agents previously started as independent threads even though the monitor showed a dependency chain. They now run as one ordered pipeline: external market capture, history sync, feature build, prospective freeze, Qwen context, shadow checks, scorer validation, backtest, and governance. Official SP remains an independent 15-minute collector.
+- The first ordered production run proves the dependency timestamps: external sync `04:37:05-04:37:22Z`, history `04:37:22-04:38:11Z`, features `04:38:11-04:38:12Z`, and prospective capture `04:38:12-04:38:13Z` with 7 new immutable predictions.
+- The current frozen prospective study reached 28 immutable rows over 7 matches at four real observation times during verification. None is yet in the registered T-60 to T-120 primary horizon and none is settled, so this is collection progress, not profitability evidence.
+- Qwen currently returns `403 AllocationQuota.FreeTierOnly`. The hourly Qwen step now trips a circuit breaker on the first authentication or quota error, records the task as `FAILED`, and lets the remaining validation, allocation, backtest, and governance tasks continue. It no longer sends one doomed request per match or shows a false green step.
+- Static frontend bundles now return `Cache-Control: no-cache, no-store, must-revalidate`; the Agent monitor therefore displays the deployed workflow order immediately after a build.
+- Verification: backend `320 passed`; frontend `43` test files / `140` tests passed; production frontend build passed; browser QA confirmed the corrected workflow order and the prospective counter.
+## 2026-07-16 official result settlement and critical-window capture
+
+- Added a separate official result collector backed by the public Sporttery result archive. The
+  collector reads the structured API from the official page's normal browser context because
+  direct scripted HTTP traffic is rejected by the upstream WAF.
+- Settlement uses the exact upstream `matchId` already stored as `sporttery-{matchId}` and verifies
+  the China-local match date. Only final 90-minute integer scores are accepted.
+- Official result evidence is immutable. A repeated score is confirmed, while a different score is
+  archived as a conflict and cannot overwrite the stored settlement.
+- The first production backfill read 433 official archive rows, confirmed 127 existing settlements,
+  added 41 missing settlements, and produced zero score conflicts or date ambiguities. The local
+  official pool now has 168 settled results and zero non-cancelled matches more than four hours past
+  kickoff without a result.
+- The fast official chain now runs in this order every 15 minutes: fixture/SP capture, independent
+  result backfill, evidence-quality check, and critical-window prospective freeze. The hourly
+  feature-enriched capture remains in place as a separate task.
+- This closes an operational evidence gap; it does not establish profitability. Promotion and
+  capital allocation remain blocked until the frozen prospective study reaches its configured
+  multi-month/sample requirements with acceptable calibration, CLV, ROI, and drawdown.
+- Official scorer validation now emits a chronological daily return path in addition to monthly
+  summaries. Allocation risk controls prefer that daily path, so intra-month losing sequences can
+  reduce deployable paper budget instead of being hidden by a positive monthly aggregate.
+- Allocation readiness derives active months from the monthly evidence rows and rejects inconsistent
+  profit or positive/negative-month summaries. A claimed aggregate can no longer bypass the detailed
+  evidence gate.
+
+## 2026-07-16 immutable paper portfolio execution ledger
+
+- The previous daily allocation output was only a readiness report and the frontend also generated a
+  separate in-memory combination. Neither was a durable position or settlement ledger.
+- Added immutable portfolio runs, paper positions, and settlements. A blocked gate writes a cash HOLD;
+  only `PAPER_ALLOCATION_READY` can produce positions.
+- Position creation uses the latest pre-match official SP available at decision time, rejects stale
+  prices, and recomputes executable EV from the already-frozen scorer probability. Historical opening
+  prices cannot be retroactively treated as executable bets after promotion.
+- Quarter-Kelly sizing is bounded by the daily budget, per-strategy budget, single-position cap, league
+  concentration cap, and the frozen strategy's maximum bets per day. One match can appear only once
+  across all portfolio strategies.
+- Official results settle each position exactly once. Profit, closing SP, CLV, equity curve, maximum
+  drawdown, and current drawdown are derived from the full ledger rather than a truncated recent sample.
+- The first real runtime decision correctly wrote a HOLD with zero positions and all CNY 100 reserved,
+  because official-SP prospective promotion has not passed. This is evidence of the gate working, not
+  evidence of profitability.
+
+## 2026-07-16 prospective uncertainty and market-relative promotion gate
+
+- Official-SP validation now applies a deterministic 5,000-iteration block bootstrap. The resampling
+  unit is the whole settlement day, so correlated selections from one day are never treated as
+  independent observations.
+- The report includes point estimates and 5th/50th/95th percentiles for ROI, average CLV, paired Brier
+  improvement, and paired Log Loss improvement. Positive improvement means the frozen model beats the
+  de-vig official-SP market probability on the exact same settled selections.
+- Once the cohort reaches 200 settled selections and six active months, production promotion also
+  requires at least 30 settlement days, positive ROI and CLV 95% lower bounds, model Brier and Log Loss
+  no worse than market, and a positive 95% lower bound for at least one paired calibration improvement.
+- Allocation readiness independently rechecks every uncertainty field. A legacy or manually edited
+  `OFFICIAL_SP_PROSPECTIVE_PASS` report without bootstrap evidence therefore remains cash-only.
+- Before the maturity threshold, these statistical checks remain diagnostics rather than extra blocker
+  noise. The current decision is still evidence collection, not a profitability claim.
+
+## 2026-07-16 pre-registered external-consensus challenger
+
+- The existing broad ensemble showed the same weak-side pattern on the current pool. With a 50%
+  residual shrink, none of 13 aligned fixtures had positive executable EV; only a 75-100% residual
+  weight manufactured several high-odds away candidates. That path was rejected rather than tuned to
+  create betting volume.
+- A new immutable challenger instead aligns official SP with the latest The Odds API bookmaker batch.
+  The first real capture covered 13 of 17 future fixtures, with roughly 34-42 bookmakers per matched
+  fixture and eight archived external timestamps already available.
+- The registered policy requires at least 10 fresh bookmakers, caps the frozen model residual at three
+  probability points, uses only 25% of that residual, and subtracts at least one probability point plus
+  a bookmaker-dispersion margin before computing conservative EV. Odds outside `[1.5, 6.0]`, expected
+  EV below 3%, or conservative EV below zero produce an immutable `NO_BET`.
+- The first live run wrote 13 immutable decisions and zero candidates. Every aligned fixture failed
+  both the 3% expected-EV threshold and the positive conservative-EV test. This demonstrates that the
+  official SP was worse than independent market fair value in the current pool; it is not evidence that
+  thresholds should be relaxed.
+- Promotion is pre-registered at 200 settled primary-window selections, six active months, 180 calendar
+  days, 30 settlement days, positive ROI/CLV lower confidence bounds, and model calibration superior to
+  the paired external consensus. Until then it is research-only and cannot receive portfolio capital.
+- The paper ledger now supports mutually exclusive `PROFIT_SCORER` and `EXTERNAL_CONSENSUS` evidence
+  references. A validated Challenger can therefore enter the same quarter-Kelly, daily budget, league
+  concentration, duplicate-match, cooldown, CLV, and drawdown controls without fabricating a scorer row.
+  The current Challenger maps to `OFFICIAL_SP_PROSPECTIVE_BLOCKED`, so this execution path remains closed.

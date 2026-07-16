@@ -21,8 +21,7 @@ class DataEnrichmentService:
         self.workflow = DecisionWorkflow(self.repository)
 
     def sync(self, limit: int = 40, evaluate: bool = True) -> dict[str, Any]:
-        all_matches = self.repository.list_official_matches()
-        matches = sorted(all_matches, key=lambda item: (item["status"] not in {"scheduled", "live"}, item["kickoff_time"]))[:limit]
+        matches = self.repository.list_active_official_matches(limit)
         summary: dict[str, Any] = {
             "matches": len(matches), "market_events_fetched": 0, "market_odds": 0,
             "market_unmatched": 0, "news_articles_fetched": 0, "news": 0,
@@ -34,7 +33,7 @@ class DataEnrichmentService:
         events: list[dict[str, Any]] = []
         if self.odds.configured():
             try:
-                events, headers = self.odds.events()
+                events, headers = self.odds.events({str(match.get("league") or "") for match in matches})
                 summary["market_events_fetched"] = len(events)
                 self.repository.log_provider_sync("the_odds_api", "success", len(events),
                     f'requests_remaining={headers.get("x-requests-remaining", "unknown")}')

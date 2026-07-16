@@ -72,6 +72,11 @@ def test_rolling_selector_uses_only_past_training_data():
     assert selected
     assert all("FUTURE_ONLY" not in rule for rule in selected)
     assert result["summary"]["active_window_count"] == 1
+    assert result["selection_uses_validation_data"] is False
+    assert result["validation_windows_overlap"] is False
+    assert result["validation_bets"]
+    assert all(row["validation_start"] == "2024-01" for row in result["validation_bets"])
+    assert all(row["train_end"] == "2023-12" for row in result["validation_bets"])
 
 
 def test_loader_accepts_unit_bet_profit_column(tmp_path):

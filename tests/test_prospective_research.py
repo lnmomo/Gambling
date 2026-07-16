@@ -13,16 +13,17 @@ from football_agents.repository import Repository
 from football_agents.research.prospective import ProspectiveResearchService
 
 
-def _seed_match(repository: Repository) -> dict:
+def _seed_match(repository: Repository, status: str = "scheduled",
+                official_match_id: str = "sporttery-prospective-1") -> dict:
     now = datetime.now(timezone.utc)
     kickoff = now + timedelta(minutes=90)
     observed = now - timedelta(minutes=1)
     kickoff_text = kickoff.isoformat()
     observed_text = observed.isoformat()
     match_id, _, _ = repository.upsert_official_match({
-        "official_match_id": "sporttery-prospective-1", "match_no": "001", "league": "Test League",
+        "official_match_id": official_match_id, "match_no": "001", "league": "Test League",
         "home_team": "Home", "away_team": "Away", "kickoff_time": kickoff_text,
-        "status": "scheduled", "source_url": "https://example.test", "data_quality_score": 1.0,
+        "status": status, "source_url": "https://example.test", "data_quality_score": 1.0,
         "raw_hash": "match-hash",
     })
     repository.add_odds(match_id, {"home": 2.1, "draw": 3.2, "away": 3.6}, "official",
@@ -30,8 +31,8 @@ def _seed_match(repository: Repository) -> dict:
     repository.add_odds(match_id, {"home": 2.0, "draw": 3.3, "away": 3.8}, "market",
                         observed_text, external=True)
     repository.archive_official_odds_observation(
-        match_id, "sporttery-prospective-1", {"home": 2.1, "draw": 3.2, "away": 3.6},
-        observed_text, kickoff_text, "scheduled",
+        match_id, official_match_id, {"home": 2.1, "draw": 3.2, "away": 3.6},
+        observed_text, kickoff_text, status,
         "official", "https://example.test", "odds-hash",
     )
     repository.add_features(match_id, {
@@ -79,3 +80,35 @@ def test_confirmation_refuses_to_run_before_registered_threshold(tmp_path: Path)
     study = service.register_study("threshold", "registered hypothesis", freeze["freeze_id"], 5000, 365)
     with pytest.raises(RuntimeError, match="not ready"):
         service.run_confirmation_once(study["study_id"])
+
+
+def test_capture_accepts_normalized_not_started_status(tmp_path: Path) -> None:
+    database = Database(tmp_path / "not-started.db")
+    database.initialize()
+    repository = Repository(database)
+    _seed_match(repository, status="NOT_STARTED")
+    service = ProspectiveResearchService(database, repository, DecisionWorkflow(repository))
+    freeze = service.freeze_current_model()
+    study = service.register_study("not-started", "status normalization", freeze["freeze_id"], 1, 0)
+
+    report = service.capture(10, study["study_id"])
+
+    assert report["eligible_pre_match"] == 1
+    assert report["predictions"] == 1
+    assert report["skip_reasons"] == {}
+
+
+def test_capture_reports_ineligible_status_without_green_zero_output(tmp_path: Path) -> None:
+    database = Database(tmp_path / "closed.db")
+    database.initialize()
+    repository = Repository(database)
+    _seed_match(repository, status="CANCELLED")
+    service = ProspectiveResearchService(database, repository, DecisionWorkflow(repository))
+    freeze = service.freeze_current_model()
+    study = service.register_study("cancelled", "status exclusion", freeze["freeze_id"], 1, 0)
+
+    report = service.capture(10, study["study_id"])
+
+    assert report["eligible_pre_match"] == 0
+    assert report["predictions"] == 0
+    assert report["skip_reasons"] == {"ineligible_status": 1}

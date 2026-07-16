@@ -18,6 +18,7 @@ from .evaluation import evaluate_probabilities
 
 
 OUTCOMES = ("home", "draw", "away")
+PRE_MATCH_STATUSES = {"scheduled", "not_started", "live"}
 FROZEN_ARTIFACTS = (
     "football_agents/agents/workflow.py",
     "football_agents/models/elo.py",
@@ -123,33 +124,58 @@ class ProspectiveResearchService:
         if current_hash != freeze["algorithm_hash"]:
             raise RuntimeError("frozen algorithm hash no longer matches the running code; register a new study")
         now = datetime.now(timezone.utc)
-        captured = duplicates = skipped = 0
+        captured = duplicates = skipped = eligible_pre_match = 0
+        skip_reasons: dict[str, int] = {}
         warnings: list[str] = []
         matches = self.repository.list_official_matches(now.date().isoformat())[:max(1, min(limit, 500))]
         for match in matches:
-            if match["status"] not in {"scheduled", "live"} or _parse_time(match["kickoff_time"]) <= now:
+            status = str(match.get("status") or "").strip().lower()
+            if status not in PRE_MATCH_STATUSES:
                 skipped += 1
+                skip_reasons["ineligible_status"] = skip_reasons.get("ineligible_status", 0) + 1
                 continue
+            if _parse_time(match["kickoff_time"]) <= now:
+                skipped += 1
+                skip_reasons["kickoff_not_in_future"] = skip_reasons.get("kickoff_not_in_future", 0) + 1
+                continue
+            eligible_pre_match += 1
             observation = self._latest_pre_match_observation(match["id"])
             if not observation:
                 skipped += 1
+                skip_reasons["missing_pre_match_official_sp"] = (
+                    skip_reasons.get("missing_pre_match_official_sp", 0) + 1
+                )
                 continue
             try:
                 self.workflow.evaluate(match["id"])
             except Exception as exc:
                 skipped += 1
+                skip_reasons["workflow_error"] = skip_reasons.get("workflow_error", 0) + 1
                 warnings.append(f"{match['official_match_id']}: {exc}")
                 continue
             source_prediction = self._latest_ensemble_prediction(match["id"])
             if not source_prediction:
                 skipped += 1
+                skip_reasons["missing_ensemble_prediction"] = (
+                    skip_reasons.get("missing_ensemble_prediction", 0) + 1
+                )
                 continue
             inserted = self._insert_prediction(study, freeze, match, observation, source_prediction)
             captured += int(inserted)
             duplicates += int(not inserted)
+        if eligible_pre_match and not captured and not duplicates:
+            warnings.append("eligible_pre_match_matches_produced_no_frozen_predictions")
         progress = self.progress(study["study_id"])
-        return {"matches": len(matches), "predictions": captured, "duplicates": duplicates,
-                "skipped": skipped, "warnings": warnings[:20], "study": progress}
+        return {
+            "matches": len(matches),
+            "eligible_pre_match": eligible_pre_match,
+            "predictions": captured,
+            "duplicates": duplicates,
+            "skipped": skipped,
+            "skip_reasons": skip_reasons,
+            "warnings": warnings[:20],
+            "study": progress,
+        }
 
     def progress(self, study_id: str | None = None) -> dict[str, Any]:
         study = self._get_study(study_id)

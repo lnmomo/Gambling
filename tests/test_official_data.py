@@ -1,6 +1,7 @@
 import tempfile
 import unittest
 import sqlite3
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from football_agents.db import Database
@@ -103,6 +104,35 @@ class OfficialDataTests(unittest.TestCase):
     def test_current_official_sale_statuses_are_mapped(self):
         self.assertEqual(STATUS_MAP["直播结束"], "finished")
         self.assertEqual(STATUS_MAP["暂停销售"], "closed")
+
+
+    def test_active_official_pool_excludes_stale_scheduled_rows(self):
+        now = datetime(2026, 7, 16, 12, tzinfo=timezone.utc)
+        for suffix, kickoff, status in (
+            ("stale", now - timedelta(days=2), "scheduled"),
+            ("future", now + timedelta(hours=2), "NOT_STARTED"),
+            ("live", now - timedelta(hours=1), "LIVE"),
+            ("old-live", now - timedelta(hours=5), "LIVE"),
+        ):
+            self.repository.upsert_official_match({
+                "official_match_id": f"sporttery-{suffix}",
+                "match_no": suffix,
+                "league": "test",
+                "home_team": f"home-{suffix}",
+                "away_team": f"away-{suffix}",
+                "kickoff_time": kickoff.isoformat(),
+                "status": status,
+                "source_url": "https://example.test",
+                "data_quality_score": 1.0,
+                "raw_hash": suffix,
+            })
+
+        active = self.repository.list_active_official_matches(10, now)
+
+        self.assertEqual(
+            {row["official_match_id"] for row in active},
+            {"sporttery-live", "sporttery-future"},
+        )
 
 
 if __name__ == "__main__":

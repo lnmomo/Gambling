@@ -64,6 +64,10 @@ class Settings:
     profit_daily_budget: float = _float("PROFIT_DAILY_BUDGET", 100.0)
     odds_max_age_minutes: int = int(os.getenv("ODDS_MAX_AGE_MINUTES", "10"))
     official_source_url: str = os.getenv("OFFICIAL_SOURCE_URL", "https://m.sporttery.cn/mjc/zqsj/?tab=schedule")
+    official_results_source_url: str = os.getenv(
+        "OFFICIAL_RESULTS_SOURCE_URL", "https://www.sporttery.cn/jc/zqsgkj/"
+    )
+    official_results_lookback_days: int = int(os.getenv("OFFICIAL_RESULTS_LOOKBACK_DAYS", "60"))
     official_browser_path: str = os.getenv(
         "OFFICIAL_BROWSER_PATH", r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
     )
@@ -96,11 +100,19 @@ class Settings:
         "PROFIT_ALLOCATION_READINESS_REPORT_PATH",
         "reports/profit_allocation_readiness_current/summary.json",
     )
+    paper_portfolio_report_path: str = os.getenv(
+        "PAPER_PORTFOLIO_REPORT_PATH", "reports/paper_portfolio_current/summary.json"
+    )
+    external_consensus_challenger_report_path: str = os.getenv(
+        "EXTERNAL_CONSENSUS_CHALLENGER_REPORT_PATH",
+        "reports/external_consensus_challenger/summary.json",
+    )
     odds_api_key: str = os.getenv("THE_ODDS_API_KEY", "")
     odds_api_base_url: str = os.getenv("ODDS_API_BASE_URL", "https://api.the-odds-api.com/v4")
     odds_api_sport_keys: tuple[str, ...] = tuple(filter(None, os.getenv(
         "ODDS_API_SPORT_KEYS", "soccer_fifa_world_cup,soccer_finland_veikkausliiga"
     ).split(",")))
+    odds_api_auto_sport_keys: bool = _bool("ODDS_API_AUTO_SPORT_KEYS", True)
     international_odds_sport_keys: tuple[str, ...] = tuple(filter(None, os.getenv(
         "INTERNATIONAL_ODDS_SPORT_KEYS",
         "soccer_fifa_world_cup,soccer_uefa_european_championship,soccer_conmebol_copa_america,"
