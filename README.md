@@ -115,6 +115,10 @@ Do not commit real keys or local runtime paths. Important settings:
 - `ENABLE_STACKING_MODEL=false`: challenger mode is opt-in.
 - `ENABLE_REAL_SYNC=false`: user-controlled real data sync switch.
 - `DATABASE_URL=sqlite:///./data/runtime/football_agents.db`: local runtime DB path.
+- `OFFICIAL_SP_REFRESH_MINUTES=15`: official fixture/SP capture and its evidence-quality check cadence.
+- `BACKGROUND_AGENT_INTERVAL_SECONDS=3600`: cadence for heavier enrichment, history, backtest, and governance agents.
+
+The API process must remain running for these in-process agents to execute. The scheduler runs immediately on startup; official SP capture then runs every 15 minutes, while the heavier agents run hourly.
 
 ## 8. Database Initialization
 

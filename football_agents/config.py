@@ -88,6 +88,14 @@ class Settings:
         "PROFIT_SCORER_OFFICIAL_SP_VALIDATION_REPORT_PATH",
         "reports/profit_scorer_official_sp_validation/summary.json",
     )
+    official_sp_evidence_quality_report_path: str = os.getenv(
+        "OFFICIAL_SP_EVIDENCE_QUALITY_REPORT_PATH",
+        "reports/official_sp_evidence_quality/summary.json",
+    )
+    profit_allocation_readiness_report_path: str = os.getenv(
+        "PROFIT_ALLOCATION_READINESS_REPORT_PATH",
+        "reports/profit_allocation_readiness_current/summary.json",
+    )
     odds_api_key: str = os.getenv("THE_ODDS_API_KEY", "")
     odds_api_base_url: str = os.getenv("ODDS_API_BASE_URL", "https://api.the-odds-api.com/v4")
     odds_api_sport_keys: tuple[str, ...] = tuple(filter(None, os.getenv(

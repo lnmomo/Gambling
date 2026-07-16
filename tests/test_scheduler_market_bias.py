@@ -34,6 +34,43 @@ def test_background_scheduler_includes_profit_scorer_official_sp_validation(tmp_
     assert "profit_scorer_official_sp_validation" in task_names
 
 
+def test_official_sp_tasks_use_fast_refresh_without_accelerating_heavy_agents(tmp_path, monkeypatch):
+    database = Database(Path(tmp_path) / "scheduler-cadence.db")
+    configured = SimpleNamespace(
+        background_agent_interval_seconds=3600,
+        official_sp_refresh_minutes=15,
+    )
+    monkeypatch.setattr("football_agents.scheduler.settings", configured)
+    scheduler = BackgroundAgentScheduler(Repository(database), TaskRunnerService(database))
+
+    assert scheduler._interval_for("official_sp_sync") == 900
+    assert scheduler._interval_for("official_sp_evidence_quality") == 900
+    assert scheduler._interval_for("historical_data_sync") == 3600
+
+
+def test_official_sp_quality_runs_after_each_official_sync(tmp_path, monkeypatch):
+    database = Database(Path(tmp_path) / "scheduler-quality-order.db")
+    database.initialize()
+    scheduler = BackgroundAgentScheduler(
+        Repository(database), TaskRunnerService(database), interval_seconds=60
+    )
+    child_tasks: list[str] = []
+    monkeypatch.setattr(
+        "football_agents.scheduler.OfficialDataService",
+        lambda _repository: SimpleNamespace(sync=lambda: {"status": "success", "records": 3}),
+    )
+    monkeypatch.setattr(
+        scheduler,
+        "_run_task",
+        lambda task_name, _action: child_tasks.append(task_name),
+    )
+
+    report = scheduler._sync_official()
+
+    assert report["status"] == "success"
+    assert child_tasks == ["official_sp_evidence_quality"]
+
+
 def test_background_profit_scorer_validation_uses_configured_artifact(tmp_path, monkeypatch):
     database = Database(Path(tmp_path) / "scheduler-profit-artifact.db")
     database.initialize()
@@ -43,6 +80,7 @@ def test_background_profit_scorer_validation_uses_configured_artifact(tmp_path, 
         profit_scorer_official_sp_validation_report_path="reports/validation.json",
         project_dir=Path(tmp_path),
     )
+    child_tasks: list[str] = []
 
     def fake_validate(database_arg, scorer_artifact, *_args):
         seen["database"] = database_arg
@@ -63,12 +101,18 @@ def test_background_profit_scorer_validation_uses_configured_artifact(tmp_path, 
         TaskRunnerService(database),
         interval_seconds=60,
     )
+    monkeypatch.setattr(
+        scheduler,
+        "_run_task",
+        lambda task_name, _action: child_tasks.append(task_name),
+    )
 
     report = scheduler._validate_profit_scorer_official_sp()
 
     assert seen["database"] is database
     assert seen["scorer_artifact"] == configured.profit_scorer_artifact_path
     assert report["decision"] == "OFFICIAL_SP_PROSPECTIVE_BLOCKED"
+    assert child_tasks == ["profit_allocation_readiness"]
     output = Path(tmp_path) / "reports" / "validation.json"
     assert json.loads(output.read_text(encoding="utf-8"))["decision"] == "OFFICIAL_SP_PROSPECTIVE_BLOCKED"
 

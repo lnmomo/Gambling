@@ -11,7 +11,11 @@ import numpy as np
 from .db import Database, db
 from .config import settings
 from .market_bias_shadow_strategy import is_i2_league, is_sp1_league
-from .profit_scorer_features import FEATURE_ENGINE, build_research_parity_features
+from .profit_scorer_features import (
+    FEATURE_ENGINE,
+    ResearchParityFeatureCache,
+    build_research_parity_features,
+)
 from .repository import Repository
 
 
@@ -78,6 +82,7 @@ def map_official_match_to_scorer_features(
     match: dict[str, Any],
     odds: dict[str, Any],
     artifact: dict[str, Any],
+    feature_cache: ResearchParityFeatureCache | None = None,
 ) -> tuple[dict[str, float] | None, list[str], list[str]]:
     missing: list[str] = []
     warnings: list[str] = []
@@ -106,11 +111,15 @@ def map_official_match_to_scorer_features(
             f"{selected_outcome}_market_probability_below_{scope['min_market_probability']}"
         )
 
-    historical, history_notes = build_research_parity_features(
-        repository,
-        match,
-        scope["league_matches"],
-        min_team_matches=10,
+    historical, history_notes = (
+        feature_cache.features_for(match)
+        if feature_cache is not None
+        else build_research_parity_features(
+            repository,
+            match,
+            scope["league_matches"],
+            min_team_matches=10,
+        )
     )
     if historical is None:
         missing.extend(history_notes)
@@ -146,12 +155,15 @@ def diagnose_official_profit_scorer_pool(
     artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
     scope = _artifact_selection(artifact)
     repository = Repository(database)
+    feature_cache = ResearchParityFeatureCache(repository, scope["league_matches"]) if scope else None
     rows: list[dict[str, Any]] = []
     blocker_counts: dict[str, int] = {}
     for match in repository.list_official_matches()[:max(1, min(limit, 5000))]:
         latest = repository.latest_odds(int(match["id"]))
         odds = latest.get("odds") or {}
-        mapped, missing, warnings = map_official_match_to_scorer_features(repository, match, odds, artifact)
+        mapped, missing, warnings = map_official_match_to_scorer_features(
+            repository, match, odds, artifact, feature_cache
+        )
         if mapped is None:
             for reason in missing:
                 blocker_counts[reason] = blocker_counts.get(reason, 0) + 1
@@ -191,6 +203,7 @@ def diagnose_official_profit_scorer_pool(
         "method": "official pool readiness for market-anchored profit scorer",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "scorer_artifact": str(artifact_path),
+        "feature_engine": FEATURE_ENGINE,
         "scanned_matches": len(rows),
         "scored_matches": len(scored),
         "passed_scorer": len(passed),
@@ -202,6 +215,6 @@ def diagnose_official_profit_scorer_pool(
         "rows": rows[:200],
         "warnings": [
             "This report does not create recommendations or bets.",
-            "Feature mapping is approximate until official live features exactly match the research scorer schema.",
+            "Features reproduce the research definitions from history available before kickoff.",
         ],
     }

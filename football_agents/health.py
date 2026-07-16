@@ -6,6 +6,7 @@ from typing import Any
 from .config import settings
 from .db import Database, db
 from .repository import Repository
+from .official_sp_evidence_quality import build_official_sp_evidence_quality
 from .services.model_governance_persistence_service import ModelGovernancePersistenceService
 from .services.scheduler_health_service import SchedulerHealthService
 
@@ -76,6 +77,10 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
         "decisionReasons": [],
         "lastRunAt": None,
     }
+    official_sp_evidence_quality: dict[str, Any] = {
+        "decision": "NOT_RUN", "research_usable": False, "summary": {},
+        "failed_checks": 0, "critical_checks": 0, "checks": [],
+    }
 
     try:
         with database.connect() as c:
@@ -84,14 +89,17 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
             official = c.execute("""SELECT fetched_at FROM official_fetch_logs
                 WHERE success=1 ORDER BY fetched_at DESC LIMIT 1""").fetchone()
             official_last_success = official["fetched_at"] if official else None
-            official_failed = c.execute("""SELECT 1 FROM official_fetch_logs
-                WHERE success=0 ORDER BY fetched_at DESC LIMIT 1""").fetchone() is not None
+            official_latest = c.execute("""SELECT success FROM official_fetch_logs
+                ORDER BY fetched_at DESC LIMIT 1""").fetchone()
+            official_failed = bool(official_latest and not official_latest["success"])
             external = c.execute("""SELECT synced_at FROM provider_sync_logs
                 WHERE provider='the_odds_api' AND status='success' ORDER BY synced_at DESC LIMIT 1""").fetchone()
             external_last_success = external["synced_at"] if external else None
-            external_failed = c.execute("""SELECT 1 FROM provider_sync_logs
-                WHERE provider='the_odds_api' AND status NOT IN ('success','not_configured')
-                ORDER BY synced_at DESC LIMIT 1""").fetchone() is not None
+            external_latest = c.execute("""SELECT status FROM provider_sync_logs
+                WHERE provider='the_odds_api' ORDER BY synced_at DESC LIMIT 1""").fetchone()
+            external_failed = bool(
+                external_latest and external_latest["status"] not in {"success", "not_configured", "waiting_metadata"}
+            )
             recent_errors = int(c.execute("""SELECT
                 (SELECT COUNT(*) FROM official_fetch_logs WHERE success=0)
                 + (SELECT COUNT(*) FROM provider_sync_logs WHERE status NOT IN ('success','not_configured','waiting_metadata'))
@@ -174,6 +182,7 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
                     "decisionReasons": reasons,
                     "lastRunAt": validation_run["finished_at"] or validation_run["started_at"],
                 })
+        official_sp_evidence_quality = build_official_sp_evidence_quality(database)
         scheduler = SchedulerHealthService()
         recent_task_runs = scheduler.list_recent_task_runs(20)
         governance = ModelGovernancePersistenceService(database)
@@ -191,6 +200,10 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
         warnings.append("ENABLE_AUTO_BETTING=true is blocked by project policy")
     if official_status == "STALE":
         warnings.append("official SP sync is stale")
+    if official_sp_evidence_quality.get("decision") != "EVIDENCE_READY":
+        warnings.append(
+            f"official SP evidence quality: {official_sp_evidence_quality.get('decision', 'NOT_RUN')}"
+        )
     if external_status == "STALE":
         warnings.append("external odds sync is stale")
     if not champion_version:
@@ -204,7 +217,12 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
 
     if not connected:
         status = "unhealthy"
-    elif settings.enable_auto_betting or official_status in {"STALE", "FAILED"} or external_status in {"STALE", "FAILED"}:
+    elif (
+        settings.enable_auto_betting
+        or official_status in {"STALE", "FAILED"}
+        or external_status in {"STALE", "FAILED"}
+        or official_sp_evidence_quality.get("decision") != "EVIDENCE_READY"
+    ):
         status = "degraded"
     else:
         status = "healthy"
@@ -235,6 +253,7 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
         "shadowValidation": shadow_validation,
         "prospectiveResearch": prospective_research,
         "profitScorerOfficialSp": profit_scorer_official_sp,
+        "officialSpEvidenceQuality": official_sp_evidence_quality,
     }
 
 

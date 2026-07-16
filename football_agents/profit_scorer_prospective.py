@@ -13,7 +13,7 @@ from .profit_scorer_official import (
     _score_from_artifact,
     map_official_match_to_scorer_features,
 )
-from .profit_scorer_features import FEATURE_ENGINE
+from .profit_scorer_features import FEATURE_ENGINE, ResearchParityFeatureCache
 from .repository import Repository
 
 
@@ -91,6 +91,7 @@ def validate_profit_scorer_on_official_sp(
         raise ValueError("Unsupported scorer artifact selection")
     selected_outcome = str(scope["outcome"])
     repository = Repository(database)
+    feature_cache = ResearchParityFeatureCache(repository, scope["league_matches"])
     rows = _load_opening_snapshot_rows(database, limit)
     scored: list[dict[str, Any]] = []
     blocker_counts: dict[str, int] = {}
@@ -112,7 +113,9 @@ def validate_profit_scorer_on_official_sp(
             valid_three_way += 1
         if row.get("outcome"):
             settled_opening += 1
-        mapped, missing, warnings = map_official_match_to_scorer_features(repository, match, odds, artifact)
+        mapped, missing, warnings = map_official_match_to_scorer_features(
+            repository, match, odds, artifact, feature_cache
+        )
         if mapped is None:
             for reason in missing:
                 blocker_counts[reason] = blocker_counts.get(reason, 0) + 1

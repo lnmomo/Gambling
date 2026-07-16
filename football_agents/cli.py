@@ -117,6 +117,9 @@ def main() -> None:
     profit_scorer_validate.add_argument("--limit", type=int, default=100_000)
     profit_scorer_validate.add_argument("--output", default="")
 
+    official_sp_quality = sub.add_parser("official-sp-evidence-quality", help="Audit official SP freshness, closing-price, and settlement evidence")
+    official_sp_quality.add_argument("--output", default=settings.official_sp_evidence_quality_report_path)
+
     activate = sub.add_parser("activate-filter-only", help="Manually activate FILTER_ONLY after promotion gate")
     activate.add_argument("config_version_id")
     activate.add_argument("--confirm", action="store_true")
@@ -387,6 +390,14 @@ def main() -> None:
         from .profit_scorer_prospective import validate_profit_scorer_on_official_sp
         db.initialize()
         payload = validate_profit_scorer_on_official_sp(db, args.scorer, args.limit)
+        if args.output:
+            Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.output).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    elif args.command == "official-sp-evidence-quality":
+        from .official_sp_evidence_quality import build_official_sp_evidence_quality
+        db.initialize()
+        payload = build_official_sp_evidence_quality(db)
         if args.output:
             Path(args.output).parent.mkdir(parents=True, exist_ok=True)
             Path(args.output).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")

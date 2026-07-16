@@ -2729,3 +2729,43 @@ Interpretation:
 - The system can now distinguish historical research support, prospective market-price evidence, and portfolio risk state instead of collapsing them into one pass/fail flag.
 - A forged or stale `OFFICIAL_SP_PROSPECTIVE_PASS` cannot bypass missing active months, CLV, profit, or drawdown evidence because allocation recomputes the gates independently.
 - This moves the project toward the long-term objective without claiming profitability before prospective official-SP evidence exists.
+
+Train/Serve Feature Parity And Runtime Evidence (2026-07-16):
+
+- A material research-to-runtime mismatch was found and removed:
+  - research used unweighted last-five form, cumulative competition-family rates, Elo-derived goal rates, and actual rest-day differences;
+  - the live scorer used 90-day weighted form, a different Poisson approximation, and a hard-coded zero rest-day difference;
+  - exact league text matching could also miss aliases such as `SP1`, `Spanish La Liga`, and `西甲`.
+- The runtime now uses `market-anchored-research-parity-v1`, which reconstructs the scorer inputs from matches strictly before kickoff and applies the same definitions used by the frozen research scorer.
+- Every successfully mapped opening-SP score is persisted with the scorer artifact SHA-256, feature-engine version, complete feature snapshot, probability, EV, and pass decision in the immutable `profit_scorer_evidence` table.
+- A parity regression compares the runtime features against `build_feature_history()` field by field. It covers league priors, recent form, season rates, rest days, and Elo-derived goal-rate features.
+- Batch scoring now loads historical matches once and advances the state in kickoff-date order. The current 178-match official-pool report completes in about 2.6 seconds; the previous per-match history replay exceeded 124 seconds.
+- Verification: 51 broader strategy/risk/shadow tests passed before the cache change, followed by 9 focused parity, official-pool, and prospective-evidence tests after it.
+
+Current Official-SP Truth:
+
+- `reports/profit_scorer_official_sp_validation/summary.json` contains 53 earliest pre-match official-SP snapshots, all with valid three-way prices; 30 are settled.
+- None belongs to the SP1 strategy family, so the frozen SP1 scorer has 0 scored, 0 selected, and 0 settled selected official-SP observations.
+- `reports/profit_scorer_official_pool/summary.json` scans 178 current/archive official matches and rejects all 178 as `league_not_sp1`. This is expected during the La Liga offseason and is not a model-feature failure.
+- The daily 100-unit readiness report therefore allocates 0 and reserves 100 as cash. A zero-sample strategy is reported as `WAITING_FOR_EVIDENCE`, not as a drawdown reduction.
+- The next production milestone is evidence accumulation, not threshold relaxation: preserve 15-minute opening/closing official SP, freeze the scorer, and wait for at least 200 settled selected observations across 6 active months with positive profit, positive average CLV, at least 50% positive CLV, and acceptable drawdown.
+
+Official-SP Evidence Quality Gate (2026-07-16):
+
+- Added `official-sp-evidence-quality` and `reports/official_sp_evidence_quality/summary.json` to audit the observation dataset at its true grain: one immutable three-way SP per match and fetch timestamp.
+- The gate checks collector freshness, collector-era pre-match coverage, closing prices captured within one hour, settlement coverage, price validity, timestamp integrity, and grain uniqueness.
+- It runs after each official SP sync and writes its own `official_sp_evidence_quality` task record. Official capture and this child check now use `OFFICIAL_SP_REFRESH_MINUTES` (15 minutes by default); heavy data, history, backtest, and governance agents remain hourly.
+- Capital allocation independently requires `EVIDENCE_READY`. A strategy cannot receive paper capital if the official-SP validation report says PASS while the underlying price or settlement chain is degraded.
+- Each scheduled official-SP prospective validation now triggers `profit_allocation_readiness` as an ordered child task and refreshes `reports/profit_allocation_readiness_current/summary.json`; drawdown and evidence controls no longer depend on a manual CLI run.
+- `/health` and Agent / Workflow monitoring expose the decision, observations, matches, freshness lag, pre-match coverage, one-hour closing coverage, settlement coverage, and each failed check.
+- The health calculation now treats only the latest provider run as the current failure state. A historical failure no longer makes a provider permanently FAILED after later successful runs.
+
+Current production profile:
+
+- After service recovery, 253 immutable observations were archived across 60 matches; 53 matches have usable pre-match observations.
+- Collector-era pre-match SP coverage: 53/126 matches (42.1%).
+- Closing price within one hour: 5/53 matches (9.4%).
+- Settlement coverage among finished matches with SP: 30/30 (100%).
+- Invalid prices, temporal conflicts, and duplicate observation grain: 0.
+- The stale collector was restarted and the next successful fetch completed at `2026-07-16T02:46:43.731267+00:00`.
+- Decision improved from `EVIDENCE_CRITICAL` to `EVIDENCE_DEGRADED`: freshness recovered, while pre-match and one-hour closing coverage still fail. The API service must stay alive and future 15-minute captures must improve both coverage metrics before official-SP evidence is research-usable.

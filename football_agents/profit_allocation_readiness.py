@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from .config import settings
+from .official_sp_evidence_quality import build_official_sp_evidence_quality
 from .profit_strategy_registry import list_profit_strategy_packages
 
 
@@ -91,7 +92,12 @@ def _risk_control(official: dict[str, Any]) -> dict[str, Any]:
     current_drawdown = _current_drawdown(monthly)
     profit = _number(official.get("profit"))
     drawdown_ratio = current_drawdown / max(profit, 1.0) if profit > 0 else 1.0
-    if negative_streak >= 2:
+    if not monthly:
+        state = "WAITING_FOR_EVIDENCE"
+        multiplier = 0.0
+        drawdown_ratio = 0.0
+        reason = "No settled official-SP monthly return series is available yet."
+    elif negative_streak >= 2:
         state = "COOLDOWN"
         multiplier = 0.0
         reason = "Two consecutive losing active months triggered the strategy cooldown."
@@ -249,9 +255,11 @@ def build_profit_allocation_readiness(daily_budget: float | None = None) -> dict
     budget = float(settings.profit_daily_budget if daily_budget is None else daily_budget)
     strategies = [_strategy_status(strategy) for strategy in list_profit_strategy_packages()]
     ready = [row for row in strategies if row["action"] == "PAPER_ALLOCATION_READY"]
+    evidence_quality = build_official_sp_evidence_quality()
+    evidence_ready = evidence_quality.get("decision") == "EVIDENCE_READY"
 
     allocations: list[dict[str, Any]] = []
-    if ready and budget > 0:
+    if ready and evidence_ready and budget > 0:
         score_pairs = [_allocation_score(row) for row in ready]
         base_total = sum(pair[0] for pair in score_pairs)
         adjusted_total = sum(pair[1] for pair in score_pairs)
@@ -274,7 +282,10 @@ def build_profit_allocation_readiness(daily_budget: float | None = None) -> dict
             })
 
     allocated_budget = round(sum(float(item["paper_budget"]) for item in allocations), 2)
-    if allocations:
+    if ready and not evidence_ready:
+        decision = "WAIT_FOR_OFFICIAL_SP_EVIDENCE_QUALITY"
+        reason = "Strategy gates passed, but official SP freshness, closing-price, or settlement evidence is incomplete."
+    elif allocations:
         decision = "PAPER_ALLOCATION_READY"
         reason = f"{len(allocations)} strategy package(s) passed historical and official-SP readiness gates."
     elif any(row["action"] == "WAIT_FOR_ELIGIBLE_OFFICIAL_POOL" for row in strategies):
@@ -302,6 +313,7 @@ def build_profit_allocation_readiness(daily_budget: float | None = None) -> dict
             "historical_audit": "STATISTICALLY_SUPPORTED_RESEARCH_CANDIDATE",
             "edge_calibration": "CALIBRATED_EDGE_CONFIRMED",
             "official_sp_decision": "OFFICIAL_SP_PROSPECTIVE_PASS",
+            "official_sp_evidence_quality": "EVIDENCE_READY",
             "min_settled_selected_snapshots": REQUIRED_OFFICIAL_SETTLED_SELECTED,
             "min_active_months": REQUIRED_ACTIVE_MONTHS,
             "min_closing_sp_coverage": REQUIRED_CLOSING_SP_COVERAGE,
@@ -309,6 +321,13 @@ def build_profit_allocation_readiness(daily_budget: float | None = None) -> dict
             "average_clv": ">0",
         },
         "allocations": allocations,
+        "official_sp_evidence_quality": {
+            "decision": evidence_quality.get("decision"),
+            "research_usable": evidence_quality.get("research_usable", False),
+            "failed_checks": evidence_quality.get("failed_checks", 0),
+            "critical_checks": evidence_quality.get("critical_checks", 0),
+            "summary": evidence_quality.get("summary", {}),
+        },
         "strategies": strategies,
         "guardrail": (
             "This report never places real bets. It only decides whether the daily budget may enter "

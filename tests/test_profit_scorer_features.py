@@ -5,7 +5,10 @@ import pytest
 
 from football_agents.db import Database
 from football_agents.market_bias_shadow_strategy import is_sp1_league
-from football_agents.profit_scorer_features import build_research_parity_features
+from football_agents.profit_scorer_features import (
+    ResearchParityFeatureCache,
+    build_research_parity_features,
+)
 from football_agents.repository import Repository
 from scripts.walk_forward_residual_strategy import build_feature_history
 
@@ -67,3 +70,39 @@ def test_live_profit_scorer_features_match_offline_training_definitions(tmp_path
     ):
         assert actual[column] == pytest.approx(float(expected[column]), abs=1e-6), column
 
+
+def test_feature_cache_reads_and_replays_history_once_for_ordered_pool(tmp_path, monkeypatch) -> None:
+    database = Database(tmp_path / "feature-cache.db")
+    database.initialize()
+    repository = Repository(database)
+    repository.upsert_historical_matches([
+        {
+            "league": "SP1", "home_team": "Home", "away_team": "Away",
+            "home_goals": index % 3, "away_goals": (index + 1) % 2,
+            "played_at": f"2025-{index:02d}-05", "match_type": "LEAGUE",
+        }
+        for index in range(1, 13)
+    ], "cache-test")
+    calls = 0
+    original = repository.list_historical_matches
+
+    def counted(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(repository, "list_historical_matches", counted)
+    cache = ResearchParityFeatureCache(repository, is_sp1_league)
+    first, _ = cache.features_for({
+        "home_team": "Home", "away_team": "Away",
+        "kickoff_time": "2026-01-10T12:00:00+00:00",
+    })
+    second, _ = cache.features_for({
+        "home_team": "Home", "away_team": "Away",
+        "kickoff_time": "2026-02-10T12:00:00+00:00",
+    })
+
+    assert first is not None
+    assert second is not None
+    assert calls == 1
+    assert cache.cursor == 12

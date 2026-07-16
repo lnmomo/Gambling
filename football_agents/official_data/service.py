@@ -35,7 +35,8 @@ class OfficialDataService:
                 payload = self.client.fetch(settings.official_source_url)
                 raw_hash = hashlib.sha256(payload["html"].encode("utf-8")).hexdigest()
                 fetched_at = datetime.now(timezone.utc).isoformat()
-                summary = {"created": 0, "updated": 0, "odds_snapshots": 0, "hourly_observations": 0, "results_settled": 0, "incomplete_odds": 0,
+                summary = {"created": 0, "updated": 0, "odds_snapshots": 0, "hourly_observations": 0,
+                           "availability_observations": 0, "results_settled": 0, "incomplete_odds": 0,
                            "invalid": 0, "records": len(payload["matches"]), "raw_hash": raw_hash}
                 for raw in payload["matches"]:
                     item = self._normalize(raw, raw_hash)
@@ -48,7 +49,20 @@ class OfficialDataService:
                         self.repository.upsert_result(match_id, raw["home_score"], raw["away_score"], fetched_at)
                         summary["results_settled"] += 1
                     odds = raw.get("odds") or {}
-                    if set(odds) == {"home", "draw", "away"} and all(float(v) > 1 for v in odds.values()):
+                    valid_sp = set(odds) == {"home", "draw", "away"} and all(float(v) > 1 for v in odds.values())
+                    raw_sale_status = str(raw.get("sale_status") or "unknown")
+                    missing_reason = None if valid_sp else (
+                        "not_on_sale" if raw_sale_status in {"待开售", "未开赛"}
+                        else "post_match" if item["status"] == "finished"
+                        else "invalid_or_incomplete_three_way_sp"
+                    )
+                    self.repository.archive_official_market_availability(
+                        match_id, item["official_match_id"], fetched_at, item["kickoff_time"],
+                        raw_sale_status, item["status"], valid_sp, missing_reason,
+                        "中国竞彩网", settings.official_source_url, raw_hash,
+                    )
+                    summary["availability_observations"] += 1
+                    if valid_sp:
                         odds_hash = hashlib.sha256(json.dumps({"id": item["official_match_id"], "odds": odds},
                                                              sort_keys=True).encode()).hexdigest()
                         if self.repository.add_official_odds(match_id, odds, "中国竞彩网",

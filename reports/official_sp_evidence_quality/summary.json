@@ -1,0 +1,181 @@
+{
+  "method": "official SP evidence-chain data quality",
+  "generated_at": "2026-07-16T02:54:11.271554+00:00",
+  "decision": "EVIDENCE_DEGRADED",
+  "research_usable": false,
+  "dataset_grain": "one immutable official three-way SP observation per match and fetch timestamp",
+  "summary": {
+    "observations": 267,
+    "observed_matches": 60,
+    "pre_match_matches": 60,
+    "pre_match_observations": 267,
+    "first_observed_at": "2026-06-19T13:11:45.392010+00:00",
+    "last_observed_at": "2026-07-16T02:54:10.722131+00:00",
+    "last_successful_fetch_at": "2026-07-16T02:54:11.265523+00:00",
+    "freshness_hours": 0.0,
+    "eligible_collector_era_matches": 126,
+    "pre_match_sp_coverage": 0.4206,
+    "closing_1h_coverage": 0.0943,
+    "settlement_coverage": 1.0,
+    "average_observations_per_match": 4.45
+  },
+  "checks": [
+    {
+      "id": "collector_freshness",
+      "status": "PASS",
+      "severity": "NONE",
+      "value": 0.0,
+      "threshold": "<=0.5 hours",
+      "evidence": "Latest successful fetch: 2026-07-16T02:54:11.265523+00:00.",
+      "impact": "A stopped collector creates permanent gaps in opening and closing prices.",
+      "remediation": "Keep the API service running continuously and alert after two missed capture cycles."
+    },
+    {
+      "id": "pre_match_sp_coverage",
+      "status": "FAIL",
+      "severity": "HIGH",
+      "value": 0.4206,
+      "threshold": ">=0.90 of eligible kicked-off matches",
+      "evidence": "53/126 collector-era matches have a pre-match three-way SP.",
+      "impact": "Missing prices bias strategy selection and reduce the auditable sample.",
+      "remediation": "Investigate omitted cards and parser failures by league before using ROI estimates."
+    },
+    {
+      "id": "closing_sp_within_1h",
+      "status": "FAIL",
+      "severity": "HIGH",
+      "value": 0.0943,
+      "threshold": ">=0.80 of closing observations within 60 minutes",
+      "evidence": "5/53 closing observations are within one hour of kickoff.",
+      "impact": "Weak closing coverage makes CLV incomparable and can hide stale executable prices.",
+      "remediation": "Run official SP capture every 15 minutes for matches starting within six hours."
+    },
+    {
+      "id": "settlement_coverage",
+      "status": "PASS",
+      "severity": "NONE",
+      "value": 1.0,
+      "threshold": ">=0.95 of observed finished matches",
+      "evidence": "34/34 finished matches with SP have a result.",
+      "impact": "Missing outcomes distort ROI, hit rate, drawdown, and promotion decisions.",
+      "remediation": "Backfill missing final scores and alert on finished matches without results."
+    },
+    {
+      "id": "odds_validity",
+      "status": "PASS",
+      "severity": "NONE",
+      "value": 0,
+      "threshold": "0 invalid three-way prices",
+      "evidence": "All stored home/draw/away prices must be greater than 1.",
+      "impact": "Invalid prices corrupt implied probabilities and EV.",
+      "remediation": "Reject the fetch and retain the previous valid snapshot."
+    },
+    {
+      "id": "temporal_integrity",
+      "status": "PASS",
+      "severity": "NONE",
+      "value": 0,
+      "threshold": "0 pre/post-match timestamp conflicts",
+      "evidence": "is_pre_match must agree with observed_at relative to kickoff_time.",
+      "impact": "Timestamp conflicts create direct future leakage.",
+      "remediation": "Quarantine conflicting observations and verify timezone normalization."
+    },
+    {
+      "id": "observation_grain_uniqueness",
+      "status": "PASS",
+      "severity": "NONE",
+      "value": 0,
+      "threshold": "0 duplicate match_id + observed_at rows",
+      "evidence": "Each fetch time is one immutable observation per match.",
+      "impact": "Duplicate grain overweights prices in downstream analyses.",
+      "remediation": "Keep the database uniqueness constraint and reject duplicate inserts."
+    }
+  ],
+  "failed_checks": 2,
+  "critical_checks": 0,
+  "warnings": [
+    "pre_match_sp_coverage: 53/126 collector-era matches have a pre-match three-way SP.",
+    "closing_sp_within_1h: 5/53 closing observations are within one hour of kickoff."
+  ],
+  "capture_stages": [
+    {
+      "capture_stage": "T_MINUS_24H",
+      "observations": 121,
+      "matches": 41
+    },
+    {
+      "capture_stage": "EARLY",
+      "observations": 117,
+      "matches": 28
+    },
+    {
+      "capture_stage": "T_MINUS_6H",
+      "observations": 24,
+      "matches": 8
+    },
+    {
+      "capture_stage": "T_MINUS_1H",
+      "observations": 5,
+      "matches": 5
+    }
+  ],
+  "league_coverage": [
+    {
+      "league": "世界杯",
+      "matches": 33,
+      "observations": 164,
+      "within_1h": 0,
+      "settled": 24
+    },
+    {
+      "league": "瑞超",
+      "matches": 6,
+      "observations": 36,
+      "within_1h": 2,
+      "settled": 1
+    },
+    {
+      "league": "芬超",
+      "matches": 6,
+      "observations": 24,
+      "within_1h": 0,
+      "settled": 4
+    },
+    {
+      "league": "韩职",
+      "matches": 6,
+      "observations": 20,
+      "within_1h": 3,
+      "settled": 3
+    },
+    {
+      "league": "美职",
+      "matches": 4,
+      "observations": 12,
+      "within_1h": 0,
+      "settled": 0
+    },
+    {
+      "league": "巴甲",
+      "matches": 2,
+      "observations": 6,
+      "within_1h": 0,
+      "settled": 0
+    },
+    {
+      "league": "挪超",
+      "matches": 1,
+      "observations": 3,
+      "within_1h": 0,
+      "settled": 0
+    },
+    {
+      "league": "欧冠",
+      "matches": 2,
+      "observations": 2,
+      "within_1h": 0,
+      "settled": 2
+    }
+  ],
+  "guardrail": "EVIDENCE_DEGRADED or EVIDENCE_CRITICAL blocks official-SP promotion and capital allocation."
+}

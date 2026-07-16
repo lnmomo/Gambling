@@ -95,6 +95,31 @@ class Repository:
                  int(minutes >= 0), minutes, stage, source, source_url, raw_hash))
             return int(cursor.lastrowid)
 
+    def archive_official_market_availability(
+        self,
+        match_id: int,
+        official_match_id: str,
+        observed_at: str,
+        kickoff_time: str,
+        raw_sale_status: str,
+        normalized_status: str,
+        has_valid_three_way_sp: bool,
+        missing_reason: str | None,
+        source: str,
+        source_url: str,
+        raw_hash: str,
+    ) -> int:
+        with self.db.connect() as connection:
+            cursor = connection.execute("""INSERT INTO official_market_availability_observations(
+                match_id,official_match_id,observed_at,kickoff_time,raw_sale_status,
+                normalized_status,has_valid_three_way_sp,missing_reason,source,source_url,raw_hash
+            ) VALUES(?,?,?,?,?,?,?,?,?,?,?)""", (
+                match_id, official_match_id, observed_at, kickoff_time, raw_sale_status,
+                normalized_status, int(has_valid_three_way_sp), missing_reason,
+                source, source_url, raw_hash,
+            ))
+            return int(cursor.lastrowid)
+
     def list_official_odds_observations(self, official_match_id: str | None = None,
                                         limit: int = 1000) -> list[dict[str, Any]]:
         query = "SELECT * FROM official_odds_observations"

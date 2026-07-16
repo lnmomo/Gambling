@@ -12,11 +12,16 @@ type WorkflowItem = {task: string; title: string; description: string; dependsOn
 
 const WORKFLOW: WorkflowItem[] = [
   {task: "official_sp_sync", title: "官方赛事/SP", description: "中国竞彩网赛事池、状态、官方赔率"},
+  {task: "official_sp_evidence_quality", title: "SP 证据质量", description: "采集新鲜度、临盘覆盖、赛果完整性与时间一致性", dependsOn: "official_sp_sync"},
   {task: "historical_data_sync", title: "历史库扩充", description: "联赛、全球、国家队历史 CSV 增量归档", dependsOn: "official_sp_sync"},
   {task: "external_odds_news_weather_sync", title: "外部赔率/新闻/天气", description: "The Odds API、新闻、天气与场地元数据", dependsOn: "official_sp_sync"},
   {task: "feature_build", title: "球队特征", description: "历史样本、Elo、lambda、source confidence", dependsOn: "historical_data_sync"},
-  {task: "prospective_research_capture", title: "前瞻研究归档", description: "冻结模型、小时赔率与不可覆盖赛前预测", dependsOn: "feature_build"},
+  {task: "prospective_research_capture", title: "前瞻研究归档", description: "冻结模型、赛前赔率与不可覆盖赛前预测", dependsOn: "feature_build"},
   {task: "qwen_news_analysis", title: "Qwen 情报", description: "新闻摘要、伤停与上下文因子", dependsOn: "external_odds_news_weather_sync"},
+  {task: "market_bias_shadow_monitor", title: "市场偏差影子验证", description: "冻结规则、影子预测、赛后评估与晋级门", dependsOn: "feature_build"},
+  {task: "profit_scorer_official_pool_diagnosis", title: "盈利评分池诊断", description: "检查当前官方比赛是否进入冻结盈利评分器", dependsOn: "feature_build"},
+  {task: "profit_scorer_official_sp_validation", title: "官方 SP 前瞻验证", description: "只用最早赛前 SP，结算 ROI、CLV 与回撤", dependsOn: "profit_scorer_official_pool_diagnosis"},
+  {task: "profit_allocation_readiness", title: "每日资金质量门", description: "证据、CLV、月份、回撤通过后才分配每日预算", dependsOn: "profit_scorer_official_sp_validation"},
   {task: "backtest_run", title: "自动回测", description: "默认 CSV 回测与指标落库", dependsOn: "feature_build"},
   {task: "model_governance_check", title: "模型治理", description: "Champion/Challenger 检查，不自动替换模型", dependsOn: "backtest_run"},
 ];
@@ -96,6 +101,7 @@ export default function AgentMonitorPage() {
   const done = WORKFLOW.filter(item => tasks.get(item.task)?.status === "SUCCESS").length;
   const failed = WORKFLOW.filter(item => tasks.get(item.task)?.status === "FAILED").length;
   const runningCount = WORKFLOW.filter(item => tasks.get(item.task)?.status === "RUNNING").length;
+  const evidence = health?.officialSpEvidenceQuality;
 
   const runAgents = async () => {
     setRunning(true); setMessage("正在运行完整 Agent 链路...");
@@ -114,7 +120,7 @@ export default function AgentMonitorPage() {
     <PageHeader title="Agent / Workflow 监控" subtitle="自动化后台服务链路、每一步状态、最近运行记录与 Critic 诊断" />
     <section className="panel" style={{marginBottom: 16}}>
       <div className="panel-heading">
-        <div><h2>自动化服务工作链路</h2><p>服务启动后立即执行一次，之后每小时执行；每一步都写入 task_runs。</p></div>
+        <div><h2>自动化服务工作链路</h2><p>服务启动后立即执行；官方 SP 每 15 分钟，其余重任务每小时执行，每一步都写入 task_runs。</p></div>
         <button onClick={() => void refreshHealth()}>刷新状态</button>
       </div>
       <section className="summary-strip" style={{padding: 16, margin: 0}}>
@@ -127,6 +133,21 @@ export default function AgentMonitorPage() {
       </section>
       <WorkflowGraph tasks={tasks}/>
       <TaskCards tasks={tasks}/>
+    </section>
+
+    <section className="panel" style={{marginBottom: 16}}>
+      <div className="panel-heading"><div><h2>官方 SP 证据质量门</h2><p>只有采集新鲜、临盘与赛果覆盖完整的数据才能用于 CLV、收益和资金晋级。</p></div></div>
+      <section className="summary-strip" style={{padding: 16, margin: 0}}>
+        <span>结论<b>{evidence?.decision ?? "NOT_RUN"}</b></span>
+        <span>观测数<b>{evidence?.summary.observations ?? 0}</b></span>
+        <span>赛前比赛<b>{evidence?.summary.pre_match_matches ?? 0}</b></span>
+        <span>采集延迟<b>{evidence?.summary.freshness_hours == null ? "-" : `${evidence.summary.freshness_hours.toFixed(1)} 小时`}</b></span>
+        <span>赛前 SP 覆盖<b>{((evidence?.summary.pre_match_sp_coverage ?? 0) * 100).toFixed(1)}%</b></span>
+        <span>1 小时临盘覆盖<b>{((evidence?.summary.closing_1h_coverage ?? 0) * 100).toFixed(1)}%</b></span>
+        <span>赛果覆盖<b>{((evidence?.summary.settlement_coverage ?? 0) * 100).toFixed(1)}%</b></span>
+      </section>
+      <div className="table-scroll"><table className="data-table"><thead><tr><th>检查</th><th>结果</th><th>证据</th><th>影响</th><th>修复动作</th></tr></thead>
+        <tbody>{(evidence?.checks ?? []).map(check => <tr key={check.id}><td><code>{check.id}</code></td><td><span className={`status-tag ${check.status === "PASS" ? "running" : "alert"}`}>{check.status}</span></td><td>{check.evidence}</td><td>{check.impact}</td><td>{check.remediation}</td></tr>)}</tbody></table></div>
     </section>
 
     <section className="panel" style={{marginBottom: 16}}>

@@ -15,6 +15,8 @@ from .international_history_agent import InternationalHistoryAgent
 from .llm import LLMNewsAgent
 from .market_bias_monitor import MarketBiasMonitorService
 from .official_data import OfficialDataService
+from .official_sp_evidence_quality import build_official_sp_evidence_quality
+from .profit_allocation_readiness import build_profit_allocation_readiness
 from .profit_scorer_official import diagnose_official_profit_scorer_pool
 from .profit_scorer_prospective import validate_profit_scorer_on_official_sp
 from .repository import Repository
@@ -34,6 +36,7 @@ class BackgroundAgentScheduler:
                  interval_seconds: int | None = None) -> None:
         self.repository = repository or Repository()
         self.task_runner = task_runner or TaskRunnerService()
+        self.interval_override_seconds = interval_seconds
         self.interval_seconds = max(60, interval_seconds or settings.background_agent_interval_seconds)
         self.stop_event = threading.Event()
         self.threads: list[threading.Thread] = []
@@ -42,10 +45,11 @@ class BackgroundAgentScheduler:
         if self.threads:
             return
         for task_name, action in self._tasks():
+            interval_seconds = self._interval_for(task_name)
             thread = threading.Thread(
                 target=self._loop,
                 name=f"background-{task_name}",
-                args=(task_name, action),
+                args=(task_name, action, interval_seconds),
                 daemon=True,
             )
             thread.start()
@@ -54,19 +58,31 @@ class BackgroundAgentScheduler:
     def stop(self) -> None:
         self.stop_event.set()
 
-    def _loop(self, task_name: str, action: TaskAction) -> None:
+    def _loop(self, task_name: str, action: TaskAction, interval_seconds: int) -> None:
         while not self.stop_event.is_set():
             self._run_task(task_name, action)
-            if self.stop_event.wait(self.interval_seconds):
+            if self.stop_event.wait(interval_seconds):
                 break
+
+    def _interval_for(self, task_name: str) -> int:
+        if self.interval_override_seconds is not None:
+            return self.interval_seconds
+        if task_name in {"official_sp_sync", "official_sp_evidence_quality"}:
+            return max(60, settings.official_sp_refresh_minutes * 60)
+        return self.interval_seconds
 
     def _run_task(self, task_name: str, action: TaskAction) -> None:
         run = self.task_runner.start_task_run(task_name)
         try:
             report = action()
+            affected_matches = report.get("matches", report.get("affected_matches"))
+            if affected_matches is None:
+                affected_matches = report.get("records")
+            if affected_matches is None:
+                affected_matches = int(report.get("created", 0) or 0) + int(report.get("updated", 0) or 0)
             self.task_runner.finish_task_run_success(
                 run["id"],
-                affected_matches=int(report.get("matches", report.get("affected_matches", 0)) or 0),
+                affected_matches=int(affected_matches or 0),
                 created_snapshots=int(report.get("market_odds", report.get("hourly_observations", report.get("odds_snapshots", report.get("snapshots", 0)))) or 0),
                 created_predictions=int(report.get("predictions", report.get("evaluated", 0)) or 0),
                 warnings=self._warnings(report),
@@ -92,7 +108,20 @@ class BackgroundAgentScheduler:
         return tasks
 
     def _sync_official(self) -> dict[str, Any]:
-        return OfficialDataService(self.repository).sync()
+        report = OfficialDataService(self.repository).sync()
+        self._run_task("official_sp_evidence_quality", self._check_official_sp_evidence_quality)
+        return report
+
+    def _check_official_sp_evidence_quality(self) -> dict[str, Any]:
+        report = build_official_sp_evidence_quality(self.repository.db)
+        self._write_report(settings.official_sp_evidence_quality_report_path, report)
+        return {
+            "matches": report["summary"]["pre_match_matches"],
+            "snapshots": report["summary"]["observations"],
+            "decision": report["decision"],
+            "warnings": report["warnings"],
+            "report": report,
+        }
 
     def _sync_external_news_weather(self) -> dict[str, Any]:
         return DataEnrichmentService(self.repository).sync(settings.agent_match_limit, evaluate=False)
@@ -195,6 +224,7 @@ class BackgroundAgentScheduler:
     def _validate_profit_scorer_official_sp(self) -> dict[str, Any]:
         report = validate_profit_scorer_on_official_sp(self.repository.db, settings.profit_scorer_artifact_path)
         self._write_report(settings.profit_scorer_official_sp_validation_report_path, report)
+        self._run_task("profit_allocation_readiness", self._refresh_profit_allocation_readiness)
         return {
             "matches": report.get("opening_pre_match_snapshots", 0),
             "evaluated": report.get("scored_snapshots", 0),
@@ -203,6 +233,17 @@ class BackgroundAgentScheduler:
             "settled_selected": report.get("settled_selected_snapshots", 0),
             "decision": report.get("decision"),
             "warnings": report.get("decision_reasons", []),
+            "report": report,
+        }
+
+    def _refresh_profit_allocation_readiness(self) -> dict[str, Any]:
+        report = build_profit_allocation_readiness(settings.profit_daily_budget)
+        self._write_report(settings.profit_allocation_readiness_report_path, report)
+        return {
+            "matches": len(report.get("strategies", [])),
+            "predictions": len(report.get("allocations", [])),
+            "decision": report.get("decision"),
+            "warnings": [] if report.get("decision") == "PAPER_ALLOCATION_READY" else [str(report.get("decision"))],
             "report": report,
         }
 

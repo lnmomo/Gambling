@@ -58,6 +58,29 @@ export type SystemHealth = {
     decisionReasons: string[];
     lastRunAt: string | null;
   };
+  officialSpEvidenceQuality?: {
+    decision: "NOT_RUN" | "EVIDENCE_READY" | "EVIDENCE_DEGRADED" | "EVIDENCE_CRITICAL";
+    research_usable: boolean;
+    failed_checks: number;
+    critical_checks: number;
+    summary: {
+      observations?: number;
+      observed_matches?: number;
+      pre_match_matches?: number;
+      freshness_hours?: number | null;
+      pre_match_sp_coverage?: number;
+      closing_1h_coverage?: number;
+      settlement_coverage?: number;
+    };
+    checks: Array<{
+      id: string;
+      status: "PASS" | "FAIL";
+      severity: string;
+      evidence: string;
+      impact: string;
+      remediation: string;
+    }>;
+  };
 };
 
 export type HealthTaskRun = NonNullable<SystemHealth["recentTaskRuns"]>[number];

@@ -1,6 +1,16 @@
 from __future__ import annotations
 
+import pytest
+
 from football_agents.profit_allocation_readiness import build_profit_allocation_readiness
+
+
+@pytest.fixture(autouse=True)
+def _ready_official_sp_evidence(monkeypatch):
+    monkeypatch.setattr(
+        "football_agents.profit_allocation_readiness.build_official_sp_evidence_quality",
+        lambda: {"decision": "EVIDENCE_READY", "research_usable": True, "summary": {}},
+    )
 
 
 def _strategy(**overrides):
@@ -48,6 +58,8 @@ def test_allocation_readiness_holds_cash_when_official_pool_has_no_coverage(monk
     assert report["allocations"] == []
     assert report["strategies"][0]["action"] == "WAIT_FOR_ELIGIBLE_OFFICIAL_POOL"
     assert report["strategies"][0]["top_blockers"][0]["reason"] == "league_not_i2"
+    assert report["strategies"][0]["portfolio_risk_control"]["state"] == "WAITING_FOR_EVIDENCE"
+    assert report["strategies"][0]["portfolio_risk_control"]["multiplier"] == 0.0
 
 
 def test_allocation_readiness_allocates_paper_budget_after_official_sp_pass(monkeypatch):
@@ -87,6 +99,45 @@ def test_allocation_readiness_allocates_paper_budget_after_official_sp_pass(monk
     assert report["allocations"][0]["strategy_id"] == "profit-i2-test"
     assert report["allocations"][0]["paper_budget"] == 100
     assert report["allocations"][0]["risk_multiplier"] == 1.0
+
+
+def test_allocation_readiness_holds_cash_when_official_sp_evidence_is_degraded(monkeypatch):
+    official = {
+        "decision": "OFFICIAL_SP_PROSPECTIVE_PASS",
+        "pool_passed_scorer": 12,
+        "settled_selected_snapshots": 240,
+        "active_months": 6,
+        "profit": 28.0,
+        "roi_pct": 5.0,
+        "max_drawdown": 8.0,
+        "closing_sp_coverage": 0.95,
+        "average_clv": 0.02,
+        "positive_clv_rate": 0.58,
+        "positive_months": 4,
+        "negative_months": 2,
+        "monthly": [
+            {"month": "2026-01", "profit": 4.0}, {"month": "2026-02", "profit": -2.0},
+            {"month": "2026-03", "profit": 8.0}, {"month": "2026-04", "profit": 5.0},
+            {"month": "2026-05", "profit": -1.0}, {"month": "2026-06", "profit": 14.0},
+        ],
+    }
+    monkeypatch.setattr(
+        "football_agents.profit_allocation_readiness.list_profit_strategy_packages",
+        lambda: [_strategy(official_validation=official)],
+    )
+    monkeypatch.setattr(
+        "football_agents.profit_allocation_readiness.build_official_sp_evidence_quality",
+        lambda: {
+            "decision": "EVIDENCE_CRITICAL", "research_usable": False,
+            "failed_checks": 2, "critical_checks": 1, "summary": {"freshness_hours": 30.0},
+        },
+    )
+
+    report = build_profit_allocation_readiness(100)
+
+    assert report["decision"] == "WAIT_FOR_OFFICIAL_SP_EVIDENCE_QUALITY"
+    assert report["allocated_budget"] == 0
+    assert report["cash_reserved"] == 100
 
 
 def test_allocation_readiness_rejects_weak_historical_strategy(monkeypatch):

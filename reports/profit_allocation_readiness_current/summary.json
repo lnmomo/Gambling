@@ -1,6 +1,6 @@
 {
   "method": "profit daily allocation readiness",
-  "generated_at": "2026-07-15T09:51:14.634704+00:00",
+  "generated_at": "2026-07-16T02:54:10.611751+00:00",
   "daily_budget": 100.0,
   "allocated_budget": 0,
   "cash_reserved": 100.0,
@@ -10,6 +10,7 @@
     "historical_audit": "STATISTICALLY_SUPPORTED_RESEARCH_CANDIDATE",
     "edge_calibration": "CALIBRATED_EDGE_CONFIRMED",
     "official_sp_decision": "OFFICIAL_SP_PROSPECTIVE_PASS",
+    "official_sp_evidence_quality": "EVIDENCE_READY",
     "min_settled_selected_snapshots": 200,
     "min_active_months": 6,
     "min_closing_sp_coverage": 0.8,
@@ -17,6 +18,27 @@
     "average_clv": ">0"
   },
   "allocations": [],
+  "official_sp_evidence_quality": {
+    "decision": "EVIDENCE_DEGRADED",
+    "research_usable": false,
+    "failed_checks": 2,
+    "critical_checks": 0,
+    "summary": {
+      "observations": 260,
+      "observed_matches": 60,
+      "pre_match_matches": 60,
+      "pre_match_observations": 260,
+      "first_observed_at": "2026-06-19T13:11:45.392010+00:00",
+      "last_observed_at": "2026-07-16T02:49:39.707990+00:00",
+      "last_successful_fetch_at": "2026-07-16T02:49:40.644965+00:00",
+      "freshness_hours": 0.07,
+      "eligible_collector_era_matches": 126,
+      "pre_match_sp_coverage": 0.4206,
+      "closing_1h_coverage": 0.0943,
+      "settlement_coverage": 1.0,
+      "average_observations_per_match": 4.33
+    }
+  },
   "strategies": [
     {
       "strategy_id": "profit-i2-draw-market-anchored-stop3-cool3-v1",
@@ -45,12 +67,12 @@
         "positive_clv_rate<0.5"
       ],
       "portfolio_risk_control": {
-        "state": "REDUCED",
-        "multiplier": 0.5,
+        "state": "WAITING_FOR_EVIDENCE",
+        "multiplier": 0.0,
         "negative_month_streak": 0,
         "current_drawdown": 0.0,
-        "current_drawdown_to_profit": 1.0,
-        "reason": "Current drawdown is at least 50% of cumulative official-SP profit."
+        "current_drawdown_to_profit": 0.0,
+        "reason": "No settled official-SP monthly return series is available yet."
       },
       "action": "RESEARCH_ONLY",
       "reason": "Historical statistical audit or calibration is not yet strong enough for daily allocation.",
@@ -104,12 +126,12 @@
         "positive_clv_rate<0.5"
       ],
       "portfolio_risk_control": {
-        "state": "REDUCED",
-        "multiplier": 0.5,
+        "state": "WAITING_FOR_EVIDENCE",
+        "multiplier": 0.0,
         "negative_month_streak": 0,
         "current_drawdown": 0.0,
-        "current_drawdown_to_profit": 1.0,
-        "reason": "Current drawdown is at least 50% of cumulative official-SP profit."
+        "current_drawdown_to_profit": 0.0,
+        "reason": "No settled official-SP monthly return series is available yet."
       },
       "action": "WAIT_FOR_ELIGIBLE_OFFICIAL_POOL",
       "reason": "The strategy is historically supported, but the current official pool has no eligible scored selections.",
@@ -185,35 +207,23 @@
         "positive_clv_rate<0.5"
       ],
       "portfolio_risk_control": {
-        "state": "REDUCED",
-        "multiplier": 0.5,
+        "state": "WAITING_FOR_EVIDENCE",
+        "multiplier": 0.0,
         "negative_month_streak": 0,
         "current_drawdown": 0.0,
-        "current_drawdown_to_profit": 1.0,
-        "reason": "Current drawdown is at least 50% of cumulative official-SP profit."
+        "current_drawdown_to_profit": 0.0,
+        "reason": "No settled official-SP monthly return series is available yet."
       },
       "action": "WAIT_FOR_ELIGIBLE_OFFICIAL_POOL",
       "reason": "The strategy is historically supported, but the current official pool has no eligible scored selections.",
       "top_blockers": [
         {
           "reason": "league_not_sp1",
-          "matches": 178
+          "matches": 20
         },
         {
           "reason": "invalid_three_way_official_sp",
-          "matches": 108
-        },
-        {
-          "reason": "missing_feature:lambda_home",
-          "matches": 79
-        },
-        {
-          "reason": "missing_feature:lambda_away",
-          "matches": 79
-        },
-        {
-          "reason": "missing_feature:home_weighted_points_per_match",
-          "matches": 79
+          "matches": 20
         }
       ],
       "deployment_blockers": [
