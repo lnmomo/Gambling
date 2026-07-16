@@ -140,14 +140,17 @@ export default function AgentMonitorPage() {
       <section className="summary-strip" style={{padding: 16, margin: 0}}>
         <span>结论<b>{evidence?.decision ?? "NOT_RUN"}</b></span>
         <span>观测数<b>{evidence?.summary.observations ?? 0}</b></span>
+        <span>赛事卡观测<b>{evidence?.summary.availability_observations ?? 0}</b></span>
+        <span>已开售比赛<b>{evidence?.summary.offered_matches ?? 0}</b></span>
         <span>赛前比赛<b>{evidence?.summary.pre_match_matches ?? 0}</b></span>
+        <span>已开赛临盘样本<b>{evidence?.summary.closing_eligible_matches ?? 0}</b></span>
         <span>采集延迟<b>{evidence?.summary.freshness_hours == null ? "-" : `${evidence.summary.freshness_hours.toFixed(1)} 小时`}</b></span>
         <span>赛前 SP 覆盖<b>{((evidence?.summary.pre_match_sp_coverage ?? 0) * 100).toFixed(1)}%</b></span>
         <span>1 小时临盘覆盖<b>{((evidence?.summary.closing_1h_coverage ?? 0) * 100).toFixed(1)}%</b></span>
         <span>赛果覆盖<b>{((evidence?.summary.settlement_coverage ?? 0) * 100).toFixed(1)}%</b></span>
       </section>
       <div className="table-scroll"><table className="data-table"><thead><tr><th>检查</th><th>结果</th><th>证据</th><th>影响</th><th>修复动作</th></tr></thead>
-        <tbody>{(evidence?.checks ?? []).map(check => <tr key={check.id}><td><code>{check.id}</code></td><td><span className={`status-tag ${check.status === "PASS" ? "running" : "alert"}`}>{check.status}</span></td><td>{check.evidence}</td><td>{check.impact}</td><td>{check.remediation}</td></tr>)}</tbody></table></div>
+        <tbody>{(evidence?.checks ?? []).map(check => <tr key={check.id}><td><code>{check.id}</code></td><td><span className={`status-tag ${check.status === "PASS" ? "running" : check.status === "PENDING" ? "delayed" : "alert"}`}>{check.status}</span></td><td>{check.evidence}</td><td>{check.impact}</td><td>{check.remediation}</td></tr>)}</tbody></table></div>
     </section>
 
     <section className="panel" style={{marginBottom: 16}}>

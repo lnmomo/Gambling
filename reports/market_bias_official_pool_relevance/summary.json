@@ -1,10 +1,10 @@
 {
   "method": "market-bias official pool relevance diagnostics",
-  "created_at": "2026-07-16T02:54:13.601216+00:00",
+  "created_at": "2026-07-16T03:11:05.502620+00:00",
   "strategy_id": "market-bias-i2-draw-2.8-3.5-v1",
   "official_matches": 185,
-  "with_latest_odds": 77,
-  "missing_latest_odds": 108,
+  "with_latest_odds": 80,
+  "missing_latest_odds": 105,
   "validated_shadow_candidates": 0,
   "research_watch_candidates": 0,
   "league_count": 10,
@@ -129,15 +129,15 @@
     {
       "league": "欧罗巴",
       "matches": 3,
-      "with_latest_odds": 0,
-      "missing_latest_odds": 3,
+      "with_latest_odds": 3,
+      "missing_latest_odds": 0,
       "mapped_history_code": null,
       "strategy_coverage": "UNMAPPED",
       "validated_shadow_candidates": 0,
       "research_watch_candidates": 0,
       "evidence_status": "no mapped historical validation package",
       "evidence_reports": [],
-      "blocker": "no latest official 1X2 odds in current pool",
+      "blocker": "league is not mapped to a validated market-bias package",
       "recommended_action": "Map the league to historical odds data, then require multi-window and portfolio validation."
     },
     {
@@ -162,7 +162,7 @@
     },
     {
       "blocker": "league is not mapped to a validated market-bias package",
-      "matches": 49
+      "matches": 52
     },
     {
       "blocker": "current league has historical data, but candidate rule failed robustness",
@@ -170,7 +170,7 @@
     },
     {
       "blocker": "no latest official 1X2 odds in current pool",
-      "matches": 5
+      "matches": 2
     }
   ],
   "recommended_next_experiment": "Do not force NO_BET bypasses. World Cup and FIN are rejected by stability gates; map SWE/KOR or collect a broader international/league odds domain, then require the same multi-window portfolio gate."

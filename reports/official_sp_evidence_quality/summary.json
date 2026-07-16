@@ -1,23 +1,28 @@
 {
   "method": "official SP evidence-chain data quality",
-  "generated_at": "2026-07-16T02:54:11.271554+00:00",
-  "decision": "EVIDENCE_DEGRADED",
+  "generated_at": "2026-07-16T03:11:01.163725+00:00",
+  "decision": "EVIDENCE_COLLECTING",
   "research_usable": false,
-  "dataset_grain": "one immutable official three-way SP observation per match and fetch timestamp",
+  "dataset_grain": "one immutable market-availability card and zero-or-one immutable official three-way SP observation per match and fetch timestamp",
   "summary": {
-    "observations": 267,
-    "observed_matches": 60,
-    "pre_match_matches": 60,
-    "pre_match_observations": 267,
+    "observations": 287,
+    "observed_matches": 63,
+    "pre_match_matches": 63,
+    "pre_match_observations": 287,
     "first_observed_at": "2026-06-19T13:11:45.392010+00:00",
-    "last_observed_at": "2026-07-16T02:54:10.722131+00:00",
-    "last_successful_fetch_at": "2026-07-16T02:54:11.265523+00:00",
+    "last_observed_at": "2026-07-16T03:10:59.705959+00:00",
+    "last_successful_fetch_at": "2026-07-16T03:11:01.154209+00:00",
     "freshness_hours": 0.0,
-    "eligible_collector_era_matches": 126,
-    "pre_match_sp_coverage": 0.4206,
-    "closing_1h_coverage": 0.0943,
-    "settlement_coverage": 1.0,
-    "average_observations_per_match": 4.45
+    "measurement_start": "2026-07-16T03:10:59.705959+00:00",
+    "availability_observations": 17,
+    "offered_matches": 10,
+    "captured_offered_matches": 10,
+    "closing_eligible_matches": 0,
+    "settlement_eligible_matches": 0,
+    "pre_match_sp_coverage": 1.0,
+    "closing_1h_coverage": 0.0,
+    "settlement_coverage": 0.0,
+    "average_observations_per_match": 4.56
   },
   "checks": [
     {
@@ -26,37 +31,37 @@
       "severity": "NONE",
       "value": 0.0,
       "threshold": "<=0.5 hours",
-      "evidence": "Latest successful fetch: 2026-07-16T02:54:11.265523+00:00.",
+      "evidence": "Latest successful fetch: 2026-07-16T03:11:01.154209+00:00.",
       "impact": "A stopped collector creates permanent gaps in opening and closing prices.",
       "remediation": "Keep the API service running continuously and alert after two missed capture cycles."
     },
     {
       "id": "pre_match_sp_coverage",
-      "status": "FAIL",
-      "severity": "HIGH",
-      "value": 0.4206,
-      "threshold": ">=0.90 of eligible kicked-off matches",
-      "evidence": "53/126 collector-era matches have a pre-match three-way SP.",
-      "impact": "Missing prices bias strategy selection and reduce the auditable sample.",
-      "remediation": "Investigate omitted cards and parser failures by league before using ROI estimates."
-    },
-    {
-      "id": "closing_sp_within_1h",
-      "status": "FAIL",
-      "severity": "HIGH",
-      "value": 0.0943,
-      "threshold": ">=0.80 of closing observations within 60 minutes",
-      "evidence": "5/53 closing observations are within one hour of kickoff.",
-      "impact": "Weak closing coverage makes CLV incomparable and can hide stale executable prices.",
-      "remediation": "Run official SP capture every 15 minutes for matches starting within six hours."
-    },
-    {
-      "id": "settlement_coverage",
       "status": "PASS",
       "severity": "NONE",
       "value": 1.0,
-      "threshold": ">=0.95 of observed finished matches",
-      "evidence": "34/34 finished matches with SP have a result.",
+      "threshold": ">=0.95 across >=10 offered matches",
+      "evidence": "10/10 offered matches satisfy the requirement.",
+      "impact": "Missing prices bias strategy selection and reduce the auditable sample.",
+      "remediation": "Investigate sold cards with invalid or missing three-way SP before using ROI estimates."
+    },
+    {
+      "id": "closing_sp_within_1h",
+      "status": "PENDING",
+      "severity": "NONE",
+      "value": 0.0,
+      "threshold": ">=0.80 after >=10 offered kicked-off matches",
+      "evidence": "0/0 offered kicked-off matches; waiting for 10 more.",
+      "impact": "Weak closing coverage makes CLV incomparable and can hide stale executable prices.",
+      "remediation": "Keep 15-minute capture running through kickoff for every offered match."
+    },
+    {
+      "id": "settlement_coverage",
+      "status": "PENDING",
+      "severity": "NONE",
+      "value": 0.0,
+      "threshold": ">=0.95 after >=10 offered matches at least four hours after kickoff",
+      "evidence": "0/0 offered matches at least four hours after kickoff; waiting for 10 more.",
       "impact": "Missing outcomes distort ROI, hit rate, drawdown, and promotion decisions.",
       "remediation": "Backfill missing final scores and alert on finished matches without results."
     },
@@ -91,17 +96,18 @@
       "remediation": "Keep the database uniqueness constraint and reject duplicate inserts."
     }
   ],
-  "failed_checks": 2,
+  "failed_checks": 0,
+  "pending_checks": 2,
   "critical_checks": 0,
   "warnings": [
-    "pre_match_sp_coverage: 53/126 collector-era matches have a pre-match three-way SP.",
-    "closing_sp_within_1h: 5/53 closing observations are within one hour of kickoff."
+    "closing_sp_within_1h: 0/0 offered kicked-off matches; waiting for 10 more.",
+    "settlement_coverage: 0/0 offered matches at least four hours after kickoff; waiting for 10 more."
   ],
   "capture_stages": [
     {
       "capture_stage": "T_MINUS_24H",
-      "observations": 121,
-      "matches": 41
+      "observations": 141,
+      "matches": 44
     },
     {
       "capture_stage": "EARLY",
@@ -117,6 +123,26 @@
       "capture_stage": "T_MINUS_1H",
       "observations": 5,
       "matches": 5
+    }
+  ],
+  "availability_reasons": [
+    {
+      "raw_sale_status": "已完成",
+      "reason": "post_match",
+      "observations": 23,
+      "matches": 23
+    },
+    {
+      "raw_sale_status": "已开售",
+      "reason": "valid_three_way_sp",
+      "observations": 10,
+      "matches": 10
+    },
+    {
+      "raw_sale_status": "待开售",
+      "reason": "not_on_sale",
+      "observations": 7,
+      "matches": 7
     }
   ],
   "league_coverage": [
@@ -151,13 +177,20 @@
     {
       "league": "美职",
       "matches": 4,
-      "observations": 12,
+      "observations": 20,
       "within_1h": 0,
       "settled": 0
     },
     {
       "league": "巴甲",
       "matches": 2,
+      "observations": 10,
+      "within_1h": 0,
+      "settled": 0
+    },
+    {
+      "league": "欧罗巴",
+      "matches": 3,
       "observations": 6,
       "within_1h": 0,
       "settled": 0
@@ -165,7 +198,7 @@
     {
       "league": "挪超",
       "matches": 1,
-      "observations": 3,
+      "observations": 5,
       "within_1h": 0,
       "settled": 0
     },
@@ -177,5 +210,12 @@
       "settled": 2
     }
   ],
-  "guardrail": "EVIDENCE_DEGRADED or EVIDENCE_CRITICAL blocks official-SP promotion and capital allocation."
+  "historical_baseline": {
+    "kicked_matches": 126,
+    "discovered_pre_match": 80,
+    "discovered_pre_with_sp": 53,
+    "closing_matches": 53,
+    "closing_within_1h": 5
+  },
+  "guardrail": "Only EVIDENCE_READY permits official-SP promotion and capital allocation."
 }

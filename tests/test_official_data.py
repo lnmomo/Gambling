@@ -39,11 +39,18 @@ class OfficialDataTests(unittest.TestCase):
         self.assertEqual(report["created"], 2)
         self.assertEqual(report["odds_snapshots"], 1)
         self.assertEqual(report["hourly_observations"], 1)
+        self.assertEqual(report["availability_observations"], 2)
         self.assertEqual(report["incomplete_odds"], 1)
         self.assertEqual(report["results_settled"], 1)
         matches = self.repository.list_matches()
         self.assertEqual(matches[0]["official_match_id"], "sporttery-2040164")
         self.assertEqual(len(self.repository.latest_odds(matches[0]["id"])["odds"]), 3)
+        with self.repository.db.connect() as connection:
+            availability = connection.execute("""SELECT raw_sale_status,has_valid_three_way_sp,missing_reason
+                FROM official_market_availability_observations ORDER BY id""").fetchall()
+        self.assertEqual([tuple(row) for row in availability], [
+            ("已开售", 1, None), ("已完成", 0, "post_match"),
+        ])
 
     def test_duplicate_snapshot_is_not_inserted_twice(self):
         self.service.sync(force=True)

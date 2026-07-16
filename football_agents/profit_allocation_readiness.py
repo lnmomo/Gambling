@@ -325,6 +325,7 @@ def build_profit_allocation_readiness(daily_budget: float | None = None) -> dict
             "decision": evidence_quality.get("decision"),
             "research_usable": evidence_quality.get("research_usable", False),
             "failed_checks": evidence_quality.get("failed_checks", 0),
+            "pending_checks": evidence_quality.get("pending_checks", 0),
             "critical_checks": evidence_quality.get("critical_checks", 0),
             "summary": evidence_quality.get("summary", {}),
         },

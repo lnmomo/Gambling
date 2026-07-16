@@ -26,6 +26,19 @@ def _seed_complete_evidence(database: Database, now: datetime, *, closing_minute
             "raw_hash": f"match-{index}",
         })
         observed = kickoff - timedelta(minutes=closing_minutes)
+        repository.archive_official_market_availability(
+            match_id,
+            f"sporttery-quality-{index}",
+            observed.isoformat(),
+            kickoff.isoformat(),
+            "已开售",
+            "scheduled",
+            True,
+            None,
+            "中国竞彩网",
+            "https://example.test",
+            f"availability-{index}",
+        )
         repository.archive_official_odds_observation(
             match_id,
             f"sporttery-quality-{index}",
@@ -57,6 +70,7 @@ def test_official_sp_evidence_quality_passes_complete_fresh_chain(tmp_path) -> N
     assert report["research_usable"] is True
     assert report["failed_checks"] == 0
     assert report["summary"]["pre_match_matches"] == 10
+    assert report["summary"]["offered_matches"] == 10
     assert report["summary"]["pre_match_sp_coverage"] == pytest.approx(1.0)
     assert report["summary"]["closing_1h_coverage"] == pytest.approx(1.0)
     assert report["summary"]["settlement_coverage"] == pytest.approx(1.0)
