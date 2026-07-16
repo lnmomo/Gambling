@@ -9,14 +9,39 @@ from typing import Any
 import numpy as np
 
 from .db import Database, db
-from .features import canonical_team_name
 from .config import settings
-from .market_bias_shadow_strategy import is_i2_league
-from .pandas_pipeline import team_weighted_goal_stats
+from .market_bias_shadow_strategy import is_i2_league, is_sp1_league
+from .profit_scorer_features import FEATURE_ENGINE, build_research_parity_features
 from .repository import Repository
 
 
 DEFAULT_SCORER_ARTIFACT = Path(settings.profit_scorer_artifact_path)
+
+I2_DRAW_RULE = "I2_draw_2p8_3p5"
+SP1_HOME_RULE = "SP1_home_market_ge_55"
+
+
+def _artifact_selection(artifact: dict[str, Any]) -> dict[str, Any] | None:
+    rules = set(artifact.get("selection", {}).get("selected_rules") or ())
+    if rules == {I2_DRAW_RULE}:
+        return {
+            "league_family": "I2",
+            "league_matches": is_i2_league,
+            "outcome": "draw",
+            "min_market_probability": None,
+            "min_odds": 2.8,
+            "max_odds": 3.5,
+        }
+    if rules == {SP1_HOME_RULE}:
+        return {
+            "league_family": "SP1",
+            "league_matches": is_sp1_league,
+            "outcome": "home",
+            "min_market_probability": 0.55,
+            "min_odds": None,
+            "max_odds": None,
+        }
+    return None
 
 
 def _devig_probabilities(odds: dict[str, Any]) -> dict[str, float] | None:
@@ -48,20 +73,6 @@ def _score_from_artifact(features: dict[str, float], artifact: dict[str, Any]) -
     return probability, ev
 
 
-def _league_context(repository: Repository, match: dict[str, Any]) -> tuple[dict[str, float], list[str]]:
-    warnings: list[str] = []
-    league_rows = repository.list_historical_matches(cutoff_time=match["kickoff_time"], league=match["league"], limit=100_000)
-    if len(league_rows) < 120:
-        warnings.append(f"league_prior_matches<{120}: {len(league_rows)}")
-    draws = sum(1 for row in league_rows if int(row["home_goals"]) == int(row["away_goals"]))
-    draw_rate = draws / len(league_rows) if league_rows else 0.0
-    return {
-        "league_prior_matches": float(len(league_rows)),
-        "league_draw_rate": float(draw_rate),
-        "league_prior_matches_scaled": float(len(league_rows)) / 1000.0,
-    }, warnings
-
-
 def map_official_match_to_scorer_features(
     repository: Repository,
     match: dict[str, Any],
@@ -70,79 +81,59 @@ def map_official_match_to_scorer_features(
 ) -> tuple[dict[str, float] | None, list[str], list[str]]:
     missing: list[str] = []
     warnings: list[str] = []
-    if not is_i2_league(match.get("league")):
-        missing.append("league_not_i2")
+    scope = _artifact_selection(artifact)
+    if scope is None:
+        return None, ["unsupported_artifact_selection"], warnings
+    if not scope["league_matches"](match.get("league")):
+        missing.append(f"league_not_{scope['league_family'].lower()}")
+    selected_outcome = str(scope["outcome"])
     try:
-        draw_odds = float(odds.get("draw") or 0)
+        selected_odds = float(odds.get(selected_outcome) or 0)
     except (TypeError, ValueError):
-        draw_odds = 0.0
-    if not 2.8 <= draw_odds < 3.5:
-        missing.append("draw_sp_outside_[2.8,3.5)")
+        selected_odds = 0.0
+    if scope["min_odds"] is not None and not float(scope["min_odds"]) <= selected_odds:
+        missing.append(f"{selected_outcome}_sp_below_{scope['min_odds']}")
+    if scope["max_odds"] is not None and not selected_odds < float(scope["max_odds"]):
+        missing.append(f"{selected_outcome}_sp_at_or_above_{scope['max_odds']}")
     market = _devig_probabilities(odds)
     if market is None:
         missing.append("invalid_three_way_official_sp")
+    elif (
+        scope["min_market_probability"] is not None
+        and market[selected_outcome] < float(scope["min_market_probability"])
+    ):
+        missing.append(
+            f"{selected_outcome}_market_probability_below_{scope['min_market_probability']}"
+        )
 
-    live_features = repository.latest_features(int(match["id"]))
-    required_live = (
-        "lambda_home",
-        "lambda_away",
-        "home_weighted_points_per_match",
-        "away_weighted_points_per_match",
-        "home_weighted_goal_difference",
-        "away_weighted_goal_difference",
+    historical, history_notes = build_research_parity_features(
+        repository,
+        match,
+        scope["league_matches"],
+        min_team_matches=10,
     )
-    for key in required_live:
-        if live_features.get(key) is None:
-            missing.append(f"missing_feature:{key}")
-
-    league_context, league_warnings = _league_context(repository, match)
-    warnings.extend(league_warnings)
-
-    home = canonical_team_name(str(match.get("home_team") or ""))
-    away = canonical_team_name(str(match.get("away_team") or ""))
-    rows = repository.list_historical_matches(cutoff_time=match["kickoff_time"], teams=[home, away], limit=100_000)
-    home_rows = [row for row in rows if home in {row["home_team"], row["away_team"]}]
-    away_rows = [row for row in rows if away in {row["home_team"], row["away_team"]}]
-    if len(home_rows) < 10:
-        missing.append(f"home_history<10:{len(home_rows)}")
-    if len(away_rows) < 10:
-        missing.append(f"away_history<10:{len(away_rows)}")
-
-    if missing or market is None:
+    if historical is None:
+        missing.extend(history_notes)
+    else:
+        warnings.extend(history_notes)
+    if missing or market is None or historical is None:
         return None, missing, warnings
-
-    home_recent = team_weighted_goal_stats(home_rows, home, match["kickoff_time"])
-    away_recent = team_weighted_goal_stats(away_rows, away, match["kickoff_time"])
-    form_points_diff = float(home_recent["points_per_match"] - away_recent["points_per_match"])
-    form_goal_diff_delta = float(home_recent["goal_difference"] - away_recent["goal_difference"])
-    season_points_delta = float(live_features["home_weighted_points_per_match"] - live_features["away_weighted_points_per_match"])
-    season_goal_delta = float(live_features["home_weighted_goal_difference"] - live_features["away_weighted_goal_difference"])
-    lambda_total = float(live_features["lambda_home"]) + float(live_features["lambda_away"])
-    lambda_diff = abs(float(live_features["lambda_home"]) - float(live_features["lambda_away"]))
     mapped = {
-        "market_probability": float(market["draw"]),
-        "odds": draw_odds,
-        "log_odds": math.log(draw_odds),
-        "is_draw": 1.0,
-        "is_home": 0.0,
-        **league_context,
-        "form_points_diff": form_points_diff,
-        "abs_form_points_diff": abs(form_points_diff),
-        "form_goal_diff_delta": form_goal_diff_delta,
-        "abs_form_goal_diff_delta": abs(form_goal_diff_delta),
-        "season_points_per_match_delta": season_points_delta,
-        "abs_season_points_per_match_delta": abs(season_points_delta),
-        "season_goal_diff_per_match_delta": season_goal_delta,
-        "abs_season_goal_diff_per_match_delta": abs(season_goal_delta),
-        "rest_days_delta": 0.0,
-        "lambda_total": lambda_total,
-        "lambda_diff": lambda_diff,
+        "market_probability": float(market[selected_outcome]),
+        "odds": selected_odds,
+        "log_odds": math.log(selected_odds),
+        "is_draw": float(selected_outcome == "draw"),
+        "is_home": float(selected_outcome == "home"),
+        **historical,
+        "abs_form_points_diff": abs(historical["form_points_diff"]),
+        "abs_form_goal_diff_delta": abs(historical["form_goal_diff_delta"]),
+        "abs_season_points_per_match_delta": abs(historical["season_points_per_match_delta"]),
+        "abs_season_goal_diff_per_match_delta": abs(historical["season_goal_diff_per_match_delta"]),
     }
     missing_columns = [column for column in artifact["selection"]["feature_columns"] if column not in mapped]
     if missing_columns:
         return None, [f"missing_scorer_column:{column}" for column in missing_columns], warnings
-    warnings.append("feature_mapping_approximation: season deltas use current weighted historical features")
-    warnings.append("feature_mapping_approximation: rest_days_delta defaults to 0 until live rest-day features are stored")
+    warnings.append(f"feature_engine:{FEATURE_ENGINE}")
     return mapped, [], warnings
 
 
@@ -153,6 +144,7 @@ def diagnose_official_profit_scorer_pool(
 ) -> dict[str, Any]:
     artifact_path = Path(scorer_artifact)
     artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
+    scope = _artifact_selection(artifact)
     repository = Repository(database)
     rows: list[dict[str, Any]] = []
     blocker_counts: dict[str, int] = {}
@@ -186,7 +178,7 @@ def diagnose_official_profit_scorer_pool(
             "kickoff_time": match.get("kickoff_time"),
             "scored": True,
             "passes_scorer": passes,
-            "outcome": "DRAW",
+            "outcome": str(scope["outcome"]).upper() if scope else None,
             "selected_sp": round(mapped["odds"], 4),
             "market_probability": round(mapped["market_probability"], 6),
             "predicted_probability": round(probability, 6),
@@ -196,7 +188,7 @@ def diagnose_official_profit_scorer_pool(
     scored = [row for row in rows if row.get("scored")]
     passed = [row for row in scored if row.get("passes_scorer")]
     return {
-        "method": "official pool readiness for market-anchored I2 profit scorer",
+        "method": "official pool readiness for market-anchored profit scorer",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "scorer_artifact": str(artifact_path),
         "scanned_matches": len(rows),

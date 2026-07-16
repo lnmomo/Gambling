@@ -1,0 +1,141 @@
+{
+  "method": "strategy edge calibration against selected-odds implied probability",
+  "created_at": "2026-07-15T09:19:58.285040+00:00",
+  "bets_path": "reports\\market_anchored_feature_sp1_home_prob_avg_open_current\\bets.csv",
+  "config": {
+    "min_bets": 150,
+    "hit_rate_interval": "Wilson 95% lower bound",
+    "selected_side_implied_probability": "mean(1 / selected_decimal_odds)"
+  },
+  "overall": {
+    "label": "overall",
+    "bets": 218,
+    "wins": 162,
+    "hit_rate": 0.7431,
+    "wilson_hit_rate_lower_95": 0.6813,
+    "avg_odds": 1.4969,
+    "avg_implied_probability": 0.678,
+    "edge_vs_implied_probability": 0.0651,
+    "conservative_edge_vs_implied": 0.0032,
+    "staked": 2180.0,
+    "profit": 208.5,
+    "roi_pct": 9.56,
+    "decision": "CALIBRATED_EDGE_CONFIRMED",
+    "decision_reasons": []
+  },
+  "by_rule": [
+    {
+      "label": "AVG_OPEN_rulesra5ae079e_train30_n120_ev0p0_top1_ridge10_cap0.08|ra5ae079e",
+      "bets": 218,
+      "wins": 162,
+      "hit_rate": 0.7431,
+      "wilson_hit_rate_lower_95": 0.6813,
+      "avg_odds": 1.4969,
+      "avg_implied_probability": 0.678,
+      "edge_vs_implied_probability": 0.0651,
+      "conservative_edge_vs_implied": 0.0032,
+      "staked": 2180.0,
+      "profit": 208.5,
+      "roi_pct": 9.56,
+      "decision": "CALIBRATED_EDGE_CONFIRMED",
+      "decision_reasons": []
+    }
+  ],
+  "by_season": [
+    {
+      "label": "2023-24",
+      "bets": 71,
+      "wins": 53,
+      "hit_rate": 0.7465,
+      "wilson_hit_rate_lower_95": 0.6345,
+      "avg_odds": 1.5415,
+      "avg_implied_probability": 0.656,
+      "edge_vs_implied_probability": 0.0905,
+      "conservative_edge_vs_implied": -0.0215,
+      "staked": 710.0,
+      "profit": 102.8,
+      "roi_pct": 14.48,
+      "decision": "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE",
+      "decision_reasons": [
+        "wilson_lower<=average_implied_probability"
+      ]
+    },
+    {
+      "label": "2024-25",
+      "bets": 60,
+      "wins": 44,
+      "hit_rate": 0.7333,
+      "wilson_hit_rate_lower_95": 0.6099,
+      "avg_odds": 1.4702,
+      "avg_implied_probability": 0.6912,
+      "edge_vs_implied_probability": 0.0422,
+      "conservative_edge_vs_implied": -0.0812,
+      "staked": 600.0,
+      "profit": 32.5,
+      "roi_pct": 5.42,
+      "decision": "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE",
+      "decision_reasons": [
+        "wilson_lower<=average_implied_probability"
+      ]
+    },
+    {
+      "label": "2025-26",
+      "bets": 56,
+      "wins": 46,
+      "hit_rate": 0.8214,
+      "wilson_hit_rate_lower_95": 0.7016,
+      "avg_odds": 1.4275,
+      "avg_implied_probability": 0.7125,
+      "edge_vs_implied_probability": 0.109,
+      "conservative_edge_vs_implied": -0.0109,
+      "staked": 560.0,
+      "profit": 88.9,
+      "roi_pct": 15.88,
+      "decision": "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE",
+      "decision_reasons": [
+        "wilson_lower<=average_implied_probability"
+      ]
+    },
+    {
+      "label": "2022-23",
+      "bets": 31,
+      "wins": 19,
+      "hit_rate": 0.6129,
+      "wilson_hit_rate_lower_95": 0.4382,
+      "avg_odds": 1.5716,
+      "avg_implied_probability": 0.641,
+      "edge_vs_implied_probability": -0.0281,
+      "conservative_edge_vs_implied": -0.2028,
+      "staked": 310.0,
+      "profit": -15.7,
+      "roi_pct": -5.06,
+      "decision": "NO_CALIBRATED_EDGE",
+      "decision_reasons": [
+        "bets<minimum",
+        "hit_rate<=average_implied_probability",
+        "wilson_lower<=average_implied_probability",
+        "roi<=0"
+      ]
+    }
+  ],
+  "by_odds_band": [
+    {
+      "label": "[1.0,1.8)",
+      "bets": 218,
+      "wins": 162,
+      "hit_rate": 0.7431,
+      "wilson_hit_rate_lower_95": 0.6813,
+      "avg_odds": 1.4969,
+      "avg_implied_probability": 0.678,
+      "edge_vs_implied_probability": 0.0651,
+      "conservative_edge_vs_implied": 0.0032,
+      "staked": 2180.0,
+      "profit": 208.5,
+      "roi_pct": 9.56,
+      "decision": "CALIBRATED_EDGE_CONFIRMED",
+      "decision_reasons": []
+    }
+  ],
+  "decision": "CALIBRATED_EDGE_CONFIRMED",
+  "decision_reasons": []
+}

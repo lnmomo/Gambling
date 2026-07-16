@@ -1,0 +1,107 @@
+{
+  "artifact_type": "market_anchored_feature_residual_scorer",
+  "created_at": "2026-07-15T09:24:44.171392+00:00",
+  "strategy_label": "AVG_CLOSE_rulessp1_home_market_ge_55_train18_n80_ev0p0_top1_ridge35_cap0.08",
+  "prediction_month": "2026-07",
+  "training_window": {
+    "train_months": 18,
+    "first_date": "2025-01-12",
+    "last_date": "2026-05-23",
+    "rows": 579
+  },
+  "selection": {
+    "odds_source": "AVG_CLOSE",
+    "selected_rules": [
+      "SP1_home_market_ge_55"
+    ],
+    "min_predicted_ev": 0.0,
+    "max_bets_per_day": 1,
+    "residual_cap": 0.08,
+    "ridge": 35.0,
+    "feature_columns": [
+      "market_probability",
+      "log_odds",
+      "is_draw",
+      "is_home",
+      "league_draw_rate",
+      "league_prior_matches_scaled",
+      "form_points_diff",
+      "abs_form_points_diff",
+      "form_goal_diff_delta",
+      "abs_form_goal_diff_delta",
+      "season_points_per_match_delta",
+      "abs_season_points_per_match_delta",
+      "season_goal_diff_per_match_delta",
+      "abs_season_goal_diff_per_match_delta",
+      "rest_days_delta",
+      "lambda_total",
+      "lambda_diff"
+    ]
+  },
+  "model": {
+    "target": "won - market_probability",
+    "intercept_and_coefficients": [
+      0.06835266250728204,
+      0.01717761868389021,
+      -0.017339396401170742,
+      0.03494976229300872,
+      -0.034949762293008765,
+      -0.03723819496642584,
+      -0.0048900320687387784,
+      0.008568921197441912,
+      0.05650888191805936,
+      -0.0165801194316499,
+      -0.04415497178848046,
+      0.017354197943302906,
+      -0.02887554957419704,
+      0.007930853774072967,
+      0.03399854906716322,
+      -0.026079794722902505,
+      -0.006244381464412622,
+      0.012150252015160684
+    ],
+    "feature_means": {
+      "market_probability": 0.3910601181490218,
+      "log_odds": 0.940076934035987,
+      "is_draw": 0.7582037996545768,
+      "is_home": 0.24179620034542315,
+      "league_draw_rate": 0.30952522452504316,
+      "league_prior_matches_scaled": 1.601846286701209,
+      "form_points_diff": 0.04761082383419688,
+      "abs_form_points_diff": 0.7175014386873921,
+      "form_goal_diff_delta": 0.09775474956822107,
+      "abs_form_goal_diff_delta": 0.9061600449050088,
+      "season_points_per_match_delta": 0.11049444559585492,
+      "abs_season_points_per_match_delta": 0.3696389948186528,
+      "season_goal_diff_per_match_delta": 0.16922337478411054,
+      "abs_season_goal_diff_per_match_delta": 0.5026506355785838,
+      "rest_days_delta": -0.044905008635578586,
+      "lambda_total": 2.4108483056994823,
+      "lambda_diff": 0.3922883316062176
+    },
+    "feature_stds": {
+      "market_probability": 0.16845170424403255,
+      "log_odds": 0.3463364091680308,
+      "is_draw": 0.4281714584648761,
+      "is_home": 0.4281714584648761,
+      "league_draw_rate": 0.02430408577067253,
+      "league_prior_matches_scaled": 0.15761460900962843,
+      "form_points_diff": 0.901630514320074,
+      "abs_form_points_diff": 0.5480839902613236,
+      "form_goal_diff_delta": 1.1501064771253846,
+      "abs_form_goal_diff_delta": 0.7149649451593142,
+      "season_points_per_match_delta": 0.48529099824545213,
+      "abs_season_points_per_match_delta": 0.33329174756519053,
+      "season_goal_diff_per_match_delta": 0.658634796051155,
+      "abs_season_goal_diff_per_match_delta": 0.4580160299543193,
+      "rest_days_delta": 1.7840361324513614,
+      "lambda_total": 0.035633622469447984,
+      "lambda_diff": 0.2774489912957701
+    }
+  },
+  "deployment_notes": [
+    "Only score matches whose feature columns are produced before kickoff.",
+    "The scorer adjusts market probability by a bounded residual; it is not an unconstrained win-rate model.",
+    "Use official-SP shadow validation before any production allocation."
+  ]
+}

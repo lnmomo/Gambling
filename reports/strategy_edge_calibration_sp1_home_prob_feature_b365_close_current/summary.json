@@ -1,0 +1,139 @@
+{
+  "method": "strategy edge calibration against selected-odds implied probability",
+  "created_at": "2026-07-15T09:19:58.285040+00:00",
+  "bets_path": "reports\\market_anchored_feature_sp1_home_prob_b365_close_current\\bets.csv",
+  "config": {
+    "min_bets": 150,
+    "hit_rate_interval": "Wilson 95% lower bound",
+    "selected_side_implied_probability": "mean(1 / selected_decimal_odds)"
+  },
+  "overall": {
+    "label": "overall",
+    "bets": 194,
+    "wins": 150,
+    "hit_rate": 0.7732,
+    "wilson_hit_rate_lower_95": 0.7093,
+    "avg_odds": 1.4927,
+    "avg_implied_probability": 0.6793,
+    "edge_vs_implied_probability": 0.0939,
+    "conservative_edge_vs_implied": 0.03,
+    "staked": 1940.0,
+    "profit": 280.0,
+    "roi_pct": 14.43,
+    "decision": "CALIBRATED_EDGE_CONFIRMED",
+    "decision_reasons": []
+  },
+  "by_rule": [
+    {
+      "label": "B365_CLOSE_rulesra5ae079e_train18_n120_ev0p0_top1_ridge10_cap0.08|ra5ae079e",
+      "bets": 194,
+      "wins": 150,
+      "hit_rate": 0.7732,
+      "wilson_hit_rate_lower_95": 0.7093,
+      "avg_odds": 1.4927,
+      "avg_implied_probability": 0.6793,
+      "edge_vs_implied_probability": 0.0939,
+      "conservative_edge_vs_implied": 0.03,
+      "staked": 1940.0,
+      "profit": 280.0,
+      "roi_pct": 14.43,
+      "decision": "CALIBRATED_EDGE_CONFIRMED",
+      "decision_reasons": []
+    }
+  ],
+  "by_season": [
+    {
+      "label": "2024-25",
+      "bets": 51,
+      "wins": 41,
+      "hit_rate": 0.8039,
+      "wilson_hit_rate_lower_95": 0.6754,
+      "avg_odds": 1.5063,
+      "avg_implied_probability": 0.6734,
+      "edge_vs_implied_probability": 0.1306,
+      "conservative_edge_vs_implied": 0.0021,
+      "staked": 510.0,
+      "profit": 99.5,
+      "roi_pct": 19.51,
+      "decision": "CALIBRATED_EDGE_CONFIRMED",
+      "decision_reasons": []
+    },
+    {
+      "label": "2023-24",
+      "bets": 66,
+      "wins": 50,
+      "hit_rate": 0.7576,
+      "wilson_hit_rate_lower_95": 0.6419,
+      "avg_odds": 1.4924,
+      "avg_implied_probability": 0.6777,
+      "edge_vs_implied_probability": 0.0798,
+      "conservative_edge_vs_implied": -0.0358,
+      "staked": 660.0,
+      "profit": 86.9,
+      "roi_pct": 13.17,
+      "decision": "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE",
+      "decision_reasons": [
+        "wilson_lower<=average_implied_probability"
+      ]
+    },
+    {
+      "label": "2025-26",
+      "bets": 40,
+      "wins": 35,
+      "hit_rate": 0.875,
+      "wilson_hit_rate_lower_95": 0.7389,
+      "avg_odds": 1.4218,
+      "avg_implied_probability": 0.7169,
+      "edge_vs_implied_probability": 0.1581,
+      "conservative_edge_vs_implied": 0.0219,
+      "staked": 400.0,
+      "profit": 95.7,
+      "roi_pct": 23.93,
+      "decision": "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE",
+      "decision_reasons": [
+        "bets<minimum"
+      ]
+    },
+    {
+      "label": "2022-23",
+      "bets": 37,
+      "wins": 24,
+      "hit_rate": 0.6486,
+      "wilson_hit_rate_lower_95": 0.4876,
+      "avg_odds": 1.5514,
+      "avg_implied_probability": 0.6494,
+      "edge_vs_implied_probability": -0.0008,
+      "conservative_edge_vs_implied": -0.1619,
+      "staked": 370.0,
+      "profit": -2.1,
+      "roi_pct": -0.57,
+      "decision": "NO_CALIBRATED_EDGE",
+      "decision_reasons": [
+        "bets<minimum",
+        "hit_rate<=average_implied_probability",
+        "wilson_lower<=average_implied_probability",
+        "roi<=0"
+      ]
+    }
+  ],
+  "by_odds_band": [
+    {
+      "label": "[1.0,1.8)",
+      "bets": 194,
+      "wins": 150,
+      "hit_rate": 0.7732,
+      "wilson_hit_rate_lower_95": 0.7093,
+      "avg_odds": 1.4927,
+      "avg_implied_probability": 0.6793,
+      "edge_vs_implied_probability": 0.0939,
+      "conservative_edge_vs_implied": 0.03,
+      "staked": 1940.0,
+      "profit": 280.0,
+      "roi_pct": 14.43,
+      "decision": "CALIBRATED_EDGE_CONFIRMED",
+      "decision_reasons": []
+    }
+  ],
+  "decision": "CALIBRATED_EDGE_CONFIRMED",
+  "decision_reasons": []
+}

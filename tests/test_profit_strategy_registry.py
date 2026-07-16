@@ -5,8 +5,10 @@ import json
 from football_agents.profit_strategy_registry import (
     MARKET_ANCHORED_I2_AVG_CLOSE_RESEARCH_ID,
     MARKET_ANCHORED_I2_DRAWS_STRATEGY_ID,
+    MARKET_ANCHORED_SP1_HOME_RESEARCH_ID,
     build_market_anchored_i2_avg_close_research_package,
     build_market_anchored_i2_strategy_package,
+    build_market_anchored_sp1_home_research_package,
     list_profit_strategy_packages,
 )
 
@@ -218,3 +220,71 @@ def test_list_profit_strategy_packages_includes_registered_candidates():
 
     assert MARKET_ANCHORED_I2_DRAWS_STRATEGY_ID in strategy_ids
     assert MARKET_ANCHORED_I2_AVG_CLOSE_RESEARCH_ID in strategy_ids
+    assert MARKET_ANCHORED_SP1_HOME_RESEARCH_ID in strategy_ids
+
+
+def test_build_sp1_home_package_preserves_shadow_only_calibration_state(tmp_path):
+    cross_source = tmp_path / "cross-source.json"
+    statistical = tmp_path / "statistical.json"
+    calibration = tmp_path / "calibration.json"
+    scorer = tmp_path / "scorer.json"
+    pool = tmp_path / "pool.json"
+    official = tmp_path / "official.json"
+    cross_source.write_text(json.dumps({
+        "decision": "FEATURE_SCORER_CROSS_SOURCE_CANDIDATE",
+        "rules": [{
+            "rule": "rule_league_SP1_market_prob_bucket_0p55_1p00_outcome_home",
+            "passes_all_sources": True,
+            "source_count": 4,
+            "worst_source_roi_pct": 8.84,
+            "worst_active_pass_rate": 0.6667,
+        }],
+    }), encoding="utf-8")
+    statistical.write_text(json.dumps({
+        "decision": "STATISTICALLY_SUPPORTED_RESEARCH_CANDIDATE",
+        "overall": {
+            "bets": 211, "profit": 186.5, "roi_pct": 8.84,
+            "max_month_drawdown": 41.0, "drawdown_to_profit": 0.2198,
+            "positive_months": 25, "negative_months": 15,
+        },
+        "bootstrap": {"roi_ci_pct": {"p05": 1.94}, "probability_roi_positive": 0.9818},
+        "sign_flip_test": {"one_sided_p_value": 0.0214},
+    }), encoding="utf-8")
+    calibration.write_text(json.dumps({
+        "decision": "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE",
+        "overall": {
+            "hit_rate": 0.7346, "wilson_hit_rate_lower_95": 0.6712,
+            "avg_implied_probability": 0.6767, "conservative_edge_vs_implied": -0.0055,
+        },
+    }), encoding="utf-8")
+    scorer.write_text(json.dumps({
+        "artifact_type": "market_anchored_feature_residual_scorer",
+        "selection": {"selected_rules": ["SP1_home_market_ge_55"]},
+    }), encoding="utf-8")
+    pool.write_text(json.dumps({
+        "scorer_artifact": str(scorer),
+        "scanned_matches": 178, "scored_matches": 0, "passed_scorer": 0,
+        "blocker_counts": [{"reason": "league_not_sp1", "matches": 178}],
+    }), encoding="utf-8")
+    official.write_text(json.dumps({
+        "scorer_artifact": str(scorer),
+        "opening_pre_match_snapshots": 53,
+        "selected_snapshots": 0,
+        "settled_selected_snapshots": 0,
+        "active_months": 0,
+        "decision": "OFFICIAL_SP_PROSPECTIVE_BLOCKED",
+        "decision_reasons": ["settled_selected<200"],
+        "monthly": [],
+    }), encoding="utf-8")
+
+    package = build_market_anchored_sp1_home_research_package(
+        cross_source, statistical, calibration, scorer, pool, official,
+    )
+
+    assert package["strategy_id"] == MARKET_ANCHORED_SP1_HOME_RESEARCH_ID
+    assert package["status"] == "OFFICIAL_SP_SHADOW_VALIDATION"
+    assert package["recommended_for_shadow"] is True
+    assert package["calibration"]["decision"] == "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE"
+    assert package["cross_source_validation"]["passes_all_sources"] is True
+    assert package["official_validation"]["settled_selected_snapshots"] == 0
+    assert package["selection"]["outcome"] == "HOME"

@@ -1,6 +1,6 @@
 {
   "method": "market-anchored feature scorer cross-source summary",
-  "created_at": "2026-07-06T07:40:27.741457+00:00",
+  "created_at": "2026-07-15T07:22:24.287765+00:00",
   "report_paths": [
     "reports\\market_anchored_candidate_screener_multi_source_avg_open_current\\summary.json",
     "reports\\market_anchored_candidate_screener_multi_source_avg_close_current\\summary.json",
@@ -14,9 +14,75 @@
     "B365_CLOSE"
   ],
   "rule_count": 12,
-  "rules_passing_all_sources": 0,
-  "decision": "NO_CROSS_SOURCE_FEATURE_SCORER_CANDIDATE",
+  "rules_passing_all_sources": 1,
+  "decision": "FEATURE_SCORER_CROSS_SOURCE_CANDIDATE",
   "rules": [
+    {
+      "rule": "rule_league_SP1_market_prob_bucket_0p55_1p00_outcome_home",
+      "available_sources": 4,
+      "passed_sources": 4,
+      "source_count": 4,
+      "passes_all_sources": true,
+      "total_bets": 810,
+      "total_profit": 944.3,
+      "combined_profit_per_bet": 1.1658,
+      "worst_source_roi_pct": 8.84,
+      "worst_active_pass_rate": 0.6667,
+      "source_results": [
+        {
+          "odds_source": "AVG_OPEN",
+          "available": true,
+          "passed": true,
+          "label": "AVG_OPEN_rulesra5ae079e_train30_n120_ev0p0_top1_ridge10_cap0.08",
+          "bets": 218,
+          "profit": 208.5,
+          "roi_pct": 9.56,
+          "max_drawdown": 47.2,
+          "active_pass_rate": 0.8333,
+          "latest_season_profit": 88.9,
+          "decision_reasons": []
+        },
+        {
+          "odds_source": "AVG_CLOSE",
+          "available": true,
+          "passed": true,
+          "label": "AVG_CLOSE_rulesra5ae079e_train18_n80_ev0p0_top1_ridge35_cap0.08",
+          "bets": 211,
+          "profit": 186.5,
+          "roi_pct": 8.84,
+          "max_drawdown": 70.1,
+          "active_pass_rate": 0.6667,
+          "latest_season_profit": 72.3,
+          "decision_reasons": []
+        },
+        {
+          "odds_source": "B365_OPEN",
+          "available": true,
+          "passed": true,
+          "label": "B365_OPEN_rulesra5ae079e_train18_n120_ev0p02_top1_ridge10_cap0.08",
+          "bets": 187,
+          "profit": 269.3,
+          "roi_pct": 14.4,
+          "max_drawdown": 42.7,
+          "active_pass_rate": 0.8333,
+          "latest_season_profit": 78.1,
+          "decision_reasons": []
+        },
+        {
+          "odds_source": "B365_CLOSE",
+          "available": true,
+          "passed": true,
+          "label": "B365_CLOSE_rulesra5ae079e_train18_n120_ev0p0_top1_ridge10_cap0.08",
+          "bets": 194,
+          "profit": 280.0,
+          "roi_pct": 14.43,
+          "max_drawdown": 52.7,
+          "active_pass_rate": 0.6667,
+          "latest_season_profit": 95.7,
+          "decision_reasons": []
+        }
+      ]
+    },
     {
       "rule": "rule_league_G1_odds_bucket_2p8_3p5_outcome_draw",
       "available_sources": 4,
@@ -88,73 +154,14 @@
       ]
     },
     {
-      "rule": "rule_league_SP1_market_prob_bucket_0p55_1p00_outcome_home",
-      "available_sources": 3,
+      "rule": "rule_league_SP1_odds_bucket_1p0_1p8_outcome_home",
+      "available_sources": 4,
       "passed_sources": 3,
       "source_count": 4,
       "passes_all_sources": false,
-      "total_bets": 616,
-      "total_profit": 664.3,
-      "combined_profit_per_bet": 1.0784,
-      "worst_source_roi_pct": 8.84,
-      "worst_active_pass_rate": 0.6667,
-      "source_results": [
-        {
-          "odds_source": "AVG_OPEN",
-          "available": true,
-          "passed": true,
-          "label": "AVG_OPEN_rulesra5ae079e_train30_n120_ev0p0_top1_ridge10_cap0.08",
-          "bets": 218,
-          "profit": 208.5,
-          "roi_pct": 9.56,
-          "max_drawdown": 47.2,
-          "active_pass_rate": 0.8333,
-          "latest_season_profit": 88.9,
-          "decision_reasons": []
-        },
-        {
-          "odds_source": "AVG_CLOSE",
-          "available": true,
-          "passed": true,
-          "label": "AVG_CLOSE_rulesra5ae079e_train18_n80_ev0p0_top1_ridge35_cap0.08",
-          "bets": 211,
-          "profit": 186.5,
-          "roi_pct": 8.84,
-          "max_drawdown": 70.1,
-          "active_pass_rate": 0.6667,
-          "latest_season_profit": 72.3,
-          "decision_reasons": []
-        },
-        {
-          "odds_source": "B365_OPEN",
-          "available": true,
-          "passed": true,
-          "label": "B365_OPEN_rulesra5ae079e_train18_n120_ev0p02_top1_ridge10_cap0.08",
-          "bets": 187,
-          "profit": 269.3,
-          "roi_pct": 14.4,
-          "max_drawdown": 42.7,
-          "active_pass_rate": 0.8333,
-          "latest_season_profit": 78.1,
-          "decision_reasons": []
-        },
-        {
-          "odds_source": "B365_CLOSE",
-          "available": false,
-          "passed": false,
-          "reason": "rule_not_tested_or_no_candidates"
-        }
-      ]
-    },
-    {
-      "rule": "rule_league_SP1_odds_bucket_1p0_1p8_outcome_home",
-      "available_sources": 3,
-      "passed_sources": 2,
-      "source_count": 4,
-      "passes_all_sources": false,
-      "total_bets": 612,
-      "total_profit": 678.7,
-      "combined_profit_per_bet": 1.109,
+      "total_bets": 810,
+      "total_profit": 907.5,
+      "combined_profit_per_bet": 1.1204,
       "worst_source_roi_pct": 8.34,
       "worst_active_pass_rate": 0.3333,
       "source_results": [
@@ -201,9 +208,16 @@
         },
         {
           "odds_source": "B365_CLOSE",
-          "available": false,
-          "passed": false,
-          "reason": "rule_not_tested_or_no_candidates"
+          "available": true,
+          "passed": true,
+          "label": "B365_CLOSE_rulesr04d9b506_train18_n80_ev0p02_top1_ridge10_cap0.08",
+          "bets": 198,
+          "profit": 228.8,
+          "roi_pct": 11.56,
+          "max_drawdown": 56.0,
+          "active_pass_rate": 0.6667,
+          "latest_season_profit": 102.4,
+          "decision_reasons": []
         }
       ]
     },
@@ -440,6 +454,168 @@
             "positive_seasons<=negative_seasons",
             "latest_season_bets<20",
             "latest_season_profit<0",
+            "active_pass_rate<0.6"
+          ]
+        }
+      ]
+    },
+    {
+      "rule": "rule_league_T1_odds_bucket_1p0_1p8_outcome_away",
+      "available_sources": 4,
+      "passed_sources": 0,
+      "source_count": 4,
+      "passes_all_sources": false,
+      "total_bets": 173,
+      "total_profit": 157.8,
+      "combined_profit_per_bet": 0.9121,
+      "worst_source_roi_pct": 6.16,
+      "worst_active_pass_rate": 0.0,
+      "source_results": [
+        {
+          "odds_source": "AVG_OPEN",
+          "available": true,
+          "passed": false,
+          "label": "AVG_OPEN_rulesrc3d24cd3_train30_n80_ev0p0_top1_ridge35_cap0.08",
+          "bets": 44,
+          "profit": 27.1,
+          "roi_pct": 6.16,
+          "max_drawdown": 40.3,
+          "active_pass_rate": 0.0,
+          "latest_season_profit": -18.2,
+          "decision_reasons": [
+            "bets<150",
+            "drawdown>profit",
+            "positive_seasons<=negative_seasons",
+            "latest_season_profit<0",
+            "active_pass_rate<0.6"
+          ]
+        },
+        {
+          "odds_source": "AVG_CLOSE",
+          "available": true,
+          "passed": false,
+          "label": "AVG_CLOSE_rulesrc3d24cd3_train30_n80_ev0p0_top1_ridge35_cap0.08",
+          "bets": 43,
+          "profit": 38.9,
+          "roi_pct": 9.05,
+          "max_drawdown": 30.0,
+          "active_pass_rate": 0.0,
+          "latest_season_profit": 13.6,
+          "decision_reasons": [
+            "bets<150",
+            "active_pass_rate<0.6"
+          ]
+        },
+        {
+          "odds_source": "B365_OPEN",
+          "available": true,
+          "passed": false,
+          "label": "B365_OPEN_rulesrc3d24cd3_train30_n80_ev0p02_top1_ridge10_cap0.08",
+          "bets": 40,
+          "profit": 38.0,
+          "roi_pct": 9.5,
+          "max_drawdown": 36.5,
+          "active_pass_rate": 0.0,
+          "latest_season_profit": -7.2,
+          "decision_reasons": [
+            "bets<150",
+            "positive_seasons<=negative_seasons",
+            "latest_season_profit<0",
+            "active_pass_rate<0.6"
+          ]
+        },
+        {
+          "odds_source": "B365_CLOSE",
+          "available": true,
+          "passed": false,
+          "label": "B365_CLOSE_rulesrc3d24cd3_train30_n80_ev0p0_top1_ridge35_cap0.08",
+          "bets": 46,
+          "profit": 53.8,
+          "roi_pct": 11.7,
+          "max_drawdown": 30.0,
+          "active_pass_rate": 0.5,
+          "latest_season_profit": 36.9,
+          "decision_reasons": [
+            "bets<150",
+            "active_pass_rate<0.6"
+          ]
+        }
+      ]
+    },
+    {
+      "rule": "rule_favorite_relation_market_favorite_league_I1_outcome_away",
+      "available_sources": 4,
+      "passed_sources": 0,
+      "source_count": 4,
+      "passes_all_sources": false,
+      "total_bets": 896,
+      "total_profit": 318.1,
+      "combined_profit_per_bet": 0.355,
+      "worst_source_roi_pct": 0.98,
+      "worst_active_pass_rate": 0.1667,
+      "source_results": [
+        {
+          "odds_source": "AVG_OPEN",
+          "available": true,
+          "passed": false,
+          "label": "AVG_OPEN_rulesrca6e4173_train30_n80_ev0p0_top1_ridge35_cap0.08",
+          "bets": 225,
+          "profit": 76.1,
+          "roi_pct": 3.38,
+          "max_drawdown": 167.4,
+          "active_pass_rate": 0.3333,
+          "latest_season_profit": 120.0,
+          "decision_reasons": [
+            "drawdown>profit",
+            "positive_seasons<=negative_seasons",
+            "active_pass_rate<0.6"
+          ]
+        },
+        {
+          "odds_source": "AVG_CLOSE",
+          "available": true,
+          "passed": false,
+          "label": "AVG_CLOSE_rulesrca6e4173_train18_n80_ev0p02_top1_ridge35_cap0.08",
+          "bets": 226,
+          "profit": 92.0,
+          "roi_pct": 4.07,
+          "max_drawdown": 81.0,
+          "active_pass_rate": 0.5,
+          "latest_season_profit": 33.7,
+          "decision_reasons": [
+            "active_pass_rate<0.6"
+          ]
+        },
+        {
+          "odds_source": "B365_OPEN",
+          "available": true,
+          "passed": false,
+          "label": "B365_OPEN_rulesrca6e4173_train30_n80_ev0p0_top1_ridge35_cap0.08",
+          "bets": 225,
+          "profit": 22.0,
+          "roi_pct": 0.98,
+          "max_drawdown": 162.0,
+          "active_pass_rate": 0.1667,
+          "latest_season_profit": 77.0,
+          "decision_reasons": [
+            "roi<3%",
+            "drawdown>profit",
+            "positive_months<=negative_months",
+            "active_pass_rate<0.6"
+          ]
+        },
+        {
+          "odds_source": "B365_CLOSE",
+          "available": true,
+          "passed": false,
+          "label": "B365_CLOSE_rulesrca6e4173_train18_n80_ev0p02_top1_ridge35_cap0.08",
+          "bets": 220,
+          "profit": 128.0,
+          "roi_pct": 5.82,
+          "max_drawdown": 65.5,
+          "active_pass_rate": 0.3333,
+          "latest_season_profit": 31.8,
+          "decision_reasons": [
             "active_pass_rate<0.6"
           ]
         }
@@ -805,155 +981,78 @@
             "latest_season_profit<0",
             "active_pass_rate<0.6"
           ]
-        }
-      ]
-    },
-    {
-      "rule": "rule_league_T1_odds_bucket_1p0_1p8_outcome_away",
-      "available_sources": 3,
-      "passed_sources": 0,
-      "source_count": 4,
-      "passes_all_sources": false,
-      "total_bets": 127,
-      "total_profit": 104.0,
-      "combined_profit_per_bet": 0.8189,
-      "worst_source_roi_pct": 6.16,
-      "worst_active_pass_rate": 0.0,
-      "source_results": [
-        {
-          "odds_source": "AVG_OPEN",
-          "available": true,
-          "passed": false,
-          "label": "AVG_OPEN_rulesrc3d24cd3_train30_n80_ev0p0_top1_ridge35_cap0.08",
-          "bets": 44,
-          "profit": 27.1,
-          "roi_pct": 6.16,
-          "max_drawdown": 40.3,
-          "active_pass_rate": 0.0,
-          "latest_season_profit": -18.2,
-          "decision_reasons": [
-            "bets<150",
-            "drawdown>profit",
-            "positive_seasons<=negative_seasons",
-            "latest_season_profit<0",
-            "active_pass_rate<0.6"
-          ]
-        },
-        {
-          "odds_source": "AVG_CLOSE",
-          "available": true,
-          "passed": false,
-          "label": "AVG_CLOSE_rulesrc3d24cd3_train30_n80_ev0p0_top1_ridge35_cap0.08",
-          "bets": 43,
-          "profit": 38.9,
-          "roi_pct": 9.05,
-          "max_drawdown": 30.0,
-          "active_pass_rate": 0.0,
-          "latest_season_profit": 13.6,
-          "decision_reasons": [
-            "bets<150",
-            "active_pass_rate<0.6"
-          ]
-        },
-        {
-          "odds_source": "B365_OPEN",
-          "available": true,
-          "passed": false,
-          "label": "B365_OPEN_rulesrc3d24cd3_train30_n80_ev0p02_top1_ridge10_cap0.08",
-          "bets": 40,
-          "profit": 38.0,
-          "roi_pct": 9.5,
-          "max_drawdown": 36.5,
-          "active_pass_rate": 0.0,
-          "latest_season_profit": -7.2,
-          "decision_reasons": [
-            "bets<150",
-            "positive_seasons<=negative_seasons",
-            "latest_season_profit<0",
-            "active_pass_rate<0.6"
-          ]
-        },
-        {
-          "odds_source": "B365_CLOSE",
-          "available": false,
-          "passed": false,
-          "reason": "rule_not_tested_or_no_candidates"
-        }
-      ]
-    },
-    {
-      "rule": "rule_favorite_relation_market_favorite_league_I1_outcome_away",
-      "available_sources": 3,
-      "passed_sources": 0,
-      "source_count": 4,
-      "passes_all_sources": false,
-      "total_bets": 676,
-      "total_profit": 190.1,
-      "combined_profit_per_bet": 0.2812,
-      "worst_source_roi_pct": 0.98,
-      "worst_active_pass_rate": 0.1667,
-      "source_results": [
-        {
-          "odds_source": "AVG_OPEN",
-          "available": true,
-          "passed": false,
-          "label": "AVG_OPEN_rulesrca6e4173_train30_n80_ev0p0_top1_ridge35_cap0.08",
-          "bets": 225,
-          "profit": 76.1,
-          "roi_pct": 3.38,
-          "max_drawdown": 167.4,
-          "active_pass_rate": 0.3333,
-          "latest_season_profit": 120.0,
-          "decision_reasons": [
-            "drawdown>profit",
-            "positive_seasons<=negative_seasons",
-            "active_pass_rate<0.6"
-          ]
-        },
-        {
-          "odds_source": "AVG_CLOSE",
-          "available": true,
-          "passed": false,
-          "label": "AVG_CLOSE_rulesrca6e4173_train18_n80_ev0p02_top1_ridge35_cap0.08",
-          "bets": 226,
-          "profit": 92.0,
-          "roi_pct": 4.07,
-          "max_drawdown": 81.0,
-          "active_pass_rate": 0.5,
-          "latest_season_profit": 33.7,
-          "decision_reasons": [
-            "active_pass_rate<0.6"
-          ]
-        },
-        {
-          "odds_source": "B365_OPEN",
-          "available": true,
-          "passed": false,
-          "label": "B365_OPEN_rulesrca6e4173_train30_n80_ev0p0_top1_ridge35_cap0.08",
-          "bets": 225,
-          "profit": 22.0,
-          "roi_pct": 0.98,
-          "max_drawdown": 162.0,
-          "active_pass_rate": 0.1667,
-          "latest_season_profit": 77.0,
-          "decision_reasons": [
-            "roi<3%",
-            "drawdown>profit",
-            "positive_months<=negative_months",
-            "active_pass_rate<0.6"
-          ]
-        },
-        {
-          "odds_source": "B365_CLOSE",
-          "available": false,
-          "passed": false,
-          "reason": "rule_not_tested_or_no_candidates"
         }
       ]
     }
   ],
   "top": [
     {
+      "rule": "rule_league_SP1_market_prob_bucket_0p55_1p00_outcome_home",
+      "available_sources": 4,
+      "passed_sources": 4,
+      "source_count": 4,
+      "passes_all_sources": true,
+      "total_bets": 810,
+      "total_profit": 944.3,
+      "combined_profit_per_bet": 1.1658,
+      "worst_source_roi_pct": 8.84,
+      "worst_active_pass_rate": 0.6667,
+      "source_results": [
+        {
+          "odds_source": "AVG_OPEN",
+          "available": true,
+          "passed": true,
+          "label": "AVG_OPEN_rulesra5ae079e_train30_n120_ev0p0_top1_ridge10_cap0.08",
+          "bets": 218,
+          "profit": 208.5,
+          "roi_pct": 9.56,
+          "max_drawdown": 47.2,
+          "active_pass_rate": 0.8333,
+          "latest_season_profit": 88.9,
+          "decision_reasons": []
+        },
+        {
+          "odds_source": "AVG_CLOSE",
+          "available": true,
+          "passed": true,
+          "label": "AVG_CLOSE_rulesra5ae079e_train18_n80_ev0p0_top1_ridge35_cap0.08",
+          "bets": 211,
+          "profit": 186.5,
+          "roi_pct": 8.84,
+          "max_drawdown": 70.1,
+          "active_pass_rate": 0.6667,
+          "latest_season_profit": 72.3,
+          "decision_reasons": []
+        },
+        {
+          "odds_source": "B365_OPEN",
+          "available": true,
+          "passed": true,
+          "label": "B365_OPEN_rulesra5ae079e_train18_n120_ev0p02_top1_ridge10_cap0.08",
+          "bets": 187,
+          "profit": 269.3,
+          "roi_pct": 14.4,
+          "max_drawdown": 42.7,
+          "active_pass_rate": 0.8333,
+          "latest_season_profit": 78.1,
+          "decision_reasons": []
+        },
+        {
+          "odds_source": "B365_CLOSE",
+          "available": true,
+          "passed": true,
+          "label": "B365_CLOSE_rulesra5ae079e_train18_n120_ev0p0_top1_ridge10_cap0.08",
+          "bets": 194,
+          "profit": 280.0,
+          "roi_pct": 14.43,
+          "max_drawdown": 52.7,
+          "active_pass_rate": 0.6667,
+          "latest_season_profit": 95.7,
+          "decision_reasons": []
+        }
+      ]
+    },
+    {
       "rule": "rule_league_G1_odds_bucket_2p8_3p5_outcome_draw",
       "available_sources": 4,
       "passed_sources": 3,
@@ -1024,73 +1123,14 @@
       ]
     },
     {
-      "rule": "rule_league_SP1_market_prob_bucket_0p55_1p00_outcome_home",
-      "available_sources": 3,
+      "rule": "rule_league_SP1_odds_bucket_1p0_1p8_outcome_home",
+      "available_sources": 4,
       "passed_sources": 3,
       "source_count": 4,
       "passes_all_sources": false,
-      "total_bets": 616,
-      "total_profit": 664.3,
-      "combined_profit_per_bet": 1.0784,
-      "worst_source_roi_pct": 8.84,
-      "worst_active_pass_rate": 0.6667,
-      "source_results": [
-        {
-          "odds_source": "AVG_OPEN",
-          "available": true,
-          "passed": true,
-          "label": "AVG_OPEN_rulesra5ae079e_train30_n120_ev0p0_top1_ridge10_cap0.08",
-          "bets": 218,
-          "profit": 208.5,
-          "roi_pct": 9.56,
-          "max_drawdown": 47.2,
-          "active_pass_rate": 0.8333,
-          "latest_season_profit": 88.9,
-          "decision_reasons": []
-        },
-        {
-          "odds_source": "AVG_CLOSE",
-          "available": true,
-          "passed": true,
-          "label": "AVG_CLOSE_rulesra5ae079e_train18_n80_ev0p0_top1_ridge35_cap0.08",
-          "bets": 211,
-          "profit": 186.5,
-          "roi_pct": 8.84,
-          "max_drawdown": 70.1,
-          "active_pass_rate": 0.6667,
-          "latest_season_profit": 72.3,
-          "decision_reasons": []
-        },
-        {
-          "odds_source": "B365_OPEN",
-          "available": true,
-          "passed": true,
-          "label": "B365_OPEN_rulesra5ae079e_train18_n120_ev0p02_top1_ridge10_cap0.08",
-          "bets": 187,
-          "profit": 269.3,
-          "roi_pct": 14.4,
-          "max_drawdown": 42.7,
-          "active_pass_rate": 0.8333,
-          "latest_season_profit": 78.1,
-          "decision_reasons": []
-        },
-        {
-          "odds_source": "B365_CLOSE",
-          "available": false,
-          "passed": false,
-          "reason": "rule_not_tested_or_no_candidates"
-        }
-      ]
-    },
-    {
-      "rule": "rule_league_SP1_odds_bucket_1p0_1p8_outcome_home",
-      "available_sources": 3,
-      "passed_sources": 2,
-      "source_count": 4,
-      "passes_all_sources": false,
-      "total_bets": 612,
-      "total_profit": 678.7,
-      "combined_profit_per_bet": 1.109,
+      "total_bets": 810,
+      "total_profit": 907.5,
+      "combined_profit_per_bet": 1.1204,
       "worst_source_roi_pct": 8.34,
       "worst_active_pass_rate": 0.3333,
       "source_results": [
@@ -1137,9 +1177,16 @@
         },
         {
           "odds_source": "B365_CLOSE",
-          "available": false,
-          "passed": false,
-          "reason": "rule_not_tested_or_no_candidates"
+          "available": true,
+          "passed": true,
+          "label": "B365_CLOSE_rulesr04d9b506_train18_n80_ev0p02_top1_ridge10_cap0.08",
+          "bets": 198,
+          "profit": 228.8,
+          "roi_pct": 11.56,
+          "max_drawdown": 56.0,
+          "active_pass_rate": 0.6667,
+          "latest_season_profit": 102.4,
+          "decision_reasons": []
         }
       ]
     },
@@ -1376,6 +1423,168 @@
             "positive_seasons<=negative_seasons",
             "latest_season_bets<20",
             "latest_season_profit<0",
+            "active_pass_rate<0.6"
+          ]
+        }
+      ]
+    },
+    {
+      "rule": "rule_league_T1_odds_bucket_1p0_1p8_outcome_away",
+      "available_sources": 4,
+      "passed_sources": 0,
+      "source_count": 4,
+      "passes_all_sources": false,
+      "total_bets": 173,
+      "total_profit": 157.8,
+      "combined_profit_per_bet": 0.9121,
+      "worst_source_roi_pct": 6.16,
+      "worst_active_pass_rate": 0.0,
+      "source_results": [
+        {
+          "odds_source": "AVG_OPEN",
+          "available": true,
+          "passed": false,
+          "label": "AVG_OPEN_rulesrc3d24cd3_train30_n80_ev0p0_top1_ridge35_cap0.08",
+          "bets": 44,
+          "profit": 27.1,
+          "roi_pct": 6.16,
+          "max_drawdown": 40.3,
+          "active_pass_rate": 0.0,
+          "latest_season_profit": -18.2,
+          "decision_reasons": [
+            "bets<150",
+            "drawdown>profit",
+            "positive_seasons<=negative_seasons",
+            "latest_season_profit<0",
+            "active_pass_rate<0.6"
+          ]
+        },
+        {
+          "odds_source": "AVG_CLOSE",
+          "available": true,
+          "passed": false,
+          "label": "AVG_CLOSE_rulesrc3d24cd3_train30_n80_ev0p0_top1_ridge35_cap0.08",
+          "bets": 43,
+          "profit": 38.9,
+          "roi_pct": 9.05,
+          "max_drawdown": 30.0,
+          "active_pass_rate": 0.0,
+          "latest_season_profit": 13.6,
+          "decision_reasons": [
+            "bets<150",
+            "active_pass_rate<0.6"
+          ]
+        },
+        {
+          "odds_source": "B365_OPEN",
+          "available": true,
+          "passed": false,
+          "label": "B365_OPEN_rulesrc3d24cd3_train30_n80_ev0p02_top1_ridge10_cap0.08",
+          "bets": 40,
+          "profit": 38.0,
+          "roi_pct": 9.5,
+          "max_drawdown": 36.5,
+          "active_pass_rate": 0.0,
+          "latest_season_profit": -7.2,
+          "decision_reasons": [
+            "bets<150",
+            "positive_seasons<=negative_seasons",
+            "latest_season_profit<0",
+            "active_pass_rate<0.6"
+          ]
+        },
+        {
+          "odds_source": "B365_CLOSE",
+          "available": true,
+          "passed": false,
+          "label": "B365_CLOSE_rulesrc3d24cd3_train30_n80_ev0p0_top1_ridge35_cap0.08",
+          "bets": 46,
+          "profit": 53.8,
+          "roi_pct": 11.7,
+          "max_drawdown": 30.0,
+          "active_pass_rate": 0.5,
+          "latest_season_profit": 36.9,
+          "decision_reasons": [
+            "bets<150",
+            "active_pass_rate<0.6"
+          ]
+        }
+      ]
+    },
+    {
+      "rule": "rule_favorite_relation_market_favorite_league_I1_outcome_away",
+      "available_sources": 4,
+      "passed_sources": 0,
+      "source_count": 4,
+      "passes_all_sources": false,
+      "total_bets": 896,
+      "total_profit": 318.1,
+      "combined_profit_per_bet": 0.355,
+      "worst_source_roi_pct": 0.98,
+      "worst_active_pass_rate": 0.1667,
+      "source_results": [
+        {
+          "odds_source": "AVG_OPEN",
+          "available": true,
+          "passed": false,
+          "label": "AVG_OPEN_rulesrca6e4173_train30_n80_ev0p0_top1_ridge35_cap0.08",
+          "bets": 225,
+          "profit": 76.1,
+          "roi_pct": 3.38,
+          "max_drawdown": 167.4,
+          "active_pass_rate": 0.3333,
+          "latest_season_profit": 120.0,
+          "decision_reasons": [
+            "drawdown>profit",
+            "positive_seasons<=negative_seasons",
+            "active_pass_rate<0.6"
+          ]
+        },
+        {
+          "odds_source": "AVG_CLOSE",
+          "available": true,
+          "passed": false,
+          "label": "AVG_CLOSE_rulesrca6e4173_train18_n80_ev0p02_top1_ridge35_cap0.08",
+          "bets": 226,
+          "profit": 92.0,
+          "roi_pct": 4.07,
+          "max_drawdown": 81.0,
+          "active_pass_rate": 0.5,
+          "latest_season_profit": 33.7,
+          "decision_reasons": [
+            "active_pass_rate<0.6"
+          ]
+        },
+        {
+          "odds_source": "B365_OPEN",
+          "available": true,
+          "passed": false,
+          "label": "B365_OPEN_rulesrca6e4173_train30_n80_ev0p0_top1_ridge35_cap0.08",
+          "bets": 225,
+          "profit": 22.0,
+          "roi_pct": 0.98,
+          "max_drawdown": 162.0,
+          "active_pass_rate": 0.1667,
+          "latest_season_profit": 77.0,
+          "decision_reasons": [
+            "roi<3%",
+            "drawdown>profit",
+            "positive_months<=negative_months",
+            "active_pass_rate<0.6"
+          ]
+        },
+        {
+          "odds_source": "B365_CLOSE",
+          "available": true,
+          "passed": false,
+          "label": "B365_CLOSE_rulesrca6e4173_train18_n80_ev0p02_top1_ridge35_cap0.08",
+          "bets": 220,
+          "profit": 128.0,
+          "roi_pct": 5.82,
+          "max_drawdown": 65.5,
+          "active_pass_rate": 0.3333,
+          "latest_season_profit": 31.8,
+          "decision_reasons": [
             "active_pass_rate<0.6"
           ]
         }
@@ -1741,149 +1950,6 @@
             "latest_season_profit<0",
             "active_pass_rate<0.6"
           ]
-        }
-      ]
-    },
-    {
-      "rule": "rule_league_T1_odds_bucket_1p0_1p8_outcome_away",
-      "available_sources": 3,
-      "passed_sources": 0,
-      "source_count": 4,
-      "passes_all_sources": false,
-      "total_bets": 127,
-      "total_profit": 104.0,
-      "combined_profit_per_bet": 0.8189,
-      "worst_source_roi_pct": 6.16,
-      "worst_active_pass_rate": 0.0,
-      "source_results": [
-        {
-          "odds_source": "AVG_OPEN",
-          "available": true,
-          "passed": false,
-          "label": "AVG_OPEN_rulesrc3d24cd3_train30_n80_ev0p0_top1_ridge35_cap0.08",
-          "bets": 44,
-          "profit": 27.1,
-          "roi_pct": 6.16,
-          "max_drawdown": 40.3,
-          "active_pass_rate": 0.0,
-          "latest_season_profit": -18.2,
-          "decision_reasons": [
-            "bets<150",
-            "drawdown>profit",
-            "positive_seasons<=negative_seasons",
-            "latest_season_profit<0",
-            "active_pass_rate<0.6"
-          ]
-        },
-        {
-          "odds_source": "AVG_CLOSE",
-          "available": true,
-          "passed": false,
-          "label": "AVG_CLOSE_rulesrc3d24cd3_train30_n80_ev0p0_top1_ridge35_cap0.08",
-          "bets": 43,
-          "profit": 38.9,
-          "roi_pct": 9.05,
-          "max_drawdown": 30.0,
-          "active_pass_rate": 0.0,
-          "latest_season_profit": 13.6,
-          "decision_reasons": [
-            "bets<150",
-            "active_pass_rate<0.6"
-          ]
-        },
-        {
-          "odds_source": "B365_OPEN",
-          "available": true,
-          "passed": false,
-          "label": "B365_OPEN_rulesrc3d24cd3_train30_n80_ev0p02_top1_ridge10_cap0.08",
-          "bets": 40,
-          "profit": 38.0,
-          "roi_pct": 9.5,
-          "max_drawdown": 36.5,
-          "active_pass_rate": 0.0,
-          "latest_season_profit": -7.2,
-          "decision_reasons": [
-            "bets<150",
-            "positive_seasons<=negative_seasons",
-            "latest_season_profit<0",
-            "active_pass_rate<0.6"
-          ]
-        },
-        {
-          "odds_source": "B365_CLOSE",
-          "available": false,
-          "passed": false,
-          "reason": "rule_not_tested_or_no_candidates"
-        }
-      ]
-    },
-    {
-      "rule": "rule_favorite_relation_market_favorite_league_I1_outcome_away",
-      "available_sources": 3,
-      "passed_sources": 0,
-      "source_count": 4,
-      "passes_all_sources": false,
-      "total_bets": 676,
-      "total_profit": 190.1,
-      "combined_profit_per_bet": 0.2812,
-      "worst_source_roi_pct": 0.98,
-      "worst_active_pass_rate": 0.1667,
-      "source_results": [
-        {
-          "odds_source": "AVG_OPEN",
-          "available": true,
-          "passed": false,
-          "label": "AVG_OPEN_rulesrca6e4173_train30_n80_ev0p0_top1_ridge35_cap0.08",
-          "bets": 225,
-          "profit": 76.1,
-          "roi_pct": 3.38,
-          "max_drawdown": 167.4,
-          "active_pass_rate": 0.3333,
-          "latest_season_profit": 120.0,
-          "decision_reasons": [
-            "drawdown>profit",
-            "positive_seasons<=negative_seasons",
-            "active_pass_rate<0.6"
-          ]
-        },
-        {
-          "odds_source": "AVG_CLOSE",
-          "available": true,
-          "passed": false,
-          "label": "AVG_CLOSE_rulesrca6e4173_train18_n80_ev0p02_top1_ridge35_cap0.08",
-          "bets": 226,
-          "profit": 92.0,
-          "roi_pct": 4.07,
-          "max_drawdown": 81.0,
-          "active_pass_rate": 0.5,
-          "latest_season_profit": 33.7,
-          "decision_reasons": [
-            "active_pass_rate<0.6"
-          ]
-        },
-        {
-          "odds_source": "B365_OPEN",
-          "available": true,
-          "passed": false,
-          "label": "B365_OPEN_rulesrca6e4173_train30_n80_ev0p0_top1_ridge35_cap0.08",
-          "bets": 225,
-          "profit": 22.0,
-          "roi_pct": 0.98,
-          "max_drawdown": 162.0,
-          "active_pass_rate": 0.1667,
-          "latest_season_profit": 77.0,
-          "decision_reasons": [
-            "roi<3%",
-            "drawdown>profit",
-            "positive_months<=negative_months",
-            "active_pass_rate<0.6"
-          ]
-        },
-        {
-          "odds_source": "B365_CLOSE",
-          "available": false,
-          "passed": false,
-          "reason": "rule_not_tested_or_no_candidates"
         }
       ]
     }

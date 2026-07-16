@@ -8,6 +8,7 @@ from typing import Any
 
 MARKET_ANCHORED_I2_DRAWS_STRATEGY_ID = "profit-i2-draw-market-anchored-stop3-cool3-v1"
 MARKET_ANCHORED_I2_AVG_CLOSE_RESEARCH_ID = "profit-i2-draw-market-anchored-avg-close-stop3-cool14-v1"
+MARKET_ANCHORED_SP1_HOME_RESEARCH_ID = "profit-sp1-home-market-prob-55-market-anchored-v1"
 MARKET_BIAS_I2_SCORECARD_REPORT = Path("reports/market_bias_profit_algorithm_scorecard_i2_draw/summary.json")
 
 
@@ -46,6 +47,15 @@ def _optional_json(path_text: str | None) -> dict[str, Any] | None:
     if not path.exists():
         return None
     return _read_json(path)
+
+
+def _report_uses_artifact(report: dict[str, Any] | None, artifact_path: Path) -> bool:
+    if not report or not report.get("scorer_artifact"):
+        return False
+    try:
+        return Path(str(report["scorer_artifact"])).resolve() == artifact_path.resolve()
+    except (OSError, RuntimeError):
+        return False
 
 
 def build_market_anchored_i2_strategy_package(
@@ -244,6 +254,166 @@ def build_market_anchored_i2_avg_close_research_package(
     }
 
 
+def build_market_anchored_sp1_home_research_package(
+    cross_source_report: Path | str = Path("reports/market_anchored_feature_scorer_cross_source_current/summary.json"),
+    statistical_audit_report: Path | str = Path(
+        "reports/strategy_statistical_audit_sp1_home_prob_feature_avg_close_current/summary.json"
+    ),
+    edge_calibration_report: Path | str = Path(
+        "reports/strategy_edge_calibration_sp1_home_prob_feature_avg_close_current/summary.json"
+    ),
+    scorer_artifact_report: Path | str = Path(
+        "reports/market_anchored_sp1_home_avg_close_shadow_scorer_v1/scorer.json"
+    ),
+    official_pool_report: Path | str = Path("reports/profit_scorer_official_pool/summary.json"),
+    official_sp_report: Path | str = Path("reports/profit_scorer_official_sp_validation/summary.json"),
+) -> dict[str, Any]:
+    paths = {
+        "cross_source": Path(cross_source_report),
+        "statistical_audit": Path(statistical_audit_report),
+        "edge_calibration": Path(edge_calibration_report),
+        "scorer_artifact": Path(scorer_artifact_report),
+        "official_pool_diagnosis": Path(official_pool_report),
+        "official_sp_validation": Path(official_sp_report),
+    }
+    required = ("cross_source", "statistical_audit", "edge_calibration", "scorer_artifact")
+    missing = [str(paths[key]) for key in required if not paths[key].exists()]
+    if missing:
+        raise FileNotFoundError("Missing SP1 strategy evidence report(s): " + ", ".join(missing))
+
+    cross_source = _read_json(paths["cross_source"])
+    statistical = _read_json(paths["statistical_audit"])
+    calibration = _read_json(paths["edge_calibration"])
+    official_pool = _optional_json(str(paths["official_pool_diagnosis"]))
+    official_sp = _optional_json(str(paths["official_sp_validation"]))
+    scorer = _read_json(paths["scorer_artifact"])
+    pool_artifact_matches = _report_uses_artifact(official_pool, paths["scorer_artifact"])
+    official_artifact_matches = _report_uses_artifact(official_sp, paths["scorer_artifact"])
+    if not pool_artifact_matches:
+        official_pool = None
+    if not official_artifact_matches:
+        official_sp = None
+    target_rule = next((
+        row for row in cross_source.get("rules", [])
+        if row.get("rule") == "rule_league_SP1_market_prob_bucket_0p55_1p00_outcome_home"
+    ), {})
+    cross_source_pass = bool(
+        cross_source.get("decision") == "FEATURE_SCORER_CROSS_SOURCE_CANDIDATE"
+        and target_rule.get("passes_all_sources")
+    )
+    audit_pass = statistical.get("decision") == "STATISTICALLY_SUPPORTED_RESEARCH_CANDIDATE"
+    calibration_decision = str(calibration.get("decision") or "PENDING_EDGE_CALIBRATION")
+    calibration_usable_for_shadow = calibration_decision in {
+        "CALIBRATED_EDGE_CONFIRMED",
+        "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE",
+    }
+    scorer_matches = scorer.get("selection", {}).get("selected_rules") == ["SP1_home_market_ge_55"]
+    recommended_for_shadow = cross_source_pass and audit_pass and calibration_usable_for_shadow and scorer_matches
+    status = (
+        "OFFICIAL_SP_SHADOW_VALIDATION"
+        if recommended_for_shadow
+        else "RESEARCH_ONLY_EVIDENCE_INCOMPLETE"
+    )
+    audit_overall = statistical.get("overall", {})
+    calibration_overall = calibration.get("overall", {})
+    official_validation = {
+        "pool_diagnosis_report": str(paths["official_pool_diagnosis"]),
+        "official_sp_validation_report": str(paths["official_sp_validation"]),
+        "pool_scanned_matches": (official_pool or {}).get("scanned_matches"),
+        "pool_scored_matches": (official_pool or {}).get("scored_matches"),
+        "pool_passed_scorer": (official_pool or {}).get("passed_scorer"),
+        "opening_pre_match_snapshots": (official_sp or {}).get("opening_pre_match_snapshots"),
+        "selected_snapshots": (official_sp or {}).get("selected_snapshots"),
+        "settled_selected_snapshots": (official_sp or {}).get("settled_selected_snapshots"),
+        "active_months": (official_sp or {}).get("active_months", len((official_sp or {}).get("monthly", []))),
+        "profit": (official_sp or {}).get("profit"),
+        "roi_pct": (official_sp or {}).get("roi_pct"),
+        "max_drawdown": (official_sp or {}).get("max_drawdown"),
+        "average_clv": (official_sp or {}).get("average_clv"),
+        "positive_clv_rate": (official_sp or {}).get("positive_clv_rate"),
+        "closing_sp_coverage": (official_sp or {}).get("closing_sp_coverage"),
+        "positive_months": (official_sp or {}).get("positive_months"),
+        "negative_months": (official_sp or {}).get("negative_months"),
+        "monthly": (official_sp or {}).get("monthly", []),
+        "decision": (official_sp or {}).get("decision", "PENDING_OFFICIAL_SP_VALIDATION"),
+        "decision_reasons": (official_sp or {}).get("decision_reasons", []),
+        "top_pool_blockers": (official_pool or {}).get("blocker_counts", [])[:5],
+        "top_snapshot_blockers": (official_sp or {}).get("blocker_counts", [])[:5],
+    }
+    blockers = [
+        "Official-SP prospective validation has not passed on at least 200 settled selections across 6 active months.",
+        "AVG_CLOSE historical calibration is positive but its Wilson 95% lower edge is not above zero.",
+        "The four historical odds sources overlap on matches and are robustness checks, not independent samples.",
+    ]
+    if not pool_artifact_matches or not official_artifact_matches:
+        blockers.insert(0, "Official evidence report is missing or belongs to a different frozen scorer artifact.")
+    return {
+        "strategy_id": MARKET_ANCHORED_SP1_HOME_RESEARCH_ID,
+        "name": "Market-anchored Spanish La Liga high-probability home residual strategy",
+        "status": status,
+        "recommended_for_shadow": recommended_for_shadow,
+        "historical_report": str(paths["cross_source"]),
+        "statistical_audit_report": str(paths["statistical_audit"]),
+        "edge_calibration_report": str(paths["edge_calibration"]),
+        "scorer_artifact_report": str(paths["scorer_artifact"]),
+        "selection": {
+            "league_family": "SP1",
+            "outcome": "HOME",
+            "odds_source": "AVG_CLOSE",
+            "min_market_probability": 0.55,
+            "train_months": 18,
+            "min_prior_candidates": 80,
+            "min_predicted_ev": 0.0,
+            "ridge": 35.0,
+            "market_residual_cap": 0.08,
+            "max_bets_per_day": 1,
+        },
+        "risk_control": {
+            "daily_budget_cap": 100.0,
+            "max_single_stake": 10.0,
+            "max_bets_per_day": 1,
+            "uses_only_settled_results": True,
+            "two_negative_months_trigger_cooldown": True,
+        },
+        "historical_metrics": {
+            "bets": audit_overall.get("bets"),
+            "profit": audit_overall.get("profit"),
+            "roi_pct": audit_overall.get("roi_pct"),
+            "max_drawdown": audit_overall.get("max_month_drawdown"),
+            "positive_months": audit_overall.get("positive_months"),
+            "negative_months": audit_overall.get("negative_months"),
+        },
+        "audit": {
+            "decision": statistical.get("decision"),
+            "bootstrap_roi_p05": statistical.get("bootstrap", {}).get("roi_ci_pct", {}).get("p05"),
+            "probability_roi_positive": statistical.get("bootstrap", {}).get("probability_roi_positive"),
+            "sign_flip_p_value": statistical.get("sign_flip_test", {}).get("one_sided_p_value"),
+            "drawdown_to_profit": audit_overall.get("drawdown_to_profit"),
+        },
+        "calibration": {
+            "decision": calibration_decision,
+            "hit_rate": calibration_overall.get("hit_rate"),
+            "wilson_hit_rate_lower_95": calibration_overall.get("wilson_hit_rate_lower_95"),
+            "avg_implied_probability": calibration_overall.get("avg_implied_probability"),
+            "conservative_edge_vs_implied": calibration_overall.get("conservative_edge_vs_implied"),
+        },
+        "cross_source_validation": {
+            "decision": cross_source.get("decision"),
+            "passes_all_sources": cross_source_pass,
+            "source_count": target_rule.get("source_count"),
+            "worst_source_roi_pct": target_rule.get("worst_source_roi_pct"),
+            "worst_active_pass_rate": target_rule.get("worst_active_pass_rate"),
+        },
+        "official_validation": official_validation,
+        "deployment_blockers": tuple(blockers),
+        "next_validation": (
+            "Collect official opening and closing SP for eligible SP1 matches without changing the frozen scorer.",
+            "Require positive official-SP CLV, positive profit, and controlled drawdown across at least 6 active months.",
+            "Keep allocation in shadow/paper mode until the prospective gate passes.",
+        ),
+    }
+
+
 def list_profit_strategy_packages() -> list[dict[str, Any]]:
     packages: list[dict[str, Any]] = []
     try:
@@ -260,6 +430,14 @@ def list_profit_strategy_packages() -> list[dict[str, Any]]:
         packages.append({
             "strategy_id": MARKET_ANCHORED_I2_AVG_CLOSE_RESEARCH_ID,
             "status": "MISSING_RESEARCH_MANIFEST",
+            "error": str(exc),
+        })
+    try:
+        packages.append(build_market_anchored_sp1_home_research_package())
+    except FileNotFoundError as exc:
+        packages.append({
+            "strategy_id": MARKET_ANCHORED_SP1_HOME_RESEARCH_ID,
+            "status": "MISSING_EVIDENCE_REPORTS",
             "error": str(exc),
         })
     return packages

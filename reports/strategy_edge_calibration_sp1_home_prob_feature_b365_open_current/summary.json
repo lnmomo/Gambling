@@ -1,0 +1,139 @@
+{
+  "method": "strategy edge calibration against selected-odds implied probability",
+  "created_at": "2026-07-15T09:19:58.285040+00:00",
+  "bets_path": "reports\\market_anchored_feature_sp1_home_prob_b365_open_current\\bets.csv",
+  "config": {
+    "min_bets": 150,
+    "hit_rate_interval": "Wilson 95% lower bound",
+    "selected_side_implied_probability": "mean(1 / selected_decimal_odds)"
+  },
+  "overall": {
+    "label": "overall",
+    "bets": 187,
+    "wins": 145,
+    "hit_rate": 0.7754,
+    "wilson_hit_rate_lower_95": 0.7104,
+    "avg_odds": 1.4899,
+    "avg_implied_probability": 0.6807,
+    "edge_vs_implied_probability": 0.0947,
+    "conservative_edge_vs_implied": 0.0297,
+    "staked": 1870.0,
+    "profit": 269.3,
+    "roi_pct": 14.4,
+    "decision": "CALIBRATED_EDGE_CONFIRMED",
+    "decision_reasons": []
+  },
+  "by_rule": [
+    {
+      "label": "B365_OPEN_rulesra5ae079e_train18_n120_ev0p02_top1_ridge10_cap0.08|ra5ae079e",
+      "bets": 187,
+      "wins": 145,
+      "hit_rate": 0.7754,
+      "wilson_hit_rate_lower_95": 0.7104,
+      "avg_odds": 1.4899,
+      "avg_implied_probability": 0.6807,
+      "edge_vs_implied_probability": 0.0947,
+      "conservative_edge_vs_implied": 0.0297,
+      "staked": 1870.0,
+      "profit": 269.3,
+      "roi_pct": 14.4,
+      "decision": "CALIBRATED_EDGE_CONFIRMED",
+      "decision_reasons": []
+    }
+  ],
+  "by_season": [
+    {
+      "label": "2023-24",
+      "bets": 59,
+      "wins": 47,
+      "hit_rate": 0.7966,
+      "wilson_hit_rate_lower_95": 0.6773,
+      "avg_odds": 1.5186,
+      "avg_implied_probability": 0.6659,
+      "edge_vs_implied_probability": 0.1307,
+      "conservative_edge_vs_implied": 0.0114,
+      "staked": 590.0,
+      "profit": 124.3,
+      "roi_pct": 21.07,
+      "decision": "CALIBRATED_EDGE_CONFIRMED",
+      "decision_reasons": []
+    },
+    {
+      "label": "2024-25",
+      "bets": 46,
+      "wins": 36,
+      "hit_rate": 0.7826,
+      "wilson_hit_rate_lower_95": 0.6443,
+      "avg_odds": 1.4665,
+      "avg_implied_probability": 0.6923,
+      "edge_vs_implied_probability": 0.0903,
+      "conservative_edge_vs_implied": -0.0481,
+      "staked": 460.0,
+      "profit": 58.4,
+      "roi_pct": 12.7,
+      "decision": "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE",
+      "decision_reasons": [
+        "bets<minimum",
+        "wilson_lower<=average_implied_probability"
+      ]
+    },
+    {
+      "label": "2025-26",
+      "bets": 46,
+      "wins": 38,
+      "hit_rate": 0.8261,
+      "wilson_hit_rate_lower_95": 0.6928,
+      "avg_odds": 1.428,
+      "avg_implied_probability": 0.7127,
+      "edge_vs_implied_probability": 0.1133,
+      "conservative_edge_vs_implied": -0.02,
+      "staked": 460.0,
+      "profit": 78.1,
+      "roi_pct": 16.98,
+      "decision": "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE",
+      "decision_reasons": [
+        "bets<minimum",
+        "wilson_lower<=average_implied_probability"
+      ]
+    },
+    {
+      "label": "2022-23",
+      "bets": 36,
+      "wins": 24,
+      "hit_rate": 0.6667,
+      "wilson_hit_rate_lower_95": 0.5033,
+      "avg_odds": 1.5517,
+      "avg_implied_probability": 0.6491,
+      "edge_vs_implied_probability": 0.0175,
+      "conservative_edge_vs_implied": -0.1458,
+      "staked": 360.0,
+      "profit": 8.5,
+      "roi_pct": 2.36,
+      "decision": "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE",
+      "decision_reasons": [
+        "bets<minimum",
+        "wilson_lower<=average_implied_probability"
+      ]
+    }
+  ],
+  "by_odds_band": [
+    {
+      "label": "[1.0,1.8)",
+      "bets": 187,
+      "wins": 145,
+      "hit_rate": 0.7754,
+      "wilson_hit_rate_lower_95": 0.7104,
+      "avg_odds": 1.4899,
+      "avg_implied_probability": 0.6807,
+      "edge_vs_implied_probability": 0.0947,
+      "conservative_edge_vs_implied": 0.0297,
+      "staked": 1870.0,
+      "profit": 269.3,
+      "roi_pct": 14.4,
+      "decision": "CALIBRATED_EDGE_CONFIRMED",
+      "decision_reasons": []
+    }
+  ],
+  "decision": "CALIBRATED_EDGE_CONFIRMED",
+  "decision_reasons": []
+}

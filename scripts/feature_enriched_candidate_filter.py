@@ -474,6 +474,8 @@ def main() -> None:
                         help="Run only the formal I2 draw market-anchored configuration")
     parser.add_argument("--export-formal-i2-scorer", action="store_true",
                         help="Export the formal I2 market-anchored scorer artifact instead of running the full grid")
+    parser.add_argument("--export-sp1-shadow-scorer", action="store_true",
+                        help="Export the audited SP1 home scorer for official-SP shadow validation")
     parser.add_argument("--export-odds-source", default="AVG_OPEN",
                         help="Odds source to use when exporting --export-formal-i2-scorer")
     parser.add_argument("--prediction-month", default="2026-06",
@@ -485,19 +487,31 @@ def main() -> None:
     if unknown:
         raise SystemExit(f"Unknown odds source(s): {', '.join(unknown)}")
 
-    if args.export_formal_i2_scorer:
+    if args.export_formal_i2_scorer or args.export_sp1_shadow_scorer:
         if args.export_odds_source not in ODDS_SOURCE_COLUMNS:
             raise SystemExit(f"Unknown export odds source: {args.export_odds_source}")
-        config = FeatureFilterConfig(
-            args.export_odds_source,
-            train_months=30,
-            min_train_rows=120,
-            min_predicted_ev=0.02,
-            max_bets_per_day=1,
-            ridge=10.0,
-            residual_cap=0.08,
-            selected_rules=(I2_DRAW_RULE,),
-        )
+        if args.export_sp1_shadow_scorer:
+            config = FeatureFilterConfig(
+                args.export_odds_source,
+                train_months=18,
+                min_train_rows=80,
+                min_predicted_ev=0.0,
+                max_bets_per_day=1,
+                ridge=35.0,
+                residual_cap=0.08,
+                selected_rules=(SP1_HOME_RULE,),
+            )
+        else:
+            config = FeatureFilterConfig(
+                args.export_odds_source,
+                train_months=30,
+                min_train_rows=120,
+                min_predicted_ev=0.02,
+                max_bets_per_day=1,
+                ridge=10.0,
+                residual_cap=0.08,
+                selected_rules=(I2_DRAW_RULE,),
+            )
         candidates = build_feature_enriched_candidates(seasons, config.odds_source)
         artifact = export_scorer_artifact(candidates, config, args.prediction_month)
         args.output_dir.mkdir(parents=True, exist_ok=True)

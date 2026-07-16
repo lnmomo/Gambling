@@ -1,19 +1,19 @@
 {
   "method": "market-bias official pool relevance diagnostics",
-  "created_at": "2026-07-14T09:12:25.570507+00:00",
+  "created_at": "2026-07-14T09:14:11.756087+00:00",
   "strategy_id": "market-bias-i2-draw-2.8-3.5-v1",
-  "official_matches": 141,
-  "with_latest_odds": 66,
-  "missing_latest_odds": 75,
+  "official_matches": 178,
+  "with_latest_odds": 70,
+  "missing_latest_odds": 108,
   "validated_shadow_candidates": 0,
   "research_watch_candidates": 0,
-  "league_count": 5,
+  "league_count": 10,
   "leagues": [
     {
       "league": "世界杯",
-      "matches": 97,
-      "with_latest_odds": 42,
-      "missing_latest_odds": 55,
+      "matches": 101,
+      "with_latest_odds": 44,
+      "missing_latest_odds": 57,
       "mapped_history_code": "WORLD_CUP",
       "strategy_coverage": "REJECTED_WORLD_CUP_RULE",
       "validated_shadow_candidates": 0,
@@ -27,9 +27,9 @@
     },
     {
       "league": "芬超",
-      "matches": 28,
+      "matches": 30,
       "with_latest_odds": 12,
-      "missing_latest_odds": 16,
+      "missing_latest_odds": 18,
       "mapped_history_code": "FIN",
       "strategy_coverage": "REJECTED_RESEARCH_RULE",
       "validated_shadow_candidates": 0,
@@ -44,9 +44,9 @@
     },
     {
       "league": "瑞超",
-      "matches": 8,
+      "matches": 15,
       "with_latest_odds": 6,
-      "missing_latest_odds": 2,
+      "missing_latest_odds": 9,
       "mapped_history_code": null,
       "strategy_coverage": "UNMAPPED",
       "validated_shadow_candidates": 0,
@@ -58,9 +58,9 @@
     },
     {
       "league": "韩职",
-      "matches": 6,
+      "matches": 9,
       "with_latest_odds": 6,
-      "missing_latest_odds": 0,
+      "missing_latest_odds": 3,
       "mapped_history_code": null,
       "strategy_coverage": "UNMAPPED",
       "validated_shadow_candidates": 0,
@@ -68,6 +68,62 @@
       "evidence_status": "no mapped historical validation package",
       "evidence_reports": [],
       "blocker": "league is not mapped to a validated market-bias package",
+      "recommended_action": "Map the league to historical odds data, then require multi-window and portfolio validation."
+    },
+    {
+      "league": "挪超",
+      "matches": 8,
+      "with_latest_odds": 0,
+      "missing_latest_odds": 8,
+      "mapped_history_code": null,
+      "strategy_coverage": "UNMAPPED",
+      "validated_shadow_candidates": 0,
+      "research_watch_candidates": 0,
+      "evidence_status": "no mapped historical validation package",
+      "evidence_reports": [],
+      "blocker": "no latest official 1X2 odds in current pool",
+      "recommended_action": "Map the league to historical odds data, then require multi-window and portfolio validation."
+    },
+    {
+      "league": "欧冠",
+      "matches": 4,
+      "with_latest_odds": 2,
+      "missing_latest_odds": 2,
+      "mapped_history_code": null,
+      "strategy_coverage": "UNMAPPED",
+      "validated_shadow_candidates": 0,
+      "research_watch_candidates": 0,
+      "evidence_status": "no mapped historical validation package",
+      "evidence_reports": [],
+      "blocker": "league is not mapped to a validated market-bias package",
+      "recommended_action": "Map the league to historical odds data, then require multi-window and portfolio validation."
+    },
+    {
+      "league": "美职",
+      "matches": 4,
+      "with_latest_odds": 0,
+      "missing_latest_odds": 4,
+      "mapped_history_code": null,
+      "strategy_coverage": "UNMAPPED",
+      "validated_shadow_candidates": 0,
+      "research_watch_candidates": 0,
+      "evidence_status": "no mapped historical validation package",
+      "evidence_reports": [],
+      "blocker": "no latest official 1X2 odds in current pool",
+      "recommended_action": "Map the league to historical odds data, then require multi-window and portfolio validation."
+    },
+    {
+      "league": "欧罗巴",
+      "matches": 3,
+      "with_latest_odds": 0,
+      "missing_latest_odds": 3,
+      "mapped_history_code": null,
+      "strategy_coverage": "UNMAPPED",
+      "validated_shadow_candidates": 0,
+      "research_watch_candidates": 0,
+      "evidence_status": "no mapped historical validation package",
+      "evidence_reports": [],
+      "blocker": "no latest official 1X2 odds in current pool",
       "recommended_action": "Map the league to historical odds data, then require multi-window and portfolio validation."
     },
     {
@@ -83,24 +139,38 @@
       "evidence_reports": [],
       "blocker": "no latest official 1X2 odds in current pool",
       "recommended_action": "Collect match odds plus results before considering allocation."
+    },
+    {
+      "league": "巴甲",
+      "matches": 2,
+      "with_latest_odds": 0,
+      "missing_latest_odds": 2,
+      "mapped_history_code": null,
+      "strategy_coverage": "UNMAPPED",
+      "validated_shadow_candidates": 0,
+      "research_watch_candidates": 0,
+      "evidence_status": "no mapped historical validation package",
+      "evidence_reports": [],
+      "blocker": "no latest official 1X2 odds in current pool",
+      "recommended_action": "Map the league to historical odds data, then require multi-window and portfolio validation."
     }
   ],
   "blocker_summary": [
     {
       "blocker": "World Cup odds history exists, but no-lookahead portfolio validation rejected allocation rules",
-      "matches": 97
+      "matches": 101
     },
     {
       "blocker": "current league has historical data, but candidate rule failed robustness",
-      "matches": 28
+      "matches": 30
     },
     {
       "blocker": "league is not mapped to a validated market-bias package",
-      "matches": 14
+      "matches": 28
     },
     {
       "blocker": "no latest official 1X2 odds in current pool",
-      "matches": 2
+      "matches": 19
     }
   ],
   "recommended_next_experiment": "Do not force NO_BET bypasses. World Cup and FIN are rejected by stability gates; map SWE/KOR or collect a broader international/league odds domain, then require the same multi-window portfolio gate."

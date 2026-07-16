@@ -210,6 +210,45 @@ class Repository:
             c.execute("INSERT INTO match_features(match_id,feature_version,feature_json,created_at) VALUES(?,?,?,?)",
                       (match_id, version, json.dumps(features, ensure_ascii=False), utcnow()))
 
+    def add_profit_scorer_evidence(self, evidence: dict[str, Any]) -> bool:
+        with self.db.connect() as c:
+            cursor = c.execute("""INSERT OR IGNORE INTO profit_scorer_evidence(
+                match_id,official_odds_observation_id,scorer_artifact_sha256,strategy_label,
+                selected_outcome,feature_engine,feature_json,market_probability,
+                predicted_probability,predicted_ev,passes_scorer,scored_at
+            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", (
+                int(evidence["match_id"]),
+                int(evidence["official_odds_observation_id"]),
+                str(evidence["scorer_artifact_sha256"]),
+                str(evidence["strategy_label"]),
+                str(evidence["selected_outcome"]).upper(),
+                str(evidence["feature_engine"]),
+                json.dumps(evidence["features"], ensure_ascii=False, sort_keys=True),
+                float(evidence["market_probability"]),
+                float(evidence["predicted_probability"]),
+                float(evidence["predicted_ev"]),
+                int(bool(evidence["passes_scorer"])),
+                str(evidence.get("scored_at") or utcnow()),
+            ))
+            return cursor.rowcount > 0
+
+    def list_profit_scorer_evidence(self, strategy_label: str | None = None,
+                                    limit: int = 1000) -> list[dict[str, Any]]:
+        where = " WHERE strategy_label=?" if strategy_label else ""
+        params: tuple[Any, ...] = (strategy_label,) if strategy_label else ()
+        query = (
+            "SELECT * FROM profit_scorer_evidence" + where
+            + " ORDER BY scored_at DESC,id DESC LIMIT ?"
+        )
+        with self.db.connect() as c:
+            rows = c.execute(query, (*params, max(1, min(limit, 100_000)))).fetchall()
+        output: list[dict[str, Any]] = []
+        for row in rows:
+            item = dict(row)
+            item["features"] = json.loads(item.pop("feature_json"))
+            output.append(item)
+        return output
+
     def add_prediction(self, match_id: int, model: str, probabilities: dict[str, float],
                        metadata: dict[str, Any] | None = None, version: str = "v1") -> None:
         fair_odds = {option: 1 / probability for option, probability in probabilities.items()}

@@ -1244,7 +1244,7 @@ Interpretation:
 - The strongest signal is not broad favorite/underdog betting. It is a narrow, market-anchored Italy Serie B draw edge where the model is allowed only a small residual correction over market probability.
 - The first rolling window (`2022-08` to `2023-07`) still fails the window gate, so this should be treated as `PROMOTE_TO_SHADOW_VALIDATION`, not as production-proven live staking.
 - The validation source is still football-data average opening odds, not verified China Sports Lottery official SP. Before real-money use, this candidate must be replayed on collected official-SP snapshots with the same no-leak timing.
-- Frozen scorer artifacts have been exported for prediction month `2026-06`. The default live validation artifact is configured by `PROFIT_SCORER_ARTIFACT_PATH` and now points to `reports/feature_enriched_market_anchored_i2_avg_close_scorer_v1/scorer.json`.
+- Frozen scorer artifacts were exported for prediction month `2026-06`. This I2 artifact was the previous default and remains preserved as historical evidence; the current default is the later SP1 shadow scorer documented below.
 - The strategy has therefore been registered as `profit-i2-draw-market-anchored-stop3-cool3-v1` with status `PROMOTE_TO_OFFICIAL_SP_SHADOW_VALIDATION`, not `PRODUCTION_READY`.
 
 Official-pool scorer readiness diagnostic:
@@ -1252,7 +1252,7 @@ Official-pool scorer readiness diagnostic:
 - Code: `football_agents/profit_scorer_official.py`.
 - CLI:
   - `python -m football_agents.cli diagnose-profit-scorer-official-pool --limit 500 --output reports/profit_scorer_official_pool/summary.json`
-- Default scorer: `PROFIT_SCORER_ARTIFACT_PATH`, currently `reports/feature_enriched_market_anchored_i2_avg_close_scorer_v1/scorer.json`.
+- Default scorer is selected through `PROFIT_SCORER_ARTIFACT_PATH`; this section records the earlier I2 diagnostic run, while the current default is the later SP1 shadow scorer documented below.
 - Purpose: map the current official match pool into the frozen scorer schema and report whether each match can be scored. This command does not create recommendations or bets.
 - Current local report: `reports/profit_scorer_official_pool/summary.json`.
 - Automation:
@@ -1285,7 +1285,7 @@ Official-SP prospective validation for the frozen profit scorer:
 - Code: `football_agents/profit_scorer_prospective.py`.
 - CLI:
   - `python -m football_agents.cli validate-profit-scorer-official-sp --output reports/profit_scorer_official_sp_validation/summary.json`
-- Default scorer: `PROFIT_SCORER_ARTIFACT_PATH`, currently `reports/feature_enriched_market_anchored_i2_avg_close_scorer_v1/scorer.json`.
+- Default scorer is selected through `PROFIT_SCORER_ARTIFACT_PATH`; this section records the earlier I2 prospective protocol, which is now artifact-driven and also supports the SP1 home direction.
 - Tests: `tests/test_profit_scorer_prospective.py`.
 - Report: `reports/profit_scorer_official_sp_validation/summary.json`.
 - Automation:
@@ -2627,3 +2627,105 @@ Interpretation:
 - Multi-source discovery is a useful upgrade because it removes many single-source artifacts before walk-forward validation.
 - However, discovery consistency is still not enough. The best remaining rules lose stability once month-by-month no-lookahead selection, settlement-aware staking, and realistic non-MAX prices are applied.
 - The next algorithmic step should move beyond static market buckets into a time-aware feature scorer, but it must preserve this same rule: no live allocation without cross-source and rolling-window survival.
+
+SP1 Market-Anchored Feature Scorer Candidate:
+
+- Candidate rule:
+  - League: `SP1` / Spanish La Liga.
+  - Outcome: home win.
+  - Entry population: de-vig market home probability in `[0.55,1.00]`.
+  - Model: rolling ridge residual against de-vig market probability, with the probability adjustment capped at `+/- 0.08`.
+  - Portfolio: at most one selected bet per day, at most 10 units per bet, and at most 100 units per day.
+- Cross-source report:
+  - `reports/market_anchored_feature_scorer_cross_source_current/summary.json`.
+  - Decision: `FEATURE_SCORER_CROSS_SOURCE_CANDIDATE`.
+  - The same semantic rule passed the feature-scorer research gates on `AVG_OPEN`, `AVG_CLOSE`, `B365_OPEN`, and `B365_CLOSE`.
+
+| Odds source | Bets | ROI | Bootstrap ROI p05 | P(ROI > 0) | Sign-flip p | Conservative edge | Audit | Calibration |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| `AVG_OPEN` | 218 | 9.56% | 1.74% | 97.64% | 0.0304 | +0.32 pp | supported | confirmed |
+| `AVG_CLOSE` | 211 | 8.84% | 1.94% | 98.18% | 0.0214 | -0.55 pp | supported | positive, not conservative |
+| `B365_OPEN` | 187 | 14.40% | 5.08% | 99.38% | 0.0096 | +2.97 pp | supported | confirmed |
+| `B365_CLOSE` | 194 | 14.43% | 6.91% | 99.88% | 0.0024 | +3.00 pp | supported | confirmed |
+
+- Audit artifacts:
+  - `reports/strategy_statistical_audit_sp1_home_prob_feature_*_current/summary.json`.
+  - `reports/strategy_edge_calibration_sp1_home_prob_feature_*_current/summary.json`.
+- Important limits:
+  - The four price sources largely describe the same underlying matches; they are robustness checks, not four independent experiments.
+  - The candidate was selected after broad rule and hyperparameter search, so the nominal p-values do not fully correct for multiple testing.
+  - The oldest season is slightly negative under `AVG_OPEN`, `AVG_CLOSE`, and `B365_CLOSE`; later seasons drive the aggregate edge.
+  - `AVG_CLOSE` does not beat its average implied probability at the 95% Wilson lower bound.
+
+Official-SP Shadow Integration:
+
+- Exported scorer:
+  - `reports/market_anchored_sp1_home_avg_close_shadow_scorer_v1/scorer.json`.
+  - Frozen training data ends on `2026-05-23`; prediction month is `2026-07`.
+- Runtime changes:
+  - The official scorer now derives league, outcome, price field, and market-probability gate from the artifact instead of assuming every scorer is an I2 draw strategy.
+  - Official-SP prospective settlement now uses the artifact's selected outcome, so SP1 home picks settle as `HOME` rather than `DRAW`.
+  - The default shadow scorer path now points to the SP1 artifact.
+- Current official-pool evidence:
+  - Pool diagnosis: `reports/profit_scorer_official_pool_sp1_home/summary.json`.
+  - Prospective validation: `reports/profit_scorer_official_sp_validation_sp1_home/summary.json`.
+  - Current pool: 178 scanned matches, 0 SP1-scored matches.
+  - Opening official-SP archive: 53 snapshots, 30 settled, 0 SP1-scored snapshots.
+  - Reason: the current summer pool contains no recognized La Liga matches; unrelated competitions are rejected by `league_not_sp1`.
+  - Decision: `OFFICIAL_SP_PROSPECTIVE_BLOCKED` until at least 200 settled selected bets across at least 6 months pass the existing profitability and drawdown gates.
+
+Current decision:
+
+- This is the first market-anchored candidate in the current search that survives the cross-source feature scorer and monthly statistical audit stages.
+- It is promoted only to automatic official-SP shadow collection, not to production recommendations and not to forced daily allocation.
+- The daily 100 amount remains a maximum budget. Until prospective official-SP evidence passes, the production allocation for this candidate is 0.
+
+Portfolio-Level Promotion And Drawdown Control:
+
+- Problem fixed:
+  - `REQUIRED_ACTIVE_MONTHS = 6` previously appeared in allocation-readiness output but was not enforced by the allocator.
+  - A passing strategy received an equal split of the daily budget regardless of CLV, official drawdown, or recent losing months.
+  - The SP1 candidate was not registered in `list_profit_strategy_packages()`, so the portfolio gate could not track it.
+- Official-SP evidence protocol now records:
+  - opening selected SP;
+  - latest pre-match closing SP;
+  - selected-side CLV (`opening_sp / closing_sp - 1`);
+  - closing-SP coverage;
+  - average CLV and positive-CLV rate;
+  - active settled months.
+- Independent paper-allocation gates now require all of the following:
+  - `OFFICIAL_SP_PROSPECTIVE_PASS`;
+  - at least 200 settled selected official-SP observations;
+  - at least 6 active settled months;
+  - positive official profit;
+  - positive months greater than negative months;
+  - maximum official drawdown no greater than cumulative official profit;
+  - closing-SP coverage at least 80%;
+  - average CLV above zero;
+  - positive-CLV rate at least 50%.
+- Automatic portfolio controls:
+  - two consecutive losing active months set the strategy to `RISK_COOLDOWN` and allocate zero;
+  - a current drawdown of at least 50% of cumulative official profit halves the deployable paper budget;
+  - one losing month or a drawdown ratio of at least 25% reduces the deployable paper budget to 75%;
+  - when multiple strategies are ready, no strategy may receive more than 60% of the deployed daily budget;
+  - the 100-unit daily amount is a cap, not a quota, so undeployed budget remains cash.
+- Registered SP1 package:
+  - Strategy ID: `profit-sp1-home-market-prob-55-market-anchored-v1`.
+  - Status: `OFFICIAL_SP_SHADOW_VALIDATION`.
+  - Historical state: statistically supported and cross-source robust, but `AVG_CLOSE` remains `POSITIVE_EDGE_BUT_NOT_CONSERVATIVE`.
+  - This state permits shadow data collection, not paper or production allocation.
+- Current runtime evidence:
+  - Official report: `reports/profit_scorer_official_sp_validation/summary.json`.
+  - Allocation report: `reports/profit_allocation_readiness_current/summary.json`.
+  - Registered strategies: 3.
+  - Eligible official-SP selections: 0.
+  - Daily budget: 100.
+  - Allocated: 0.
+  - Cash reserved: 100.
+  - Decision: `WAIT_FOR_VALIDATED_OFFICIAL_SP_COVERAGE`.
+
+Interpretation:
+
+- The system can now distinguish historical research support, prospective market-price evidence, and portfolio risk state instead of collapsing them into one pass/fail flag.
+- A forged or stale `OFFICIAL_SP_PROSPECTIVE_PASS` cannot bypass missing active months, CLV, profit, or drawdown evidence because allocation recomputes the gates independently.
+- This moves the project toward the long-term objective without claiming profitability before prospective official-SP evidence exists.

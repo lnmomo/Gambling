@@ -78,7 +78,7 @@ class Settings:
     )
     profit_scorer_artifact_path: str = os.getenv(
         "PROFIT_SCORER_ARTIFACT_PATH",
-        "reports/feature_enriched_market_anchored_i2_avg_close_scorer_v1/scorer.json",
+        "reports/market_anchored_sp1_home_avg_close_shadow_scorer_v1/scorer.json",
     )
     profit_scorer_official_pool_report_path: str = os.getenv(
         "PROFIT_SCORER_OFFICIAL_POOL_REPORT_PATH",

@@ -9,7 +9,7 @@ from football_agents.profit_scorer_official import DEFAULT_SCORER_ARTIFACT, diag
 from football_agents.repository import Repository
 
 
-def _artifact(path: Path) -> None:
+def _artifact(path: Path, *, selected_rule: str = "I2_draw_2p8_3p5") -> None:
     path.write_text(json.dumps({
         "selection": {
             "feature_columns": [
@@ -21,6 +21,7 @@ def _artifact(path: Path) -> None:
             ],
             "residual_cap": 0.08,
             "min_predicted_ev": 0.02,
+            "selected_rules": [selected_rule],
         },
         "model": {
             "intercept_and_coefficients": [0.08] + [0.0] * 17,
@@ -44,7 +45,7 @@ def _artifact(path: Path) -> None:
 
 def test_default_profit_scorer_artifact_uses_configured_research_candidate() -> None:
     assert DEFAULT_SCORER_ARTIFACT == Path(settings.profit_scorer_artifact_path)
-    assert "feature_enriched_market_anchored_i2_avg_close_scorer_v1" in str(DEFAULT_SCORER_ARTIFACT)
+    assert "market_anchored_sp1_home_avg_close_shadow_scorer_v1" in str(DEFAULT_SCORER_ARTIFACT)
 
 
 def _official_match(repo: Repository, database: Database) -> int:
@@ -62,7 +63,7 @@ def _official_match(repo: Repository, database: Database) -> int:
     return match_id
 
 
-def test_official_profit_scorer_reports_missing_features(tmp_path):
+def test_official_profit_scorer_reports_missing_history(tmp_path):
     database = Database(tmp_path / "missing.db")
     database.initialize()
     repo = Repository(database)
@@ -74,7 +75,7 @@ def test_official_profit_scorer_reports_missing_features(tmp_path):
 
     assert report["scored_matches"] == 0
     reasons = {row["reason"] for row in report["blocker_counts"]}
-    assert "missing_feature:lambda_home" in reasons
+    assert any(reason.startswith("home_history<10") for reason in reasons)
 
 
 def test_official_profit_scorer_scores_ready_i2_match(tmp_path):
@@ -112,3 +113,48 @@ def test_official_profit_scorer_scores_ready_i2_match(tmp_path):
     candidate = report["candidates"][0]
     assert candidate["outcome"] == "DRAW"
     assert candidate["predicted_ev"] > 0.02
+
+
+def test_official_profit_scorer_scores_ready_sp1_home_match(tmp_path):
+    database = Database(tmp_path / "sp1-ready.db")
+    database.initialize()
+    repo = Repository(database)
+    match_id = repo.create_match({
+        "official_match_id": "sporttery-sp1-profit",
+        "league": "Spanish La Liga",
+        "home_team": "Home",
+        "away_team": "Away",
+        "kickoff_time": "2026-06-01T12:00:00+00:00",
+        "status": "scheduled",
+    })
+    with database.connect() as c:
+        c.execute("UPDATE matches SET source_url=? WHERE id=?", ("test", match_id))
+    repo.add_odds(match_id, {"home": 1.45, "draw": 4.2, "away": 7.0}, "official", "2026-06-01T08:00:00+00:00")
+    history = []
+    for index in range(130):
+        history.append({
+            "league": "Spanish La Liga",
+            "home_team": "Home" if index % 2 == 0 else f"H{index}",
+            "away_team": "Away" if index % 2 else f"A{index}",
+            "home_goals": 2,
+            "away_goals": 0,
+            "played_at": f"2025-{index % 12 + 1:02d}-01",
+            "match_type": "LEAGUE",
+        })
+    repo.upsert_historical_matches(history, "test")
+    repo.add_features(match_id, {
+        "lambda_home": 1.8,
+        "lambda_away": 0.8,
+        "home_weighted_points_per_match": 1.9,
+        "away_weighted_points_per_match": 1.0,
+        "home_weighted_goal_difference": 0.8,
+        "away_weighted_goal_difference": -0.2,
+    })
+    artifact = tmp_path / "scorer.json"
+    _artifact(artifact, selected_rule="SP1_home_market_ge_55")
+
+    report = diagnose_official_profit_scorer_pool(database, artifact)
+
+    assert report["scored_matches"] == 1
+    assert report["passed_scorer"] == 1
+    assert report["candidates"][0]["outcome"] == "HOME"

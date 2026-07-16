@@ -9,6 +9,9 @@ from .profit_strategy_registry import list_profit_strategy_packages
 
 REQUIRED_OFFICIAL_SETTLED_SELECTED = 200
 REQUIRED_ACTIVE_MONTHS = 6
+REQUIRED_CLOSING_SP_COVERAGE = 0.80
+REQUIRED_POSITIVE_CLV_RATE = 0.50
+MAX_STRATEGY_SHARE = 0.60
 
 
 def _is_historically_supported(strategy: dict[str, Any]) -> bool:
@@ -17,22 +20,23 @@ def _is_historically_supported(strategy: dict[str, Any]) -> bool:
         return False
     audit = strategy.get("audit") or {}
     calibration = strategy.get("calibration") or {}
-    return (
-        audit.get("decision") == "STATISTICALLY_SUPPORTED_RESEARCH_CANDIDATE"
-        and calibration.get("decision") == "CALIBRATED_EDGE_CONFIRMED"
+    calibration_confirmed = calibration.get("decision") == "CALIBRATED_EDGE_CONFIRMED"
+    cross_source = strategy.get("cross_source_validation") or {}
+    cross_source_supported = (
+        calibration.get("decision") == "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE"
+        and cross_source.get("passes_all_sources") is True
+    )
+    return audit.get("decision") == "STATISTICALLY_SUPPORTED_RESEARCH_CANDIDATE" and (
+        calibration_confirmed or cross_source_supported
     )
 
 
 def _official_selected_count(strategy: dict[str, Any]) -> int:
     official = strategy.get("official_validation") or {}
-    for key in ("settled_selected_snapshots", "selected_snapshots", "pool_passed_scorer"):
-        try:
-            value = int(official.get(key) or 0)
-        except (TypeError, ValueError):
-            value = 0
-        if key == "settled_selected_snapshots":
-            return value
-    return 0
+    try:
+        return int(official.get("settled_selected_snapshots") or 0)
+    except (TypeError, ValueError):
+        return 0
 
 
 def _official_pool_passed(strategy: dict[str, Any]) -> int:
@@ -43,20 +47,125 @@ def _official_pool_passed(strategy: dict[str, Any]) -> int:
         return 0
 
 
+def _number(value: Any, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _official_monthly(official: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = [row for row in (official.get("monthly") or []) if isinstance(row, dict)]
+    return sorted(rows, key=lambda row: str(row.get("month") or ""))
+
+
+def _active_months(official: dict[str, Any]) -> int:
+    try:
+        reported = int(official.get("active_months") or 0)
+    except (TypeError, ValueError):
+        reported = 0
+    return max(reported, len(_official_monthly(official)))
+
+
+def _current_drawdown(monthly: list[dict[str, Any]]) -> float:
+    equity = peak = 0.0
+    for row in monthly:
+        equity += _number(row.get("profit"))
+        peak = max(peak, equity)
+    return max(0.0, peak - equity)
+
+
+def _negative_month_streak(monthly: list[dict[str, Any]]) -> int:
+    streak = 0
+    for row in reversed(monthly):
+        if _number(row.get("profit")) < 0:
+            streak += 1
+        else:
+            break
+    return streak
+
+
+def _risk_control(official: dict[str, Any]) -> dict[str, Any]:
+    monthly = _official_monthly(official)
+    negative_streak = _negative_month_streak(monthly)
+    current_drawdown = _current_drawdown(monthly)
+    profit = _number(official.get("profit"))
+    drawdown_ratio = current_drawdown / max(profit, 1.0) if profit > 0 else 1.0
+    if negative_streak >= 2:
+        state = "COOLDOWN"
+        multiplier = 0.0
+        reason = "Two consecutive losing active months triggered the strategy cooldown."
+    elif drawdown_ratio >= 0.50:
+        state = "REDUCED"
+        multiplier = 0.50
+        reason = "Current drawdown is at least 50% of cumulative official-SP profit."
+    elif negative_streak == 1 or drawdown_ratio >= 0.25:
+        state = "REDUCED"
+        multiplier = 0.75
+        reason = "Recent loss or drawdown triggered a reduced paper allocation."
+    else:
+        state = "NORMAL"
+        multiplier = 1.0
+        reason = "No portfolio drawdown reduction is active."
+    return {
+        "state": state,
+        "multiplier": multiplier,
+        "negative_month_streak": negative_streak,
+        "current_drawdown": round(current_drawdown, 2),
+        "current_drawdown_to_profit": round(drawdown_ratio, 4),
+        "reason": reason,
+    }
+
+
+def _official_evidence_failures(official: dict[str, Any], settled_selected: int) -> list[str]:
+    failures: list[str] = []
+    active_months = _active_months(official)
+    profit = _number(official.get("profit"))
+    max_drawdown = _number(official.get("max_drawdown"))
+    positive_months = int(_number(official.get("positive_months")))
+    negative_months = int(_number(official.get("negative_months")))
+    closing_coverage = _number(official.get("closing_sp_coverage"))
+    average_clv = _number(official.get("average_clv"), -1.0)
+    positive_clv_rate = _number(official.get("positive_clv_rate"), -1.0)
+    if settled_selected < REQUIRED_OFFICIAL_SETTLED_SELECTED:
+        failures.append("settled_selected<200")
+    if active_months < REQUIRED_ACTIVE_MONTHS:
+        failures.append("active_months<6")
+    if profit <= 0:
+        failures.append("official_profit<=0")
+    if max_drawdown > max(profit, 1.0):
+        failures.append("official_max_drawdown>profit")
+    if positive_months <= negative_months:
+        failures.append("positive_months<=negative_months")
+    if closing_coverage < REQUIRED_CLOSING_SP_COVERAGE:
+        failures.append("closing_sp_coverage<0.8")
+    if average_clv <= 0:
+        failures.append("average_clv<=0")
+    if positive_clv_rate < REQUIRED_POSITIVE_CLV_RATE:
+        failures.append("positive_clv_rate<0.5")
+    return failures
+
+
 def _strategy_status(strategy: dict[str, Any]) -> dict[str, Any]:
     official = strategy.get("official_validation") or {}
     historical_supported = _is_historically_supported(strategy)
     settled_selected = _official_selected_count(strategy)
     pool_passed = _official_pool_passed(strategy)
     official_decision = str(official.get("decision") or "PENDING_OFFICIAL_SP_VALIDATION")
+    active_months = _active_months(official)
+    evidence_failures = _official_evidence_failures(official, settled_selected)
+    risk_control = _risk_control(official)
     blockers = list(strategy.get("deployment_blockers") or [])
     top_blockers = list(official.get("top_pool_blockers") or official.get("top_snapshot_blockers") or [])
 
     official_ready = (
         official_decision == "OFFICIAL_SP_PROSPECTIVE_PASS"
-        and settled_selected >= REQUIRED_OFFICIAL_SETTLED_SELECTED
+        and not evidence_failures
     )
-    if official_ready:
+    if official_ready and risk_control["state"] == "COOLDOWN":
+        action = "RISK_COOLDOWN"
+        reason = risk_control["reason"]
+    elif official_ready:
         action = "PAPER_ALLOCATION_READY"
         reason = "Historical audit, edge calibration, and official-SP prospective validation have all passed."
     elif not historical_supported:
@@ -81,6 +190,16 @@ def _strategy_status(strategy: dict[str, Any]) -> dict[str, Any]:
         "pool_passed_scorer": pool_passed,
         "settled_selected_snapshots": settled_selected,
         "required_settled_selected_snapshots": REQUIRED_OFFICIAL_SETTLED_SELECTED,
+        "active_months": active_months,
+        "required_active_months": REQUIRED_ACTIVE_MONTHS,
+        "official_profit": _number(official.get("profit")),
+        "official_roi_pct": _number(official.get("roi_pct")),
+        "official_max_drawdown": _number(official.get("max_drawdown")),
+        "closing_sp_coverage": _number(official.get("closing_sp_coverage")),
+        "average_clv": _number(official.get("average_clv"), -1.0),
+        "positive_clv_rate": _number(official.get("positive_clv_rate"), -1.0),
+        "official_evidence_failures": evidence_failures,
+        "portfolio_risk_control": risk_control,
         "action": action,
         "reason": reason,
         "top_blockers": top_blockers[:5],
@@ -90,6 +209,42 @@ def _strategy_status(strategy: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _allocation_score(strategy: dict[str, Any]) -> tuple[float, float]:
+    roi = max(0.001, _number(strategy.get("official_roi_pct")) / 100.0)
+    average_clv = max(0.001, _number(strategy.get("average_clv")))
+    profit = max(1.0, _number(strategy.get("official_profit")))
+    drawdown_penalty = 1.0 + _number(strategy.get("official_max_drawdown")) / profit
+    base_score = (roi + average_clv) / drawdown_penalty
+    multiplier = _number((strategy.get("portfolio_risk_control") or {}).get("multiplier"), 1.0)
+    return base_score, base_score * multiplier
+
+
+def _capped_shares(scores: list[float]) -> list[float]:
+    if not scores:
+        return []
+    if len(scores) == 1:
+        return [1.0]
+    shares = [0.0] * len(scores)
+    remaining = set(range(len(scores)))
+    remaining_share = 1.0
+    while remaining:
+        total = sum(max(scores[index], 0.0) for index in remaining)
+        proposed = {
+            index: remaining_share * (max(scores[index], 0.0) / total if total > 0 else 1.0 / len(remaining))
+            for index in remaining
+        }
+        capped = [index for index, share in proposed.items() if share > MAX_STRATEGY_SHARE]
+        if not capped:
+            for index, share in proposed.items():
+                shares[index] = share
+            break
+        for index in capped:
+            shares[index] = MAX_STRATEGY_SHARE
+            remaining_share -= MAX_STRATEGY_SHARE
+            remaining.remove(index)
+    return shares
+
+
 def build_profit_allocation_readiness(daily_budget: float | None = None) -> dict[str, Any]:
     budget = float(settings.profit_daily_budget if daily_budget is None else daily_budget)
     strategies = [_strategy_status(strategy) for strategy in list_profit_strategy_packages()]
@@ -97,13 +252,25 @@ def build_profit_allocation_readiness(daily_budget: float | None = None) -> dict
 
     allocations: list[dict[str, Any]] = []
     if ready and budget > 0:
-        per_strategy = round(budget / len(ready), 2)
-        for row in ready:
+        score_pairs = [_allocation_score(row) for row in ready]
+        base_total = sum(pair[0] for pair in score_pairs)
+        adjusted_total = sum(pair[1] for pair in score_pairs)
+        deployment_fraction = min(1.0, adjusted_total / base_total) if base_total > 0 else 0.0
+        deployable_budget = round(budget * deployment_fraction, 2)
+        shares = _capped_shares([pair[1] for pair in score_pairs])
+        assigned = 0.0
+        for index, row in enumerate(ready):
+            amount = round(deployable_budget * shares[index], 2)
+            if index == len(ready) - 1:
+                amount = round(deployable_budget - assigned, 2)
+            assigned += amount
             allocations.append({
                 "strategy_id": row["strategy_id"],
-                "paper_budget": per_strategy,
+                "paper_budget": amount,
+                "portfolio_weight": round(shares[index], 4),
+                "risk_multiplier": row["portfolio_risk_control"]["multiplier"],
                 "mode": "shadow_or_paper_only",
-                "reason": "Allocation readiness passed; still no automatic real-money order placement.",
+                "reason": "Evidence-weighted paper allocation after strategy drawdown controls.",
             })
 
     allocated_budget = round(sum(float(item["paper_budget"]) for item in allocations), 2)
@@ -116,6 +283,9 @@ def build_profit_allocation_readiness(daily_budget: float | None = None) -> dict
     elif any(row["action"] == "WAIT_FOR_OFFICIAL_SP_SETTLEMENT" for row in strategies):
         decision = "WAIT_FOR_OFFICIAL_SP_SETTLEMENT"
         reason = "Eligible official selections exist, but settled official-SP sample size is still below the promotion gate."
+    elif any(row["action"] == "RISK_COOLDOWN" for row in strategies):
+        decision = "PORTFOLIO_RISK_COOLDOWN"
+        reason = "Validated strategies are temporarily held in cash after two consecutive losing active months."
     else:
         decision = "RESEARCH_ONLY_NO_DAILY_ALLOCATION"
         reason = "No strategy currently passes the historical plus official-SP allocation gates."
@@ -134,6 +304,9 @@ def build_profit_allocation_readiness(daily_budget: float | None = None) -> dict
             "official_sp_decision": "OFFICIAL_SP_PROSPECTIVE_PASS",
             "min_settled_selected_snapshots": REQUIRED_OFFICIAL_SETTLED_SELECTED,
             "min_active_months": REQUIRED_ACTIVE_MONTHS,
+            "min_closing_sp_coverage": REQUIRED_CLOSING_SP_COVERAGE,
+            "min_positive_clv_rate": REQUIRED_POSITIVE_CLV_RATE,
+            "average_clv": ">0",
         },
         "allocations": allocations,
         "strategies": strategies,
@@ -141,4 +314,10 @@ def build_profit_allocation_readiness(daily_budget: float | None = None) -> dict
             "This report never places real bets. It only decides whether the daily budget may enter "
             "shadow/paper allocation under validated strategy coverage."
         ),
+        "portfolio_controls": {
+            "budget_is_a_cap_not_a_quota": True,
+            "two_negative_months_trigger_cooldown": True,
+            "drawdown_reduces_deployable_budget": True,
+            "max_strategy_share_when_multiple_ready": MAX_STRATEGY_SHARE,
+        },
     }

@@ -1,0 +1,252 @@
+{
+  "method": "profit daily allocation readiness",
+  "generated_at": "2026-07-15T09:51:14.634704+00:00",
+  "daily_budget": 100.0,
+  "allocated_budget": 0,
+  "cash_reserved": 100.0,
+  "decision": "WAIT_FOR_VALIDATED_OFFICIAL_SP_COVERAGE",
+  "reason": "At least one strategy is historically supported, but none covers the current official pool.",
+  "requirements": {
+    "historical_audit": "STATISTICALLY_SUPPORTED_RESEARCH_CANDIDATE",
+    "edge_calibration": "CALIBRATED_EDGE_CONFIRMED",
+    "official_sp_decision": "OFFICIAL_SP_PROSPECTIVE_PASS",
+    "min_settled_selected_snapshots": 200,
+    "min_active_months": 6,
+    "min_closing_sp_coverage": 0.8,
+    "min_positive_clv_rate": 0.5,
+    "average_clv": ">0"
+  },
+  "allocations": [],
+  "strategies": [
+    {
+      "strategy_id": "profit-i2-draw-market-anchored-stop3-cool3-v1",
+      "name": "Market-anchored Italy Serie B draw residual strategy with settled-loss cooldown",
+      "status": "RESEARCH_ONLY_UNSTABLE_WINDOWS",
+      "historically_supported": false,
+      "official_decision": "PENDING_OFFICIAL_SP_VALIDATION",
+      "pool_passed_scorer": 0,
+      "settled_selected_snapshots": 0,
+      "required_settled_selected_snapshots": 200,
+      "active_months": 0,
+      "required_active_months": 6,
+      "official_profit": 0.0,
+      "official_roi_pct": 0.0,
+      "official_max_drawdown": 0.0,
+      "closing_sp_coverage": 0.0,
+      "average_clv": -1.0,
+      "positive_clv_rate": -1.0,
+      "official_evidence_failures": [
+        "settled_selected<200",
+        "active_months<6",
+        "official_profit<=0",
+        "positive_months<=negative_months",
+        "closing_sp_coverage<0.8",
+        "average_clv<=0",
+        "positive_clv_rate<0.5"
+      ],
+      "portfolio_risk_control": {
+        "state": "REDUCED",
+        "multiplier": 0.5,
+        "negative_month_streak": 0,
+        "current_drawdown": 0.0,
+        "current_drawdown_to_profit": 1.0,
+        "reason": "Current drawdown is at least 50% of cumulative official-SP profit."
+      },
+      "action": "RESEARCH_ONLY",
+      "reason": "Historical statistical audit or calibration is not yet strong enough for daily allocation.",
+      "top_blockers": [],
+      "deployment_blockers": [
+        "latest profit scorecard does not recommend shadow promotion (RESEARCH_ONLY_UNSTABLE_WINDOWS); treat this package as research-only until multi-window evidence improves",
+        "historical validation uses football-data AVG_OPEN, not collected China Sporttery official SP snapshots",
+        "first rolling annual window remains weak, so production allocation is blocked until prospective official-SP evidence accumulates"
+      ],
+      "selection": {
+        "league_family": "I2",
+        "outcome": "DRAW",
+        "odds_source": "AVG_OPEN",
+        "odds_band": "[2.8,3.5)",
+        "train_months": 30,
+        "min_prior_candidates": 120,
+        "min_predicted_ev": 0.02,
+        "ridge": 10.0,
+        "market_residual_cap": 0.08,
+        "max_bets_per_day": 1
+      },
+      "risk_control": {
+        "stop_after_losing_settlement_days": 3,
+        "cooldown_days": 3
+      }
+    },
+    {
+      "strategy_id": "profit-i2-draw-market-anchored-avg-close-stop3-cool14-v1",
+      "name": "Frozen AVG_CLOSE Italy Serie B draw residual strategy with settled-loss cooldown",
+      "status": "STATISTICALLY_CALIBRATED_RESEARCH_LEAD_WAITING_OFFICIAL_SP_SHADOW",
+      "historically_supported": true,
+      "official_decision": "OFFICIAL_SP_PROSPECTIVE_BLOCKED",
+      "pool_passed_scorer": 0,
+      "settled_selected_snapshots": 0,
+      "required_settled_selected_snapshots": 200,
+      "active_months": 0,
+      "required_active_months": 6,
+      "official_profit": 0.0,
+      "official_roi_pct": 0.0,
+      "official_max_drawdown": 0.0,
+      "closing_sp_coverage": 0.0,
+      "average_clv": -1.0,
+      "positive_clv_rate": -1.0,
+      "official_evidence_failures": [
+        "settled_selected<200",
+        "active_months<6",
+        "official_profit<=0",
+        "positive_months<=negative_months",
+        "closing_sp_coverage<0.8",
+        "average_clv<=0",
+        "positive_clv_rate<0.5"
+      ],
+      "portfolio_risk_control": {
+        "state": "REDUCED",
+        "multiplier": 0.5,
+        "negative_month_streak": 0,
+        "current_drawdown": 0.0,
+        "current_drawdown_to_profit": 1.0,
+        "reason": "Current drawdown is at least 50% of cumulative official-SP profit."
+      },
+      "action": "WAIT_FOR_ELIGIBLE_OFFICIAL_POOL",
+      "reason": "The strategy is historically supported, but the current official pool has no eligible scored selections.",
+      "top_blockers": [
+        {
+          "reason": "league_not_i2",
+          "matches": 100
+        },
+        {
+          "reason": "draw_sp_outside_[2.8,3.5)",
+          "matches": 84
+        },
+        {
+          "reason": "invalid_three_way_official_sp",
+          "matches": 55
+        },
+        {
+          "reason": "missing_feature:lambda_home",
+          "matches": 14
+        },
+        {
+          "reason": "missing_feature:lambda_away",
+          "matches": 14
+        }
+      ],
+      "deployment_blockers": [
+        "historical reports use football-data AVG_CLOSE, not China Sporttery official SP",
+        "cooldown parameter is post-hoc until frozen prospective shadow validation runs",
+        "official pool currently has no I2 scorer-eligible matches or settled selected official-SP snapshots"
+      ],
+      "selection": {
+        "league_family": "I2",
+        "outcome": "DRAW",
+        "odds_source": "AVG_CLOSE",
+        "odds_band": "[2.8,3.5)",
+        "train_months": 30,
+        "min_prior_candidates": 120,
+        "min_predicted_ev": 0.02,
+        "ridge": 10.0,
+        "market_residual_cap": 0.08,
+        "max_bets_per_day": 1
+      },
+      "risk_control": {
+        "stop_after_losing_settlement_days": 3,
+        "cooldown_days": 14,
+        "uses_only_settled_results": true
+      }
+    },
+    {
+      "strategy_id": "profit-sp1-home-market-prob-55-market-anchored-v1",
+      "name": "Market-anchored Spanish La Liga high-probability home residual strategy",
+      "status": "OFFICIAL_SP_SHADOW_VALIDATION",
+      "historically_supported": true,
+      "official_decision": "OFFICIAL_SP_PROSPECTIVE_BLOCKED",
+      "pool_passed_scorer": 0,
+      "settled_selected_snapshots": 0,
+      "required_settled_selected_snapshots": 200,
+      "active_months": 0,
+      "required_active_months": 6,
+      "official_profit": 0.0,
+      "official_roi_pct": 0.0,
+      "official_max_drawdown": 0.0,
+      "closing_sp_coverage": 0.0,
+      "average_clv": -1.0,
+      "positive_clv_rate": -1.0,
+      "official_evidence_failures": [
+        "settled_selected<200",
+        "active_months<6",
+        "official_profit<=0",
+        "positive_months<=negative_months",
+        "closing_sp_coverage<0.8",
+        "average_clv<=0",
+        "positive_clv_rate<0.5"
+      ],
+      "portfolio_risk_control": {
+        "state": "REDUCED",
+        "multiplier": 0.5,
+        "negative_month_streak": 0,
+        "current_drawdown": 0.0,
+        "current_drawdown_to_profit": 1.0,
+        "reason": "Current drawdown is at least 50% of cumulative official-SP profit."
+      },
+      "action": "WAIT_FOR_ELIGIBLE_OFFICIAL_POOL",
+      "reason": "The strategy is historically supported, but the current official pool has no eligible scored selections.",
+      "top_blockers": [
+        {
+          "reason": "league_not_sp1",
+          "matches": 178
+        },
+        {
+          "reason": "invalid_three_way_official_sp",
+          "matches": 108
+        },
+        {
+          "reason": "missing_feature:lambda_home",
+          "matches": 79
+        },
+        {
+          "reason": "missing_feature:lambda_away",
+          "matches": 79
+        },
+        {
+          "reason": "missing_feature:home_weighted_points_per_match",
+          "matches": 79
+        }
+      ],
+      "deployment_blockers": [
+        "Official-SP prospective validation has not passed on at least 200 settled selections across 6 active months.",
+        "AVG_CLOSE historical calibration is positive but its Wilson 95% lower edge is not above zero.",
+        "The four historical odds sources overlap on matches and are robustness checks, not independent samples."
+      ],
+      "selection": {
+        "league_family": "SP1",
+        "outcome": "HOME",
+        "odds_source": "AVG_CLOSE",
+        "min_market_probability": 0.55,
+        "train_months": 18,
+        "min_prior_candidates": 80,
+        "min_predicted_ev": 0.0,
+        "ridge": 35.0,
+        "market_residual_cap": 0.08,
+        "max_bets_per_day": 1
+      },
+      "risk_control": {
+        "daily_budget_cap": 100.0,
+        "max_single_stake": 10.0,
+        "max_bets_per_day": 1,
+        "uses_only_settled_results": true,
+        "two_negative_months_trigger_cooldown": true
+      }
+    }
+  ],
+  "guardrail": "This report never places real bets. It only decides whether the daily budget may enter shadow/paper allocation under validated strategy coverage.",
+  "portfolio_controls": {
+    "budget_is_a_cap_not_a_quota": true,
+    "two_negative_months_trigger_cooldown": true,
+    "drawdown_reduces_deployable_budget": true,
+    "max_strategy_share_when_multiple_ready": 0.6
+  }
+}
