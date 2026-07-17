@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
+import sys
 import tempfile
 import time
 from pathlib import Path
@@ -12,6 +13,50 @@ try:
     from websockets.sync.client import connect
 except ModuleNotFoundError:
     connect = None
+
+# Candidate Chromium-family browsers, checked in priority order. Edge and Chrome
+# both speak the CDP protocol used by this client, so either is acceptable.
+BROWSER_CANDIDATES: tuple[str, ...] = (
+    r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+    r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+    r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+    r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+)
+
+
+def _resolve_browser_path(explicit: str | None) -> Path:
+    """Return the first existing Chromium-family browser, or raise a helpful error.
+
+    Priority: explicit OFFICIAL_BROWSER_PATH > well-known Edge/Chrome install
+    locations > msedge/chrome found on PATH. Raises a RuntimeError listing the
+    attempted candidates so the operator knows exactly what to fix.
+    """
+    if explicit and explicit.strip():
+        candidate = Path(explicit.strip())
+        if candidate.exists():
+            return candidate
+        raise _browser_not_found_error([f"OFFICIAL_BROWSER_PATH={explicit}"] + list(BROWSER_CANDIDATES))
+
+    tried: list[str] = list(BROWSER_CANDIDATES)
+    for candidate in BROWSER_CANDIDATES:
+        path = Path(candidate)
+        if path.exists():
+            return path
+    for name in ("msedge", "chrome"):
+        located = shutil.which(name)
+        if located:
+            return Path(located)
+        tried.append(f"PATH:{name}")
+    raise _browser_not_found_error(tried)
+
+
+def _browser_not_found_error(tried: list[str]) -> RuntimeError:
+    listing = "\n".join(f"  - {item}" for item in tried)
+    return RuntimeError(
+        "No Chromium-family browser (Edge/Chrome) found for the official data sync. "
+        "Install Microsoft Edge or Google Chrome, or set OFFICIAL_BROWSER_PATH to an "
+        f"existing executable. Tried:\n{listing}"
+    )
 
 EXTRACT_EXPRESSION = r"""
 JSON.stringify({html: document.querySelector('.m-main')?.innerHTML || '', matches:
@@ -52,9 +97,9 @@ class CdpConnection:
 class SportteryBrowserClient:
     """Render the public page in a normal off-screen Edge window, without bypassing access controls."""
     def __init__(self,browser_path:str,timeout_seconds:int=25)->None:
-        self.browser_path=Path(browser_path); self.timeout_seconds=timeout_seconds
+        self.browser_path=_resolve_browser_path(browser_path); self.timeout_seconds=timeout_seconds
     def fetch(self,url:str)->dict[str,Any]:
-        if not self.browser_path.exists(): raise RuntimeError(f"Browser not found: {self.browser_path}")
+        if not self.browser_path.exists(): raise _browser_not_found_error([str(self.browser_path)] + list(BROWSER_CANDIDATES))
         profile=tempfile.mkdtemp(prefix="sporttery-browser-")
         process=subprocess.Popen([str(self.browser_path),"--no-first-run","--disable-extensions","--window-position=-32000,-32000","--window-size=800,600",f"--user-data-dir={profile}","--remote-debugging-port=0","about:blank"],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
         connection=None
@@ -97,7 +142,7 @@ class SportteryBrowserClient:
         context and do not attempt to bypass the site's access controls.
         """
         if not self.browser_path.exists():
-            raise RuntimeError(f"Browser not found: {self.browser_path}")
+            raise _browser_not_found_error([str(self.browser_path)] + list(BROWSER_CANDIDATES))
         if not date_windows:
             return {"results": [], "windows": []}
         profile = tempfile.mkdtemp(prefix="sporttery-results-browser-")

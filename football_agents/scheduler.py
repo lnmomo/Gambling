@@ -22,6 +22,7 @@ from .paper_portfolio import PaperPortfolioService
 from .profit_scorer_official import diagnose_official_profit_scorer_pool
 from .profit_scorer_prospective import validate_profit_scorer_on_official_sp
 from .repository import Repository
+from .services.db_cleanup_service import DbCleanupService
 from .services.model_governance_persistence_service import ModelGovernancePersistenceService
 from .services.task_runner_service import TaskRunnerService
 from .research.prospective import ProspectiveResearchService
@@ -68,6 +69,16 @@ class BackgroundAgentScheduler:
         hourly_thread.start()
         self.threads.append(hourly_thread)
 
+        cleanup_thread = threading.Thread(
+            target=self._loop,
+            name="background-db-cleanup",
+            args=("db_retention_cleanup", self._cleanup_retention,
+                  self._interval_for("db_retention_cleanup")),
+            daemon=True,
+        )
+        cleanup_thread.start()
+        self.threads.append(cleanup_thread)
+
     def stop(self) -> None:
         self.stop_event.set()
 
@@ -98,6 +109,8 @@ class BackgroundAgentScheduler:
             return self.interval_seconds
         if task_name in {"official_sp_sync", "official_sp_evidence_quality"}:
             return max(60, settings.official_sp_refresh_minutes * 60)
+        if task_name == "db_retention_cleanup":
+            return max(3600, settings.db_vacuum_interval_hours * 3600)
         return self.interval_seconds
 
     def _run_task(self, task_name: str, action: TaskAction) -> None:
@@ -381,6 +394,23 @@ class BackgroundAgentScheduler:
 
     def _target_matches(self, limit: int) -> list[dict[str, Any]]:
         return self.repository.list_active_official_matches(max(1, min(limit, 100)))
+
+    def _cleanup_retention(self) -> dict[str, Any]:
+        report = DbCleanupService(self.repository).run_retention_cleanup()
+        total = report.get("total_deleted", 0)
+        vacuum = report.get("vacuum")
+        warnings = []
+        if vacuum != "ok" and report.get("vacuum_detail"):
+            warnings.append(str(report["vacuum_detail"]))
+        return {
+            "records": total,
+            "affected_matches": 0,
+            "snapshots": sum(report.get("deleted", {}).values()),
+            "vacuum": vacuum,
+            "db_size_bytes_after": report.get("db_size_bytes_after"),
+            "warnings": warnings,
+            "report": report,
+        }
 
     @staticmethod
     def _write_report(path_text: str, report: dict[str, Any]) -> None:

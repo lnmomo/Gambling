@@ -1,5 +1,9 @@
 PRAGMA foreign_keys = ON;
 PRAGMA journal_mode = WAL;
+-- New databases vacuum incrementally so retention deletes return pages to the
+-- OS without a full VACUUM lock. Existing databases keep using periodic VACUUM
+-- (auto_vacuum cannot be enabled retroactively without a one-shot VACUUM).
+PRAGMA auto_vacuum = INCREMENTAL;
 
 CREATE TABLE IF NOT EXISTS matches (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -52,6 +52,9 @@ class Settings:
     enable_auto_betting: bool = _bool("ENABLE_AUTO_BETTING", False)
     log_level: str = os.getenv("LOG_LEVEL", "INFO")
     snapshot_stale_minutes: int = int(os.getenv("SNAPSHOT_STALE_MINUTES", "30"))
+    db_retention_days: int = int(os.getenv("DB_RETENTION_DAYS", "90"))
+    db_backtest_retention_days: int = int(os.getenv("DB_BACKTEST_RETENTION_DAYS", "180"))
+    db_vacuum_interval_hours: int = int(os.getenv("DB_VACUUM_INTERVAL_HOURS", "24"))
     pre_match_close_minutes: int = int(os.getenv("PRE_MATCH_CLOSE_MINUTES", "5"))
     official_sp_refresh_minutes: int = int(os.getenv("OFFICIAL_SP_REFRESH_MINUTES", "15"))
     external_odds_refresh_minutes: int = int(os.getenv("EXTERNAL_ODDS_REFRESH_MINUTES", "15"))
@@ -68,9 +71,7 @@ class Settings:
         "OFFICIAL_RESULTS_SOURCE_URL", "https://www.sporttery.cn/jc/zqsgkj/"
     )
     official_results_lookback_days: int = int(os.getenv("OFFICIAL_RESULTS_LOOKBACK_DAYS", "60"))
-    official_browser_path: str = os.getenv(
-        "OFFICIAL_BROWSER_PATH", r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
-    )
+    official_browser_path: str = os.getenv("OFFICIAL_BROWSER_PATH", "")
     official_fetch_timeout_seconds: int = int(os.getenv("OFFICIAL_FETCH_TIMEOUT_SECONDS", "25"))
     official_min_sync_interval_seconds: int = int(os.getenv("OFFICIAL_MIN_SYNC_INTERVAL_SECONDS", "60"))
     official_auto_sync_interval_seconds: int = int(os.getenv("OFFICIAL_AUTO_SYNC_INTERVAL_SECONDS", "3600"))

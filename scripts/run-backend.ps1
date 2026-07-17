@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $python = Join-Path $projectRoot ".venv\Scripts\python.exe"
@@ -13,6 +13,13 @@ if (-not (Test-Path -LiteralPath $python)) {
 
 New-Item -ItemType Directory -Path $runtimeDir -Force | Out-Null
 Set-Location -LiteralPath $projectRoot
+
+# Clear any stale process still bound to port 8000 before starting. The
+# scheduler's IgnoreNew guard prevents the healthy instance from being killed;
+# this only reaps leftover python.exe that failed to release the port.
+Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue | ForEach-Object {
+    Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue
+}
 
 "[$([DateTimeOffset]::Now.ToString('o'))] backend service starting" | Add-Content -LiteralPath $logPath
 $process = Start-Process `

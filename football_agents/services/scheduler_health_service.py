@@ -19,6 +19,7 @@ TASK_NAMES = {
     "recommendation_lifecycle_check",
     "backtest_run",
     "model_governance_check",
+    "db_retention_cleanup",
 }
 
 

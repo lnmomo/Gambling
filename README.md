@@ -115,6 +115,8 @@ Do not commit real keys or local runtime paths. Important settings:
 - `ENABLE_STACKING_MODEL=false`: challenger mode is opt-in.
 - `ENABLE_REAL_SYNC=false`: user-controlled real data sync switch.
 - `DATABASE_URL=sqlite:///./data/runtime/football_agents.db`: local runtime DB path.
+- `DB_RETENTION_DAYS=90`, `DB_BACKTEST_RETENTION_DAYS=180`, `DB_VACUUM_INTERVAL_HOURS=24`: housekeeping knobs for the background cleanup thread. High-churn mutable tables (odds snapshots, fetch/sync logs, audit events, task runs, model predictions, critic/bet signals, shadow time series, backtest artifacts) are pruned past the cutoff and the database is VACUUMed at the configured cadence. Immutable evidence ledgers (official odds/result observations, prospective predictions, paper portfolio, external consensus decisions) are never deleted.
+- `OFFICIAL_BROWSER_PATH`: Chromium-family browser used by the official data sync (CDP). Leave empty to auto-detect Edge/Chrome from common install locations and PATH; set explicitly to override.
 - `OFFICIAL_SP_REFRESH_MINUTES=15`: official fixture/SP capture and its evidence-quality check cadence.
 - The same 15-minute chain independently reads the public official result archive, settles exact
   `sporttery-{matchId}` matches without overwriting conflicts, and freezes a critical-window
@@ -143,7 +145,13 @@ Do not commit real keys or local runtime paths. Important settings:
 - `ODDS_API_REGIONS=eu`: request one bookmaker region by default to conserve quota while retaining multi-book consensus.
 - `ODDS_API_MIN_REQUESTS_REMAINING=20`: preserve an emergency quota reserve instead of exhausting the account before the primary horizon.
 
-The API process must remain running for these in-process agents to execute. The scheduler runs immediately on startup; official SP capture then runs every 15 minutes, while the heavier agents run hourly.
+The API process must remain running for these in-process agents to execute. The scheduler runs immediately on startup; official SP capture then runs every 15 minutes, while the heavier agents run hourly, and a separate db-cleanup thread prunes mutable tables and VACUUMs the database every 24 hours by default.
+
+## 7.1 Secret Safety
+
+- `api.env` holds real plaintext `THE_ODDS_API_KEY` and `LLM_API_KEY`. It is listed in `.gitignore` and must never be committed.
+- If a key has been displayed, shared, or suspected exposed, rotate it at the provider console (DashScope for the Qwen key, The Odds API dashboard for the odds key) and replace the matching line in `api.env`. Rotation is an external, user-controlled action — nothing in this codebase can do it for you.
+- `docker-compose.yml` references `api.env` via `env_file` only; it contains no inline secrets.
 
 ## 8. Database Initialization
 
@@ -204,11 +212,7 @@ npm test
 npm run build
 ```
 
-Latest local validation during Phase 13:
-
-- Backend: 77 passed
-- Frontend: 41 files / 130 tests passed
-- Build: passed
+Run the full suite end to end with `scripts\test-all.ps1` (backend pytest + frontend vitest). Test counts grow with each phase; run the command above for the current counts rather than relying on a number pinned in docs.
 
 ## 11. Main Pages
 
