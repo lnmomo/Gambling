@@ -4,6 +4,7 @@ from dataclasses import asdict
 from typing import Any
 
 from ..config import settings
+from ..independent_model import independent_football_probability
 from ..models import EloModel, EnsembleModel, PoissonModel
 from ..models.ensemble import market_probabilities, market_residual_anchor
 from ..repository import Repository
@@ -51,7 +52,7 @@ class DecisionWorkflow:
         )
         self.repository.add_prediction(match_id, "elo", elo_prediction)
         self.repository.add_prediction(match_id, "poisson", poisson_prediction)
-        baseline = self.ensemble.predict({"elo": elo_prediction, "poisson": poisson_prediction})
+        baseline = independent_football_probability(elo_prediction, poisson_prediction)
         baseline_fair_odds = {option: 1 / probability for option, probability in baseline.items()}
         self.repository.add_prediction(match_id, "baseline", baseline, {
             "market_calibrated": False, "fair_odds": baseline_fair_odds,

@@ -41,6 +41,7 @@ class BackgroundAgentScheduler:
         self.interval_override_seconds = interval_seconds
         self.interval_seconds = max(60, interval_seconds or settings.background_agent_interval_seconds)
         self.stop_event = threading.Event()
+        self.initial_official_sync_complete = threading.Event()
         self.threads: list[threading.Thread] = []
 
     def start(self) -> None:
@@ -61,7 +62,7 @@ class BackgroundAgentScheduler:
         hourly_thread = threading.Thread(
             target=self._pipeline_loop,
             name="background-hourly-agent-pipeline",
-            args=(hourly_tasks, self.interval_seconds),
+            args=(hourly_tasks, self.interval_seconds, True),
             daemon=True,
         )
         hourly_thread.start()
@@ -73,10 +74,17 @@ class BackgroundAgentScheduler:
     def _loop(self, task_name: str, action: TaskAction, interval_seconds: int) -> None:
         while not self.stop_event.is_set():
             self._run_task(task_name, action)
+            if task_name == "official_sp_sync":
+                self.initial_official_sync_complete.set()
             if self.stop_event.wait(interval_seconds):
                 break
 
-    def _pipeline_loop(self, tasks: list[tuple[str, TaskAction]], interval_seconds: int) -> None:
+    def _pipeline_loop(self, tasks: list[tuple[str, TaskAction]], interval_seconds: int,
+                       wait_for_official: bool = False) -> None:
+        if wait_for_official:
+            while not self.stop_event.is_set():
+                if self.initial_official_sync_complete.wait(1):
+                    break
         while not self.stop_event.is_set():
             for task_name, action in tasks:
                 if self.stop_event.is_set():
@@ -138,6 +146,14 @@ class BackgroundAgentScheduler:
         self._run_task("official_sp_evidence_quality", self._check_official_sp_evidence_quality)
         if settings.enable_prospective_research:
             self._run_task("prospective_research_critical_capture", self._capture_prospective_research)
+            self._run_task(
+                "external_consensus_challenger_critical_capture",
+                self._capture_external_consensus_challenger,
+            )
+            self._run_task(
+                "profit_allocation_readiness_critical",
+                self._refresh_profit_allocation_readiness,
+            )
         return report
 
     def _sync_official_results(self) -> dict[str, Any]:
@@ -164,7 +180,27 @@ class BackgroundAgentScheduler:
         }
 
     def _sync_external_news_weather(self) -> dict[str, Any]:
-        return DataEnrichmentService(self.repository).sync(settings.agent_match_limit, evaluate=False)
+        report = DataEnrichmentService(self.repository).sync(
+            settings.agent_match_limit, evaluate=False
+        )
+        if settings.enable_prospective_research and int(report.get("market_target_matches", 0) or 0) > 0:
+            self._run_task(
+                "feature_build_post_external",
+                self._build_features,
+            )
+            self._run_task(
+                "prospective_research_post_external_capture",
+                self._capture_prospective_research,
+            )
+            self._run_task(
+                "external_consensus_challenger_post_external_capture",
+                self._capture_external_consensus_challenger,
+            )
+            self._run_task(
+                "profit_allocation_readiness_post_external",
+                self._refresh_profit_allocation_readiness,
+            )
+        return report
 
     def _build_features(self) -> dict[str, Any]:
         report = build_features_for_official_matches(
@@ -317,16 +353,30 @@ class BackgroundAgentScheduler:
         return report
 
     def _capture_prospective_research(self) -> dict[str, Any]:
-        return ProspectiveResearchService(self.repository.db, self.repository).capture(settings.agent_match_limit)
+        report = ProspectiveResearchService(self.repository.db, self.repository).capture(
+            settings.agent_match_limit
+        )
+        actionable_skips = [
+            f"{reason}:{count}"
+            for reason, count in (report.get("skip_reasons") or {}).items()
+            if reason not in {"ineligible_status", "kickoff_not_in_future"} and int(count or 0) > 0
+        ]
+        return {**report, "warnings": list(report.get("warnings", [])) + actionable_skips}
 
     def _capture_external_consensus_challenger(self) -> dict[str, Any]:
         result = ExternalConsensusChallengerService(self.repository.db, self.repository).capture(
             settings.agent_match_limit
         )
         self._write_report(settings.external_consensus_challenger_report_path, result["report"])
+        input_blockers = [
+            f'{item.get("reason")}:{int(item.get("matches") or 0)}'
+            for item in result.get("blocker_counts", [])
+            if int(item.get("matches") or 0) > 0
+        ]
         return {
             **result,
             "snapshots": result.get("decisions", 0),
+            "warnings": list(result.get("warnings", [])) + input_blockers,
         }
 
     def _target_matches(self, limit: int) -> list[dict[str, Any]]:

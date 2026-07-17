@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from statistics import fmean, pstdev
 from typing import Any
 
+from .config import settings
 from .db import Database, db
 from .prospective_statistics import build_prospective_statistical_evidence
 from .repository import Repository
@@ -18,7 +19,8 @@ from .research.prospective import ProspectiveResearchService
 
 OUTCOMES = ("home", "draw", "away")
 POLICY_CONFIG: dict[str, Any] = {
-    "version": "external-consensus-quarter-residual-v1",
+    "version": "external-consensus-normalized-sem-v3",
+    "model_source": "pure_football_baseline",
     "minimum_bookmakers": 10,
     "maximum_external_age_minutes": 120,
     "maximum_official_sp_age_minutes": 30,
@@ -29,6 +31,8 @@ POLICY_CONFIG: dict[str, Any] = {
     "model_residual_cap": 0.03,
     "minimum_probability_uncertainty": 0.01,
     "dispersion_uncertainty_z": 1.645,
+    "maximum_effective_bookmakers": 5,
+    "uncertainty_method": "conservative_effective_sample_standard_error",
     "minimum_expected_ev": 0.03,
     "minimum_conservative_ev": 0.0,
     "minimum_odds": 1.50,
@@ -73,6 +77,112 @@ def _max_drawdown(profits: list[float]) -> float:
     return round(worst, 2)
 
 
+def _fused_probabilities(
+    external: dict[str, float],
+    pure_model: dict[str, float],
+    config: dict[str, Any],
+) -> dict[str, float]:
+    raw: dict[str, float] = {}
+    for outcome in OUTCOMES:
+        residual = max(
+            -float(config["model_residual_cap"]),
+            min(
+                float(config["model_residual_cap"]),
+                pure_model[outcome] - external[outcome],
+            ),
+        )
+        raw[outcome] = external[outcome] + float(config["model_residual_weight"]) * residual
+    total = sum(raw.values())
+    if total <= 0:
+        raise ValueError("fused_probability_sum_not_positive")
+    return {outcome: raw[outcome] / total for outcome in OUTCOMES}
+
+
+def _consensus_uncertainty(
+    dispersion: dict[str, float],
+    bookmaker_count: int,
+    config: dict[str, Any],
+) -> tuple[dict[str, float], dict[str, float], int]:
+    effective_count = max(
+        1,
+        min(int(bookmaker_count), int(config["maximum_effective_bookmakers"])),
+    )
+    standard_error = {
+        outcome: dispersion[outcome] / math.sqrt(effective_count)
+        for outcome in OUTCOMES
+    }
+    uncertainty = {
+        outcome: max(
+            float(config["minimum_probability_uncertainty"]),
+            float(config["dispersion_uncertainty_z"]) * standard_error[outcome],
+        )
+        for outcome in OUTCOMES
+    }
+    return standard_error, uncertainty, effective_count
+
+
+def _probability_diagnostics(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    settled = [
+        row for row in rows
+        if row.get("outcome") in OUTCOMES
+        and all(row.get(f"fused_{outcome}_probability") is not None for outcome in OUTCOMES)
+    ]
+    metrics: dict[str, dict[str, float | None]] = {}
+    for source, prefix in (
+        ("external_consensus", "external"),
+        ("pure_football_model", "pure_model"),
+        ("normalized_fusion", "fused"),
+    ):
+        brier_values: list[float] = []
+        log_loss_values: list[float] = []
+        for row in settled:
+            actual = str(row["outcome"])
+            probabilities = {
+                outcome: float(row[f"{prefix}_{outcome}_probability"])
+                for outcome in OUTCOMES
+            }
+            brier_values.append(sum(
+                (probabilities[outcome] - float(outcome == actual)) ** 2
+                for outcome in OUTCOMES
+            ) / len(OUTCOMES))
+            log_loss_values.append(-math.log(max(1e-15, probabilities[actual])))
+        metrics[source] = {
+            "brier_score": round(fmean(brier_values), 6) if brier_values else None,
+            "log_loss": round(fmean(log_loss_values), 6) if log_loss_values else None,
+        }
+    external = metrics["external_consensus"]
+    fused = metrics["normalized_fusion"]
+    brier_improvement = (
+        float(external["brier_score"]) - float(fused["brier_score"])
+        if external["brier_score"] is not None and fused["brier_score"] is not None else None
+    )
+    log_loss_improvement = (
+        float(external["log_loss"]) - float(fused["log_loss"])
+        if external["log_loss"] is not None and fused["log_loss"] is not None else None
+    )
+    return {
+        "matches": len(settled),
+        "minimum_matches": 200,
+        "metrics": metrics,
+        "brier_improvement_vs_external": round(brier_improvement, 6)
+        if brier_improvement is not None else None,
+        "log_loss_improvement_vs_external": round(log_loss_improvement, 6)
+        if log_loss_improvement is not None else None,
+        "decision": (
+            "INSUFFICIENT_SETTLED_MATCHES"
+            if len(settled) < 200
+            else "FUSION_CALIBRATION_SUPPORTED"
+            if brier_improvement is not None and brier_improvement > 0
+            and log_loss_improvement is not None and log_loss_improvement > 0
+            else "FUSION_NOT_BETTER_THAN_EXTERNAL"
+        ),
+        "guardrail": (
+            "One pre-registered horizon snapshot per match is used. This diagnostic cannot promote "
+            "the strategy before the prospective profitability and drawdown gates also pass."
+        ),
+    }
+
+
 class ExternalConsensusChallengerService:
     """Freezes executable official-SP decisions against independent bookmaker consensus."""
 
@@ -80,14 +190,29 @@ class ExternalConsensusChallengerService:
         self.db = database
         self.repository = repository or Repository(database)
 
-    def ensure_policy(self) -> dict[str, Any]:
+    def ensure_policy(self, study: dict[str, Any] | None = None) -> dict[str, Any]:
+        prospective = ProspectiveResearchService(self.db, self.repository)
+        study = study or prospective.ensure_default_study()
+        freeze = prospective.get_freeze(study["freeze_id"])
+        policy_config = {
+            **POLICY_CONFIG,
+            "external_odds_regions": settings.odds_api_regions,
+            "external_odds_capture_window_minutes": settings.external_odds_capture_window_minutes,
+            "prospective_study_id": study["study_id"],
+            "model_freeze_id": freeze["freeze_id"],
+            "model_algorithm_hash": freeze["algorithm_hash"],
+        }
         source_sha256 = hashlib.sha256("\n".join((
             inspect.getsource(self._inputs),
             inspect.getsource(self._build_decision),
             inspect.getsource(self._primary_decisions),
+            inspect.getsource(_fused_probabilities),
+            inspect.getsource(_consensus_uncertainty),
+            inspect.getsource(_probability_diagnostics),
+            inspect.getsource(self._horizon_decisions),
         )).encode()).hexdigest()
         policy_hash = hashlib.sha256(_canonical({
-            "config": POLICY_CONFIG,
+            "config": policy_config,
             "source_sha256": source_sha256,
         }).encode()).hexdigest()
         policy_id = f"external-consensus-{policy_hash[:20]}"
@@ -96,10 +221,11 @@ class ExternalConsensusChallengerService:
             "policy_hash": policy_hash,
             "policy_name": "Official SP versus independent bookmaker consensus challenger",
             "hypothesis": (
-                "A strongly shrunk frozen-model residual can identify official-SP prices whose "
-                "conservative expected value remains positive against independent de-vig consensus."
+                "A strongly shrunk, market-independent Elo/Poisson baseline residual can identify "
+                "official-SP prices whose conservative expected value remains positive against "
+                "independent de-vig bookmaker consensus."
             ),
-            "config_json": _canonical(POLICY_CONFIG),
+            "config_json": _canonical(policy_config),
             "source_sha256": source_sha256,
             "registered_at": _utcnow().isoformat(),
         }
@@ -115,8 +241,8 @@ class ExternalConsensusChallengerService:
 
     def capture(self, limit: int = 100, as_of: str | datetime | None = None) -> dict[str, Any]:
         decided_at = _parse_time(as_of or _utcnow())
-        policy = self.ensure_policy()
         study = ProspectiveResearchService(self.db, self.repository).ensure_default_study()
+        policy = self.ensure_policy(study)
         matches = self.repository.list_active_official_matches(max(1, min(limit, 500)))
         captured = duplicates = eligible = 0
         blockers: Counter[str] = Counter()
@@ -126,7 +252,9 @@ class ExternalConsensusChallengerService:
             if kickoff <= decided_at:
                 blockers["kickoff_not_in_future"] += 1
                 continue
-            inputs, missing = self._inputs(match["id"], study["study_id"], decided_at)
+            inputs, missing = self._inputs(
+                match["id"], study["study_id"], decided_at, policy["config"]
+            )
             if inputs is None:
                 blockers[missing] += 1
                 continue
@@ -163,6 +291,7 @@ class ExternalConsensusChallengerService:
         policy = self.get_policy(policy_id) if policy_id else self.ensure_policy()
         now = _parse_time(as_of or _utcnow())
         rows = self._decision_rows(policy["policy_id"])
+        horizon_rows = self._horizon_decisions(rows, policy["config"])
         candidate_rows = [row for row in rows if row["action"] == "CANDIDATE"]
         primary = self._primary_decisions(candidate_rows, policy["config"])
         settled = [row for row in primary if row.get("outcome") in OUTCOMES]
@@ -263,6 +392,20 @@ class ExternalConsensusChallengerService:
         conservative_ev_values = [float(row["conservative_ev"]) for row in rows]
         best_expected_ev = max(expected_ev_values) if expected_ev_values else None
         best_conservative_ev = max(conservative_ev_values) if conservative_ev_values else None
+        expected_threshold = float(policy["config"]["minimum_expected_ev"])
+        conservative_threshold = float(policy["config"]["minimum_conservative_ev"])
+        minimum_odds = float(policy["config"]["minimum_odds"])
+        maximum_odds = float(policy["config"]["maximum_odds"])
+        price_eligible_rows = [
+            row for row in rows
+            if minimum_odds <= float(row["selected_sp"]) <= maximum_odds
+        ]
+        price_eligible_expected = [float(row["expected_ev"]) for row in price_eligible_rows]
+        price_eligible_conservative = [float(row["conservative_ev"]) for row in price_eligible_rows]
+        best_price_eligible_expected = max(price_eligible_expected) if price_eligible_expected else None
+        best_price_eligible_conservative = (
+            max(price_eligible_conservative) if price_eligible_conservative else None
+        )
         return {
             "method": "pre-registered external consensus versus executable official-SP challenger",
             "created_at": now.isoformat(),
@@ -272,11 +415,24 @@ class ExternalConsensusChallengerService:
             "decisions": len(rows),
             "candidate_decisions": len(candidate_rows),
             "positive_expected_ev_decisions": sum(value > 0 for value in expected_ev_values),
+            "expected_ev_threshold_pass_decisions": sum(
+                value >= expected_threshold for value in expected_ev_values
+            ),
+            "entry_price_eligible_decisions": len(price_eligible_rows),
+            "entry_price_and_expected_ev_pass_decisions": sum(
+                value >= expected_threshold for value in price_eligible_expected
+            ),
+            "positive_conservative_ev_decisions": sum(
+                value >= conservative_threshold for value in conservative_ev_values
+            ),
             "best_expected_ev": round(best_expected_ev, 6) if best_expected_ev is not None else None,
             "best_conservative_ev": round(best_conservative_ev, 6) if best_conservative_ev is not None else None,
             "expected_ev_gap_to_entry": round(
-                max(0.0, float(policy["config"]["minimum_expected_ev"]) - best_expected_ev), 6
-            ) if best_expected_ev is not None else None,
+                max(0.0, expected_threshold - best_price_eligible_expected), 6
+            ) if best_price_eligible_expected is not None else None,
+            "conservative_ev_gap_to_entry": round(
+                max(0.0, conservative_threshold - best_price_eligible_conservative), 6
+            ) if best_price_eligible_conservative is not None else None,
             "primary_horizon_candidates": len(primary),
             "settled_selections": len(settled),
             "active_months": active_months,
@@ -291,6 +447,8 @@ class ExternalConsensusChallengerService:
             "positive_months": sum(row["profit"] > 0 for row in monthly),
             "negative_months": sum(row["profit"] < 0 for row in monthly),
             "statistical_evidence": statistics,
+            "all_match_probability_diagnostics": _probability_diagnostics(horizon_rows),
+            "bookmaker_probability_diagnostics": self._bookmaker_probability_diagnostics(horizon_rows),
             "monthly": monthly,
             "daily": daily,
             "blocker_counts": [
@@ -300,7 +458,91 @@ class ExternalConsensusChallengerService:
             "recent_decisions": rows[-100:],
             "guardrail": (
                 "Policy parameters and every decision are immutable. Selection uses only official SP, "
-                "independent bookmaker snapshots, and a previously frozen prospective model prediction."
+                "independent bookmaker snapshots, and a pre-decision Elo/Poisson baseline that does not "
+                "consume official or external market odds."
+            ),
+        }
+
+    def _bookmaker_probability_diagnostics(self, rows: list[dict[str, Any]]) -> dict[str, Any]:
+        minimum_matches = 200
+        minimum_months = 6
+        settled = [row for row in rows if row.get("outcome") in OUTCOMES]
+        samples: dict[str, dict[str, Any]] = {}
+        with self.db.connect() as connection:
+            for decision in settled:
+                bookmaker_rows = connection.execute("""SELECT * FROM external_bookmaker_odds
+                    WHERE match_id=? AND fetched_at=? ORDER BY bookmaker_key,bookmaker,id""", (
+                        decision["match_id"], decision["external_fetched_at"],
+                    )).fetchall()
+                seen: set[str] = set()
+                for raw_row in bookmaker_rows:
+                    row = dict(raw_row)
+                    key = str(row.get("bookmaker_key") or row.get("bookmaker") or "").strip()
+                    if not key or key in seen:
+                        continue
+                    seen.add(key)
+                    try:
+                        if _parse_time(row["last_update"]) > _parse_time(decision["decided_at"]):
+                            continue
+                        inverse = {
+                            outcome: 1.0 / float(row[f"{outcome}_odds"])
+                            for outcome in OUTCOMES
+                        }
+                    except (KeyError, TypeError, ValueError, ZeroDivisionError):
+                        continue
+                    total = sum(inverse.values())
+                    if total <= 0:
+                        continue
+                    probabilities = {outcome: inverse[outcome] / total for outcome in OUTCOMES}
+                    actual = str(decision["outcome"])
+                    brier = sum(
+                        (probabilities[outcome] - float(outcome == actual)) ** 2
+                        for outcome in OUTCOMES
+                    ) / len(OUTCOMES)
+                    log_loss = -math.log(max(1e-15, probabilities[actual]))
+                    entry = samples.setdefault(key, {
+                        "bookmaker_key": key,
+                        "bookmaker": str(row.get("bookmaker") or key),
+                        "brier": [],
+                        "log_loss": [],
+                        "months": set(),
+                    })
+                    entry["brier"].append(brier)
+                    entry["log_loss"].append(log_loss)
+                    entry["months"].add(str(decision["kickoff_time"])[:7])
+
+        rankings: list[dict[str, Any]] = []
+        for entry in samples.values():
+            sample_count = len(entry["brier"])
+            active_months = len(entry["months"])
+            rankings.append({
+                "bookmaker_key": entry["bookmaker_key"],
+                "bookmaker": entry["bookmaker"],
+                "matches": sample_count,
+                "active_months": active_months,
+                "brier_score": round(fmean(entry["brier"]), 6),
+                "log_loss": round(fmean(entry["log_loss"]), 6),
+                "weighting_eligible": sample_count >= minimum_matches and active_months >= minimum_months,
+            })
+        rankings.sort(key=lambda row: (row["log_loss"], row["brier_score"], row["bookmaker_key"]))
+        eligible = [row for row in rankings if row["weighting_eligible"]]
+        return {
+            "settled_horizon_matches": len(settled),
+            "bookmakers_observed": len(rankings),
+            "bookmaker_match_observations": sum(row["matches"] for row in rankings),
+            "minimum_matches_per_bookmaker": minimum_matches,
+            "minimum_active_months": minimum_months,
+            "eligible_bookmakers": len(eligible),
+            "decision": (
+                "RELIABILITY_WEIGHT_RESEARCH_ELIGIBLE"
+                if len(eligible) >= 3
+                else "INSUFFICIENT_BOOKMAKER_CALIBRATION_EVIDENCE"
+            ),
+            "rankings": rankings,
+            "guardrail": (
+                "Diagnostic only. It uses one frozen T-60 to T-120 snapshot per settled match. "
+                "No bookmaker weights are applied to the active policy; an eligible result must "
+                "be frozen as a separate prospective challenger."
             ),
         }
 
@@ -313,7 +555,8 @@ class ExternalConsensusChallengerService:
             raise KeyError(policy_id)
         return self._decode_policy(dict(row))
 
-    def _inputs(self, match_id: int, study_id: str, decided_at: datetime) -> tuple[dict[str, Any] | None, str]:
+    def _inputs(self, match_id: int, study_id: str, decided_at: datetime,
+                config: dict[str, Any]) -> tuple[dict[str, Any] | None, str]:
         with self.db.connect() as connection:
             official = connection.execute("""SELECT * FROM official_odds_observations
                 WHERE match_id=? AND is_pre_match=1 AND datetime(observed_at)<=datetime(?)
@@ -322,6 +565,12 @@ class ExternalConsensusChallengerService:
                 WHERE match_id=? AND study_id=? AND datetime(predicted_at)<=datetime(?)
                 ORDER BY predicted_at DESC,created_at DESC LIMIT 1""",
                 (match_id, study_id, decided_at.isoformat())).fetchone()
+            pure_model = connection.execute("""SELECT * FROM model_predictions
+                WHERE match_id=? AND model_name='baseline' AND datetime(predicted_at)<=datetime(?)
+                ORDER BY predicted_at DESC,id DESC LIMIT 1""", (
+                    match_id,
+                    prediction["predicted_at"] if prediction else decided_at.isoformat(),
+                )).fetchone()
             external_time = connection.execute("""SELECT MAX(fetched_at) value
                 FROM external_bookmaker_odds WHERE match_id=? AND datetime(fetched_at)<=datetime(?)""",
                 (match_id, decided_at.isoformat())).fetchone()["value"]
@@ -332,14 +581,20 @@ class ExternalConsensusChallengerService:
             return None, "missing_official_sp"
         if not prediction:
             return None, "missing_frozen_model_prediction"
+        if not pure_model:
+            return None, "missing_independent_pure_model_prediction"
         if not external_time or not bookmaker_rows:
             return None, "missing_external_bookmakers"
-        if _minutes_between(decided_at, official["observed_at"]) > POLICY_CONFIG["maximum_official_sp_age_minutes"]:
+        if _minutes_between(decided_at, official["observed_at"]) > config["maximum_official_sp_age_minutes"]:
             return None, "stale_official_sp"
-        if _minutes_between(decided_at, external_time) > POLICY_CONFIG["maximum_external_age_minutes"]:
+        if _minutes_between(decided_at, external_time) > config["maximum_external_age_minutes"]:
             return None, "stale_external_consensus"
-        if _minutes_between(decided_at, prediction["predicted_at"]) > POLICY_CONFIG["maximum_model_age_minutes"]:
+        if _minutes_between(decided_at, prediction["predicted_at"]) > config["maximum_model_age_minutes"]:
             return None, "stale_frozen_model_prediction"
+        if _minutes_between(decided_at, pure_model["predicted_at"]) > config["maximum_model_age_minutes"]:
+            return None, "stale_independent_pure_model_prediction"
+        if _parse_time(pure_model["predicted_at"]) > _parse_time(prediction["predicted_at"]):
+            return None, "pure_model_prediction_after_frozen_prediction"
         deduplicated: dict[str, dict[str, Any]] = {}
         for raw_row in bookmaker_rows:
             row = dict(raw_row)
@@ -348,13 +603,14 @@ class ExternalConsensusChallengerService:
                 age = _minutes_between(decided_at, row["last_update"])
             except (TypeError, ValueError):
                 continue
-            if 0 <= age <= POLICY_CONFIG["maximum_bookmaker_last_update_age_minutes"]:
+            if 0 <= age <= config["maximum_bookmaker_last_update_age_minutes"]:
                 deduplicated[key] = row
-        if len(deduplicated) < POLICY_CONFIG["minimum_bookmakers"]:
+        if len(deduplicated) < config["minimum_bookmakers"]:
             return None, "bookmaker_count<10"
         return {
             "official": dict(official),
             "prediction": dict(prediction),
+            "pure_model": dict(pure_model),
             "external_fetched_at": external_time,
             "bookmakers": list(deduplicated.values()),
         }, ""
@@ -363,6 +619,7 @@ class ExternalConsensusChallengerService:
                         inputs: dict[str, Any], decided_at: datetime) -> dict[str, Any]:
         official = inputs["official"]
         prediction = inputs["prediction"]
+        pure_model = inputs["pure_model"]
         books = inputs["bookmakers"]
         bookmaker_probabilities: dict[str, list[float]] = {key: [] for key in OUTCOMES}
         for book in books:
@@ -372,34 +629,35 @@ class ExternalConsensusChallengerService:
                 bookmaker_probabilities[key].append(inverse[key] / total)
         external = {key: fmean(bookmaker_probabilities[key]) for key in OUTCOMES}
         dispersion = {key: pstdev(bookmaker_probabilities[key]) for key in OUTCOMES}
+        pure_model_probability = {
+            key: float(pure_model[f"p_{key}"])
+            for key in OUTCOMES
+        }
+        config = policy["config"]
+        fused = _fused_probabilities(external, pure_model_probability, config)
+        standard_error, uncertainty, effective_count = _consensus_uncertainty(
+            dispersion, len(books), config
+        )
         candidates: list[dict[str, Any]] = []
         for outcome in OUTCOMES:
-            model_probability = float(prediction[f"p_{outcome}"])
-            residual = max(
-                -POLICY_CONFIG["model_residual_cap"],
-                min(POLICY_CONFIG["model_residual_cap"], model_probability - external[outcome]),
-            )
-            probability = external[outcome] + POLICY_CONFIG["model_residual_weight"] * residual
-            uncertainty = max(
-                POLICY_CONFIG["minimum_probability_uncertainty"],
-                POLICY_CONFIG["dispersion_uncertainty_z"] * dispersion[outcome],
-            )
-            conservative_probability = max(0.01, probability - uncertainty)
+            probability = fused[outcome]
+            conservative_probability = max(0.01, probability - uncertainty[outcome])
             sp = float(official[f"{outcome}_sp"])
             expected_ev = probability * sp - 1.0
             conservative_ev = conservative_probability * sp - 1.0
             reasons: list[str] = []
-            if not POLICY_CONFIG["minimum_odds"] <= sp <= POLICY_CONFIG["maximum_odds"]:
+            if not config["minimum_odds"] <= sp <= config["maximum_odds"]:
                 reasons.append("selected_sp_outside_[1.5,6.0]")
-            if dispersion[outcome] > POLICY_CONFIG["maximum_probability_dispersion"]:
+            if dispersion[outcome] > config["maximum_probability_dispersion"]:
                 reasons.append("bookmaker_probability_dispersion>0.03")
-            if expected_ev < POLICY_CONFIG["minimum_expected_ev"]:
+            if expected_ev < config["minimum_expected_ev"]:
                 reasons.append("expected_ev<0.03")
-            if conservative_ev < POLICY_CONFIG["minimum_conservative_ev"]:
+            if conservative_ev < config["minimum_conservative_ev"]:
                 reasons.append("conservative_ev<0")
             candidates.append({
                 "outcome": outcome, "sp": sp, "probability": probability,
                 "conservative_probability": conservative_probability,
+                "probability_uncertainty": uncertainty[outcome],
                 "expected_ev": expected_ev, "conservative_ev": conservative_ev,
                 "reasons": reasons,
             })
@@ -410,7 +668,10 @@ class ExternalConsensusChallengerService:
             "official_odds_observation_id": official["id"],
             "external_fetched_at": inputs["external_fetched_at"],
             "source_prediction_id": prediction["prediction_id"],
-            "external": external, "dispersion": dispersion, "selected": selected, "action": action,
+            "pure_model_prediction_id": pure_model["id"],
+            "external": external, "dispersion": dispersion, "standard_error": standard_error,
+            "fused": fused, "effective_bookmaker_count": effective_count,
+            "selected": selected, "action": action,
         }
         kickoff = _parse_time(match["kickoff_time"])
         return {
@@ -421,14 +682,20 @@ class ExternalConsensusChallengerService:
             "official_odds_observation_id": official["id"],
             "external_fetched_at": inputs["external_fetched_at"],
             "source_prediction_id": prediction["prediction_id"],
+            "pure_model_prediction_id": pure_model["id"],
             "decided_at": decided_at.isoformat(), "kickoff_time": match["kickoff_time"],
             "minutes_to_kickoff": (kickoff - decided_at).total_seconds() / 60.0,
             "bookmaker_count": len(books),
+            "effective_bookmaker_count": effective_count,
             **{f"external_{key}_probability": external[key] for key in OUTCOMES},
             **{f"external_{key}_std": dispersion[key] for key in OUTCOMES},
+            **{f"external_{key}_sem": standard_error[key] for key in OUTCOMES},
+            **{f"pure_model_{key}_probability": pure_model_probability[key] for key in OUTCOMES},
+            **{f"fused_{key}_probability": fused[key] for key in OUTCOMES},
             "selected_outcome": selected["outcome"], "selected_sp": selected["sp"],
             "selected_probability": selected["probability"],
             "conservative_probability": selected["conservative_probability"],
+            "selected_probability_uncertainty": selected["probability_uncertainty"],
             "expected_ev": selected["expected_ev"], "conservative_ev": selected["conservative_ev"],
             "action": action, "blockers_json": _canonical(selected["reasons"]),
             "payload_hash": hashlib.sha256(_canonical(payload).encode()).hexdigest(),
@@ -464,7 +731,7 @@ class ExternalConsensusChallengerService:
         return output
 
     @staticmethod
-    def _primary_decisions(rows: list[dict[str, Any]], config: dict[str, Any]) -> list[dict[str, Any]]:
+    def _horizon_decisions(rows: list[dict[str, Any]], config: dict[str, Any]) -> list[dict[str, Any]]:
         lower = float(config["primary_horizon_minutes"])
         upper = lower + float(config["horizon_tolerance_minutes"])
         in_horizon = [row for row in rows if lower <= float(row["minutes_to_kickoff"]) <= upper]
@@ -475,8 +742,13 @@ class ExternalConsensusChallengerService:
                 float(current["minutes_to_kickoff"]) - lower
             ):
                 by_match[int(row["match_id"])] = row
+        return sorted(by_match.values(), key=lambda row: row["kickoff_time"])
+
+    @classmethod
+    def _primary_decisions(cls, rows: list[dict[str, Any]], config: dict[str, Any]) -> list[dict[str, Any]]:
+        horizon_rows = cls._horizon_decisions(rows, config)
         by_day: dict[str, list[dict[str, Any]]] = {}
-        for row in by_match.values():
+        for row in horizon_rows:
             by_day.setdefault(str(row["kickoff_time"])[:10], []).append(row)
         selected: list[dict[str, Any]] = []
         for day in sorted(by_day):

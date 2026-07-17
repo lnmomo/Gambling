@@ -1,6 +1,6 @@
 {
   "method": "profit daily allocation readiness",
-  "generated_at": "2026-07-16T06:41:18.774252+00:00",
+  "generated_at": "2026-07-17T06:34:10.526646+00:00",
   "daily_budget": 100.0,
   "allocated_budget": 0,
   "cash_reserved": 100.0,
@@ -25,34 +25,34 @@
   "official_sp_evidence_quality": {
     "decision": "EVIDENCE_DEGRADED",
     "research_usable": false,
-    "failed_checks": 1,
-    "pending_checks": 2,
+    "failed_checks": 2,
+    "pending_checks": 0,
     "critical_checks": 0,
     "summary": {
-      "observations": 549,
-      "observed_matches": 69,
-      "pre_match_matches": 69,
-      "pre_match_observations": 549,
+      "observations": 929,
+      "observed_matches": 72,
+      "pre_match_matches": 72,
+      "pre_match_observations": 916,
       "first_observed_at": "2026-06-19T13:11:45.392010+00:00",
-      "last_observed_at": "2026-07-16T06:39:23.213553+00:00",
-      "last_successful_fetch_at": "2026-07-16T06:39:24.551174+00:00",
+      "last_observed_at": "2026-07-17T06:32:34.466203+00:00",
+      "last_successful_fetch_at": "2026-07-17T06:32:35.728994+00:00",
       "freshness_hours": 0.03,
       "measurement_start": "2026-07-16T03:10:59.705959+00:00",
-      "availability_observations": 391,
-      "offered_matches": 17,
-      "captured_offered_matches": 16,
-      "closing_eligible_matches": 0,
-      "settlement_eligible_matches": 0,
-      "pre_match_sp_coverage": 0.9412,
-      "closing_1h_coverage": 0.0,
-      "settlement_coverage": 0.0,
-      "stale_unsettled_matches": 0,
-      "official_result_observations": 433,
-      "official_result_last_observed_at": "2026-07-16T05:08:48.291588+00:00",
+      "availability_observations": 799,
+      "offered_matches": 20,
+      "captured_offered_matches": 19,
+      "closing_eligible_matches": 10,
+      "settlement_eligible_matches": 10,
+      "pre_match_sp_coverage": 0.95,
+      "closing_1h_coverage": 0.1,
+      "settlement_coverage": 0.9,
+      "stale_unsettled_matches": 1,
+      "official_result_observations": 446,
+      "official_result_last_observed_at": "2026-07-17T05:49:46.177547+00:00",
       "official_result_conflicts": 0,
       "archived_result_rows_outside_local_pool": 265,
       "official_result_ambiguous": 0,
-      "average_observations_per_match": 7.96
+      "average_observations_per_match": 12.72
     }
   },
   "strategies": [
@@ -331,7 +331,7 @@
       "status": "EXTERNAL_CONSENSUS_PROSPECTIVE_COLLECTING",
       "historically_supported": true,
       "official_decision": "OFFICIAL_SP_PROSPECTIVE_BLOCKED",
-      "pool_passed_scorer": 0,
+      "pool_passed_scorer": 1,
       "settled_selected_snapshots": 0,
       "required_settled_selected_snapshots": 200,
       "active_months": 0,
@@ -409,20 +409,20 @@
         "path_grain": "monthly",
         "reason": "No settled official-SP monthly return series is available yet."
       },
-      "action": "WAIT_FOR_ELIGIBLE_OFFICIAL_POOL",
-      "reason": "The strategy is historically supported, but the current official pool has no eligible scored selections.",
+      "action": "WAIT_FOR_OFFICIAL_SP_SETTLEMENT",
+      "reason": "The strategy has eligible official-pool selections, but not enough settled official-SP shadow samples for allocation promotion.",
       "top_blockers": [
         {
-          "reason": "expected_ev<0.03",
-          "decisions": 50
+          "reason": "conservative_ev<0",
+          "decisions": 5
         },
         {
-          "reason": "conservative_ev<0",
-          "decisions": 50
+          "reason": "expected_ev<0.03",
+          "decisions": 4
         },
         {
           "reason": "selected_sp_outside_[1.5,6.0]",
-          "decisions": 10
+          "decisions": 2
         }
       ],
       "deployment_blockers": [

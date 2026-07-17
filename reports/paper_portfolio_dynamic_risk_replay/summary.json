@@ -1,0 +1,140 @@
+{
+  "method": "settlement-aware replay of immutable paper portfolio risk policy",
+  "source": "reports\\feature_enriched_market_anchored_i2_formal_avg_close_v1\\selected.csv",
+  "source_rows": 335,
+  "unit_stake": 10.0,
+  "daily_budget": 100.0,
+  "risk_policy": {
+    "version": "settled-day-drawdown-shadow-v2",
+    "enforcement": "SHADOW_ONLY",
+    "half_stake_losing_days": 999,
+    "pause_losing_days": 2,
+    "half_stake_drawdown_budget_multiple": 999.0,
+    "pause_drawdown_budget_multiple": 999.0,
+    "pause_days": 3,
+    "recovery_multiplier": 1.0,
+    "half_stake_multiplier": 1.0,
+    "maximum_league_daily_share": 0.4,
+    "maximum_outcome_daily_share": 0.5,
+    "maximum_longshot_daily_share": 0.25,
+    "longshot_odds_threshold": 4.0
+  },
+  "fixed_stake": {
+    "bets": 335,
+    "staked": 3350.0,
+    "profit": 439.9,
+    "roi_pct": 13.13,
+    "max_drawdown": 115.8
+  },
+  "dynamic_risk": {
+    "bets": 238,
+    "skipped": 97,
+    "staked": 2380.0,
+    "profit": 333.8,
+    "roi_pct": 14.03,
+    "max_drawdown": 109.8,
+    "paused_decisions": 97,
+    "reduced_decisions": 0,
+    "recovery_decisions": 96
+  },
+  "multi_window": [
+    {
+      "start": "2022-08-01",
+      "fixed_stake": {
+        "bets": 335,
+        "staked": 3350.0,
+        "profit": 439.9,
+        "roi_pct": 13.13,
+        "max_drawdown": 115.8
+      },
+      "dynamic_risk": {
+        "bets": 238,
+        "skipped": 97,
+        "staked": 2380.0,
+        "profit": 333.8,
+        "roi_pct": 14.03,
+        "max_drawdown": 109.8,
+        "paused_decisions": 97,
+        "reduced_decisions": 0,
+        "recovery_decisions": 96
+      },
+      "profit_retention": 0.7588,
+      "drawdown_ratio": 0.9482
+    },
+    {
+      "start": "2023-07-01",
+      "fixed_stake": {
+        "bets": 255,
+        "staked": 2550.0,
+        "profit": 379.7,
+        "roi_pct": 14.89,
+        "max_drawdown": 115.8
+      },
+      "dynamic_risk": {
+        "bets": 178,
+        "skipped": 77,
+        "staked": 1780.0,
+        "profit": 235.7,
+        "roi_pct": 13.24,
+        "max_drawdown": 109.8,
+        "paused_decisions": 77,
+        "reduced_decisions": 0,
+        "recovery_decisions": 73
+      },
+      "profit_retention": 0.6208,
+      "drawdown_ratio": 0.9482
+    },
+    {
+      "start": "2024-07-01",
+      "fixed_stake": {
+        "bets": 176,
+        "staked": 1760.0,
+        "profit": 344.4,
+        "roi_pct": 19.57,
+        "max_drawdown": 115.8
+      },
+      "dynamic_risk": {
+        "bets": 122,
+        "skipped": 54,
+        "staked": 1220.0,
+        "profit": 166.5,
+        "roi_pct": 13.65,
+        "max_drawdown": 109.8,
+        "paused_decisions": 54,
+        "reduced_decisions": 0,
+        "recovery_decisions": 49
+      },
+      "profit_retention": 0.4834,
+      "drawdown_ratio": 0.9482
+    },
+    {
+      "start": "2025-07-01",
+      "fixed_stake": {
+        "bets": 87,
+        "staked": 870.0,
+        "profit": 203.2,
+        "roi_pct": 23.36,
+        "max_drawdown": 86.6
+      },
+      "dynamic_risk": {
+        "bets": 60,
+        "skipped": 27,
+        "staked": 600.0,
+        "profit": 31.8,
+        "roi_pct": 5.3,
+        "max_drawdown": 109.8,
+        "paused_decisions": 27,
+        "reduced_decisions": 0,
+        "recovery_decisions": 26
+      },
+      "profit_retention": 0.1565,
+      "drawdown_ratio": 1.2679
+    }
+  ],
+  "promotion_decision": "REJECT_DYNAMIC_RISK_PROMOTION",
+  "guardrails": [
+    "Risk state for each date uses only earlier settled days.",
+    "The current date result is applied only after its stake is frozen.",
+    "This replay evaluates drawdown control, not strategy promotion or official-SP profitability."
+  ]
+}

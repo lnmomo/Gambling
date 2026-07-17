@@ -73,6 +73,108 @@ def test_hourly_pipeline_runs_dependencies_before_prospective_capture(tmp_path, 
     assert seen.index("prospective_research_capture") < seen.index("profit_scorer_official_sp_validation")
 
 
+def test_startup_pipeline_waits_for_initial_official_sync(tmp_path, monkeypatch):
+    database = Database(Path(tmp_path) / "scheduler-startup-order.db")
+    database.initialize()
+    scheduler = BackgroundAgentScheduler(
+        Repository(database), TaskRunnerService(database), interval_seconds=60
+    )
+    events: list[str] = []
+
+    def wait_for_official(_seconds):
+        events.append("waited_for_official")
+        return True
+
+    scheduler.initial_official_sync_complete.wait = wait_for_official
+    scheduler.stop_event.wait = lambda _seconds: True
+    monkeypatch.setattr(
+        scheduler,
+        "_run_task",
+        lambda task_name, _action: events.append(task_name),
+    )
+
+    scheduler._pipeline_loop([("external_odds_news_weather_sync", lambda: {})], 60, True)
+
+    assert events == ["waited_for_official", "external_odds_news_weather_sync"]
+
+
+def test_capture_warnings_expose_actionable_input_blockers(tmp_path, monkeypatch):
+    database = Database(Path(tmp_path) / "scheduler-capture-blockers.db")
+    database.initialize()
+    scheduler = BackgroundAgentScheduler(Repository(database), TaskRunnerService(database))
+    monkeypatch.setattr(
+        "football_agents.scheduler.ExternalConsensusChallengerService",
+        lambda *_args: SimpleNamespace(capture=lambda _limit: {
+            "decisions": 0,
+            "warnings": ["settled_selections<200"],
+            "blocker_counts": [{"reason": "stale_external_consensus", "matches": 6}],
+            "report": {},
+        }),
+    )
+    monkeypatch.setattr(scheduler, "_write_report", lambda *_args: None)
+
+    report = scheduler._capture_external_consensus_challenger()
+
+    assert report["warnings"] == ["settled_selections<200", "stale_external_consensus:6"]
+
+
+def test_external_refresh_immediately_runs_consensus_and_allocation_checks(tmp_path, monkeypatch):
+    database = Database(Path(tmp_path) / "scheduler-post-external.db")
+    database.initialize()
+    scheduler = BackgroundAgentScheduler(Repository(database), TaskRunnerService(database))
+    child_tasks: list[str] = []
+    monkeypatch.setattr(
+        "football_agents.scheduler.DataEnrichmentService",
+        lambda _repository: SimpleNamespace(
+            sync=lambda _limit, evaluate: {
+                "matches": 10, "market_odds": 7, "market_target_matches": 4,
+                "evaluate": evaluate,
+            }
+        ),
+    )
+    monkeypatch.setattr(
+        scheduler,
+        "_run_task",
+        lambda task_name, _action: child_tasks.append(task_name),
+    )
+
+    report = scheduler._sync_external_news_weather()
+
+    assert report["market_odds"] == 7
+    assert report["evaluate"] is False
+    assert child_tasks == [
+        "feature_build_post_external",
+        "prospective_research_post_external_capture",
+        "external_consensus_challenger_post_external_capture",
+        "profit_allocation_readiness_post_external",
+    ]
+
+
+def test_external_refresh_skips_capture_chain_without_near_horizon_matches(tmp_path, monkeypatch):
+    database = Database(Path(tmp_path) / "scheduler-no-horizon.db")
+    database.initialize()
+    scheduler = BackgroundAgentScheduler(Repository(database), TaskRunnerService(database))
+    child_tasks: list[str] = []
+    monkeypatch.setattr(
+        "football_agents.scheduler.DataEnrichmentService",
+        lambda _repository: SimpleNamespace(
+            sync=lambda _limit, evaluate: {
+                "matches": 10, "market_odds": 0, "market_target_matches": 0,
+                "evaluate": evaluate,
+            }
+        ),
+    )
+    monkeypatch.setattr(
+        scheduler,
+        "_run_task",
+        lambda task_name, _action: child_tasks.append(task_name),
+    )
+
+    scheduler._sync_external_news_weather()
+
+    assert child_tasks == []
+
+
 def test_qwen_terminal_auth_and_quota_errors_trip_circuit_breaker(tmp_path):
     database = Database(Path(tmp_path) / "scheduler-qwen-breaker.db")
     database.initialize()
@@ -116,6 +218,8 @@ def test_official_sp_quality_runs_after_each_official_sync(tmp_path, monkeypatch
         "paper_portfolio_settlement",
         "official_sp_evidence_quality",
         "prospective_research_critical_capture",
+        "external_consensus_challenger_critical_capture",
+        "profit_allocation_readiness_critical",
     ]
 
 

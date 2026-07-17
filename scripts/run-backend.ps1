@@ -1,3 +1,29 @@
 $ErrorActionPreference = "Stop"
 
-.\.venv\Scripts\python.exe -m football_agents.cli serve
+$projectRoot = Split-Path -Parent $PSScriptRoot
+$python = Join-Path $projectRoot ".venv\Scripts\python.exe"
+$runtimeDir = Join-Path $projectRoot "data\runtime"
+$logPath = Join-Path $runtimeDir "backend-service.log"
+$stdoutPath = Join-Path $runtimeDir "backend-service.stdout.log"
+$stderrPath = Join-Path $runtimeDir "backend-service.stderr.log"
+
+if (-not (Test-Path -LiteralPath $python)) {
+    throw "Virtual environment Python was not found: $python"
+}
+
+New-Item -ItemType Directory -Path $runtimeDir -Force | Out-Null
+Set-Location -LiteralPath $projectRoot
+
+"[$([DateTimeOffset]::Now.ToString('o'))] backend service starting" | Add-Content -LiteralPath $logPath
+$process = Start-Process `
+    -FilePath $python `
+    -ArgumentList "-m", "football_agents.cli", "serve", "--host", "127.0.0.1", "--port", "8000" `
+    -WorkingDirectory $projectRoot `
+    -NoNewWindow `
+    -RedirectStandardOutput $stdoutPath `
+    -RedirectStandardError $stderrPath `
+    -PassThru `
+    -Wait
+$exitCode = $process.ExitCode
+"[$([DateTimeOffset]::Now.ToString('o'))] backend service exited with code $exitCode" | Add-Content -LiteralPath $logPath
+exit $exitCode

@@ -112,3 +112,22 @@ def test_capture_reports_ineligible_status_without_green_zero_output(tmp_path: P
     assert report["eligible_pre_match"] == 0
     assert report["predictions"] == 0
     assert report["skip_reasons"] == {"ineligible_status": 1}
+
+
+def test_capture_limit_prioritizes_active_matches_over_closed_rows(tmp_path: Path) -> None:
+    database = Database(tmp_path / "active-priority.db")
+    database.initialize()
+    repository = Repository(database)
+    _seed_match(repository, status="CANCELLED", official_match_id="sporttery-closed-first")
+    active = _seed_match(repository, status="scheduled", official_match_id="sporttery-active-second")
+    service = ProspectiveResearchService(database, repository, DecisionWorkflow(repository))
+    freeze = service.freeze_current_model()
+    study = service.register_study("active-priority", "active rows must not be displaced", freeze["freeze_id"], 1, 0)
+
+    report = service.capture(1, study["study_id"])
+
+    assert report["eligible_pre_match"] == 1
+    assert report["predictions"] == 1
+    with database.connect() as connection:
+        captured = connection.execute("SELECT match_id FROM prospective_predictions").fetchone()
+    assert captured["match_id"] == active["id"]

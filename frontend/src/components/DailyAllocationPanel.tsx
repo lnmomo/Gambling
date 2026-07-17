@@ -10,6 +10,17 @@ type PaperRun = {
   allocated_budget: number;
   cash_reserved: number;
   status: "HOLD" | "ALLOCATED" | "NO_ELIGIBLE_POSITIONS";
+  risk_multiplier: number | null;
+};
+
+type RiskState = {
+  status: "NORMAL" | "REDUCED" | "PAUSED" | "RECOVERY";
+  enforcement: "ACTIVE" | "SHADOW_ONLY";
+  recommended_stake_multiplier: number;
+  applied_stake_multiplier: number;
+  consecutive_losing_settlement_days: number;
+  current_drawdown: number;
+  days_since_last_settlement: number | null;
 };
 
 type PaperPosition = {
@@ -46,6 +57,7 @@ type PaperPortfolio = {
   closing_sp_coverage: number;
   average_clv: number | null;
   positive_clv_rate: number | null;
+  risk_state: RiskState;
   recent_runs: PaperRun[];
   recent_positions: PaperPosition[];
   guardrail: string;
@@ -65,6 +77,15 @@ const empty: PaperPortfolio = {
   closing_sp_coverage: 0,
   average_clv: null,
   positive_clv_rate: null,
+  risk_state: {
+    status: "NORMAL",
+    enforcement: "SHADOW_ONLY",
+    recommended_stake_multiplier: 1,
+    applied_stake_multiplier: 1,
+    consecutive_losing_settlement_days: 0,
+    current_drawdown: 0,
+    days_since_last_settlement: null,
+  },
   recent_runs: [],
   recent_positions: [],
   guardrail: "仅进行纸面记账，不连接真实下单或支付接口。",
@@ -97,6 +118,9 @@ export default function DailyAllocationPanel({matches: _matches}: {matches: Offi
       <span>累计收益<b>¥{data.profit.toFixed(2)}</b></span>
       <span>ROI<b>{data.roi_pct.toFixed(2)}%</b></span>
       <span>最大回撤<b>¥{data.max_drawdown.toFixed(2)}</b></span>
+      <span>动态风险状态<b>{data.risk_state.status}</b></span>
+      <span>风险规则模式<b>{data.risk_state.enforcement === "ACTIVE" ? "已启用" : "影子观察"}</b></span>
+      <span>建议 / 实际仓位倍数<b>{data.risk_state.recommended_stake_multiplier.toFixed(2)} / {data.risk_state.applied_stake_multiplier.toFixed(2)}</b></span>
       <span>平均 CLV<b>{pct(data.average_clv)}</b></span>
     </div>
     {latest && <p style={{padding: "0 16px"}}>

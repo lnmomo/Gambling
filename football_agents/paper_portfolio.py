@@ -15,7 +15,25 @@ from .profit_strategy_registry import list_profit_strategy_packages
 
 CHINA_TZ = timezone(timedelta(hours=8))
 MAX_LEAGUE_DAILY_SHARE = 0.40
+MAX_OUTCOME_DAILY_SHARE = 0.50
+MAX_LONGSHOT_DAILY_SHARE = 0.25
+LONGSHOT_ODDS_THRESHOLD = 4.00
 DEFAULT_MAX_SINGLE_STAKE = 10.0
+RISK_POLICY: dict[str, Any] = {
+    "version": "settled-day-drawdown-shadow-v2",
+    "enforcement": "SHADOW_ONLY",
+    "half_stake_losing_days": 999,
+    "pause_losing_days": 2,
+    "half_stake_drawdown_budget_multiple": 999.0,
+    "pause_drawdown_budget_multiple": 999.0,
+    "pause_days": 3,
+    "recovery_multiplier": 1.0,
+    "half_stake_multiplier": 1.0,
+    "maximum_league_daily_share": MAX_LEAGUE_DAILY_SHARE,
+    "maximum_outcome_daily_share": MAX_OUTCOME_DAILY_SHARE,
+    "maximum_longshot_daily_share": MAX_LONGSHOT_DAILY_SHARE,
+    "longshot_odds_threshold": LONGSHOT_ODDS_THRESHOLD,
+}
 
 
 def _canonical(value: Any) -> str:
@@ -52,6 +70,74 @@ def _quarter_kelly(probability: float, odds: float) -> float:
     return max(0.0, min(0.10, full * 0.25))
 
 
+def settled_risk_state(
+    daily: list[dict[str, Any]],
+    as_of: datetime,
+    daily_budget: float,
+    last_settled_at: datetime | None,
+) -> dict[str, Any]:
+    equity = peak = max_drawdown = 0.0
+    for row in daily:
+        equity += float(row["profit"])
+        peak = max(peak, equity)
+        max_drawdown = max(max_drawdown, peak - equity)
+    current_drawdown = max(0.0, peak - equity)
+    losing_days = 0
+    for row in reversed(daily):
+        if float(row["profit"]) < 0:
+            losing_days += 1
+        elif float(row["profit"]) > 0:
+            break
+    days_since_last_settlement = (
+        max(0, (as_of - last_settled_at).days) if last_settled_at is not None else None
+    )
+    pause_trigger = (
+        losing_days >= int(RISK_POLICY["pause_losing_days"])
+        or current_drawdown >= daily_budget * float(RISK_POLICY["pause_drawdown_budget_multiple"])
+    )
+    last_day_lost = bool(daily and float(daily[-1]["profit"]) < 0)
+    in_pause = bool(
+        pause_trigger
+        and last_day_lost
+        and days_since_last_settlement is not None
+        and days_since_last_settlement < int(RISK_POLICY["pause_days"])
+    )
+    if in_pause:
+        multiplier, status = 0.0, "PAUSED"
+    elif pause_trigger:
+        multiplier = float(RISK_POLICY["recovery_multiplier"])
+        status = "RECOVERY"
+    elif (
+        losing_days >= int(RISK_POLICY["half_stake_losing_days"])
+        or current_drawdown >= daily_budget * float(
+            RISK_POLICY["half_stake_drawdown_budget_multiple"]
+        )
+    ):
+        multiplier = float(RISK_POLICY["half_stake_multiplier"])
+        status = "REDUCED"
+    else:
+        multiplier, status = 1.0, "NORMAL"
+    applied_multiplier = multiplier if RISK_POLICY["enforcement"] == "ACTIVE" else 1.0
+    return {
+        "policy": RISK_POLICY,
+        "policy_hash": _hash(RISK_POLICY),
+        "status": status,
+        "stake_multiplier": multiplier,
+        "recommended_stake_multiplier": multiplier,
+        "applied_stake_multiplier": applied_multiplier,
+        "enforcement": RISK_POLICY["enforcement"],
+        "settled_days": len(daily),
+        "consecutive_losing_settlement_days": losing_days,
+        "equity": round(equity, 2),
+        "peak_equity": round(peak, 2),
+        "current_drawdown": round(current_drawdown, 2),
+        "max_drawdown": round(max_drawdown, 2),
+        "last_settled_at": last_settled_at.isoformat() if last_settled_at else None,
+        "days_since_last_settlement": days_since_last_settlement,
+        "uses_only_settled_ledger": True,
+    }
+
+
 class PaperPortfolioService:
     """Create and settle an immutable paper-only portfolio from promoted evidence."""
 
@@ -74,6 +160,23 @@ class PaperPortfolioService:
                     **package, "source_type": "PROFIT_SCORER", "artifact_hash": artifact_hash,
                 }
         return output
+
+    def _risk_state(self, as_of: datetime, daily_budget: float) -> dict[str, Any]:
+        with self.database.connect() as connection:
+            rows = connection.execute("""SELECT s.settled_at,s.profit
+                FROM paper_portfolio_settlements s
+                WHERE unixepoch(s.settled_at)<=unixepoch(?)
+                ORDER BY s.settled_at,s.settlement_id""", (as_of.isoformat(),)).fetchall()
+        by_day: dict[str, float] = {}
+        last_settled_at: datetime | None = None
+        for row in rows:
+            settled_at = _parse_time(row["settled_at"]).astimezone(CHINA_TZ)
+            by_day[settled_at.date().isoformat()] = (
+                by_day.get(settled_at.date().isoformat(), 0.0) + float(row["profit"])
+            )
+            last_settled_at = _parse_time(row["settled_at"]).astimezone(timezone.utc)
+        daily = [{"date": day, "profit": round(by_day[day], 2)} for day in sorted(by_day)]
+        return settled_risk_state(daily, as_of, daily_budget, last_settled_at)
 
     def _strategy_candidates(self, strategy: dict[str, Any], as_of: str) -> list[dict[str, Any]]:
         if strategy.get("source_type") == "EXTERNAL_CONSENSUS":
@@ -156,6 +259,10 @@ class PaperPortfolioService:
         now_text = now.isoformat()
         allocation_date = now.astimezone(CHINA_TZ).date().isoformat()
         budget = float(settings.profit_daily_budget if daily_budget is None else daily_budget)
+        risk_state = self._risk_state(now, budget)
+        recommended_risk_multiplier = float(risk_state["recommended_stake_multiplier"])
+        risk_multiplier = float(risk_state["applied_stake_multiplier"])
+        effective_budget = round(budget * risk_multiplier, 2)
         readiness = build_profit_allocation_readiness(budget)
         readiness_hash = _hash(readiness)
         strategies = self._strategy_map()
@@ -185,6 +292,16 @@ class PaperPortfolioService:
                     FROM paper_portfolio_positions p JOIN matches m ON m.id=p.match_id
                     WHERE p.allocation_date=? GROUP BY m.league""", (allocation_date,)).fetchall()
             }
+            outcome_staked = {
+                str(row[0]): float(row[1])
+                for row in connection.execute("""SELECT selected_outcome,COALESCE(SUM(stake),0)
+                    FROM paper_portfolio_positions WHERE allocation_date=?
+                    GROUP BY selected_outcome""", (allocation_date,)).fetchall()
+            }
+            longshot_staked = float(connection.execute("""SELECT COALESCE(SUM(stake),0)
+                FROM paper_portfolio_positions WHERE allocation_date=? AND selected_sp>=?""", (
+                    allocation_date, LONGSHOT_ODDS_THRESHOLD,
+                )).fetchone()[0])
             occupied_matches = {
                 int(row[0]) for row in connection.execute(
                     "SELECT match_id FROM paper_portfolio_positions"
@@ -197,7 +314,9 @@ class PaperPortfolioService:
             if not strategy:
                 skipped["missing_frozen_scorer_artifact"] = skipped.get("missing_frozen_scorer_artifact", 0) + 1
                 continue
-            strategy_budget = max(0.0, float(allocation.get("paper_budget") or 0))
+            strategy_budget = max(
+                0.0, float(allocation.get("paper_budget") or 0) * risk_multiplier
+            )
             strategy_remaining = max(0.0, strategy_budget - strategy_staked.get(strategy_id, 0.0))
             max_bets = max(1, int((strategy.get("selection") or {}).get("max_bets_per_day") or 1))
             max_single = min(
@@ -206,7 +325,11 @@ class PaperPortfolioService:
             )
             placed_for_strategy = strategy_position_count.get(strategy_id, 0)
             for row in self._strategy_candidates(strategy, now_text):
-                if placed_for_strategy >= max_bets or strategy_remaining <= 0 or staked_today >= budget:
+                if (
+                    placed_for_strategy >= max_bets
+                    or strategy_remaining <= 0
+                    or staked_today >= effective_budget
+                ):
                     break
                 if int(row["match_id"]) in occupied_matches:
                     skipped["match_already_in_portfolio"] = skipped.get("match_already_in_portfolio", 0) + 1
@@ -225,14 +348,33 @@ class PaperPortfolioService:
                         "current_ev_below_frozen_threshold", 0
                     ) + 1
                     continue
-                league_room = max(0.0, budget * MAX_LEAGUE_DAILY_SHARE - league_staked.get(str(row["league"]), 0.0))
+                outcome = str(row["selected_outcome"]).upper()
+                league_room = max(
+                    0.0,
+                    effective_budget * MAX_LEAGUE_DAILY_SHARE
+                    - league_staked.get(str(row["league"]), 0.0),
+                )
+                outcome_room = max(
+                    0.0,
+                    effective_budget * MAX_OUTCOME_DAILY_SHARE
+                    - outcome_staked.get(outcome, 0.0),
+                )
+                longshot_room = (
+                    max(
+                        0.0,
+                        effective_budget * MAX_LONGSHOT_DAILY_SHARE - longshot_staked,
+                    )
+                    if odds >= LONGSHOT_ODDS_THRESHOLD else effective_budget
+                )
                 fraction = _quarter_kelly(probability, odds)
                 stake = round(min(
-                    budget * fraction,
+                    effective_budget * fraction,
                     max_single,
                     strategy_remaining,
-                    budget - staked_today,
+                    effective_budget - staked_today,
                     league_room,
+                    outcome_room,
+                    longshot_room,
                 ), 2)
                 if stake <= 0:
                     skipped["zero_after_risk_caps"] = skipped.get("zero_after_risk_caps", 0) + 1
@@ -250,6 +392,8 @@ class PaperPortfolioService:
                     "predicted_probability": probability,
                     "predicted_ev": ev,
                     "stake": stake,
+                    "risk_policy_hash": risk_state["policy_hash"],
+                    "risk_multiplier": risk_multiplier,
                     "placed_at": now_text,
                 }
                 positions.append({
@@ -283,9 +427,12 @@ class PaperPortfolioService:
                 strategy_staked[strategy_id] = strategy_staked.get(strategy_id, 0.0) + stake
                 strategy_position_count[strategy_id] = strategy_position_count.get(strategy_id, 0) + 1
                 league_staked[str(row["league"])] = league_staked.get(str(row["league"]), 0.0) + stake
+                outcome_staked[outcome] = outcome_staked.get(outcome, 0.0) + stake
+                if odds >= LONGSHOT_ODDS_THRESHOLD:
+                    longshot_staked += stake
                 occupied_matches.add(int(row["match_id"]))
 
-        if readiness.get("decision") != "PAPER_ALLOCATION_READY":
+        if readiness.get("decision") != "PAPER_ALLOCATION_READY" or risk_multiplier <= 0:
             status = "HOLD"
         elif positions:
             status = "ALLOCATED"
@@ -297,12 +444,18 @@ class PaperPortfolioService:
             "readiness_allocations": readiness.get("allocations", []),
             "skipped": skipped,
             "position_count": len(positions),
+            "risk_state": risk_state,
+            "effective_daily_budget": effective_budget,
             "guardrail": "Paper ledger only; no external order or payment interface is called.",
         }
         run_payload = {
             "decision_at": now_text,
             "allocation_date": allocation_date,
             "daily_budget": budget,
+            "risk_policy_hash": risk_state["policy_hash"],
+            "risk_multiplier": risk_multiplier,
+            "recommended_risk_multiplier": recommended_risk_multiplier,
+            "risk_status": risk_state["status"],
             "readiness_hash": readiness_hash,
             "status": status,
             "positions": [{key: row[key] for key in (
@@ -320,12 +473,14 @@ class PaperPortfolioService:
                 return {"status": "duplicate", "run": dict(existing), "positions_created": 0, "skipped": skipped}
             connection.execute("""INSERT INTO paper_portfolio_runs(
                 run_id,run_hash,decision_at,allocation_date,daily_budget,readiness_decision,
-                readiness_hash,allocated_budget,cash_reserved,status,details_json
-            ) VALUES(?,?,?,?,?,?,?,?,?,?,?)""", (
+                readiness_hash,allocated_budget,cash_reserved,status,details_json,
+                risk_policy_hash,risk_multiplier,risk_state_json
+            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
                 run_id, run_hash, now_text, allocation_date, budget,
                 str(readiness.get("decision")), readiness_hash,
                 round(sum(row["stake"] for row in positions), 2),
                 round(max(0.0, budget - staked_today), 2), status, _canonical(details),
+                risk_state["policy_hash"], risk_multiplier, _canonical(risk_state),
             ))
             for row in positions:
                 connection.execute("""INSERT INTO paper_portfolio_positions(
@@ -352,6 +507,10 @@ class PaperPortfolioService:
             "cash_reserved": round(max(0.0, budget - staked_today), 2),
             "skipped": skipped,
             "readiness_decision": readiness.get("decision"),
+            "risk_status": risk_state["status"],
+            "risk_multiplier": risk_multiplier,
+            "recommended_risk_multiplier": recommended_risk_multiplier,
+            "effective_daily_budget": effective_budget,
         }
 
     def settle(self, as_of: datetime | str | None = None) -> dict[str, Any]:
@@ -449,6 +608,7 @@ class PaperPortfolioService:
             "average_clv": round(sum(clv) / len(clv), 6) if clv else None,
             "positive_clv_rate": round(sum(value > 0 for value in clv) / len(clv), 4) if clv else None,
             "equity_curve": curve,
+            "risk_state": self._risk_state(datetime.now(timezone.utc), settings.profit_daily_budget),
             "recent_runs": runs[:20],
             "recent_positions": list(reversed(positions[-100:])),
             "guardrail": "Paper-only accounting. No real order placement is implemented.",

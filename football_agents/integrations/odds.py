@@ -136,7 +136,8 @@ class OddsApiClient:
         for sport in selected:
             data, response_headers = get_json(
                 f"{settings.odds_api_base_url}/sports/{sport}/odds",
-                {"apiKey": settings.odds_api_key, "regions": "uk,eu", "markets": "h2h", "oddsFormat": "decimal"},
+                {"apiKey": settings.odds_api_key, "regions": settings.odds_api_regions,
+                 "markets": "h2h", "oddsFormat": "decimal"},
                 settings.enrichment_timeout_seconds,
             )
             output.extend(data)

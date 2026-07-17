@@ -53,6 +53,7 @@ TEAM_ALIASES = {
     "\u5f17\u9c81\u7c73\u5ae9": "Fluminense", "\u5e03\u62c9\u5e72RB": "Bragantino",
     "\u7c73\u62c9\u7d22\u5c14": "Mirassol", "\u683c\u96f7\u7c73\u5965": "Gremio",
     "\u7eb3\u4ec0\u7ef4\u5c14": "Nashville SC", "\u4e9a\u7279\u8054": "Atlanta Utd",
+    "\u6d1b\u57ce\u94f6\u6cb3": "Los Angeles Galaxy", "\u6d1b\u6749\u77f6FC": "Los Angeles FC",
     "\u5fb7\u91cc\u57ce": "Derry City", "\u8d39\u4f26\u8328": "Ferencvaros",
     "\u4f0f\u4f0a\u4f0f\u4e01": "Vojvodina", "\u65e5\u5229\u7eb3": "Zilina",
     "\u65af\u6d77\u675c\u514b": "Hajduk Split",
@@ -174,6 +175,16 @@ def build_features_for_official_matches(repository: Repository | None = None, li
             "away_team": match["away_team"],
             **result,
         })
+    skip_reasons: dict[str, int] = {}
+    for source in report["sources"]:
+        if source.get("built"):
+            continue
+        reason = str(source.get("reason") or "unknown")
+        skip_reasons[reason] = skip_reasons.get(reason, 0) + 1
+    report["skip_reasons"] = skip_reasons
+    report["warnings"] = [
+        f"{reason}:{count}" for reason, count in sorted(skip_reasons.items())
+    ]
     repository.add_audit_event("feature-agent", "历史特征", "构建官方比赛特征",
                                f'built={report["built"]}, skipped={report["skipped"]}', "success")
     return report

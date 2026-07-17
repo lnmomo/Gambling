@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from football_agents.db import Database
-from football_agents.health import build_health_report
+from football_agents.health import build_health_report, _effective_external_refresh_minutes
 from football_agents.services.audit_log_persistence_service import AuditLogPersistenceService
 from football_agents.services.backtest_persistence_service import BacktestPersistenceService
 from football_agents.services.bankroll_persistence_service import BankrollPersistenceService
@@ -144,6 +144,9 @@ class Phase8GovernanceTests(unittest.TestCase):
         self.assertIn(health["status"], {"healthy", "degraded"})
         self.assertFalse(health["config"]["autoBettingEnabled"])
         self.assertNotIn("THE_ODDS_API_KEY=", str(health))
+
+    def test_external_health_cadence_matches_hourly_scheduler(self):
+        self.assertGreaterEqual(_effective_external_refresh_minutes(), 60)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import math
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any
@@ -30,6 +31,12 @@ def _sync_status(last_success_at: str | None, refresh_minutes: int, failed: bool
     if not parsed:
         return "UNKNOWN"
     return "STALE" if datetime.now(timezone.utc) - parsed > timedelta(minutes=max(1, refresh_minutes * 2)) else "OK"
+
+
+def _effective_external_refresh_minutes() -> int:
+    """Match health freshness to the scheduler cadence that actually runs enrichment."""
+    background_minutes = math.ceil(settings.background_agent_interval_seconds / 60)
+    return max(1, settings.external_odds_refresh_minutes, background_minutes)
 
 
 def _current_profit_scorer_sha256() -> str | None:
@@ -113,12 +120,17 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
             external_last_success = external["synced_at"] if external else None
             external_latest = c.execute("""SELECT status FROM provider_sync_logs
                 WHERE provider='the_odds_api' ORDER BY synced_at DESC LIMIT 1""").fetchone()
+            external_latest_status = str(external_latest["status"]) if external_latest else "unknown"
             external_failed = bool(
-                external_latest and external_latest["status"] not in {"success", "not_configured", "waiting_metadata"}
+                external_latest and external_latest_status not in {
+                    "success", "not_configured", "waiting_metadata", "waiting_horizon"
+                }
             )
             recent_errors = int(c.execute("""SELECT
                 (SELECT COUNT(*) FROM official_fetch_logs WHERE success=0)
-                + (SELECT COUNT(*) FROM provider_sync_logs WHERE status NOT IN ('success','not_configured','waiting_metadata'))
+                + (SELECT COUNT(*) FROM provider_sync_logs WHERE status NOT IN (
+                    'success','not_configured','waiting_metadata','waiting_horizon'
+                ))
                 + (SELECT COUNT(*) FROM task_runs WHERE status='FAILED')""").fetchone()[0])
             data_quality["invalidSnapshots"] = int(c.execute("""SELECT
                 (SELECT COUNT(*) FROM official_sp_snapshots WHERE is_valid=0)
@@ -129,7 +141,13 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
                 (SELECT COUNT(*) FROM official_sp_snapshots WHERE captured_at<?)
                 + (SELECT COUNT(*) FROM external_odds_snapshots WHERE captured_at<?)""", (cutoff, cutoff)).fetchone()[0])
             official_status = _sync_status(official_last_success, settings.official_sp_refresh_minutes, official_failed)
-            external_status = _sync_status(external_last_success, settings.external_odds_refresh_minutes, external_failed)
+            external_status = _sync_status(
+                external_last_success,
+                _effective_external_refresh_minutes(),
+                external_failed,
+            )
+            if external_latest_status == "waiting_horizon":
+                external_status = "IDLE_NO_NEAR_TERM_MATCHES"
             shadow_validation["activeShadowConfigCount"] = int(c.execute("SELECT COUNT(*) FROM true_odds_config_versions WHERE status='SHADOW_RUNNING'").fetchone()[0])
             shadow_validation["pendingShadowPredictions"] = int(c.execute("SELECT COUNT(*) FROM live_shadow_predictions WHERE lifecycle_status='PENDING_RESULT'").fetchone()[0])
             shadow_validation["evaluatedShadowPredictions"] = int(c.execute("SELECT COUNT(*) FROM shadow_post_match_results WHERE evaluation_status='EVALUATED'").fetchone()[0])
@@ -293,6 +311,12 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
             "oddsApiKeyConfigured": bool(settings.odds_api_key),
             "databaseUrlConfigured": bool(settings.database_url),
             "logLevel": settings.log_level,
+            "officialSpRefreshMinutes": settings.official_sp_refresh_minutes,
+            "externalOddsHealthRefreshMinutes": _effective_external_refresh_minutes(),
+            "backgroundAgentIntervalSeconds": settings.background_agent_interval_seconds,
+            "externalOddsCaptureWindowMinutes": settings.external_odds_capture_window_minutes,
+            "oddsApiRegions": settings.odds_api_regions,
+            "oddsApiMinRequestsRemaining": settings.odds_api_min_requests_remaining,
         },
         "recentErrors": recent_errors,
         "warnings": warnings,

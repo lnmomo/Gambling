@@ -1,34 +1,34 @@
 {
   "method": "official SP evidence-chain data quality",
-  "generated_at": "2026-07-16T06:54:41.594649+00:00",
+  "generated_at": "2026-07-17T06:32:43.310404+00:00",
   "decision": "EVIDENCE_DEGRADED",
   "research_usable": false,
   "dataset_grain": "one immutable market-availability card and zero-or-one immutable official three-way SP observation per match and fetch timestamp",
   "summary": {
-    "observations": 565,
-    "observed_matches": 69,
-    "pre_match_matches": 69,
-    "pre_match_observations": 565,
+    "observations": 929,
+    "observed_matches": 72,
+    "pre_match_matches": 72,
+    "pre_match_observations": 916,
     "first_observed_at": "2026-06-19T13:11:45.392010+00:00",
-    "last_observed_at": "2026-07-16T06:54:35.566653+00:00",
-    "last_successful_fetch_at": "2026-07-16T06:54:36.777549+00:00",
+    "last_observed_at": "2026-07-17T06:32:34.466203+00:00",
+    "last_successful_fetch_at": "2026-07-17T06:32:35.728994+00:00",
     "freshness_hours": 0.0,
     "measurement_start": "2026-07-16T03:10:59.705959+00:00",
-    "availability_observations": 408,
-    "offered_matches": 17,
-    "captured_offered_matches": 16,
-    "closing_eligible_matches": 0,
-    "settlement_eligible_matches": 0,
-    "pre_match_sp_coverage": 0.9412,
-    "closing_1h_coverage": 0.0,
-    "settlement_coverage": 0.0,
-    "stale_unsettled_matches": 0,
-    "official_result_observations": 433,
-    "official_result_last_observed_at": "2026-07-16T05:08:48.291588+00:00",
+    "availability_observations": 799,
+    "offered_matches": 20,
+    "captured_offered_matches": 19,
+    "closing_eligible_matches": 10,
+    "settlement_eligible_matches": 10,
+    "pre_match_sp_coverage": 0.95,
+    "closing_1h_coverage": 0.1,
+    "settlement_coverage": 0.9,
+    "stale_unsettled_matches": 1,
+    "official_result_observations": 446,
+    "official_result_last_observed_at": "2026-07-17T05:49:46.177547+00:00",
     "official_result_conflicts": 0,
     "archived_result_rows_outside_local_pool": 265,
     "official_result_ambiguous": 0,
-    "average_observations_per_match": 8.19
+    "average_observations_per_match": 12.72
   },
   "checks": [
     {
@@ -37,37 +37,37 @@
       "severity": "NONE",
       "value": 0.0,
       "threshold": "<=0.5 hours",
-      "evidence": "Latest successful fetch: 2026-07-16T06:54:36.777549+00:00.",
+      "evidence": "Latest successful fetch: 2026-07-17T06:32:35.728994+00:00.",
       "impact": "A stopped collector creates permanent gaps in opening and closing prices.",
       "remediation": "Keep the API service running continuously and alert after two missed capture cycles."
     },
     {
       "id": "pre_match_sp_coverage",
-      "status": "FAIL",
-      "severity": "HIGH",
-      "value": 0.9412,
+      "status": "PASS",
+      "severity": "NONE",
+      "value": 0.95,
       "threshold": ">=0.95 across >=10 offered matches",
-      "evidence": "16/17 offered matches satisfy the requirement.",
+      "evidence": "19/20 offered matches satisfy the requirement.",
       "impact": "Missing prices bias strategy selection and reduce the auditable sample.",
       "remediation": "Investigate sold cards with invalid or missing three-way SP before using ROI estimates."
     },
     {
       "id": "closing_sp_within_1h",
-      "status": "PENDING",
-      "severity": "NONE",
-      "value": 0.0,
-      "threshold": ">=0.80 after >=10 offered kicked-off matches",
-      "evidence": "0/0 offered kicked-off matches; waiting for 10 more.",
+      "status": "FAIL",
+      "severity": "HIGH",
+      "value": 0.1,
+      "threshold": ">=0.80 across >=10 offered kicked-off matches",
+      "evidence": "1/10 offered kicked-off matches satisfy the requirement.",
       "impact": "Weak closing coverage makes CLV incomparable and can hide stale executable prices.",
       "remediation": "Keep 15-minute capture running through kickoff for every offered match."
     },
     {
       "id": "settlement_coverage",
-      "status": "PENDING",
-      "severity": "NONE",
-      "value": 0.0,
-      "threshold": ">=0.95 after >=10 offered matches at least four hours after kickoff",
-      "evidence": "0/0 offered matches at least four hours after kickoff; waiting for 10 more.",
+      "status": "FAIL",
+      "severity": "HIGH",
+      "value": 0.9,
+      "threshold": ">=0.95 across >=10 offered matches at least four hours after kickoff",
+      "evidence": "9/10 offered matches at least four hours after kickoff satisfy the requirement.",
       "impact": "Missing outcomes distort ROI, hit rate, drawdown, and promotion decisions.",
       "remediation": "Backfill missing final scores and alert on finished matches without results."
     },
@@ -112,63 +112,159 @@
       "remediation": "Compare the archived raw official rows and resolve the conflict explicitly."
     }
   ],
-  "failed_checks": 1,
-  "pending_checks": 2,
+  "failed_checks": 2,
+  "pending_checks": 0,
   "critical_checks": 0,
   "warnings": [
-    "pre_match_sp_coverage: 16/17 offered matches satisfy the requirement.",
-    "closing_sp_within_1h: 0/0 offered kicked-off matches; waiting for 10 more.",
-    "settlement_coverage: 0/0 offered matches at least four hours after kickoff; waiting for 10 more."
+    "closing_sp_within_1h: 1/10 offered kicked-off matches satisfy the requirement.",
+    "settlement_coverage: 9/10 offered matches at least four hours after kickoff satisfy the requirement."
   ],
   "capture_stages": [
     {
       "capture_stage": "T_MINUS_24H",
-      "observations": 371,
-      "matches": 44
+      "observations": 606,
+      "matches": 51
     },
     {
       "capture_stage": "EARLY",
-      "observations": 165,
-      "matches": 34
+      "observations": 275,
+      "matches": 37
     },
     {
       "capture_stage": "T_MINUS_6H",
-      "observations": 24,
-      "matches": 8
+      "observations": 27,
+      "matches": 9
+    },
+    {
+      "capture_stage": "POST_MATCH",
+      "observations": 13,
+      "matches": 1
     },
     {
       "capture_stage": "T_MINUS_1H",
-      "observations": 5,
-      "matches": 5
+      "observations": 8,
+      "matches": 6
     }
   ],
   "availability_reasons": [
     {
       "raw_sale_status": "已完成",
       "reason": "post_match",
-      "observations": 552,
-      "matches": 23
+      "observations": 1244,
+      "matches": 32
     },
     {
       "raw_sale_status": "已开售",
       "reason": "valid_three_way_sp",
-      "observations": 288,
-      "matches": 16
+      "observations": 591,
+      "matches": 19
     },
     {
       "raw_sale_status": "待开售",
       "reason": "not_on_sale",
-      "observations": 112,
-      "matches": 7
+      "observations": 124,
+      "matches": 9
+    },
+    {
+      "raw_sale_status": "暂停销售",
+      "reason": "valid_three_way_sp",
+      "observations": 61,
+      "matches": 9
     },
     {
       "raw_sale_status": "已开售",
       "reason": "invalid_or_incomplete_three_way_sp",
-      "observations": 8,
+      "observations": 30,
+      "matches": 1
+    },
+    {
+      "raw_sale_status": "直播结束",
+      "reason": "post_match",
+      "observations": 13,
+      "matches": 3
+    },
+    {
+      "raw_sale_status": "暂停销售",
+      "reason": "invalid_or_incomplete_three_way_sp",
+      "observations": 6,
+      "matches": 1
+    },
+    {
+      "raw_sale_status": "45+'",
+      "reason": "invalid_or_incomplete_three_way_sp",
+      "observations": 2,
+      "matches": 1
+    },
+    {
+      "raw_sale_status": "27'",
+      "reason": "invalid_or_incomplete_three_way_sp",
+      "observations": 1,
+      "matches": 1
+    },
+    {
+      "raw_sale_status": "36'",
+      "reason": "invalid_or_incomplete_three_way_sp",
+      "observations": 1,
+      "matches": 1
+    },
+    {
+      "raw_sale_status": "43'",
+      "reason": "invalid_or_incomplete_three_way_sp",
+      "observations": 1,
+      "matches": 1
+    },
+    {
+      "raw_sale_status": "68'",
+      "reason": "invalid_or_incomplete_three_way_sp",
+      "observations": 1,
+      "matches": 1
+    },
+    {
+      "raw_sale_status": "76'",
+      "reason": "invalid_or_incomplete_three_way_sp",
+      "observations": 1,
+      "matches": 1
+    },
+    {
+      "raw_sale_status": "84'",
+      "reason": "invalid_or_incomplete_three_way_sp",
+      "observations": 1,
+      "matches": 1
+    },
+    {
+      "raw_sale_status": "88'",
+      "reason": "invalid_or_incomplete_three_way_sp",
+      "observations": 1,
+      "matches": 1
+    },
+    {
+      "raw_sale_status": "90+'",
+      "reason": "invalid_or_incomplete_three_way_sp",
+      "observations": 1,
+      "matches": 1
+    },
+    {
+      "raw_sale_status": "中场休息",
+      "reason": "invalid_or_incomplete_three_way_sp",
+      "observations": 1,
       "matches": 1
     }
   ],
   "league_coverage": [
+    {
+      "league": "美职",
+      "matches": 6,
+      "observations": 227,
+      "within_1h": 1,
+      "settled": 3
+    },
+    {
+      "league": "巴甲",
+      "matches": 5,
+      "observations": 194,
+      "within_1h": 0,
+      "settled": 2
+    },
     {
       "league": "世界杯",
       "matches": 33,
@@ -177,52 +273,38 @@
       "settled": 33
     },
     {
-      "league": "美职",
-      "matches": 5,
-      "observations": 120,
-      "within_1h": 0,
-      "settled": 0
-    },
-    {
-      "league": "巴甲",
-      "matches": 5,
-      "observations": 80,
-      "within_1h": 0,
-      "settled": 0
-    },
-    {
       "league": "欧罗巴",
       "matches": 3,
-      "observations": 75,
+      "observations": 120,
       "within_1h": 0,
-      "settled": 0
+      "settled": 3
     },
     {
       "league": "瑞超",
       "matches": 8,
-      "observations": 52,
+      "observations": 108,
       "within_1h": 2,
       "settled": 6
     },
     {
       "league": "挪超",
       "matches": 1,
-      "observations": 28,
+      "observations": 43,
       "within_1h": 0,
-      "settled": 0
+      "settled": 1
+    },
+    {
+      "league": "韩职",
+      "matches": 8,
+      "observations": 34,
+      "within_1h": 3,
+      "settled": 6
     },
     {
       "league": "芬超",
       "matches": 6,
       "observations": 24,
       "within_1h": 0,
-      "settled": 6
-    },
-    {
-      "league": "韩职",
-      "matches": 6,
-      "observations": 20,
-      "within_1h": 3,
       "settled": 6
     },
     {
@@ -234,11 +316,11 @@
     }
   ],
   "historical_baseline": {
-    "kicked_matches": 126,
-    "discovered_pre_match": 80,
-    "discovered_pre_with_sp": 53,
-    "closing_matches": 53,
-    "closing_within_1h": 5
+    "kicked_matches": 136,
+    "discovered_pre_match": 90,
+    "discovered_pre_with_sp": 63,
+    "closing_matches": 63,
+    "closing_within_1h": 6
   },
   "guardrail": "Only EVIDENCE_READY permits official-SP promotion and capital allocation."
 }

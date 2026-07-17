@@ -139,6 +139,9 @@ Do not commit real keys or local runtime paths. Important settings:
   is absent. It cannot enter allocation before 200 settlements, six active months, and 180 calendar days.
 - `EXTERNAL_CONSENSUS_CHALLENGER_REPORT_PATH` controls its prospective report location.
 - `BACKGROUND_AGENT_INTERVAL_SECONDS=3600`: cadence for heavier enrichment, history, backtest, and governance agents.
+- `EXTERNAL_ODDS_CAPTURE_WINDOW_MINUTES=180`: spend external-odds quota only on matches close enough to feed the registered T-60 to T-120 study.
+- `ODDS_API_REGIONS=eu`: request one bookmaker region by default to conserve quota while retaining multi-book consensus.
+- `ODDS_API_MIN_REQUESTS_REMAINING=20`: preserve an emergency quota reserve instead of exhausting the account before the primary horizon.
 
 The API process must remain running for these in-process agents to execute. The scheduler runs immediately on startup; official SP capture then runs every 15 minutes, while the heavier agents run hourly.
 
@@ -157,6 +160,19 @@ Backend:
 ```powershell
 .\.venv\Scripts\python.exe -m football_agents.cli serve
 ```
+
+For continuous Windows collection across terminal closes and process failures, install the
+per-user scheduled task once:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\install-backend-scheduled-task.ps1
+```
+
+The task starts at sign-in and has a minutely watchdog trigger; `IgnoreNew` prevents duplicate
+processes while a healthy instance is running. It uses a hidden `wscript.exe` launcher, so no
+PowerShell console window is displayed. Runtime output is
+written to `data/runtime/backend-service.log`. It does not enable real-money auto betting.
+Remove it with `scripts\uninstall-backend-scheduled-task.ps1`.
 
 Frontend:
 

@@ -1,0 +1,260 @@
+{
+  "method": "daily no-lookahead rolling Elo/Poisson independent-model weight validation",
+  "created_at": "2026-07-16T09:34:54.658895+00:00",
+  "source": "data\\historical_csv\\football-data",
+  "dataset_audit": {
+    "files": 108,
+    "raw_rows": 33365,
+    "usable_rows": 33332,
+    "duplicate_matches": 0,
+    "invalid_dates": 0,
+    "missing_selected_odds": 32,
+    "files_with_closing_odds": 104,
+    "first_match_date": "2021-07-23",
+    "last_match_date": "2026-05-31",
+    "selected_odds_timing": "pre_closing",
+    "exact_snapshot_timestamps_available": false,
+    "leakage_safe_for_prematch_features": false,
+    "warnings": [
+      "Provider odds columns do not include exact collection timestamps; call them pre-closing, not opening odds.",
+      "Result and post-match columns share each CSV; feature builders must explicitly whitelist pre-match columns."
+    ]
+  },
+  "loaded_matches": 33332,
+  "deduplicated_matches": 33332,
+  "duplicate_rows_removed": 0,
+  "first_match_date": "2021-07-23",
+  "last_match_date": "2026-05-31",
+  "candidate_elo_weights": [
+    0.3,
+    0.35,
+    0.4,
+    0.45,
+    0.5,
+    0.55,
+    0.6,
+    0.65,
+    0.7,
+    0.75,
+    0.8
+  ],
+  "selected_weights": {
+    "elo": 0.6,
+    "poisson": 0.4
+  },
+  "selection_rule": "Choose a rounded, conservative weight that is at or adjacent to the minimum Log Loss across every registered holdout start; Brier score is the tie-breaker.",
+  "windows": [
+    {
+      "start": "2023-07-01",
+      "matches": 19849,
+      "best": {
+        "elo_weight": 0.65,
+        "poisson_weight": 0.35,
+        "log_loss": 1.022032065,
+        "brier_score": 0.204104123,
+        "maximum_absolute_class_bias": 0.016315054,
+        "class_bias": {
+          "home": 0.010721953,
+          "draw": -0.016315054,
+          "away": 0.005593101
+        }
+      },
+      "selected": {
+        "elo_weight": 0.6,
+        "poisson_weight": 0.4,
+        "log_loss": 1.022103054,
+        "brier_score": 0.20413876,
+        "maximum_absolute_class_bias": 0.013065314,
+        "class_bias": {
+          "home": 0.009299281,
+          "draw": -0.013065314,
+          "away": 0.003766033
+        }
+      },
+      "legacy_30_70": {
+        "elo_weight": 0.3,
+        "poisson_weight": 0.7,
+        "log_loss": 1.024711216,
+        "brier_score": 0.204834938,
+        "maximum_absolute_class_bias": 0.00719638,
+        "class_bias": {
+          "home": 0.00076325,
+          "draw": 0.00643313,
+          "away": -0.00719638
+        }
+      },
+      "selected_log_loss_improvement_vs_legacy": 0.002608162
+    },
+    {
+      "start": "2024-01-01",
+      "matches": 16529,
+      "best": {
+        "elo_weight": 0.65,
+        "poisson_weight": 0.35,
+        "log_loss": 1.021855387,
+        "brier_score": 0.204085125,
+        "maximum_absolute_class_bias": 0.017141163,
+        "class_bias": {
+          "home": 0.013041075,
+          "draw": -0.017141163,
+          "away": 0.004100089
+        }
+      },
+      "selected": {
+        "elo_weight": 0.6,
+        "poisson_weight": 0.4,
+        "log_loss": 1.02192344,
+        "brier_score": 0.204118107,
+        "maximum_absolute_class_bias": 0.013886391,
+        "class_bias": {
+          "home": 0.011621711,
+          "draw": -0.013886391,
+          "away": 0.00226468
+        }
+      },
+      "legacy_30_70": {
+        "elo_weight": 0.3,
+        "poisson_weight": 0.7,
+        "log_loss": 1.024535125,
+        "brier_score": 0.204809156,
+        "maximum_absolute_class_bias": 0.008747772,
+        "class_bias": {
+          "home": 0.003105531,
+          "draw": 0.005642241,
+          "away": -0.008747772
+        }
+      },
+      "selected_log_loss_improvement_vs_legacy": 0.002611685
+    },
+    {
+      "start": "2024-07-01",
+      "matches": 13143,
+      "best": {
+        "elo_weight": 0.6,
+        "poisson_weight": 0.4,
+        "log_loss": 1.023345374,
+        "brier_score": 0.204458054,
+        "maximum_absolute_class_bias": 0.013589503,
+        "class_bias": {
+          "home": 0.009132531,
+          "draw": -0.013589503,
+          "away": 0.004456972
+        }
+      },
+      "selected": {
+        "elo_weight": 0.6,
+        "poisson_weight": 0.4,
+        "log_loss": 1.023345374,
+        "brier_score": 0.204458054,
+        "maximum_absolute_class_bias": 0.013589503,
+        "class_bias": {
+          "home": 0.009132531,
+          "draw": -0.013589503,
+          "away": 0.004456972
+        }
+      },
+      "legacy_30_70": {
+        "elo_weight": 0.3,
+        "poisson_weight": 0.7,
+        "log_loss": 1.025486208,
+        "brier_score": 0.205039592,
+        "maximum_absolute_class_bias": 0.006519847,
+        "class_bias": {
+          "home": 0.000629194,
+          "draw": 0.005890653,
+          "away": -0.006519847
+        }
+      },
+      "selected_log_loss_improvement_vs_legacy": 0.002140834
+    },
+    {
+      "start": "2025-01-01",
+      "matches": 9948,
+      "best": {
+        "elo_weight": 0.65,
+        "poisson_weight": 0.35,
+        "log_loss": 1.021613531,
+        "brier_score": 0.204007293,
+        "maximum_absolute_class_bias": 0.014155937,
+        "class_bias": {
+          "home": 0.012662195,
+          "draw": -0.014155937,
+          "away": 0.001493742
+        }
+      },
+      "selected": {
+        "elo_weight": 0.6,
+        "poisson_weight": 0.4,
+        "log_loss": 1.021697927,
+        "brier_score": 0.204044097,
+        "maximum_absolute_class_bias": 0.011243899,
+        "class_bias": {
+          "home": 0.011243899,
+          "draw": -0.010905636,
+          "away": -0.000338263
+        }
+      },
+      "legacy_30_70": {
+        "elo_weight": 0.3,
+        "poisson_weight": 0.7,
+        "log_loss": 1.024412371,
+        "brier_score": 0.204757448,
+        "maximum_absolute_class_bias": 0.011330295,
+        "class_bias": {
+          "home": 0.002734127,
+          "draw": 0.008596168,
+          "away": -0.011330295
+        }
+      },
+      "selected_log_loss_improvement_vs_legacy": 0.002714444
+    },
+    {
+      "start": "2025-06-01",
+      "matches": 6564,
+      "best": {
+        "elo_weight": 0.65,
+        "poisson_weight": 0.35,
+        "log_loss": 1.022846225,
+        "brier_score": 0.204314718,
+        "maximum_absolute_class_bias": 0.017166458,
+        "class_bias": {
+          "home": 0.011926988,
+          "draw": -0.017166458,
+          "away": 0.00523947
+        }
+      },
+      "selected": {
+        "elo_weight": 0.6,
+        "poisson_weight": 0.4,
+        "log_loss": 1.02286826,
+        "brier_score": 0.204339216,
+        "maximum_absolute_class_bias": 0.013931657,
+        "class_bias": {
+          "home": 0.010514908,
+          "draw": -0.013931657,
+          "away": 0.003416749
+        }
+      },
+      "legacy_30_70": {
+        "elo_weight": 0.3,
+        "poisson_weight": 0.7,
+        "log_loss": 1.025189685,
+        "brier_score": 0.204972101,
+        "maximum_absolute_class_bias": 0.007519578,
+        "class_bias": {
+          "home": 0.002042431,
+          "draw": 0.005477147,
+          "away": -0.007519578
+        }
+      },
+      "selected_log_loss_improvement_vs_legacy": 0.002321425
+    }
+  ],
+  "decision": "USE_60_ELO_40_POISSON",
+  "guardrails": [
+    "All matches on a date are predicted before that date updates Elo ratings.",
+    "Weights are selected using probability accuracy, never betting ROI.",
+    "Provider odds and match results are not model inputs in this weight experiment.",
+    "This validates the independent component blend; official-SP profitability still requires prospective evidence."
+  ]
+}

@@ -12,6 +12,7 @@ import numpy as np
 from football_agents.agents.workflow import DecisionWorkflow
 from football_agents.config import settings
 from football_agents.db import Database, db
+from football_agents.independent_model import INDEPENDENT_MODEL_WEIGHTS
 from football_agents.repository import Repository
 
 from .evaluation import evaluate_probabilities
@@ -24,6 +25,7 @@ FROZEN_ARTIFACTS = (
     "football_agents/models/elo.py",
     "football_agents/models/poisson.py",
     "football_agents/models/ensemble.py",
+    "football_agents/independent_model.py",
     "football_agents/features.py",
 )
 
@@ -58,6 +60,7 @@ class ProspectiveResearchService:
         config = {
             "model_name": "ensemble", "model_version": "v1",
             "ensemble_weights": self.workflow.ensemble.weights,
+            "independent_model_weights": INDEPENDENT_MODEL_WEIGHTS,
             "probability_outcomes": list(OUTCOMES),
             "market_devig": "multiplicative",
             "qwen_probability_adjustment": False,
@@ -127,7 +130,17 @@ class ProspectiveResearchService:
         captured = duplicates = skipped = eligible_pre_match = 0
         skip_reasons: dict[str, int] = {}
         warnings: list[str] = []
-        matches = self.repository.list_official_matches(now.date().isoformat())[:max(1, min(limit, 500))]
+        pool = self.repository.list_official_matches(now.date().isoformat())
+        matches = sorted(
+            pool,
+            key=lambda match: (
+                0 if (
+                    str(match.get("status") or "").strip().lower() in PRE_MATCH_STATUSES
+                    and _parse_time(match["kickoff_time"]) > now
+                ) else 1,
+                _parse_time(match["kickoff_time"]),
+            ),
+        )[:max(1, min(limit, 500))]
         for match in matches:
             status = str(match.get("status") or "").strip().lower()
             if status not in PRE_MATCH_STATUSES:

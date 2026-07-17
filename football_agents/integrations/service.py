@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+from datetime import datetime, timezone
 from typing import Any
 
 from ..agents.workflow import DecisionWorkflow
@@ -9,6 +11,25 @@ from ..repository import Repository, utcnow
 from .news import GdeltNewsClient
 from .odds import OddsApiClient
 from .weather import OpenMeteoClient
+
+
+def _parse_time(value: str) -> datetime:
+    parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
+def _odds_capture_targets(matches: list[dict[str, Any]], now: datetime,
+                          window_minutes: int) -> list[dict[str, Any]]:
+    return [
+        match for match in matches
+        if 0 < (_parse_time(match["kickoff_time"]) - now).total_seconds() / 60 <= window_minutes
+    ]
+
+
+def _requests_remaining(provider_rows: list[dict[str, Any]]) -> int | None:
+    latest = next((row for row in provider_rows if row.get("provider") == "the_odds_api"), None)
+    match = re.search(r"requests_remaining=(\d+)", str((latest or {}).get("message") or ""))
+    return int(match.group(1)) if match else None
 
 
 class DataEnrichmentService:
@@ -24,6 +45,9 @@ class DataEnrichmentService:
         matches = self.repository.list_active_official_matches(limit)
         summary: dict[str, Any] = {
             "matches": len(matches), "market_events_fetched": 0, "market_odds": 0,
+            "market_target_matches": 0, "market_capture_window_minutes": (
+                settings.external_odds_capture_window_minutes
+            ),
             "market_unmatched": 0, "news_articles_fetched": 0, "news": 0,
             "news_duplicates": 0, "news_existing": 0, "weather": 0,
             "weather_missing_metadata": 0, "predictions": 0, "evaluated": 0,
@@ -31,22 +55,54 @@ class DataEnrichmentService:
             "model_blocked_missing_official_odds": 0, "errors": [],
         }
         events: list[dict[str, Any]] = []
-        if self.odds.configured():
+        now = datetime.now(timezone.utc)
+        odds_matches = _odds_capture_targets(
+            matches, now, settings.external_odds_capture_window_minutes
+        )
+        odds_match_ids = {int(match["id"]) for match in odds_matches}
+        summary["market_target_matches"] = len(odds_matches)
+        remaining = _requests_remaining(self.repository.provider_status())
+        summary["odds_requests_remaining_before"] = remaining
+        quota_reserved = (
+            remaining is not None
+            and remaining <= settings.odds_api_min_requests_remaining
+            and bool(odds_matches)
+        )
+        if quota_reserved:
+            message = (
+                f"requests_remaining={remaining}; reserve={settings.odds_api_min_requests_remaining}; "
+                f"target_matches={len(odds_matches)}"
+            )
+            self.repository.log_provider_sync("the_odds_api", "quota_reserved", message=message)
+            summary["errors"].append("external_odds: request quota reserve reached")
+        elif self.odds.configured() and odds_matches:
             try:
-                events, headers = self.odds.events({str(match.get("league") or "") for match in matches})
+                events, headers = self.odds.events({
+                    str(match.get("league") or "") for match in odds_matches
+                })
                 summary["market_events_fetched"] = len(events)
                 self.repository.log_provider_sync("the_odds_api", "success", len(events),
                     f'requests_remaining={headers.get("x-requests-remaining", "unknown")}')
+                summary["odds_requests_remaining_after"] = headers.get("x-requests-remaining")
                 summary["odds_warnings"] = list(self.odds.warnings)
             except Exception as exc:
                 self.repository.log_provider_sync("the_odds_api", "error", message=str(exc))
                 summary["errors"].append(f"external_odds: {exc}")
-        else:
+        elif not self.odds.configured():
             self.repository.log_provider_sync("the_odds_api", "not_configured", message="THE_ODDS_API_KEY is missing")
+        else:
+            self.repository.log_provider_sync(
+                "the_odds_api", "waiting_horizon", message=(
+                    f"requests_remaining={remaining if remaining is not None else 'unknown'}; "
+                    f"target_matches=0; capture_window_minutes="
+                    f"{settings.external_odds_capture_window_minutes}"
+                )
+            )
 
         for match in matches:
             try:
-                event = self.odds.match_event(match, events) if events else None
+                is_odds_target = int(match["id"]) in odds_match_ids
+                event = self.odds.match_event(match, events) if events and is_odds_target else None
                 consensus = self.odds.consensus(event) if event else None
                 if consensus:
                     fetched_at = utcnow()
@@ -55,7 +111,7 @@ class DataEnrichmentService:
                         match["id"], self.odds.bookmaker_odds(event), fetched_at
                     )
                     summary["market_odds"] += 1
-                else:
+                elif is_odds_target:
                     summary["market_unmatched"] += 1
             except Exception as exc:
                 summary["errors"].append(f'{match["official_match_id"]} external_odds: {exc}')
@@ -95,7 +151,12 @@ class DataEnrichmentService:
                 except Exception as exc:
                     summary["errors"].append(f'{match["official_match_id"]} model: {exc}')
         summary["news_existing"] = sum(len(self.repository.list_news(match["id"], 100)) for match in matches)
-        summary["market_status"] = "matched" if summary["market_odds"] else "no_matches"
+        summary["market_status"] = (
+            "quota_reserved" if quota_reserved else
+            "not_configured" if not self.odds.configured() else
+            "waiting_horizon" if not odds_matches else
+            "matched" if summary["market_odds"] else "no_matches"
+        )
         if summary["news"]:
             summary["news_status"] = "updated"
         elif summary["news_articles_fetched"] and summary["news_duplicates"] == summary["news_articles_fetched"]:

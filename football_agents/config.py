@@ -109,6 +109,11 @@ class Settings:
     )
     odds_api_key: str = os.getenv("THE_ODDS_API_KEY", "")
     odds_api_base_url: str = os.getenv("ODDS_API_BASE_URL", "https://api.the-odds-api.com/v4")
+    odds_api_regions: str = os.getenv("ODDS_API_REGIONS", "eu")
+    odds_api_min_requests_remaining: int = int(os.getenv("ODDS_API_MIN_REQUESTS_REMAINING", "20"))
+    external_odds_capture_window_minutes: int = int(os.getenv(
+        "EXTERNAL_ODDS_CAPTURE_WINDOW_MINUTES", "180"
+    ))
     odds_api_sport_keys: tuple[str, ...] = tuple(filter(None, os.getenv(
         "ODDS_API_SPORT_KEYS", "soccer_fifa_world_cup,soccer_finland_veikkausliiga"
     ).split(",")))

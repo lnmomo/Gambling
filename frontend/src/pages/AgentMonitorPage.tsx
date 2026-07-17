@@ -29,9 +29,14 @@ type ExternalConsensusChallenger = {
   decisions: number;
   candidate_decisions: number;
   positive_expected_ev_decisions: number;
+  expected_ev_threshold_pass_decisions: number;
+  entry_price_eligible_decisions: number;
+  entry_price_and_expected_ev_pass_decisions: number;
+  positive_conservative_ev_decisions: number;
   best_expected_ev: number | null;
   best_conservative_ev: number | null;
   expected_ev_gap_to_entry: number | null;
+  conservative_ev_gap_to_entry: number | null;
   primary_horizon_candidates: number;
   settled_selections: number;
   elapsed_days: number;
@@ -55,7 +60,7 @@ const WORKFLOW: WorkflowItem[] = [
   {task: "profit_scorer_official_pool_diagnosis", title: "盈利评分池诊断", description: "检查当前官方比赛是否进入冻结盈利评分器", dependsOn: "feature_build"},
   {task: "profit_scorer_official_sp_validation", title: "官方 SP 前瞻验证", description: "冻结赛前决策；按结算日 Bootstrap ROI/CLV，并与去水市场校准对比", dependsOn: "profit_scorer_official_pool_diagnosis"},
   {task: "profit_allocation_readiness", title: "每日资金质量门", description: "样本、月份、ROI/CLV 置信下界、相对市场校准与回撤全部通过后才分配预算", dependsOn: "profit_scorer_official_sp_validation"},
-  {task: "paper_portfolio_allocation", title: "纸面组合建仓", description: "按最新可执行SP、四分之一Kelly和每日风险上限写入不可变账本", dependsOn: "profit_allocation_readiness"},
+  {task: "paper_portfolio_allocation", title: "纸面组合建仓", description: "按最新可执行SP、四分之一Kelly、方向/联赛/长赔集中度上限写入不可变账本；动态回撤规则先影子验证", dependsOn: "profit_allocation_readiness"},
   {task: "backtest_run", title: "自动回测", description: "默认 CSV 回测与指标落库", dependsOn: "feature_build"},
   {task: "model_governance_check", title: "模型治理", description: "Champion/Challenger 检查，不自动替换模型", dependsOn: "backtest_run"},
 ];
@@ -127,8 +132,10 @@ export default function AgentMonitorPage() {
   const consensusChallenger = useApi<ExternalConsensusChallenger>(
     "/api/research/external-consensus-challenger",
     {decision: "NOT_RUN", policy: {policy_id: "-", registered_at: ""}, decisions: 0, candidate_decisions: 0,
-      positive_expected_ev_decisions: 0, best_expected_ev: null, best_conservative_ev: null,
-      expected_ev_gap_to_entry: null,
+      positive_expected_ev_decisions: 0, expected_ev_threshold_pass_decisions: 0,
+      entry_price_eligible_decisions: 0, entry_price_and_expected_ev_pass_decisions: 0,
+      positive_conservative_ev_decisions: 0, best_expected_ev: null, best_conservative_ev: null,
+      expected_ev_gap_to_entry: null, conservative_ev_gap_to_entry: null,
       primary_horizon_candidates: 0, settled_selections: 0, elapsed_days: 0, decision_reasons: [], blocker_counts: []},
   );
   const [health, setHealth] = useState<SystemHealth | null>(null);
@@ -246,9 +253,13 @@ export default function AgentMonitorPage() {
         <span>冻结决策<b>{consensusChallenger.data.decisions}</b></span>
         <span>候选决策<b>{consensusChallenger.data.candidate_decisions}</b></span>
         <span>点估计正 EV<b>{consensusChallenger.data.positive_expected_ev_decisions}</b></span>
+        <span>价格范围合格<b>{consensusChallenger.data.entry_price_eligible_decisions}</b></span>
+        <span>价格与点估计均通过<b>{consensusChallenger.data.entry_price_and_expected_ev_pass_decisions}</b></span>
+        <span>保守 EV 非负<b>{consensusChallenger.data.positive_conservative_ev_decisions}</b></span>
         <span>最佳点估计 EV<b>{pct(consensusChallenger.data.best_expected_ev == null ? null : consensusChallenger.data.best_expected_ev * 100)}</b></span>
         <span>最佳保守 EV<b>{pct(consensusChallenger.data.best_conservative_ev == null ? null : consensusChallenger.data.best_conservative_ev * 100)}</b></span>
-        <span>距准入门槛<b>{pct(consensusChallenger.data.expected_ev_gap_to_entry == null ? null : consensusChallenger.data.expected_ev_gap_to_entry * 100)}</b></span>
+        <span>距点估计门槛<b>{pct(consensusChallenger.data.expected_ev_gap_to_entry == null ? null : consensusChallenger.data.expected_ev_gap_to_entry * 100)}</b></span>
+        <span>距保守 EV 门槛<b>{pct(consensusChallenger.data.conservative_ev_gap_to_entry == null ? null : consensusChallenger.data.conservative_ev_gap_to_entry * 100)}</b></span>
         <span>主窗口候选<b>{consensusChallenger.data.primary_horizon_candidates}</b></span>
         <span>已结算选择<b>{consensusChallenger.data.settled_selections}</b></span>
         <span>注册天数<b>{consensusChallenger.data.elapsed_days} / 180</b></span>

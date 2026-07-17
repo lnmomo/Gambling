@@ -80,6 +80,85 @@ def _seed_candidate(tmp_path: Path, database: Database, repo: Repository):
     return match_id, current_id, package
 
 
+def _seed_settled_loss(
+    database: Database,
+    repo: Repository,
+    index: int,
+    settled_at: str,
+    profit: float = -10.0,
+) -> None:
+    match_id = repo.create_match({
+        "official_match_id": f"sporttery-risk-{index}",
+        "league": "Risk Test",
+        "home_team": f"Risk Home {index}",
+        "away_team": f"Risk Away {index}",
+        "kickoff_time": settled_at,
+        "status": "finished",
+    })
+    observation_id = repo.archive_official_odds_observation(
+        match_id,
+        f"sporttery-risk-{index}",
+        {"home": 2.0, "draw": 3.5, "away": 4.0},
+        settled_at,
+        settled_at,
+        "FINISHED",
+        "official",
+        "test",
+        f"risk-{index}",
+    )
+    repo.add_profit_scorer_evidence({
+        "match_id": match_id,
+        "official_odds_observation_id": observation_id,
+        "scorer_artifact_sha256": f"risk-artifact-{index}",
+        "strategy_label": "risk-test",
+        "selected_outcome": "HOME",
+        "feature_engine": "test",
+        "features": {},
+        "market_probability": 0.5,
+        "predicted_probability": 0.55,
+        "predicted_ev": 0.1,
+        "passes_scorer": True,
+        "scored_at": settled_at,
+    })
+    repo.upsert_result(match_id, 0, 1, settled_at)
+    with database.connect() as connection:
+        evidence_id = connection.execute(
+            "SELECT id FROM profit_scorer_evidence WHERE match_id=?", (match_id,)
+        ).fetchone()["id"]
+        result_id = connection.execute(
+            "SELECT id FROM results WHERE match_id=?", (match_id,)
+        ).fetchone()["id"]
+        run_id = f"risk-run-{index}"
+        position_id = f"risk-position-{index}"
+        connection.execute("""INSERT INTO paper_portfolio_runs(
+            run_id,run_hash,decision_at,allocation_date,daily_budget,readiness_decision,
+            readiness_hash,allocated_budget,cash_reserved,status,details_json
+        ) VALUES(?,?,?,?,?,?,?,?,?,?,?)""", (
+            run_id, f"risk-run-hash-{index}", settled_at, settled_at[:10], 100.0,
+            "PAPER_ALLOCATION_READY", f"readiness-{index}", 10.0, 90.0,
+            "ALLOCATED", "{}",
+        ))
+        connection.execute("""INSERT INTO paper_portfolio_positions(
+            position_id,run_id,allocation_date,strategy_id,source_type,scorer_evidence_id,
+            external_consensus_decision_id,match_id,official_match_id,
+            official_odds_observation_id,selected_outcome,selected_sp,predicted_probability,
+            predicted_ev,quarter_kelly_fraction,stake,placed_at,kickoff_time,
+            scorer_artifact_sha256,source_payload_hash
+        ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
+            position_id, run_id, settled_at[:10], "risk-strategy", "PROFIT_SCORER",
+            evidence_id, None, match_id, f"sporttery-risk-{index}", observation_id,
+            "HOME", 2.0, 0.55, 0.1, 0.025, 10.0, settled_at, settled_at,
+            f"risk-artifact-{index}", f"risk-position-hash-{index}",
+        ))
+        connection.execute("""INSERT INTO paper_portfolio_settlements(
+            settlement_id,position_id,result_id,closing_odds_observation_id,
+            actual_outcome,closing_sp,clv,profit,settled_at,source_payload_hash
+        ) VALUES(?,?,?,?,?,?,?,?,?,?)""", (
+            f"risk-settlement-{index}", position_id, result_id, observation_id,
+            "AWAY", 2.0, 0.0, profit, settled_at, f"risk-settlement-hash-{index}",
+        ))
+
+
 def test_blocked_readiness_creates_immutable_cash_hold(tmp_path: Path, monkeypatch) -> None:
     database, _ = _database(tmp_path)
     monkeypatch.setattr(
@@ -283,3 +362,72 @@ def test_promoted_external_consensus_candidate_can_enter_multi_source_ledger(
     assert position["external_consensus_decision_id"] is not None
     assert position["match_id"] == match["id"]
     assert position["predicted_probability"] < 0.60
+
+
+def test_unvalidated_dynamic_risk_remains_shadow_only_after_two_losses(
+    tmp_path: Path, monkeypatch,
+) -> None:
+    database, repo = _database(tmp_path)
+    _seed_settled_loss(database, repo, 1, "2026-07-29T12:00:00+00:00")
+    _seed_settled_loss(database, repo, 2, "2026-07-30T12:00:00+00:00")
+    _, _, package = _seed_candidate(tmp_path, database, repo)
+    monkeypatch.setattr(
+        "football_agents.paper_portfolio.build_profit_allocation_readiness", lambda _budget: _readiness()
+    )
+    monkeypatch.setattr(
+        "football_agents.paper_portfolio.list_profit_strategy_packages", lambda: [package]
+    )
+
+    report = PaperPortfolioService(database).allocate(AS_OF, 100)
+
+    assert report["status"] == "allocated"
+    assert report["risk_status"] == "PAUSED"
+    assert report["recommended_risk_multiplier"] == 0.0
+    assert report["risk_multiplier"] == 1.0
+    assert report["effective_daily_budget"] == 100.0
+    assert report["new_stake"] == 5.0
+
+
+def test_shadow_pause_is_recorded_but_does_not_override_validated_static_caps(
+    tmp_path: Path, monkeypatch,
+) -> None:
+    database, repo = _database(tmp_path)
+    _seed_settled_loss(database, repo, 1, "2026-07-29T12:00:00+00:00")
+    _seed_settled_loss(database, repo, 2, "2026-07-30T12:00:00+00:00")
+    _seed_settled_loss(database, repo, 3, "2026-07-31T12:00:00+00:00")
+    _, _, package = _seed_candidate(tmp_path, database, repo)
+    monkeypatch.setattr(
+        "football_agents.paper_portfolio.build_profit_allocation_readiness", lambda _budget: _readiness()
+    )
+    monkeypatch.setattr(
+        "football_agents.paper_portfolio.list_profit_strategy_packages", lambda: [package]
+    )
+
+    report = PaperPortfolioService(database).allocate(AS_OF, 100)
+
+    assert report["status"] == "allocated"
+    assert report["positions_created"] == 1
+    assert report["risk_status"] == "PAUSED"
+    assert report["recommended_risk_multiplier"] == 0.0
+    assert report["risk_multiplier"] == 1.0
+    with database.connect() as connection:
+        run = connection.execute(
+            "SELECT * FROM paper_portfolio_runs ORDER BY decision_at DESC LIMIT 1"
+        ).fetchone()
+    state = __import__("json").loads(run["risk_state_json"])
+    assert state["uses_only_settled_ledger"] is True
+    assert state["consecutive_losing_settlement_days"] == 3
+    assert state["enforcement"] == "SHADOW_ONLY"
+
+
+def test_shadow_pause_expires_after_three_calendar_days(tmp_path: Path) -> None:
+    database, repo = _database(tmp_path)
+    _seed_settled_loss(database, repo, 1, "2026-07-21T12:00:00+00:00")
+    _seed_settled_loss(database, repo, 2, "2026-07-22T12:00:00+00:00")
+    _seed_settled_loss(database, repo, 3, "2026-07-23T12:00:00+00:00")
+
+    state = PaperPortfolioService(database)._risk_state(AS_OF, 100)
+
+    assert state["status"] == "RECOVERY"
+    assert state["stake_multiplier"] == 1.0
+    assert state["consecutive_losing_settlement_days"] == 3
