@@ -34,6 +34,7 @@ RISK_POLICY: dict[str, Any] = {
     "pause_multiplier": 0.0,
     "recovery_multiplier": 0.50,
     "recovery_drawdown_threshold": 0.05,
+    "pause_cooldown_settlement_days": 3,
     "maximum_league_daily_share": MAX_LEAGUE_DAILY_SHARE,
     "maximum_outcome_daily_share": MAX_OUTCOME_DAILY_SHARE,
     "maximum_longshot_daily_share": MAX_LONGSHOT_DAILY_SHARE,
@@ -88,15 +89,30 @@ def settled_risk_state(
         max_drawdown = max(max_drawdown, peak - equity)
     current_drawdown = max(0.0, peak - equity)
     drawdown_fraction = current_drawdown / max(peak, 1e-9) if peak > 0 else 0.0
-    # Rolling-window max drawdown fraction over the trailing N settlement days.
+    # Rolling-window max drawdown *fraction of the all-time peak* over the
+    # trailing N settlement days. The window's peak is anchored to the global
+    # running equity peak at the start of the window (the cumulative equity
+    # before the window), not a window-local zero baseline — otherwise, once
+    # more than N settled days accumulate, the bankroll seed leaves the window
+    # and the "peak" resets to a near-zero window-local value, inflating the
+    # drawdown fraction above 1.0 and tripping a spurious PAUSE.
     rolling_window = max(1, int(RISK_POLICY["rolling_window_days"]))
     rolling_days = daily[-rolling_window:] if len(daily) > rolling_window else daily
-    roll_equity = roll_peak = roll_worst = 0.0
+    # Equity at the start of the window (sum of all settled rows *before* the
+    # trailing window). When the harness seeds the curve with the starting
+    # bankroll, this baseline carries the real capital into the window.
+    pre_window = daily[:-len(rolling_days)] if len(daily) > len(rolling_days) else []
+    roll_baseline = sum(float(r["profit"]) for r in pre_window)
+    roll_equity = roll_baseline
+    roll_peak = roll_baseline
+    roll_worst_abs = 0.0
     for row in rolling_days:
         roll_equity += float(row["profit"])
         roll_peak = max(roll_peak, roll_equity)
-        roll_worst = max(roll_worst, roll_peak - roll_equity)
-    rolling_drawdown_fraction = roll_worst / max(roll_peak, 1e-9) if roll_peak > 0 else 0.0
+        roll_worst_abs = max(roll_worst_abs, roll_peak - roll_equity)
+    rolling_drawdown_fraction = (
+        roll_worst_abs / max(roll_peak, 1e-9) if roll_peak > 0 else 0.0
+    )
     losing_days = 0
     for row in reversed(daily):
         if float(row["profit"]) < 0:
@@ -112,11 +128,20 @@ def settled_risk_state(
     pause_losing = int(RISK_POLICY["pause_consecutive_losing_days"])
     defensive_losing = int(RISK_POLICY["defensive_consecutive_losing_days"])
     caution_losing = int(RISK_POLICY["caution_consecutive_losing_days"])
-    paused = (
+    cooldown = int(RISK_POLICY["pause_cooldown_settlement_days"])
+    deep_paused = (
         losing_days >= pause_losing
         or drawdown_fraction >= pause_drawdown
         or rolling_drawdown_fraction >= pause_drawdown
     )
+    in_pause_cooldown = (
+        deep_paused
+        and last_settled_at is not None
+        and days_since_last_settlement is not None
+        and days_since_last_settlement < cooldown
+        and bool(daily and float(daily[-1]["profit"]) < 0)
+    )
+    paused = deep_paused or in_pause_cooldown
     defensive = (
         losing_days >= defensive_losing
         or drawdown_fraction >= defensive_drawdown
@@ -155,7 +180,7 @@ def settled_risk_state(
         "current_drawdown": round(current_drawdown, 2),
         "current_drawdown_fraction": round(drawdown_fraction, 4),
         "rolling_window_days": rolling_window,
-        "rolling_max_drawdown": round(roll_worst, 2),
+        "rolling_max_drawdown": round(roll_worst_abs, 2),
         "rolling_max_drawdown_fraction": round(rolling_drawdown_fraction, 4),
         "max_drawdown": round(max_drawdown, 2),
         "last_settled_at": last_settled_at.isoformat() if last_settled_at else None,

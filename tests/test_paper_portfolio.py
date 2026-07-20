@@ -380,9 +380,10 @@ def test_unvalidated_dynamic_risk_remains_shadow_only_after_two_losses(
 
     report = PaperPortfolioService(database).allocate(AS_OF, 100)
 
-    # v3 enforcement is ACTIVE: two consecutive losing settlement days trip
-    # CAUTION (>=2), not a hard pause, so stakes shrink to 0.75 but allocation
-    # is not blocked.
+    # v3 enforcement is ACTIVE: the two losing settlement days are dated
+    # 2026-07-29 and 2026-07-30, with AS_OF = 2026-08-01 (1 day after the last
+    # loss). The trailing-streak gate trips CAUTION (>=2 losing days), not a
+    # hard pause, so stakes shrink to 0.75 but allocation still proceeds.
     assert report["risk_status"] == "CAUTION"
     assert report["recommended_risk_multiplier"] == 0.75
     assert report["risk_multiplier"] == 0.75
@@ -407,10 +408,11 @@ def test_shadow_pause_is_recorded_but_does_not_override_validated_static_caps(
 
     report = PaperPortfolioService(database).allocate(AS_OF, 100)
 
-    # v3 with ACTIVE enforcement: three consecutive losing settlement days (>=2
-    # is CAUTION) shrink stakes to 0.75. The losses are -10 each with no positive
-    # peak, so drawdown_fraction is 0 and only the trailing-streak gate drives the
-    # tier; allocation still proceeds, at 0.75 stake.
+    # v3 with ACTIVE enforcement: the three losing settlement days are dated
+    # 2026-07-29/30/31, with AS_OF = 2026-08-01 (1 day after the last loss).
+    # The trailing-streak gate (>=2) trips CAUTION (0.75) and the >=4 DEFENSIVE
+    # tier is not yet reached by streak alone; the losses are -10 each with no
+    # positive peak so drawdown_fraction is 0. Allocation proceeds at 0.75 stake.
     assert report["status"] == "allocated"
     assert report["positions_created"] == 1
     assert report["risk_status"] == "CAUTION"

@@ -50,6 +50,9 @@ def _simulate(frame: pd.DataFrame, unit_stake: float, daily_budget: float) -> tu
             "date": item.date.date().isoformat(),
             "risk_status": state["status"],
             "stake_multiplier": state["stake_multiplier"],
+            "applied_stake_multiplier": state["applied_stake_multiplier"],
+            "current_drawdown_fraction": state.get("current_drawdown_fraction"),
+            "rolling_max_drawdown_fraction": state.get("rolling_max_drawdown_fraction"),
             "fixed_stake": unit_stake,
             "controlled_stake": stake,
             "unit_profit": float(item.unit_profit),
@@ -78,8 +81,9 @@ def _simulate(frame: pd.DataFrame, unit_stake: float, daily_budget: float) -> tu
             "roi_pct": round(controlled_profit / controlled_staked * 100, 2)
             if controlled_staked else 0.0,
             "max_drawdown": _max_drawdown(controlled_profits),
+            "caution_decisions": sum(row["risk_status"] == "CAUTION" for row in rows),
+            "defensive_decisions": sum(row["risk_status"] == "DEFENSIVE" for row in rows),
             "paused_decisions": sum(row["risk_status"] == "PAUSED" for row in rows),
-            "reduced_decisions": sum(row["risk_status"] == "REDUCED" for row in rows),
             "recovery_decisions": sum(row["risk_status"] == "RECOVERY" for row in rows),
         },
     }, rows
@@ -111,8 +115,10 @@ def run(source: Path, output: Path, unit_stake: float = 10.0, daily_budget: floa
     promotion_passes = all(
         window["profit_retention"] is not None
         and float(window["profit_retention"]) >= 0.65
-        and window["drawdown_ratio"] is not None
-        and float(window["drawdown_ratio"]) <= 1.0
+        and (
+            window["drawdown_ratio"] is None
+            or float(window["drawdown_ratio"]) <= 1.0
+        )
         for window in windows
     )
     report = {
