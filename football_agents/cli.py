@@ -25,6 +25,11 @@ def main() -> None:
     sync = sub.add_parser("sync-official", help="Sync official Sporttery fixtures and SP")
     sync.add_argument("--force", action="store_true", help="Ignore minimum sync interval")
 
+    official_results = sub.add_parser("sync-official-results",
+                                      help="Backfill auditable 90-minute final scores from the official result archive")
+    official_results.add_argument("--lookback-days", type=int,
+                                  default=settings.official_results_lookback_days)
+
     data_sync = sub.add_parser("sync-data", help="Sync external odds, news, weather, and model signals")
     data_sync.add_argument("--limit", type=int, default=40)
 
@@ -168,6 +173,12 @@ def main() -> None:
         db.initialize()
         report = OfficialDataService().sync(force=args.force)
         print(json.dumps(QwenOpsAgent().attach("official-data-agent", report), ensure_ascii=False, indent=2))
+    elif args.command == "sync-official-results":
+        from .official_data import OfficialResultService
+        from .llm import QwenOpsAgent
+        db.initialize()
+        report = OfficialResultService().sync()
+        print(json.dumps(QwenOpsAgent().attach("official-results-agent", report), ensure_ascii=False, indent=2))
     elif args.command == "sync-data":
         from .integrations import DataEnrichmentService
         from .llm import QwenOpsAgent

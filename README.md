@@ -118,21 +118,50 @@ Do not commit real keys or local runtime paths. Important settings:
 - `DB_RETENTION_DAYS=90`, `DB_BACKTEST_RETENTION_DAYS=180`, `DB_VACUUM_INTERVAL_HOURS=24`: housekeeping knobs for the background cleanup thread. High-churn mutable tables (odds snapshots, fetch/sync logs, audit events, task runs, model predictions, critic/bet signals, shadow time series, backtest artifacts) are pruned past the cutoff and the database is VACUUMed at the configured cadence. Immutable evidence ledgers (official odds/result observations, prospective predictions, paper portfolio, external consensus decisions) are never deleted.
 - `OFFICIAL_BROWSER_PATH`: Chromium-family browser used by the official data sync (CDP). Leave empty to auto-detect Edge/Chrome from common install locations and PATH; set explicitly to override.
 - `OFFICIAL_SP_REFRESH_MINUTES=15`: official fixture/SP capture and its evidence-quality check cadence.
+- A dedicated **closing-capture thread** (`official_sp_closing_capture`) runs every
+  `LIVE_FAST_REFRESH_MINUTES=5` minutes but only spins up the browser when at least
+  one offered official match kicks off within the next 60 minutes. It guarantees a
+  `T_MINUS_1H` official-SP observation for every offered match, directly driving the
+  `closing_sp_within_1h` evidence-quality check toward `EVIDENCE_READY`. It reuses the
+  same `OfficialDataService._lock` so it never launches a second browser alongside the
+  15-minute thread.
 - The same 15-minute chain independently reads the public official result archive, settles exact
   `sporttery-{matchId}` matches without overwriting conflicts, and freezes a critical-window
   prospective prediction after the latest SP observation.
 - `OFFICIAL_RESULTS_SOURCE_URL` configures the public result page and
   `OFFICIAL_RESULTS_LOOKBACK_DAYS=60` controls incremental result backfill coverage.
+  A `sync-official-results` CLI command can trigger a manual backfill when a settlement is missing.
+- Reaching `EVIDENCE_READY` requires the Windows scheduled task to keep the backend
+  alive continuously through evening kickoffs; reinstall it with
+  `scripts\install-backend-scheduled-task.ps1` after any script change. A missed capture
+  cycle in the final hour is the root cause of `EVIDENCE_DEGRADED`.
 - After the official-SP promotion gate, `paper_portfolio_allocation` can create immutable paper
   positions from the latest non-stale executable SP. It recalculates EV from the frozen probability,
   applies quarter-Kelly, daily/strategy/league caps, and prevents duplicate exposure to one match.
 - Mature official-SP evidence is promoted only when a deterministic settlement-day block bootstrap
   puts the 95% lower bounds of ROI and average CLV above zero. The frozen model must also be no worse
   than the paired de-vig market baseline on both Brier score and Log Loss, with statistically positive
-  improvement on at least one of those calibration metrics.
+  improvement on at least one of those calibration metrics. The main prospective study, the profit
+  scorer, and the external-consensus challenger all share this **same settlement-day block bootstrap**
+  (seed 42, 5000 iterations) so the confirmation endpoint reproduces the documented methodology.
+- The main prospective research study (`PROSPECTIVE_RESEARCH_STUDY_NAME` =
+  `frozen-ensemble-market-anchor-v2-t60-confirmation-2026-oos200`) uses
+  `PROSPECTIVE_RESEARCH_MIN_SETTLED=200` and `PROSPECTIVE_RESEARCH_MIN_DAYS=180`, aligned
+  with the external-consensus challenger, so the first promotable decision can arrive in
+  roughly six months. Statistical safety is still enforced by the settlement-day block
+  bootstrap's 95% lower bound being above zero.
 - `paper_portfolio_settlement` runs after the official result collector and records profit, closing
   SP, CLV, equity, and drawdown. Before promotion it records an auditable cash HOLD and never invents
   a position. No real order-placement integration exists.
+- **Portfolio-level drawdown control (tiered, paper-only, ACTIVE):** the paper-portfolio risk
+  policy (`tiered-drawdown-paper-active-v3`) now actively scales stakes. CAUTION (≥2 consecutive
+  losing settlement days or ≥10% peak drawdown) reduces the daily budget multiplier to 0.75;
+  DEFENSIVE (≥4 days or ≥15%) to 0.50; PAUSED (≥6 days or ≥20%, including a trailing-30-day
+  rolling max drawdown) to 0.0 and halts all new paper positions. Open (unsettled) positions are
+  marked to market against the latest official SP so the breaker can trip before settlement reveals
+  the loss. `recovery_multiplier=0.50` keeps stakes half-reduced until drawdown falls below 5%.
+  This is paper-only: `ENABLE_AUTO_BETTING=false` is permanent, there is no real-money order
+  interface, and the immutable settlement ledger is never rewritten by MTM.
 - `PAPER_PORTFOLIO_REPORT_PATH` controls the generated ledger summary location.
 - `external_consensus_challenger_capture` runs after the hourly frozen-model capture. It archives an
   immutable policy and one decision for every aligned official-SP/external-bookmaker snapshot. The
@@ -145,7 +174,7 @@ Do not commit real keys or local runtime paths. Important settings:
 - `ODDS_API_REGIONS=eu`: request one bookmaker region by default to conserve quota while retaining multi-book consensus.
 - `ODDS_API_MIN_REQUESTS_REMAINING=20`: preserve an emergency quota reserve instead of exhausting the account before the primary horizon.
 
-The API process must remain running for these in-process agents to execute. The scheduler runs immediately on startup; official SP capture then runs every 15 minutes, while the heavier agents run hourly, and a separate db-cleanup thread prunes mutable tables and VACUUMs the database every 24 hours by default.
+The API process must remain running for these in-process agents to execute. The scheduler runs immediately on startup; official SP capture then runs every 15 minutes, a closing-capture thread runs every 5 minutes while matches are imminent, the heavier agents run hourly, and a separate db-cleanup thread prunes mutable tables and VACUUMs the database every 24 hours by default.
 
 ## 7.1 Secret Safety
 

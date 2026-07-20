@@ -1,19 +1,19 @@
 {
   "method": "market-bias official pool relevance diagnostics",
-  "created_at": "2026-07-17T08:41:53.153159+00:00",
+  "created_at": "2026-07-20T02:22:21.514384+00:00",
   "strategy_id": "market-bias-i2-draw-2.8-3.5-v1",
-  "official_matches": 188,
-  "with_latest_odds": 89,
-  "missing_latest_odds": 99,
+  "official_matches": 227,
+  "with_latest_odds": 93,
+  "missing_latest_odds": 134,
   "validated_shadow_candidates": 0,
   "research_watch_candidates": 0,
   "league_count": 10,
   "leagues": [
     {
       "league": "世界杯",
-      "matches": 101,
+      "matches": 103,
       "with_latest_odds": 44,
-      "missing_latest_odds": 57,
+      "missing_latest_odds": 59,
       "mapped_history_code": "WORLD_CUP",
       "strategy_coverage": "REJECTED_WORLD_CUP_RULE",
       "validated_shadow_candidates": 0,
@@ -27,9 +27,9 @@
     },
     {
       "league": "芬超",
-      "matches": 30,
-      "with_latest_odds": 12,
-      "missing_latest_odds": 18,
+      "matches": 36,
+      "with_latest_odds": 14,
+      "missing_latest_odds": 22,
       "mapped_history_code": "FIN",
       "strategy_coverage": "REJECTED_RESEARCH_RULE",
       "validated_shadow_candidates": 0,
@@ -44,9 +44,9 @@
     },
     {
       "league": "瑞超",
-      "matches": 17,
-      "with_latest_odds": 8,
-      "missing_latest_odds": 9,
+      "matches": 23,
+      "with_latest_odds": 10,
+      "missing_latest_odds": 13,
       "mapped_history_code": null,
       "strategy_coverage": "UNMAPPED",
       "validated_shadow_candidates": 0,
@@ -58,9 +58,9 @@
     },
     {
       "league": "韩职",
-      "matches": 11,
+      "matches": 21,
       "with_latest_odds": 8,
-      "missing_latest_odds": 3,
+      "missing_latest_odds": 13,
       "mapped_history_code": null,
       "strategy_coverage": "UNMAPPED",
       "validated_shadow_candidates": 0,
@@ -72,23 +72,9 @@
     },
     {
       "league": "挪超",
-      "matches": 9,
+      "matches": 17,
       "with_latest_odds": 1,
-      "missing_latest_odds": 8,
-      "mapped_history_code": null,
-      "strategy_coverage": "UNMAPPED",
-      "validated_shadow_candidates": 0,
-      "research_watch_candidates": 0,
-      "evidence_status": "no mapped historical validation package",
-      "evidence_reports": [],
-      "blocker": "league is not mapped to a validated market-bias package",
-      "recommended_action": "Map the league to historical odds data, then require multi-window and portfolio validation."
-    },
-    {
-      "league": "美职",
-      "matches": 6,
-      "with_latest_odds": 6,
-      "missing_latest_odds": 0,
+      "missing_latest_odds": 16,
       "mapped_history_code": null,
       "strategy_coverage": "UNMAPPED",
       "validated_shadow_candidates": 0,
@@ -100,9 +86,23 @@
     },
     {
       "league": "巴甲",
-      "matches": 5,
+      "matches": 10,
       "with_latest_odds": 5,
-      "missing_latest_odds": 0,
+      "missing_latest_odds": 5,
+      "mapped_history_code": null,
+      "strategy_coverage": "UNMAPPED",
+      "validated_shadow_candidates": 0,
+      "research_watch_candidates": 0,
+      "evidence_status": "no mapped historical validation package",
+      "evidence_reports": [],
+      "blocker": "league is not mapped to a validated market-bias package",
+      "recommended_action": "Map the league to historical odds data, then require multi-window and portfolio validation."
+    },
+    {
+      "league": "美职",
+      "matches": 8,
+      "with_latest_odds": 6,
+      "missing_latest_odds": 2,
       "mapped_history_code": null,
       "strategy_coverage": "UNMAPPED",
       "validated_shadow_candidates": 0,
@@ -158,15 +158,15 @@
   "blocker_summary": [
     {
       "blocker": "World Cup odds history exists, but no-lookahead portfolio validation rejected allocation rules",
-      "matches": 101
+      "matches": 103
     },
     {
       "blocker": "league is not mapped to a validated market-bias package",
-      "matches": 55
+      "matches": 86
     },
     {
       "blocker": "current league has historical data, but candidate rule failed robustness",
-      "matches": 30
+      "matches": 36
     },
     {
       "blocker": "no latest official 1X2 odds in current pool",

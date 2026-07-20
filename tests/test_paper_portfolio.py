@@ -380,12 +380,14 @@ def test_unvalidated_dynamic_risk_remains_shadow_only_after_two_losses(
 
     report = PaperPortfolioService(database).allocate(AS_OF, 100)
 
-    assert report["status"] == "allocated"
-    assert report["risk_status"] == "PAUSED"
-    assert report["recommended_risk_multiplier"] == 0.0
-    assert report["risk_multiplier"] == 1.0
-    assert report["effective_daily_budget"] == 100.0
-    assert report["new_stake"] == 5.0
+    # v3 enforcement is ACTIVE: two consecutive losing settlement days trip
+    # CAUTION (>=2), not a hard pause, so stakes shrink to 0.75 but allocation
+    # is not blocked.
+    assert report["risk_status"] == "CAUTION"
+    assert report["recommended_risk_multiplier"] == 0.75
+    assert report["risk_multiplier"] == 0.75
+    assert report["effective_daily_budget"] == 75.0
+    assert report["new_stake"] < 5.0
 
 
 def test_shadow_pause_is_recorded_but_does_not_override_validated_static_caps(
@@ -405,11 +407,15 @@ def test_shadow_pause_is_recorded_but_does_not_override_validated_static_caps(
 
     report = PaperPortfolioService(database).allocate(AS_OF, 100)
 
+    # v3 with ACTIVE enforcement: three consecutive losing settlement days (>=2
+    # is CAUTION) shrink stakes to 0.75. The losses are -10 each with no positive
+    # peak, so drawdown_fraction is 0 and only the trailing-streak gate drives the
+    # tier; allocation still proceeds, at 0.75 stake.
     assert report["status"] == "allocated"
     assert report["positions_created"] == 1
-    assert report["risk_status"] == "PAUSED"
-    assert report["recommended_risk_multiplier"] == 0.0
-    assert report["risk_multiplier"] == 1.0
+    assert report["risk_status"] == "CAUTION"
+    assert report["recommended_risk_multiplier"] == 0.75
+    assert report["risk_multiplier"] == 0.75
     with database.connect() as connection:
         run = connection.execute(
             "SELECT * FROM paper_portfolio_runs ORDER BY decision_at DESC LIMIT 1"
@@ -417,7 +423,7 @@ def test_shadow_pause_is_recorded_but_does_not_override_validated_static_caps(
     state = __import__("json").loads(run["risk_state_json"])
     assert state["uses_only_settled_ledger"] is True
     assert state["consecutive_losing_settlement_days"] == 3
-    assert state["enforcement"] == "SHADOW_ONLY"
+    assert state["enforcement"] == "ACTIVE"
 
 
 def test_shadow_pause_expires_after_three_calendar_days(tmp_path: Path) -> None:
@@ -428,6 +434,96 @@ def test_shadow_pause_expires_after_three_calendar_days(tmp_path: Path) -> None:
 
     state = PaperPortfolioService(database)._risk_state(AS_OF, 100)
 
-    assert state["status"] == "RECOVERY"
-    assert state["stake_multiplier"] == 1.0
+    # v3: three consecutive losing settlement days (>=4 is DEFENSIVE, so three is
+    # CAUTION=0.75) but the days are old; recovery behaviour is now governed by
+    # drawdown fraction rather than a calendar-day pause. Three -10 losses after
+    # no peak (equity starts at 0) leave equity at -30 with no positive peak, so
+    # drawdown_fraction is 0 and the trailing-streak gate alone drives CAUTION.
+    assert state["status"] == "CAUTION"
     assert state["consecutive_losing_settlement_days"] == 3
+    assert state["enforcement"] == "ACTIVE"
+
+
+def test_drawdown_hard_kill_switch_blocks_new_positions(
+    tmp_path: Path, monkeypatch,
+) -> None:
+    database, repo = _database(tmp_path)
+    # Peak equity +100 then a -25 settlement produces a 20% drawdown, tripping
+    # the hard kill-switch. The candidate is otherwise ready, but no new paper
+    # position may be opened while the breaker is PAUSED.
+    _seed_settled_loss(database, repo, 1, "2026-07-29T12:00:00+00:00", profit=100.0)
+    _seed_settled_loss(database, repo, 2, "2026-07-30T12:00:00+00:00", profit=-25.0)
+    _, _, package = _seed_candidate(tmp_path, database, repo)
+    monkeypatch.setattr(
+        "football_agents.paper_portfolio.build_profit_allocation_readiness", lambda _budget: _readiness()
+    )
+    monkeypatch.setattr(
+        "football_agents.paper_portfolio.list_profit_strategy_packages", lambda: [package]
+    )
+
+    report = PaperPortfolioService(database).allocate(AS_OF, 100)
+
+    assert report["risk_status"] == "PAUSED"
+    assert report["risk_multiplier"] == 0.0
+    assert report["effective_daily_budget"] == 0.0
+    # Hard kill-switch: PAUSED => risk_multiplier<=0 => allocate holds, no new position.
+    assert report["status"] == "hold"
+    assert report["positions_created"] == 0
+
+
+def test_mtm_open_positions_advance_breaker(tmp_path: Path, monkeypatch) -> None:
+    database, repo = _database(tmp_path)
+    # A settled winning day (+100) gives a positive peak. We then open one paper
+    # position whose current official SP has drifted against the selected outcome,
+    # pushing the MTM drawdown past the CAUTION (>=10%) threshold before any
+    # settlement of the open position.
+    _seed_settled_loss(database, repo, 1, "2026-07-29T12:00:00+00:00", profit=100.0)
+    match_id, current_id, package = _seed_candidate(tmp_path, database, repo)
+    # Freeze a paper position at a HOME price of 2.00 (implied ~0.50), then push
+    # the latest official SP for the same match so HOME implied drops to ~0.20,
+    # making the open position's MTM deeply negative and tripping CAUTION/PAUSED.
+    repo.archive_official_odds_observation(
+        match_id, "sporttery-paper-1", {"home": 5.0, "draw": 3.5, "away": 1.6},
+        "2026-08-01T11:00:00+00:00", "2026-08-01T12:00:00+00:00",
+        "ON_SALE", "official", "test", "adverse",
+    )
+    with database.connect() as connection:
+        run_id = "mtm-run-1"
+        position_id = "mtm-position-1"
+        evidence_id = connection.execute(
+            "SELECT id FROM profit_scorer_evidence WHERE match_id=?", (match_id,)
+        ).fetchone()["id"]
+        connection.execute("""INSERT INTO paper_portfolio_runs(
+            run_id,run_hash,decision_at,allocation_date,daily_budget,readiness_decision,
+            readiness_hash,allocated_budget,cash_reserved,status,details_json
+        ) VALUES(?,?,?,?,?,?,?,?,?,?,?)""", (
+            run_id, "mtm-run-hash-1", "2026-07-29T13:00:00+00:00", "2026-07-29", 100.0,
+            "PAPER_ALLOCATION_READY", "mtm-readiness", 10.0, 90.0, "ALLOCATED", "{}",
+        ))
+        connection.execute("""INSERT INTO paper_portfolio_positions(
+            position_id,run_id,allocation_date,strategy_id,source_type,scorer_evidence_id,
+            external_consensus_decision_id,match_id,official_match_id,
+            official_odds_observation_id,selected_outcome,selected_sp,predicted_probability,
+            predicted_ev,quarter_kelly_fraction,stake,placed_at,kickoff_time,
+            scorer_artifact_sha256,source_payload_hash
+        ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
+            position_id, run_id, "2026-07-29", "mtm-strategy", "PROFIT_SCORER",
+            evidence_id, None, match_id, "sporttery-paper-1", current_id,
+            "HOME", 2.0, 0.55, 0.1, 0.025, 100.0, "2026-07-29T13:00:00+00:00",
+            "2026-08-01T12:00:00+00:00", "mtm-artifact", "mtm-position-hash-1",
+        ))
+    monkeypatch.setattr(
+        "football_agents.paper_portfolio.build_profit_allocation_readiness", lambda _budget: _readiness()
+    )
+    monkeypatch.setattr(
+        "football_agents.paper_portfolio.list_profit_strategy_packages", lambda: [package]
+    )
+
+    state = PaperPortfolioService(database)._risk_state(AS_OF, 100)
+
+    # The MTM drawdown from the adverse open position must escalate the breaker
+    # beyond NORMAL before the position settles.
+    assert state["status"] in {"CAUTION", "DEFENSIVE", "PAUSED"}
+    assert state["mark_to_market"]["open_positions"] == 1
+    assert state["mark_to_market"]["unrealized_profit"] < 0
+    assert state["applied_stake_multiplier"] < 1.0

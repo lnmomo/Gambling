@@ -13,6 +13,7 @@ from football_agents.agents.workflow import DecisionWorkflow
 from football_agents.config import settings
 from football_agents.db import Database, db
 from football_agents.independent_model import INDEPENDENT_MODEL_WEIGHTS
+from football_agents.prospective_statistics import build_prospective_statistical_evidence
 from football_agents.repository import Repository
 
 from .evaluation import evaluate_probabilities
@@ -235,23 +236,51 @@ class ProspectiveResearchService:
         market = np.array([[row[f"market_p_{key}"] for key in OUTCOMES] for row in rows], dtype=float)
         proposed_metrics = evaluate_probabilities(proposed, outcomes)
         market_metrics = evaluate_probabilities(market, outcomes)
-        indices = np.array([OUTCOMES.index(value) for value in outcomes])
-        delta = -np.log(proposed[np.arange(len(rows)), indices]) + np.log(market[np.arange(len(rows)), indices])
-        rng = np.random.default_rng(20260622)
-        bootstrap = np.empty(5000)
-        for start in range(0, len(bootstrap), 250):
-            size = min(250, len(bootstrap) - start)
-            selected = rng.integers(0, len(delta), size=(size, len(delta)))
-            bootstrap[start:start + size] = delta[selected].mean(axis=1)
-        difference = float(delta.mean())
+        # Settle-day attribution: each frozen prediction's outcome is the selected
+        # outcome implied by the frozen probability (argmax) so that the settlement-day
+        # block bootstrap can compute paired Brier/Log-Loss improvement of the frozen
+        # model over the de-vigged official-SP market, identical to the method used by
+        # profit_scorer_prospective and external_consensus_challenger.
+        settlement_rows = []
+        for index, row in enumerate(rows):
+            selected_index = int(np.argmax(proposed[index]))
+            predicted_probability = float(proposed[index, selected_index])
+            market_probability = float(market[index, selected_index])
+            settlement_rows.append({
+                "predicted_probability": predicted_probability,
+                "market_probability": market_probability,
+                "selected_outcome": OUTCOMES[selected_index],
+                "actual_outcome": str(row["outcome"]),
+                "kickoff_time": row["kickoff_time"],
+                "settled_at": str(row["kickoff_time"]),
+                "profit": None,
+                "clv": None,
+            })
+        evidence = build_prospective_statistical_evidence(settlement_rows)
+        log_loss_ci = evidence["bootstrap"]["log_loss_improvement_ci"]
+        ci_low = log_loss_ci["p05"]
+        ci_high = log_loss_ci["p95"]
+        if ci_low is None or ci_high is None:
+            decision = "INCONCLUSIVE"
+        elif ci_high < 0:
+            decision = "SUPERIOR"
+        elif ci_low > 0:
+            decision = "INFERIOR"
+        else:
+            decision = "INCONCLUSIVE"
         result = {
             "proposed": proposed_metrics, "market": market_metrics,
-            "log_loss_difference": difference,
-            "ci95_low": float(np.quantile(bootstrap, 0.025)),
-            "ci95_high": float(np.quantile(bootstrap, 0.975)),
-            "probability_proposed_better": float(np.mean(bootstrap < 0)),
+            "primary_metric": "multiclass_log_loss",
+            "method": evidence["method"],
+            "statistical_evidence": evidence,
+            "log_loss_improvement_ci": log_loss_ci,
+            "brier_improvement_ci": evidence["bootstrap"]["brier_improvement_ci"],
+            "decision_basis": (
+                "SUPERIOR when log_loss_improvement_ci.p95 < 0; INFERIOR when p05 > 0; "
+                "else INCONCLUSIVE. log_loss_improvement = market_log_loss - model_log_loss "
+                "(positive means frozen model beats de-vig market)."
+            ),
         }
-        decision = "SUPERIOR" if result["ci95_high"] < 0 else "INFERIOR" if result["ci95_low"] > 0 else "INCONCLUSIVE"
         record = {
             "run_id": f"confirm-{uuid.uuid4().hex}", "study_id": progress["study_id"],
             "freeze_id": progress["freeze_id"], "executed_at": utcnow(),

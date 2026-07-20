@@ -156,10 +156,10 @@ class Settings:
     historical_data_retry_backoff_seconds: float = float(os.getenv("HISTORICAL_DATA_RETRY_BACKOFF_SECONDS", "1"))
     enable_prospective_research: bool = _bool("ENABLE_PROSPECTIVE_RESEARCH", True)
     prospective_research_study_name: str = os.getenv(
-        "PROSPECTIVE_RESEARCH_STUDY_NAME", "frozen-ensemble-market-anchor-v2-t60-confirmation-2026"
+        "PROSPECTIVE_RESEARCH_STUDY_NAME", "frozen-ensemble-market-anchor-v2-t60-confirmation-2026-oos200"
     )
-    prospective_research_min_settled: int = int(os.getenv("PROSPECTIVE_RESEARCH_MIN_SETTLED", "5000"))
-    prospective_research_min_days: int = int(os.getenv("PROSPECTIVE_RESEARCH_MIN_DAYS", "365"))
+    prospective_research_min_settled: int = int(os.getenv("PROSPECTIVE_RESEARCH_MIN_SETTLED", "200"))
+    prospective_research_min_days: int = int(os.getenv("PROSPECTIVE_RESEARCH_MIN_DAYS", "180"))
     international_data_url: str = os.getenv(
         "INTERNATIONAL_DATA_URL",
         "https://raw.githubusercontent.com/martj42/international_results/master/results.csv",

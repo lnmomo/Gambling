@@ -79,6 +79,16 @@ class BackgroundAgentScheduler:
         cleanup_thread.start()
         self.threads.append(cleanup_thread)
 
+        closing_thread = threading.Thread(
+            target=self._loop,
+            name="background-official_sp_closing_capture",
+            args=("official_sp_closing_capture", self._sync_official_closing,
+                  self._interval_for("official_sp_closing_capture")),
+            daemon=True,
+        )
+        closing_thread.start()
+        self.threads.append(closing_thread)
+
     def stop(self) -> None:
         self.stop_event.set()
 
@@ -109,6 +119,8 @@ class BackgroundAgentScheduler:
             return self.interval_seconds
         if task_name in {"official_sp_sync", "official_sp_evidence_quality"}:
             return max(60, settings.official_sp_refresh_minutes * 60)
+        if task_name == "official_sp_closing_capture":
+            return max(60, settings.live_fast_refresh_minutes * 60)
         if task_name == "db_retention_cleanup":
             return max(3600, settings.db_vacuum_interval_hours * 3600)
         return self.interval_seconds
@@ -168,6 +180,39 @@ class BackgroundAgentScheduler:
                 self._refresh_profit_allocation_readiness,
             )
         return report
+
+    def _sync_official_closing(self) -> dict[str, Any]:
+        """Accelerated official-SP capture inside the final hour before kickoff.
+
+        The 15-minute ``official_sp_sync`` cadence can miss the T_MINUS_1H window
+        when the process is not alive through evening kickoffs, which leaves
+        ``closing_sp_within_1h`` below the EVIDENCE_READY threshold. This loop runs
+        every ``live_fast_refresh_minutes`` (default 5) but only spins up the
+        browser when at least one offered official match kicks off within the
+        next 60 minutes, so it stays idle the rest of the time.
+        """
+        from datetime import datetime, timedelta, timezone
+
+        now = datetime.now(timezone.utc)
+        cutoff = now + timedelta(minutes=60)
+        imminent = False
+        for match in self.repository.list_official_matches():
+            kickoff = datetime.fromisoformat(str(match["kickoff_time"]).replace("Z", "+00:00"))
+            if kickoff.tzinfo is None:
+                kickoff = kickoff.replace(tzinfo=timezone.utc)
+            if now < kickoff <= cutoff and str(match.get("status") or "").lower() in {
+                "scheduled", "not_started",
+            }:
+                imminent = True
+                break
+        if not imminent:
+            return {"status": "no_imminent", "matches": 0, "records": 0}
+        # Reuse the full-card capture path; OfficialDataService._lock serializes
+        # against the 15-minute thread so there is no concurrent CDP launch.
+        report = OfficialDataService(self.repository).sync()
+        return {"status": report.get("status", "success"),
+                "matches": report.get("records", 0), "records": report.get("records", 0),
+                "odds_snapshots": report.get("odds_snapshots", 0), "report": report}
 
     def _sync_official_results(self) -> dict[str, Any]:
         report = OfficialResultService(self.repository).sync()

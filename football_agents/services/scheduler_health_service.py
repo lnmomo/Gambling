@@ -8,6 +8,7 @@ from .task_runner_service import TaskRunnerService
 
 TASK_NAMES = {
     "official_sp_sync",
+    "official_sp_closing_capture",
     "official_sp_evidence_quality",
     "profit_allocation_readiness",
     "external_odds_sync",

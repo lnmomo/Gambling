@@ -20,15 +20,20 @@ MAX_LONGSHOT_DAILY_SHARE = 0.25
 LONGSHOT_ODDS_THRESHOLD = 4.00
 DEFAULT_MAX_SINGLE_STAKE = 10.0
 RISK_POLICY: dict[str, Any] = {
-    "version": "settled-day-drawdown-shadow-v2",
-    "enforcement": "SHADOW_ONLY",
-    "half_stake_losing_days": 999,
-    "pause_losing_days": 2,
-    "half_stake_drawdown_budget_multiple": 999.0,
-    "pause_drawdown_budget_multiple": 999.0,
-    "pause_days": 3,
-    "recovery_multiplier": 1.0,
-    "half_stake_multiplier": 1.0,
+    "version": "tiered-drawdown-paper-active-v3",
+    "enforcement": "ACTIVE",
+    "caution_consecutive_losing_days": 2,
+    "caution_drawdown_fraction": 0.10,
+    "defensive_consecutive_losing_days": 4,
+    "defensive_drawdown_fraction": 0.15,
+    "pause_consecutive_losing_days": 6,
+    "pause_drawdown_fraction": 0.20,
+    "rolling_window_days": 30,
+    "caution_multiplier": 0.75,
+    "defensive_multiplier": 0.50,
+    "pause_multiplier": 0.0,
+    "recovery_multiplier": 0.50,
+    "recovery_drawdown_threshold": 0.05,
     "maximum_league_daily_share": MAX_LEAGUE_DAILY_SHARE,
     "maximum_outcome_daily_share": MAX_OUTCOME_DAILY_SHARE,
     "maximum_longshot_daily_share": MAX_LONGSHOT_DAILY_SHARE,
@@ -82,6 +87,16 @@ def settled_risk_state(
         peak = max(peak, equity)
         max_drawdown = max(max_drawdown, peak - equity)
     current_drawdown = max(0.0, peak - equity)
+    drawdown_fraction = current_drawdown / max(peak, 1e-9) if peak > 0 else 0.0
+    # Rolling-window max drawdown fraction over the trailing N settlement days.
+    rolling_window = max(1, int(RISK_POLICY["rolling_window_days"]))
+    rolling_days = daily[-rolling_window:] if len(daily) > rolling_window else daily
+    roll_equity = roll_peak = roll_worst = 0.0
+    for row in rolling_days:
+        roll_equity += float(row["profit"])
+        roll_peak = max(roll_peak, roll_equity)
+        roll_worst = max(roll_worst, roll_peak - roll_equity)
+    rolling_drawdown_fraction = roll_worst / max(roll_peak, 1e-9) if roll_peak > 0 else 0.0
     losing_days = 0
     for row in reversed(daily):
         if float(row["profit"]) < 0:
@@ -91,30 +106,37 @@ def settled_risk_state(
     days_since_last_settlement = (
         max(0, (as_of - last_settled_at).days) if last_settled_at is not None else None
     )
-    pause_trigger = (
-        losing_days >= int(RISK_POLICY["pause_losing_days"])
-        or current_drawdown >= daily_budget * float(RISK_POLICY["pause_drawdown_budget_multiple"])
+    pause_drawdown = float(RISK_POLICY["pause_drawdown_fraction"])
+    defensive_drawdown = float(RISK_POLICY["defensive_drawdown_fraction"])
+    caution_drawdown = float(RISK_POLICY["caution_drawdown_fraction"])
+    pause_losing = int(RISK_POLICY["pause_consecutive_losing_days"])
+    defensive_losing = int(RISK_POLICY["defensive_consecutive_losing_days"])
+    caution_losing = int(RISK_POLICY["caution_consecutive_losing_days"])
+    paused = (
+        losing_days >= pause_losing
+        or drawdown_fraction >= pause_drawdown
+        or rolling_drawdown_fraction >= pause_drawdown
     )
-    last_day_lost = bool(daily and float(daily[-1]["profit"]) < 0)
-    in_pause = bool(
-        pause_trigger
-        and last_day_lost
-        and days_since_last_settlement is not None
-        and days_since_last_settlement < int(RISK_POLICY["pause_days"])
+    defensive = (
+        losing_days >= defensive_losing
+        or drawdown_fraction >= defensive_drawdown
+        or rolling_drawdown_fraction >= defensive_drawdown
     )
-    if in_pause:
-        multiplier, status = 0.0, "PAUSED"
-    elif pause_trigger:
-        multiplier = float(RISK_POLICY["recovery_multiplier"])
-        status = "RECOVERY"
-    elif (
-        losing_days >= int(RISK_POLICY["half_stake_losing_days"])
-        or current_drawdown >= daily_budget * float(
-            RISK_POLICY["half_stake_drawdown_budget_multiple"]
-        )
-    ):
-        multiplier = float(RISK_POLICY["half_stake_multiplier"])
-        status = "REDUCED"
+    caution = (
+        losing_days >= caution_losing
+        or drawdown_fraction >= caution_drawdown
+        or rolling_drawdown_fraction >= caution_drawdown
+    )
+    if paused:
+        multiplier, status = float(RISK_POLICY["pause_multiplier"]), "PAUSED"
+    elif defensive:
+        multiplier, status = float(RISK_POLICY["defensive_multiplier"]), "DEFENSIVE"
+    elif caution:
+        multiplier, status = float(RISK_POLICY["caution_multiplier"]), "CAUTION"
+    elif drawdown_fraction >= float(RISK_POLICY["recovery_drawdown_threshold"]):
+        # Recently recovered from a deeper drawdown: stay half-staked until the
+        # paper equity makes a clean new high beyond the recovery threshold.
+        multiplier, status = float(RISK_POLICY["recovery_multiplier"]), "RECOVERY"
     else:
         multiplier, status = 1.0, "NORMAL"
     applied_multiplier = multiplier if RISK_POLICY["enforcement"] == "ACTIVE" else 1.0
@@ -131,6 +153,10 @@ def settled_risk_state(
         "equity": round(equity, 2),
         "peak_equity": round(peak, 2),
         "current_drawdown": round(current_drawdown, 2),
+        "current_drawdown_fraction": round(drawdown_fraction, 4),
+        "rolling_window_days": rolling_window,
+        "rolling_max_drawdown": round(roll_worst, 2),
+        "rolling_max_drawdown_fraction": round(rolling_drawdown_fraction, 4),
         "max_drawdown": round(max_drawdown, 2),
         "last_settled_at": last_settled_at.isoformat() if last_settled_at else None,
         "days_since_last_settlement": days_since_last_settlement,
@@ -176,7 +202,95 @@ class PaperPortfolioService:
             )
             last_settled_at = _parse_time(row["settled_at"]).astimezone(timezone.utc)
         daily = [{"date": day, "profit": round(by_day[day], 2)} for day in sorted(by_day)]
-        return settled_risk_state(daily, as_of, daily_budget, last_settled_at)
+        state = settled_risk_state(daily, as_of, daily_budget, last_settled_at)
+        # Mark-to-market of open (unsettled) positions so the drawdown breaker can
+        # trip before settlement reveals the loss. MTM is estimate-only: it feeds
+        # the risk-state drawdown fractions, but never writes to the immutable
+        # settlement ledger (settlement still only comes from real final scores).
+        mtm = self._open_positions_mtm(as_of=as_of)
+        if mtm["open_positions"]:
+            equity = float(state["equity"]) + mtm["unrealized_profit"]
+            peak = max(float(state["peak_equity"]), equity)
+            mtm_drawdown = max(0.0, peak - equity)
+            mtm_drawdown_fraction = mtm_drawdown / max(peak, 1e-9) if peak > 0 else 0.0
+            state["mark_to_market"] = {
+                "open_positions": mtm["open_positions"],
+                "unrealized_profit": round(mtm["unrealized_profit"], 2),
+                "equity_with_mtm": round(equity, 2),
+                "peak_with_mtm": round(peak, 2),
+                "current_drawdown_with_mtm": round(mtm_drawdown, 2),
+                "current_drawdown_fraction_with_mtm": round(mtm_drawdown_fraction, 4),
+            }
+            # Re-evaluate the breaker using MTM-augmented drawdown so a real-time
+            # drawdown can escalate the tier even before settlement.
+            pause_dd = float(RISK_POLICY["pause_drawdown_fraction"])
+            defensive_dd = float(RISK_POLICY["defensive_drawdown_fraction"])
+            caution_dd = float(RISK_POLICY["caution_drawdown_fraction"])
+            if mtm_drawdown_fraction >= pause_dd and state["status"] not in {"PAUSED"}:
+                state["status"] = "PAUSED"
+                state["stake_multiplier"] = float(RISK_POLICY["pause_multiplier"])
+                state["recommended_stake_multiplier"] = float(RISK_POLICY["pause_multiplier"])
+                state["applied_stake_multiplier"] = (
+                    state["stake_multiplier"] if RISK_POLICY["enforcement"] == "ACTIVE" else 1.0
+                )
+            elif mtm_drawdown_fraction >= defensive_dd and state["status"] in {"CAUTION", "NORMAL", "RECOVERY"}:
+                state["status"] = "DEFENSIVE"
+                state["stake_multiplier"] = float(RISK_POLICY["defensive_multiplier"])
+                state["recommended_stake_multiplier"] = float(RISK_POLICY["defensive_multiplier"])
+                state["applied_stake_multiplier"] = (
+                    state["stake_multiplier"] if RISK_POLICY["enforcement"] == "ACTIVE" else 1.0
+                )
+            elif mtm_drawdown_fraction >= caution_dd and state["status"] in {"NORMAL", "RECOVERY"}:
+                state["status"] = "CAUTION"
+                state["stake_multiplier"] = float(RISK_POLICY["caution_multiplier"])
+                state["recommended_stake_multiplier"] = float(RISK_POLICY["caution_multiplier"])
+                state["applied_stake_multiplier"] = (
+                    state["stake_multiplier"] if RISK_POLICY["enforcement"] == "ACTIVE" else 1.0
+                )
+        else:
+            state["mark_to_market"] = {"open_positions": 0, "unrealized_profit": 0.0}
+        return state
+
+    def _open_positions_mtm(self, as_of: datetime) -> dict[str, Any]:
+        """Estimate unrealized P&L of open paper positions via the latest official SP.
+
+        For each open position, the current implied probability of its selected
+        outcome is read from the freshest official_odds_observations row for the
+        match. The unrealized profit is ``stake * (current_implied_prob * selected_sp - 1)``,
+        which is positive when the executable price has moved in our favour since
+        freeze. This is an estimate only — settlement always uses real final scores.
+        """
+        with self.database.connect() as conn:
+            open_rows = conn.execute("""SELECT p.position_id,p.stake,p.selected_outcome,p.selected_sp,
+                p.match_id,p.placed_at
+                FROM paper_portfolio_positions p
+                WHERE NOT EXISTS(SELECT 1 FROM paper_portfolio_settlements s
+                    WHERE s.position_id=p.position_id)
+                ORDER BY p.placed_at""").fetchall()
+            cached_latest: dict[int, Any] = {}
+            for r in conn.execute("""SELECT match_id,
+                home_sp,draw_sp,away_sp,observed_at FROM official_odds_observations
+                WHERE is_pre_match=1 ORDER BY observed_at DESC""").fetchall():
+                # ORDER BY observed_at DESC iterates newest-first; keep the first
+                # (latest) row seen per match and ignore older rows for the same match.
+                cached_latest.setdefault(int(r["match_id"]), r)
+        unrealized = 0.0
+        for row in open_rows:
+            latest = cached_latest.get(int(row["match_id"]))
+            if not latest:
+                continue
+            outcome = str(row["selected_outcome"]).lower()
+            inverse_home = 1.0 / float(latest["home_sp"])
+            inverse_draw = 1.0 / float(latest["draw_sp"])
+            inverse_away = 1.0 / float(latest["away_sp"])
+            total = inverse_home + inverse_draw + inverse_away
+            implied = {outcome_name: inv / total for outcome_name, inv in (
+                ("home", inverse_home), ("draw", inverse_draw), ("away", inverse_away)
+            )}[outcome]
+            stake = float(row["stake"])
+            selected_sp = float(row["selected_sp"])
+            unrealized += stake * (implied * selected_sp - 1.0)
+        return {"open_positions": len(open_rows), "unrealized_profit": round(unrealized, 2)}
 
     def _strategy_candidates(self, strategy: dict[str, Any], as_of: str) -> list[dict[str, Any]]:
         if strategy.get("source_type") == "EXTERNAL_CONSENSUS":
