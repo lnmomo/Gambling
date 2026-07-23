@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
+from football_agents.config import settings
 from football_agents.db import Database
 from football_agents.health import build_health_report
 from football_agents.repository import Repository
@@ -173,6 +174,71 @@ def test_external_refresh_skips_capture_chain_without_near_horizon_matches(tmp_p
     scheduler._sync_external_news_weather()
 
     assert child_tasks == []
+
+
+def test_primary_horizon_odds_capture_is_lightweight_and_runs_evidence_chain(tmp_path, monkeypatch):
+    database = Database(Path(tmp_path) / "scheduler-primary-horizon.db")
+    database.initialize()
+    scheduler = BackgroundAgentScheduler(Repository(database), TaskRunnerService(database))
+    seen: dict = {}
+    child_tasks: list[str] = []
+
+    def sync(limit, evaluate, **kwargs):
+        seen.update({"limit": limit, "evaluate": evaluate, **kwargs})
+        return {"matches": 3, "market_odds": 2, "market_target_matches": 3}
+
+    monkeypatch.setattr(
+        "football_agents.scheduler.DataEnrichmentService",
+        lambda _repository: SimpleNamespace(sync=sync),
+    )
+    monkeypatch.setattr(
+        scheduler,
+        "_run_task",
+        lambda task_name, _action: child_tasks.append(task_name),
+    )
+
+    report = scheduler._capture_primary_horizon_external_odds()
+
+    assert report["market_odds"] == 2
+    assert seen == {
+        "limit": settings.agent_match_limit,
+        "evaluate": False,
+        "include_news_weather": False,
+        "odds_minimum_minutes": 60,
+        "odds_window_minutes": 120,
+        "skip_existing_horizon_capture": True,
+    }
+    assert child_tasks == [
+        "feature_build_primary_horizon",
+        "prospective_research_primary_horizon_capture",
+        "external_consensus_challenger_primary_horizon_capture",
+        "profit_allocation_readiness_primary_horizon",
+    ]
+
+
+def test_primary_horizon_rechecks_fresh_existing_odds_without_new_fetch(tmp_path, monkeypatch):
+    database = Database(Path(tmp_path) / "scheduler-primary-existing.db")
+    database.initialize()
+    scheduler = BackgroundAgentScheduler(Repository(database), TaskRunnerService(database))
+    child_tasks: list[str] = []
+    monkeypatch.setattr(
+        "football_agents.scheduler.DataEnrichmentService",
+        lambda _repository: SimpleNamespace(sync=lambda *_args, **_kwargs: {
+            "matches": 3, "market_odds": 0, "market_target_matches": 0,
+        }),
+    )
+    monkeypatch.setattr(
+        scheduler,
+        "_run_task",
+        lambda task_name, _action: child_tasks.append(task_name),
+    )
+
+    scheduler._capture_primary_horizon_external_odds()
+
+    assert child_tasks == [
+        "external_consensus_challenger_primary_horizon_capture",
+        "profit_allocation_readiness_primary_horizon",
+    ]
 
 
 def test_qwen_terminal_auth_and_quota_errors_trip_circuit_breaker(tmp_path):

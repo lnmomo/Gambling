@@ -57,6 +57,9 @@ TEAM_ALIASES = {
     "\u5fb7\u91cc\u57ce": "Derry City", "\u8d39\u4f26\u8328": "Ferencvaros",
     "\u4f0f\u4f0a\u4f0f\u4e01": "Vojvodina", "\u65e5\u5229\u7eb3": "Zilina",
     "\u65af\u6d77\u675c\u514b": "Hajduk Split",
+    "\u6d4e\u5ddeSK": "Jeju United FC", "\u6c5f\u539fFC": "Gangwon FC",
+    "\u5168\u5317\u73b0\u4ee3": "Jeonbuk Hyundai Motors", "\u5927\u7530\u5e02\u6c11": "Daejeon Citizen",
+    "\u851a\u5c71\u73b0\u4ee3": "Ulsan Hyundai FC", "\u4ec1\u5ddd\u8054": "Incheon United",
 }
 
 

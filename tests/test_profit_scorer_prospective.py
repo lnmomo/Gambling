@@ -3,7 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from football_agents.db import Database
-from football_agents.profit_scorer_prospective import validate_profit_scorer_on_official_sp
+from football_agents.profit_scorer_prospective import (
+    build_fixed_daily_budget_portfolio,
+    validate_profit_scorer_on_official_sp,
+)
 from football_agents.repository import Repository
 
 from tests.test_profit_scorer_official import _artifact
@@ -128,6 +131,8 @@ def test_prospective_validation_settles_selected_snapshots_only_after_result(tmp
     assert report["monthly"][0]["month"] == "2026-06"
     assert report["daily"][0]["date"] == "2026-06-01"
     assert report["daily"][0]["profit"] == 2.1
+    assert report["daily_portfolio"]["summary"]["staked"] == 10.0
+    assert report["daily_portfolio"]["summary"]["profit"] == 21.0
     assert report["active_months"] == 1
     assert report["closing_sp_samples"] == 1
     assert report["closing_sp_coverage"] == 1.0
@@ -208,6 +213,36 @@ def test_post_kickoff_first_capture_is_permanently_missed(tmp_path: Path) -> Non
     assert repeated["immutable_attempts_written"] == 0
     assert repo.list_profit_scorer_evidence() == []
     assert repo.list_profit_scorer_freeze_attempts()[0]["status"] == "MISSED_PRE_MATCH"
+
+
+def test_fixed_daily_portfolio_freezes_allocation_before_same_day_results() -> None:
+    candidates = [
+        {"kickoff_time": "2026-06-01T12:00:00+00:00", "official_match_id": "a",
+         "official_odds_observation_id": 1, "selected_outcome": "HOME", "predicted_ev": 0.20,
+         "selected_sp": 2.0, "passes_scorer": True, "settled": True, "actual_outcome": "HOME"},
+        {"kickoff_time": "2026-06-01T14:00:00+00:00", "official_match_id": "b",
+         "official_odds_observation_id": 2, "selected_outcome": "HOME", "predicted_ev": 0.10,
+         "selected_sp": 2.0, "passes_scorer": True, "settled": True, "actual_outcome": "AWAY"},
+        {"kickoff_time": "2026-06-01T16:00:00+00:00", "official_match_id": "c",
+         "official_odds_observation_id": 3, "selected_outcome": "HOME", "predicted_ev": 0.30,
+         "selected_sp": 2.0, "passes_scorer": True, "settled": True, "actual_outcome": "AWAY"},
+    ]
+    first = build_fixed_daily_budget_portfolio(candidates, daily_budget=20, max_single_stake=10)
+    changed_results = [{**row, "actual_outcome": "HOME"} for row in candidates]
+    second = build_fixed_daily_budget_portfolio(changed_results, daily_budget=20, max_single_stake=10)
+
+    assert [row["official_match_id"] for row in first["bets"]] == ["c", "a"]
+    assert [row["stake"] for row in first["bets"]] == [10.0, 10.0]
+    assert first["monthly"] == [{
+        "month": "2026-06", "days": 1, "bets": 2, "settled_bets": 2,
+        "staked": 20.0, "profit": 0.0, "roi_pct": 0.0,
+    }]
+    assert first["summary"]["active_months"] == 1
+    assert first["summary"]["positive_months"] == 0
+    assert first["summary"]["negative_months"] == 0
+    assert [(row["official_match_id"], row["stake"]) for row in first["bets"]] == [
+        (row["official_match_id"], row["stake"]) for row in second["bets"]
+    ]
 
 
 def test_blocked_pre_match_snapshot_cannot_be_rescored_after_backfill(tmp_path: Path) -> None:

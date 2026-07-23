@@ -10,7 +10,10 @@ import pytest
 from football_agents.agents.workflow import DecisionWorkflow
 from football_agents.config import settings
 from football_agents.db import Database
-from football_agents.external_consensus_challenger import ExternalConsensusChallengerService
+from football_agents.external_consensus_challenger import (
+    POLICY_CONFIG,
+    ExternalConsensusChallengerService,
+)
 from football_agents.repository import Repository
 from football_agents.research.prospective import ProspectiveResearchService
 
@@ -67,6 +70,8 @@ def test_challenger_freezes_candidate_and_is_immutable(tmp_path: Path) -> None:
     assert decision["bookmaker_count"] == 12
     assert decision["conservative_ev"] > 0
     assert first["report"]["policy"]["config"]["model_source"] == "pure_football_baseline"
+    assert first["report"]["policy"]["config"]["minimum_external_probability"] == 0.40
+    assert first["report"]["policy"]["config"]["maximum_bets_per_day"] == 3
     assert first["report"]["policy"]["config"]["external_odds_regions"] == settings.odds_api_regions
     assert first["report"]["policy"]["config"]["external_odds_capture_window_minutes"] == (
         settings.external_odds_capture_window_minutes
@@ -140,6 +145,29 @@ def test_challenger_freezes_candidate_and_is_immutable(tmp_path: Path) -> None:
     assert report["decision"] == "EXTERNAL_CONSENSUS_PROSPECTIVE_COLLECTING"
 
 
+def test_primary_portfolio_keeps_up_to_three_candidates_per_day() -> None:
+    rows = [
+        {
+            "match_id": index,
+            "official_match_id": f"sporttery-{index}",
+            "kickoff_time": "2026-08-01T18:00:00+00:00",
+            "minutes_to_kickoff": 90,
+            "conservative_ev": 0.01 * index,
+        }
+        for index in range(1, 5)
+    ]
+    config = {
+        "primary_horizon_minutes": 60,
+        "horizon_tolerance_minutes": 60,
+        "maximum_bets_per_day": 3,
+    }
+
+    selected = ExternalConsensusChallengerService._primary_decisions(rows, config)
+
+    assert len(selected) == 3
+    assert {row["match_id"] for row in selected} == {2, 3, 4}
+
+
 def test_challenger_refuses_stale_external_consensus(tmp_path: Path) -> None:
     database, repository, _match, now = _seed_challenger(tmp_path, external_age_minutes=181)
     service = ExternalConsensusChallengerService(database, repository)
@@ -151,6 +179,20 @@ def test_challenger_refuses_stale_external_consensus(tmp_path: Path) -> None:
     assert result["blocker_counts"][0]["reason"] == "stale_external_consensus"
     with database.connect() as connection:
         assert connection.execute("SELECT COUNT(*) n FROM external_consensus_decisions").fetchone()["n"] == 0
+
+
+def test_challenger_refuses_fresh_but_time_misaligned_market_inputs(tmp_path: Path) -> None:
+    # The official quote is one minute old and external quote is twenty minutes
+    # old: both pass their individual freshness checks but cannot form a fair
+    # same-time EV comparison.
+    database, repository, _match, now = _seed_challenger(tmp_path, external_age_minutes=20)
+    service = ExternalConsensusChallengerService(database, repository)
+
+    result = service.capture(10, as_of=now)
+
+    assert result["decisions"] == 0
+    assert result["predictions"] == 0
+    assert result["blocker_counts"][0]["reason"] == "official_external_time_skew>15m"
 
 
 def test_current_official_margin_can_freeze_honest_no_bet(tmp_path: Path) -> None:
@@ -183,3 +225,27 @@ def test_challenger_requires_market_independent_pure_model(tmp_path: Path) -> No
     assert result["decisions"] == 0
     assert result["predictions"] == 0
     assert result["blocker_counts"][0]["reason"] == "missing_independent_pure_model_prediction"
+
+
+def test_challenger_distinguishes_not_on_sale_from_collector_gap(tmp_path: Path) -> None:
+    database = Database(tmp_path / "not-on-sale.db")
+    database.initialize()
+    repository = Repository(database)
+    now = datetime.now(timezone.utc)
+    match_id = repository.create_match({
+        "official_match_id": "not-on-sale", "league": "Test League",
+        "home_team": "Home", "away_team": "Away",
+        "kickoff_time": (now + timedelta(hours=3)).isoformat(), "status": "scheduled",
+    })
+    match = repository.get_match(match_id)
+    repository.archive_official_market_availability(
+        match["id"], match["official_match_id"], now.isoformat(), match["kickoff_time"],
+        "待开售", "scheduled", False, "not_on_sale", "official", "https://example.test", "not-on-sale",
+    )
+
+    inputs, blocker = ExternalConsensusChallengerService(database, repository)._inputs(
+        match["id"], "unused-study", now + timedelta(seconds=1), POLICY_CONFIG,
+    )
+
+    assert inputs is None
+    assert blocker == "official_sp_not_on_sale"

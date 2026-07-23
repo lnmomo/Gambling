@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -26,6 +27,33 @@ def _bool(name: str, default: bool = False) -> bool:
     if value is None:
         return default
     return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _json_source_list(name: str) -> tuple[dict[str, str], ...]:
+    """Read optional licensed historical CSV sources from environment JSON."""
+    raw = os.getenv(name, "[]").strip()
+    if not raw:
+        return ()
+    try:
+        values = json.loads(raw)
+    except json.JSONDecodeError:
+        return ()
+    if not isinstance(values, list):
+        return ()
+    sources: list[dict[str, str]] = []
+    for value in values:
+        if not isinstance(value, dict):
+            continue
+        url = str(value.get("url") or "").strip()
+        name_value = str(value.get("name") or "").strip()
+        if not url or not name_value:
+            continue
+        sources.append({
+            "name": name_value,
+            "url": url,
+            "league": str(value.get("league") or "").strip(),
+        })
+    return tuple(sources)
 
 
 def _database_path_from_url(database_url: str) -> Path:
@@ -154,6 +182,9 @@ class Settings:
     historical_data_workers: int = int(os.getenv("HISTORICAL_DATA_WORKERS", "8"))
     historical_data_retries: int = int(os.getenv("HISTORICAL_DATA_RETRIES", "3"))
     historical_data_retry_backoff_seconds: float = float(os.getenv("HISTORICAL_DATA_RETRY_BACKOFF_SECONDS", "1"))
+    historical_data_extra_csv_sources: tuple[dict[str, str], ...] = _json_source_list(
+        "HISTORICAL_DATA_EXTRA_CSV_SOURCES"
+    )
     enable_prospective_research: bool = _bool("ENABLE_PROSPECTIVE_RESEARCH", True)
     prospective_research_study_name: str = os.getenv(
         "PROSPECTIVE_RESEARCH_STUDY_NAME", "frozen-ensemble-market-anchor-v2-t60-confirmation-2026-oos200"
@@ -172,4 +203,3 @@ class Settings:
 
 
 settings = Settings()
-

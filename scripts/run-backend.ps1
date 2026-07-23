@@ -26,7 +26,7 @@ $process = Start-Process `
     -FilePath $python `
     -ArgumentList "-m", "football_agents.cli", "serve", "--host", "127.0.0.1", "--port", "8000" `
     -WorkingDirectory $projectRoot `
-    -NoNewWindow `
+    -WindowStyle Hidden `
     -RedirectStandardOutput $stdoutPath `
     -RedirectStandardError $stderrPath `
     -PassThru `

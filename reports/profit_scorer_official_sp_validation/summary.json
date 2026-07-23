@@ -1,18 +1,18 @@
 {
   "method": "prospective official-SP validation for market-anchored profit scorer",
-  "created_at": "2026-07-20T04:54:32.114724+00:00",
+  "created_at": "2026-07-23T06:50:16.878448+00:00",
   "scorer_artifact": "reports\\market_anchored_sp1_home_avg_close_shadow_scorer_v1\\scorer.json",
   "scorer_artifact_sha256": "dfb6d7d487a9fe68240a1e9d6c112241a7b15563db8407489481c33df831ef0d",
   "feature_engine": "market-anchored-research-parity-v1",
-  "capture_as_of": "2026-07-20T04:54:32.090575+00:00",
+  "capture_as_of": "2026-07-23T06:50:16.841902+00:00",
   "immutable_attempts_written": 0,
   "immutable_evidence_written": 0,
-  "opening_pre_match_snapshots": 76,
-  "valid_three_way_snapshots": 76,
-  "settled_opening_snapshots": 71,
-  "frozen_attempts": 76,
+  "opening_pre_match_snapshots": 97,
+  "valid_three_way_snapshots": 97,
+  "settled_opening_snapshots": 87,
+  "frozen_attempts": 97,
   "frozen_scored_attempts": 0,
-  "frozen_blocked_attempts": 23,
+  "frozen_blocked_attempts": 44,
   "missed_pre_match_attempts": 53,
   "frozen_evidence_temporal_violations": 0,
   "scored_snapshots": 0,
@@ -80,6 +80,26 @@
   "negative_months": 0,
   "monthly": [],
   "daily": [],
+  "daily_portfolio": {
+    "method": "frozen official-SP fixed-daily-budget portfolio replay",
+    "daily_budget": 100.0,
+    "max_single_stake": 10.0,
+    "same_day_results_hidden_until_allocation": true,
+    "bets": [],
+    "daily": [],
+    "monthly": [],
+    "summary": {
+      "allocated_bets": 0,
+      "settled_bets": 0,
+      "staked": 0,
+      "profit": 0,
+      "roi_pct": 0.0,
+      "max_drawdown": 0.0,
+      "active_months": 0,
+      "positive_months": 0,
+      "negative_months": 0
+    }
+  },
   "blocker_counts": [
     {
       "reason": "capture_started_at_or_after_kickoff",
@@ -87,19 +107,19 @@
     },
     {
       "reason": "league_not_sp1",
-      "snapshots": 23
+      "snapshots": 44
     },
     {
       "reason": "home_history<10:0",
-      "snapshots": 16
+      "snapshots": 34
     },
     {
       "reason": "away_history<10:0",
-      "snapshots": 16
+      "snapshots": 33
     },
     {
       "reason": "home_market_probability_below_0.55",
-      "snapshots": 16
+      "snapshots": 30
     }
   ],
   "decision": "OFFICIAL_SP_PROSPECTIVE_BLOCKED",

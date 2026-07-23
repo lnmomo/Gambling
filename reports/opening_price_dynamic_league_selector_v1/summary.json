@@ -1,0 +1,192 @@
+{
+  "method": {
+    "candidate": "X-max-edge-fav040-edge105-hardkill30",
+    "price_timing": "pre-match opening only",
+    "selection": "per-league preceding six-month profit > 0 and minimum training bets",
+    "holdout": "following three months",
+    "fold_starts": [
+      "2022-03",
+      "2022-09",
+      "2023-03",
+      "2023-09",
+      "2024-03",
+      "2024-09",
+      "2025-03",
+      "2025-09"
+    ],
+    "future_results_used_for_selection": false,
+    "purpose": "research comparison; no automatic promotion or deployment"
+  },
+  "threshold": 20,
+  "folds": [
+    {
+      "train_window": "2022-03-01..2022-08-31",
+      "holdout_window": "2022-09-01..2022-11-30",
+      "eligible_leagues": [
+        "D1",
+        "E0",
+        "E1",
+        "E2",
+        "F2",
+        "I1",
+        "T1"
+      ],
+      "eligible_league_count": 7,
+      "bets": 135,
+      "staked": 1350.0,
+      "profit": 119.2,
+      "roi_pct": 8.83,
+      "max_drawdown": 64.8
+    },
+    {
+      "train_window": "2022-09-01..2023-02-28",
+      "holdout_window": "2023-03-01..2023-05-31",
+      "eligible_leagues": [
+        "D1",
+        "D2",
+        "E0",
+        "E2",
+        "E3",
+        "F2",
+        "P1",
+        "SP1",
+        "SP2"
+      ],
+      "eligible_league_count": 9,
+      "bets": 151,
+      "staked": 1510.0,
+      "profit": 77.2,
+      "roi_pct": 5.11,
+      "max_drawdown": 95.8
+    },
+    {
+      "train_window": "2023-03-01..2023-08-31",
+      "holdout_window": "2023-09-01..2023-11-30",
+      "eligible_leagues": [
+        "E0",
+        "E2",
+        "F2",
+        "P1",
+        "SP1",
+        "T1"
+      ],
+      "eligible_league_count": 6,
+      "bets": 80,
+      "staked": 800.0,
+      "profit": -151.7,
+      "roi_pct": -18.96,
+      "max_drawdown": 185.5
+    },
+    {
+      "train_window": "2023-09-01..2024-02-29",
+      "holdout_window": "2024-03-01..2024-05-31",
+      "eligible_leagues": [
+        "E0",
+        "E2",
+        "F1",
+        "I1",
+        "SP1"
+      ],
+      "eligible_league_count": 5,
+      "bets": 78,
+      "staked": 780.0,
+      "profit": 193.9,
+      "roi_pct": 24.86,
+      "max_drawdown": 30.0
+    },
+    {
+      "train_window": "2024-03-01..2024-08-31",
+      "holdout_window": "2024-09-01..2024-11-30",
+      "eligible_leagues": [
+        "F1",
+        "I1"
+      ],
+      "eligible_league_count": 2,
+      "bets": 29,
+      "staked": 290.0,
+      "profit": -21.3,
+      "roi_pct": -7.34,
+      "max_drawdown": 52.0
+    },
+    {
+      "train_window": "2024-09-01..2025-02-28",
+      "holdout_window": "2025-03-01..2025-05-31",
+      "eligible_leagues": [
+        "E1",
+        "E2",
+        "F2",
+        "I1"
+      ],
+      "eligible_league_count": 4,
+      "bets": 48,
+      "staked": 480.0,
+      "profit": -7.2,
+      "roi_pct": -1.5,
+      "max_drawdown": 46.1
+    },
+    {
+      "train_window": "2025-03-01..2025-08-31",
+      "holdout_window": "2025-09-01..2025-11-30",
+      "eligible_leagues": [
+        "E2",
+        "SP1"
+      ],
+      "eligible_league_count": 2,
+      "bets": 32,
+      "staked": 320.0,
+      "profit": 14.3,
+      "roi_pct": 4.47,
+      "max_drawdown": 55.0
+    },
+    {
+      "train_window": "2025-09-01..2026-02-28",
+      "holdout_window": "2026-03-01..2026-05-31",
+      "eligible_leagues": [
+        "E1",
+        "E2",
+        "E3",
+        "F2",
+        "P1",
+        "T1"
+      ],
+      "eligible_league_count": 6,
+      "bets": 155,
+      "staked": 1550.0,
+      "profit": 132.2,
+      "roi_pct": 8.53,
+      "max_drawdown": 40.1
+    }
+  ],
+  "aggregate": {
+    "folds": 8,
+    "positive_folds": 5,
+    "bets": 708,
+    "staked": 7080.0,
+    "profit": 356.6,
+    "roi_pct": 5.04,
+    "median_fold_roi_pct": 4.79,
+    "worst_fold_roi_pct": -18.96,
+    "max_fold_drawdown": 185.5
+  },
+  "fixed_candidate_baseline": {
+    "folds": 8,
+    "positive_folds": 6,
+    "bets": 1630,
+    "staked": 16300.0,
+    "profit": 1095.4,
+    "roi_pct": 6.72,
+    "median_fold_roi_pct": 6.96,
+    "worst_fold_roi_pct": -5.47,
+    "max_fold_drawdown": 186.2
+  },
+  "decision": {
+    "status": "REJECTED",
+    "requirements": {
+      "positive_aggregate_profit": true,
+      "positive_folds_at_least_5": true,
+      "holdout_bets_at_least_200": true,
+      "roi_at_least_fixed_candidate": false
+    }
+  },
+  "guardrail": "Cross-book opening-price research only; no China Sporttery SP deployment."
+}

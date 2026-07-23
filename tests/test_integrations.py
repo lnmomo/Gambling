@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import unittest
-from unittest.mock import patch
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import Mock, patch
 
 from datetime import datetime, timedelta, timezone
 
+from football_agents.db import Database
 from football_agents.integrations.odds import OddsApiClient, normalize_team
-from football_agents.integrations.service import _odds_capture_targets, _requests_remaining
+from football_agents.integrations.service import (
+    DataEnrichmentService, _odds_capture_targets, _requests_remaining,
+)
+from football_agents.repository import Repository
 
 
 class IntegrationTests(unittest.TestCase):
@@ -21,6 +27,59 @@ class IntegrationTests(unittest.TestCase):
         targets = _odds_capture_targets(matches, now, 180)
 
         self.assertEqual([row["id"] for row in targets], [1])
+
+    def test_primary_horizon_targets_only_t60_to_t120(self) -> None:
+        now = datetime.now(timezone.utc)
+        matches = [
+            {"id": 1, "kickoff_time": (now + timedelta(minutes=59)).isoformat()},
+            {"id": 2, "kickoff_time": (now + timedelta(minutes=60)).isoformat()},
+            {"id": 3, "kickoff_time": (now + timedelta(minutes=120)).isoformat()},
+            {"id": 4, "kickoff_time": (now + timedelta(minutes=121)).isoformat()},
+        ]
+
+        targets = _odds_capture_targets(matches, now, 120, 60)
+
+        self.assertEqual([row["id"] for row in targets], [2, 3])
+
+    def test_primary_horizon_capture_is_not_requested_twice(self) -> None:
+        with TemporaryDirectory() as directory:
+            database = Database(Path(directory) / "horizon.db")
+            database.initialize()
+            repository = Repository(database)
+            now = datetime.now(timezone.utc)
+            kickoff = now + timedelta(minutes=90)
+            match_id, _, _ = repository.upsert_official_match({
+                "official_match_id": "sporttery-horizon-1", "match_no": "001",
+                "league": "Test League", "home_team": "Home", "away_team": "Away",
+                "kickoff_time": kickoff.isoformat(), "status": "scheduled",
+                "source_url": "https://example.test", "data_quality_score": 1.0,
+                "raw_hash": "horizon-match",
+            })
+            service = DataEnrichmentService(repository)
+            service.odds.configured = Mock(return_value=True)
+            service.odds.events = Mock(return_value=([{"id": "event"}], {
+                "x-requests-remaining": "99",
+            }))
+            service.odds.match_event = Mock(return_value={"id": "event"})
+            service.odds.consensus = Mock(return_value={"home": 2.0, "draw": 3.5, "away": 4.0})
+            service.odds.bookmaker_odds = Mock(return_value=[{
+                "bookmaker": "Book", "bookmaker_key": "book", "market": "H2H",
+                "odds": {"home": 2.0, "draw": 3.5, "away": 4.0},
+                "last_update": now.isoformat(),
+            }])
+
+            first = service.sync(10, evaluate=False, include_news_weather=False,
+                                 odds_minimum_minutes=60, odds_window_minutes=120,
+                                 skip_existing_horizon_capture=True)
+            second = service.sync(10, evaluate=False, include_news_weather=False,
+                                  odds_minimum_minutes=60, odds_window_minutes=120,
+                                  skip_existing_horizon_capture=True)
+
+            self.assertEqual(first["market_odds"], 1)
+            self.assertEqual(second["market_status"], "horizon_captured")
+            self.assertEqual(second["market_already_captured"], 1)
+            self.assertEqual(service.odds.events.call_count, 1)
+            self.assertTrue(repository.has_external_odds_capture_in_horizon(match_id, 60, 120))
 
     def test_reads_latest_odds_api_quota_for_reserve_guard(self) -> None:
         rows = [
@@ -47,6 +106,26 @@ class IntegrationTests(unittest.TestCase):
         self.assertEqual(normalize_team("\u535a\u5854\u5f17\u6208"), "botafogo")
         self.assertEqual(normalize_team("\u8499\u7279\u5229\u5c14"), "cfmontreal")
         self.assertEqual(normalize_team("\u74e6\u52d2\u4f26\u52a0"), "valerenga")
+
+    def test_kleague_aliases_match_current_official_pool(self) -> None:
+        self.assertEqual(normalize_team("\u6d4e\u5ddeSK"), "jejuunitedfc")
+        self.assertEqual(normalize_team("\u5168\u5317\u73b0\u4ee3"), "jeonbukhundaimotors")
+        self.assertEqual(normalize_team("\u851a\u5c71\u73b0\u4ee3"), "ulsanhyundaifc")
+
+    def test_event_match_uses_klague_aliases_when_kickoffs_are_shared(self) -> None:
+        kickoff = "2026-07-21T10:30:00+00:00"
+        events = [
+            {"id": "jeju", "commence_time": kickoff, "home_team": "Jeju SK FC", "away_team": "Gangwon FC"},
+            {"id": "jeonbuk", "commence_time": kickoff, "home_team": "Jeonbuk Hyundai Motors", "away_team": "Daejeon Citizen"},
+            {"id": "ulsan", "commence_time": kickoff, "home_team": "Ulsan HD FC", "away_team": "Incheon United"},
+        ]
+        match = {
+            "kickoff_time": kickoff,
+            "home_team": "\u5168\u5317\u73b0\u4ee3",
+            "away_team": "\u5927\u7530\u5e02\u6c11",
+        }
+
+        self.assertEqual(OddsApiClient.match_event(match, events)["id"], "jeonbuk")
 
     def test_sport_keys_are_derived_from_current_official_leagues(self) -> None:
         self.assertEqual(

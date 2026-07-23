@@ -89,6 +89,17 @@ class BackgroundAgentScheduler:
         closing_thread.start()
         self.threads.append(closing_thread)
 
+        primary_odds_thread = threading.Thread(
+            target=self._pipeline_loop,
+            name="background-external-odds-primary-horizon",
+            args=([("external_odds_primary_horizon_capture",
+                    self._capture_primary_horizon_external_odds)],
+                  self._interval_for("external_odds_primary_horizon_capture"), True),
+            daemon=True,
+        )
+        primary_odds_thread.start()
+        self.threads.append(primary_odds_thread)
+
     def stop(self) -> None:
         self.stop_event.set()
 
@@ -119,7 +130,7 @@ class BackgroundAgentScheduler:
             return self.interval_seconds
         if task_name in {"official_sp_sync", "official_sp_evidence_quality"}:
             return max(60, settings.official_sp_refresh_minutes * 60)
-        if task_name == "official_sp_closing_capture":
+        if task_name in {"official_sp_closing_capture", "external_odds_primary_horizon_capture"}:
             return max(60, settings.live_fast_refresh_minutes * 60)
         if task_name == "db_retention_cleanup":
             return max(3600, settings.db_vacuum_interval_hours * 3600)
@@ -260,6 +271,36 @@ class BackgroundAgentScheduler:
             )
         return report
 
+    def _capture_primary_horizon_external_odds(self) -> dict[str, Any]:
+        report = DataEnrichmentService(self.repository).sync(
+            settings.agent_match_limit,
+            evaluate=False,
+            include_news_weather=False,
+            odds_minimum_minutes=60,
+            odds_window_minutes=120,
+            skip_existing_horizon_capture=True,
+        )
+        if settings.enable_prospective_research:
+            # A skipped external fetch may mean an already-captured snapshot is
+            # still fresh, not that no valid T-60 decision exists. Always let
+            # the immutable challenger inspect current inputs at this horizon;
+            # it independently rejects stale or incomplete evidence.
+            if int(report.get("market_odds", 0) or 0) > 0:
+                self._run_task("feature_build_primary_horizon", self._build_features)
+                self._run_task(
+                    "prospective_research_primary_horizon_capture",
+                    self._capture_prospective_research,
+                )
+            self._run_task(
+                "external_consensus_challenger_primary_horizon_capture",
+                self._capture_external_consensus_challenger,
+            )
+            self._run_task(
+                "profit_allocation_readiness_primary_horizon",
+                self._refresh_profit_allocation_readiness,
+            )
+        return report
+
     def _build_features(self) -> dict[str, Any]:
         report = build_features_for_official_matches(
             self.repository,
@@ -306,13 +347,16 @@ class BackgroundAgentScheduler:
         international = InternationalHistoryAgent(self.repository)
         regular = history.sync(settings.historical_data_years_back)
         worldwide = history.sync_worldwide()
+        extra = history.sync_extra()
         national = international.sync()
         return {
             "matches": regular.get("database_matches", 0),
             "regular": regular,
             "worldwide": worldwide,
+            "extra": extra,
             "international": national,
-            "errors": self._source_errors(regular) + self._source_errors(worldwide) + self._source_errors(national),
+            "errors": self._source_errors(regular) + self._source_errors(worldwide)
+            + self._source_errors(extra) + self._source_errors(national),
         }
 
     def _run_backtest(self) -> dict[str, Any]:

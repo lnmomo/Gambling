@@ -23,6 +23,14 @@ Every capture stores the exact official odds observation ID, model prediction ID
 kickoff time, model probabilities, market probabilities, and frozen algorithm hash.
 Duplicate study/match/snapshot combinations are ignored.
 
+The external-market confirmation path has a separate lightweight collector named
+`external_odds_primary_horizon_capture`. It checks every
+`LIVE_FAST_REFRESH_MINUTES` minutes, fetches The Odds API only when an uncaptured match
+is 60 to 120 minutes from kickoff, and runs independently of news and weather. After a
+successful market capture it immediately runs the downstream feature, prospective,
+external-consensus challenger, and readiness tasks. This collector must run before
+kickoff; later results are never used to reconstruct a missing pre-match snapshot.
+
 ## Monitoring
 
 ```text

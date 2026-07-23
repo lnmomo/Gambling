@@ -59,6 +59,36 @@ def _report_uses_artifact(report: dict[str, Any] | None, artifact_path: Path) ->
         return False
 
 
+def _apply_fixed_daily_budget_metrics(
+    validation: dict[str, Any], report: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Prefer the frozen 100-yuan daily replay for allocation-facing metrics."""
+    portfolio = (report or {}).get("daily_portfolio")
+    if not isinstance(portfolio, dict):
+        return validation
+    summary = portfolio.get("summary")
+    if not isinstance(summary, dict):
+        return validation
+    validation.update({
+        "portfolio_method": portfolio.get("method"),
+        "portfolio_daily_budget": portfolio.get("daily_budget"),
+        "portfolio_max_single_stake": portfolio.get("max_single_stake"),
+        "portfolio_same_day_results_hidden_until_allocation": portfolio.get(
+            "same_day_results_hidden_until_allocation"
+        ),
+        "profit": summary.get("profit"),
+        "roi_pct": summary.get("roi_pct"),
+        "max_drawdown": summary.get("max_drawdown"),
+        "active_months": summary.get("active_months", len(portfolio.get("monthly") or [])),
+        "positive_months": summary.get("positive_months"),
+        "negative_months": summary.get("negative_months"),
+        "monthly": portfolio.get("monthly") or [],
+        "daily": portfolio.get("daily") or [],
+        "portfolio_summary": summary,
+    })
+    return validation
+
+
 def build_market_anchored_i2_strategy_package(
     historical_report: Path | str = Path("reports/feature_enriched_market_anchored_i2_stop3_cool3_v1/summary.json"),
     statistical_audit_report: Path | str = Path("reports/strategy_statistical_audit_market_anchored_i2_stop3_cool3_v1/summary.json"),
@@ -246,6 +276,7 @@ def build_market_anchored_i2_avg_close_research_package(
         "top_pool_blockers": (official_pool or {}).get("blocker_counts", [])[:5],
         "top_snapshot_blockers": (official_sp or {}).get("blocker_counts", [])[:5],
     }
+    _apply_fixed_daily_budget_metrics(official_validation_payload, official_sp)
     return {
         "strategy_id": manifest.get("strategy_id", MARKET_ANCHORED_I2_AVG_CLOSE_RESEARCH_ID),
         "name": "Frozen AVG_CLOSE Italy Serie B draw residual strategy with settled-loss cooldown",
@@ -355,6 +386,7 @@ def build_market_anchored_sp1_home_research_package(
         "top_pool_blockers": (official_pool or {}).get("blocker_counts", [])[:5],
         "top_snapshot_blockers": (official_sp or {}).get("blocker_counts", [])[:5],
     }
+    _apply_fixed_daily_budget_metrics(official_validation, official_sp)
     blockers = [
         "Official-SP prospective validation has not passed on at least 200 settled selections across 6 active months.",
         "AVG_CLOSE historical calibration is positive but its Wilson 95% lower edge is not above zero.",

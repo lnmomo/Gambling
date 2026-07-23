@@ -60,6 +60,8 @@ class HistoricalFeatureBuilderTests(unittest.TestCase):
         self.assertEqual(canonical_team_name("\u74e6\u52d2\u4f26\u52a0"), "Valerenga")
         self.assertEqual(canonical_team_name("\u6d1b\u57ce\u94f6\u6cb3"), "Los Angeles Galaxy")
         self.assertEqual(canonical_team_name("\u6d1b\u6749\u77f6FC"), "Los Angeles FC")
+        self.assertEqual(canonical_team_name("\u6d4e\u5ddeSK"), "Jeju United FC")
+        self.assertEqual(canonical_team_name("\u851a\u5c71\u73b0\u4ee3"), "Ulsan Hyundai FC")
 
     def test_large_raw_history_keeps_source_confidence_usable(self):
         rows = []

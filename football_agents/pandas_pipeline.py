@@ -34,16 +34,24 @@ def read_csv_text(text: str) -> pd.DataFrame:
 
 
 def normalize_historical_matches(frame: pd.DataFrame, *, source: str = "csv",
-                                 division_names: dict[str, str] | None = None) -> tuple[list[dict[str, Any]], PandasImportReport]:
+                                 division_names: dict[str, str] | None = None,
+                                 league_override: str | None = None) -> tuple[list[dict[str, Any]], PandasImportReport]:
     columns = set(frame.columns)
-    missing = [canonical for canonical, aliases in REQUIRED_GROUPS.items() if not columns.intersection(aliases)]
+    missing = [
+        canonical for canonical, aliases in REQUIRED_GROUPS.items()
+        if canonical != "league" or not league_override
+        if not columns.intersection(aliases)
+    ]
     if missing:
         raise ValueError(f"历史 CSV 缺少字段: {', '.join(missing)}")
 
     normalized = pd.DataFrame()
     for canonical, aliases in REQUIRED_GROUPS.items():
-        source_column = next(column for column in aliases if column in frame.columns)
-        normalized[canonical] = frame[source_column]
+        source_column = next((column for column in aliases if column in frame.columns), None)
+        if source_column:
+            normalized[canonical] = frame[source_column]
+        elif canonical == "league" and league_override:
+            normalized[canonical] = league_override
 
     normalized["league"] = normalized["league"].astype("string").str.strip()
     if division_names:

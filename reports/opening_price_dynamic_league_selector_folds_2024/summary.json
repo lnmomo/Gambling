@@ -1,0 +1,64 @@
+{
+  "method": {
+    "candidate": "X-max-edge-fav040-edge105-hardkill30",
+    "price_timing": "pre-match opening only",
+    "selection": "per-league preceding six-month profit > 0 and minimum training bets",
+    "holdout": "following three months",
+    "fold_starts": [
+      "2024-03",
+      "2024-09"
+    ],
+    "future_results_used_for_selection": false,
+    "purpose": "research comparison; no automatic promotion or deployment"
+  },
+  "variants": {
+    "min_train_bets_20": {
+      "minimum_train_bets": 20,
+      "holdout_aggregate": {
+        "folds": 2,
+        "positive_folds": 0,
+        "bets": 77,
+        "staked": 770.0,
+        "profit": -28.5,
+        "roi_pct": -3.7,
+        "median_fold_roi_pct": -4.42,
+        "worst_fold_roi_pct": -7.34,
+        "max_fold_drawdown": 52.0
+      },
+      "positive_holdout_folds": 0,
+      "folds": [
+        {
+          "train_window": "2024-03-01..2024-08-31",
+          "holdout_window": "2024-09-01..2024-11-30",
+          "eligible_leagues": [
+            "F1",
+            "I1"
+          ],
+          "eligible_league_count": 2,
+          "bets": 29,
+          "staked": 290.0,
+          "profit": -21.3,
+          "roi_pct": -7.34,
+          "max_drawdown": 52.0
+        },
+        {
+          "train_window": "2024-09-01..2025-02-28",
+          "holdout_window": "2025-03-01..2025-05-31",
+          "eligible_leagues": [
+            "E1",
+            "E2",
+            "F2",
+            "I1"
+          ],
+          "eligible_league_count": 4,
+          "bets": 48,
+          "staked": 480.0,
+          "profit": -7.2,
+          "roi_pct": -1.5,
+          "max_drawdown": 46.1
+        }
+      ]
+    }
+  },
+  "guardrail": "Cross-book opening-price research only, not executable China Sporttery SP evidence."
+}

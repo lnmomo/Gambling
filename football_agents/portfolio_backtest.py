@@ -1,6 +1,6 @@
 """Leak-free daily portfolio backtest harness.
 
-Drives the real football-data.co.uk closing 1X2 odds through the project's
+Drives the real football-data.co.uk pre-match opening 1X2 odds through the project's
 probability stack (online Elo + Poisson + Ensemble) and the paper-portfolio
 risk caps (quarter-Kelly stake sizing, daily budget, tiered drawdown breaker)
 to simulate one bet per selected outcome per day, settling against the real
@@ -39,6 +39,17 @@ class BacktestConfig:
     """Knobs that define an *algorithm variant* to compare on the same month."""
 
     name: str = "baseline-ensemble"
+    # The loader only supplies pre-match opening fields. A different timing is
+    # rejected so a future change cannot silently use closing information.
+    market_price_timing: str = "opening"
+    # A backtest may restrict decisions to one named, internally consistent
+    # bookmaker feed. ``any`` retains the loader's per-match primary source;
+    # it never combines outcomes from different books.
+    execution_price_source: str = "any"  # any | pinnacle_opening | bet365_opening
+    # ``MaxH/MaxD/MaxA`` are cross-book aggregates without a named executable
+    # venue. They are therefore disabled by default, rather than silently
+    # becoming an investable price in a portfolio replay.
+    allow_unattributed_cross_book_max: bool = False
     daily_budget: float = 100.0
     unit_stake: float = 10.0
     # Starting capital the daily stakes draw against. Seeds the equity curve so
@@ -51,12 +62,16 @@ class BacktestConfig:
     )
     # Minimum EV gate (probability * odds - 1) required to place a bet.
     min_ev: float = 0.03
+    # Optional executable-price interval. Kept optional for generic model
+    # tests; investment candidates should state an explicit interval.
+    minimum_odds: float | None = None
+    maximum_odds: float | None = None
     # Cap per single bet as a fraction of the effective daily budget.
     max_single_fraction: float = 0.10
     # Fraction of full Kelly to stake (paper-portfolio default is 0.25).
     kelly_fraction: float = 0.25
     # How much of the model-vs-market residual to retain (0=pure market,
-    # 1=pure model). Lower trusts the closing market more.
+    # 1=pure model). Lower trusts the opening market more.
     residual_retention: float = 1.0
     # Drawdown control on/off (CAUTION/DEFENSIVE/PAUSED scaling of stakes).
     drawdown_control: bool = True
@@ -73,21 +88,30 @@ class BacktestConfig:
     # strong favourites (market prob >= favorite_min) and, to a lesser degree,
     # mid-prob home/draw. Longshots are a value sink (-20% ROI). Restricting
     # candidates to a region is an *algorithm* lever, not month-cherry-picking.
-    bet_region: str = "all"  # all | strong_favorite | favorite_lean | mid_home | max_edge
+    bet_region: str = "all"  # all | strong_favorite | favorite_lean | mid_home | max_edge | named_book_edge
     favorite_min: float = 0.55
     favorite_lean_min: float = 0.45
     mid_home_min: float = 0.45
     mid_home_max: float = 0.55
-    # "max edge": the best (Max) closing price beats the soft-book (B365)
+    # "max edge": the best (Max) opening price beats the soft-book (B365)
     # baseline by >= max_edge_ratio. This selects value-priced bets.
     max_edge_ratio: float = 1.05
     # When max_edge is required, bet the Max price (sharpest/best obtainable)
     # rather than the soft-book baseline.
     use_max_price_when_edge: bool = True
+    # Minimum B365/Pinnacle price ratio for the named-book market-dislocation
+    # hypothesis. Both source triplets must exist; this never consumes Max*.
+    named_book_edge_ratio: float = 1.02
     # Optional override of the tiered-breaker policy dict for this variant
     # only (does not touch the global paper_portfolio.RISK_POLICY). Used by
     # the optimization loop to compare breaker strengths on the same edge.
     risk_policy_override: dict[str, Any] | None = None
+    # Goal-rate estimator used by the walk-forward Poisson component.
+    # ``attack_defence`` matches the production feature builder: each team's
+    # decayed scoring rate is paired with the opponent's conceded-goals rate
+    # and both are shrunk toward the league mean when samples are thin.
+    # ``legacy`` is retained only as a historical benchmark.
+    lambda_engine: str = "attack_defence"
 
 
 @dataclass
@@ -102,13 +126,22 @@ class MatchRecord:
     odds_home: float
     odds_draw: float
     odds_away: float
-    # Best (max) closing 1X2 across bookmakers, used to detect a "max edge"
+    # Provenance of the complete primary 1X2 quote used for both de-vigging
+    # and settlement pricing. This is deliberately not inferred per outcome.
+    price_source: str = "unknown"
+    # Complete named Pinnacle opening triplet retained even when the execution
+    # source is B365, so a source-attributed comparison can be audited.
+    pinnacle_odds_home: float = float("nan")
+    pinnacle_odds_draw: float = float("nan")
+    pinnacle_odds_away: float = float("nan")
+    # Best (max) opening 1X2 across bookmakers, used to detect a "max edge".
+    # Closing fields use a C suffix in football-data and are never read.
     # (best price beats the typical soft-book B365 line) — a structural value
     # signal independent of the model.
     max_odds_home: float = float("nan")
     max_odds_draw: float = float("nan")
     max_odds_away: float = float("nan")
-    # Soft-book (B365) closing 1X2, used as the bettable price baseline.
+    # Soft-book (B365) opening 1X2, used as the bettable price baseline.
     soft_odds_home: float = float("nan")
     soft_odds_draw: float = float("nan")
     soft_odds_away: float = float("nan")
@@ -147,19 +180,25 @@ def _safe_float(value: Any) -> float:
 
 def load_football_data_rows(
     season_dirs: Iterable[str],
+    primary_price_source: str = "prefer_pinnacle",
     leagues: tuple[str, ...] = (
         "E0", "E1", "E2", "E3", "SP1", "SP2", "I1", "I2", "D1", "D2",
         "F1", "F2", "N1", "B1", "P1", "T1", "G1", "SC0",
     ),
 ) -> list[MatchRecord]:
-    """Load real football-data.co.uk CSV rows into match records.
+    """Load real football-data.co.uk opening-price rows into match records.
 
-    Uses closing Pinnacle odds (PSH/PSD/PSA) when present (the sharpest
-    closing line), falling back to B365. Rows missing odds or FTR are skipped.
+    ``prefer_pinnacle`` uses a complete pre-match Pinnacle PSH/PSD/PSA triplet
+    when present, otherwise a complete B365H/B365D/B365A triplet. ``pinnacle``
+    and ``bet365`` require that named source for every retained match. It never
+    mixes outcomes across books. Closing columns have a C suffix (for example
+    PSCH) and are deliberately excluded from decisions.
     """
     import csv
     import os
 
+    if primary_price_source not in {"prefer_pinnacle", "pinnacle", "bet365"}:
+        raise ValueError("primary_price_source must be prefer_pinnacle, pinnacle, or bet365")
     records: list[MatchRecord] = []
     for season_dir in season_dirs:
         for league in leagues:
@@ -175,12 +214,17 @@ def load_football_data_rows(
                         kickoff = _parse_date(row["Date"])
                     except (KeyError, ValueError):
                         continue
-                    oh = _safe_float(row.get("PSH") or row.get("B365H"))
-                    od = _safe_float(row.get("PSD") or row.get("B365D"))
-                    oa = _safe_float(row.get("PSA") or row.get("B365A"))
-                    if math.isnan(oh) or math.isnan(od) or math.isnan(oa):
-                        continue
-                    if min(oh, od, oa) <= 1.0:
+                    pinnacle = tuple(_safe_float(row.get(field)) for field in ("PSH", "PSD", "PSA"))
+                    bet365 = tuple(_safe_float(row.get(field)) for field in ("B365H", "B365D", "B365A"))
+                    has_pinnacle = all(math.isfinite(value) and value > 1.0 for value in pinnacle)
+                    has_bet365 = all(math.isfinite(value) and value > 1.0 for value in bet365)
+                    if primary_price_source in {"prefer_pinnacle", "pinnacle"} and has_pinnacle:
+                        oh, od, oa = pinnacle
+                        price_source = "pinnacle_opening"
+                    elif primary_price_source in {"prefer_pinnacle", "bet365"} and has_bet365:
+                        oh, od, oa = bet365
+                        price_source = "bet365_opening"
+                    else:
                         continue
                     records.append(
                         MatchRecord(
@@ -194,6 +238,10 @@ def load_football_data_rows(
                             odds_home=oh,
                             odds_draw=od,
                             odds_away=oa,
+                            price_source=price_source,
+                            pinnacle_odds_home=pinnacle[0],
+                            pinnacle_odds_draw=pinnacle[1],
+                            pinnacle_odds_away=pinnacle[2],
                             max_odds_home=_safe_float(row.get("MaxH")),
                             max_odds_draw=_safe_float(row.get("MaxD")),
                             max_odds_away=_safe_float(row.get("MaxA")),
@@ -243,6 +291,8 @@ class _LeagueLambdaState:
 
         self._home: dict[str, list[tuple[datetime, float]]] = defaultdict(list)
         self._away: dict[str, list[tuple[datetime, float]]] = defaultdict(list)
+        self._goals_for: dict[str, list[tuple[datetime, float]]] = defaultdict(list)
+        self._goals_against: dict[str, list[tuple[datetime, float]]] = defaultdict(list)
         self._league_avg: dict[str, list[tuple[datetime, float]]] = defaultdict(list)
 
     def _decay_sum(self, series: list[tuple[datetime, float]], as_of: datetime) -> tuple[float, float]:
@@ -279,7 +329,7 @@ class _LeagueLambdaState:
         defence = 1.0  # simplified symmetric defence; lambda is attack-scaled
         return attack, defence, int(eff_home + eff_away)
 
-    def lambdas(self, league: str, home: str, away: str, as_of: datetime) -> tuple[float, float, int]:
+    def _legacy_lambdas(self, league: str, home: str, away: str, as_of: datetime) -> tuple[float, float, int]:
         h_atk, _h_def, n_home = self._team_attack_defence(league, home, as_of)
         a_atk, _a_def, n_away = self._team_attack_defence(league, away, as_of)
         league_avg_v, league_avg_w = self._decay_sum(self._league_avg[league], as_of)
@@ -289,9 +339,43 @@ class _LeagueLambdaState:
         lambda_away = max(0.20, min(3.5, base * a_atk / max(h_atk, 0.1)))
         return lambda_home, lambda_away, min(n_home, n_away)
 
+    def _shrunk_ratio(self, values: list[tuple[datetime, float]], baseline: float,
+                      as_of: datetime) -> tuple[float, int]:
+        total, weight = self._decay_sum(values, as_of)
+        observed = total / weight if weight > 0 else baseline
+        reliability = min(1.0, weight / 20.0)
+        ratio = 1.0 + reliability * (observed / max(baseline, 0.1) - 1.0)
+        # ``weight`` is fractional after time decay, so casting it to int
+        # makes a real one-match sample look like zero observations.
+        return ratio, len(values)
+
+    def _attack_defence_lambdas(
+        self, league: str, home: str, away: str, as_of: datetime
+    ) -> tuple[float, float, int]:
+        league_total, league_weight = self._decay_sum(self._league_avg[league], as_of)
+        baseline = league_total / league_weight if league_weight > 0 else 1.35
+        home_key, away_key = _team_key(league, home), _team_key(league, away)
+        home_attack, n_home = self._shrunk_ratio(self._goals_for[home_key], baseline, as_of)
+        home_defence, _ = self._shrunk_ratio(self._goals_against[home_key], baseline, as_of)
+        away_attack, n_away = self._shrunk_ratio(self._goals_for[away_key], baseline, as_of)
+        away_defence, _ = self._shrunk_ratio(self._goals_against[away_key], baseline, as_of)
+        lambda_home = max(0.25, min(4.0, baseline * 1.08 * home_attack * away_defence))
+        lambda_away = max(0.20, min(3.5, baseline / 1.08 * away_attack * home_defence))
+        return lambda_home, lambda_away, min(n_home, n_away)
+
+    def lambdas(self, league: str, home: str, away: str, as_of: datetime,
+                engine: str = "attack_defence") -> tuple[float, float, int]:
+        if engine == "legacy":
+            return self._legacy_lambdas(league, home, away, as_of)
+        return self._attack_defence_lambdas(league, home, away, as_of)
+
     def update(self, league: str, home: str, away: str, hs: int, as_: int, ts: datetime) -> None:
         self._home[_team_key(league, home)].append((ts, hs))
         self._away[_team_key(league, away)].append((ts, as_))
+        self._goals_for[_team_key(league, home)].append((ts, hs))
+        self._goals_against[_team_key(league, home)].append((ts, as_))
+        self._goals_for[_team_key(league, away)].append((ts, as_))
+        self._goals_against[_team_key(league, away)].append((ts, hs))
         self._league_avg[league].append((ts, (hs + as_) / 2.0))
 
 
@@ -352,6 +436,10 @@ def _in_bet_region(config: BacktestConfig, outcome: str, market_p: float) -> boo
         # Region is decided per-bet in _resolve_price (needs the max/soft
         # odds pair); here allow all, the edge test filters inside.
         return True
+    if region == "named_book_edge":
+        # Price eligibility is checked in _resolve_price; no model-derived
+        # favourite filter is applied to this independent-market hypothesis.
+        return True
     return True
 
 
@@ -363,13 +451,31 @@ def _resolve_price(
 ) -> tuple[float, bool]:
     """Return (bettable_odds, passed_region_filter).
 
-    For the max_edge region, a candidate passes only if the best closing price
+    For the max_edge region, a candidate passes only if the best opening price
     beats the soft-book baseline by >= max_edge_ratio; the bet is then struck
     at that best price. For other regions the base odds are used as-is.
     """
     region = getattr(config, "bet_region", "all")
+    if region == "named_book_edge":
+        if m.price_source != "bet365_opening":
+            return base_odds, False
+        if not all(
+            math.isfinite(value) and value > 1.0
+            for value in (m.pinnacle_odds_home, m.pinnacle_odds_draw, m.pinnacle_odds_away)
+        ):
+            return base_odds, False
+        reference = {
+            "home": m.pinnacle_odds_home,
+            "draw": m.pinnacle_odds_draw,
+            "away": m.pinnacle_odds_away,
+        }[outcome]
+        if not math.isfinite(reference) or reference <= 1.0:
+            return base_odds, False
+        return base_odds, base_odds >= reference * config.named_book_edge_ratio
     if region != "max_edge":
         return base_odds, True
+    if not config.allow_unattributed_cross_book_max:
+        return base_odds, False
     soft = {
         "home": m.soft_odds_home,
         "draw": m.soft_odds_draw,
@@ -397,22 +503,13 @@ def _resolve_price(
 def _multiplicative_devig(m: MatchRecord) -> dict[str, float]:
     """De-vigged market consensus probabilities.
 
-    Prefers the sharp Pinnacle closing line (PSH/PSD/PSA) when present, falling
-    back to the best closing Max line, then the soft baseline. The sharp line
-    carries less margin and is the better structural prior.
+    Uses one internally consistent opening 1X2 book. ``odds_*`` is Pinnacle
+    when available and B365 otherwise. ``Max*`` cannot be used here because
+    its three outcomes may come from different bookmakers, so joining them
+    would fabricate a market probability vector that was never simultaneously
+    available.
     """
-    def pick(p, q, base):
-        v = _safe_float(p)
-        if not math.isnan(v) and v > 1.0:
-            return v
-        v = _safe_float(q)
-        if not math.isnan(v) and v > 1.0:
-            return v
-        return base
-    base_h = pick(None, m.max_odds_home, m.odds_home)
-    base_d = pick(None, m.max_odds_draw, m.odds_draw)
-    base_a = pick(None, m.max_odds_away, m.odds_away)
-    raw = [1.0 / base_h, 1.0 / base_d, 1.0 / base_a]
+    raw = [1.0 / m.odds_home, 1.0 / m.odds_draw, 1.0 / m.odds_away]
     s = sum(raw)
     return {"home": raw[0] / s, "draw": raw[1] / s, "away": raw[2] / s}
 
@@ -423,6 +520,16 @@ def _sharp_devig(m: MatchRecord) -> dict[str, float]:
     # loader prefers PSH/PSD/PSA), so multiplicative devig of odds_* already
     # is the sharp devig. This helper exists for clarity at call sites.
     return _multiplicative_devig(m)
+
+
+def _pinnacle_devig(m: MatchRecord) -> dict[str, float] | None:
+    """Return a complete named Pinnacle opening probability vector, if present."""
+    odds = (m.pinnacle_odds_home, m.pinnacle_odds_draw, m.pinnacle_odds_away)
+    if not all(math.isfinite(value) and value > 1.0 for value in odds):
+        return None
+    raw = [1.0 / value for value in odds]
+    total = sum(raw)
+    return {"home": raw[0] / total, "draw": raw[1] / total, "away": raw[2] / total}
 
 
 def _stake_for(
@@ -510,9 +617,15 @@ def _run_daily_portfolio_inner(
     ensemble: EnsembleModel,
 ) -> dict[str, Any]:
     """Body of the daily portfolio sim; runs under the scoped risk policy."""
-    start_dt = start or records[0].kickoff
-    end_dt = end or records[-1].kickoff
-    window = [m for m in records if start_dt <= m.kickoff <= end_dt]
+    if config.market_price_timing != "opening":
+        raise ValueError("daily portfolio decisions require pre-match opening prices")
+    ordered_records = sorted(records, key=lambda item: item.kickoff)
+    start_dt = start or ordered_records[0].kickoff
+    end_dt = end or ordered_records[-1].kickoff
+    warmup = [m for m in ordered_records if m.kickoff < start_dt]
+    for match in warmup:
+        _update_states(elo_state, lambda_state, match)
+    window = [m for m in ordered_records if start_dt <= m.kickoff <= end_dt]
     by_day: dict[str, list[MatchRecord]] = {}
     for m in window:
         by_day.setdefault(m.kickoff.date().isoformat(), []).append(m)
@@ -559,6 +672,11 @@ def _run_daily_portfolio_inner(
         # which orders by predicted EV.
         daily_pool: list[tuple] = []
         for m in matches:
+            if (
+                config.execution_price_source != "any"
+                and m.price_source != config.execution_price_source
+            ):
+                continue
             odds = {"home": m.odds_home, "draw": m.odds_draw, "away": m.odds_away}
             # The de-vigged *sharp market consensus* (best/sharp closing price,
             # margin removed) is the structural signal for the max_edge region
@@ -566,13 +684,17 @@ def _run_daily_portfolio_inner(
             devig_p = _sharp_devig(m)
             elo_p = elo_state.predict(m.league, m.home_team, m.away_team)
             lambda_home, lambda_away, _n = lambda_state.lambdas(
-                m.league, m.home_team, m.away_team, m.kickoff
+                m.league, m.home_team, m.away_team, m.kickoff, config.lambda_engine
             )
             poisson_p = poisson.predict(lambda_home, lambda_away)
             model_p = ensemble.predict(
                 {"elo": elo_p, "poisson": poisson_p, "market": devig_p}
             )
             final_p = _market_anchored_probability(model_p, devig_p, config.residual_retention)
+            if config.bet_region == "named_book_edge":
+                final_p = _pinnacle_devig(m)
+                if final_p is None:
+                    continue
             match_candidates = []
             for outcome in OUTCOMES:
                 p = final_p[outcome]
@@ -581,6 +703,10 @@ def _run_daily_portfolio_inner(
                 )
                 if not region_ok:
                     continue
+                if config.minimum_odds is not None and bet_odds < config.minimum_odds:
+                    continue
+                if config.maximum_odds is not None and bet_odds > config.maximum_odds:
+                    continue
                 ev = p * bet_odds - 1.0
                 if ev < config.min_ev:
                     continue
@@ -588,7 +714,6 @@ def _run_daily_portfolio_inner(
                     continue
                 match_candidates.append((outcome, p, bet_odds, ev))
             if not match_candidates:
-                _update_states(elo_state, lambda_state, m)
                 continue
             if config.one_bet_per_match:
                 if getattr(config, "selection", "ev") == "prob":
@@ -598,7 +723,6 @@ def _run_daily_portfolio_inner(
                 match_candidates = match_candidates[:1]
             for outcome, p, o, ev in match_candidates:
                 daily_pool.append((m, outcome, p, o, ev))
-            _update_states(elo_state, lambda_state, m)
 
         # Rank the day's pool by EV descending and allocate the daily budget to
         # the top candidates until exhausted (same logic the production
@@ -645,6 +769,11 @@ def _run_daily_portfolio_inner(
             day_bets.append(bet)
             bets.append(bet)
 
+        # The source CSV has match dates but no reliable kickoff times. Freeze
+        # every decision for the date before revealing any result from that date.
+        for match in matches:
+            _update_states(elo_state, lambda_state, match)
+
         day_profit = round(sum(b.profit for b in day_bets), 2)
         day_staked = round(sum(b.stake for b in day_bets), 2)
         equity += day_profit
@@ -684,8 +813,13 @@ def _run_daily_portfolio_inner(
     wins = sum(1 for b in bets if b.hit)
     return {
         "config_name": config.name,
+        "market_price_timing": config.market_price_timing,
+        "execution_price_source": config.execution_price_source,
+        "allow_unattributed_cross_book_max": config.allow_unattributed_cross_book_max,
         "daily_budget": config.daily_budget,
         "min_ev": config.min_ev,
+        "minimum_odds": config.minimum_odds,
+        "maximum_odds": config.maximum_odds,
         "weights": config.weights,
         "residual_retention": config.residual_retention,
         "drawdown_control": config.drawdown_control,
@@ -695,8 +829,11 @@ def _run_daily_portfolio_inner(
         "kelly_fraction": config.kelly_fraction,
         "starting_bankroll": config.starting_bankroll,
         "max_edge_ratio": config.max_edge_ratio,
+        "named_book_edge_ratio": config.named_book_edge_ratio,
+        "lambda_engine": config.lambda_engine,
         "period_start": (start_dt.date().isoformat() if start_dt else None),
         "period_end": (end_dt.date().isoformat() if end_dt else None),
+        "warmup_matches": len(warmup),
         "matches_in_window": len(window),
         "betting_days": len(by_day),
         "bets": len(bets),

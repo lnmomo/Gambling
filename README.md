@@ -167,14 +167,21 @@ Do not commit real keys or local runtime paths. Important settings:
   immutable policy and one decision for every aligned official-SP/external-bookmaker snapshot. The
   policy requires at least 10 fresh bookmakers, shrinks and caps the model residual, subtracts a
   bookmaker-dispersion uncertainty margin, and records honest `NO_BET` decisions when executable EV
-  is absent. It cannot enter allocation before 200 settlements, six active months, and 180 calendar days.
+  is absent. Candidate policy v4 also requires external consensus probability of at least 0.40 and
+  may retain at most three candidates per settlement day. It cannot enter allocation before 200
+  settlements, six active months, and 180 calendar days.
 - `EXTERNAL_CONSENSUS_CHALLENGER_REPORT_PATH` controls its prospective report location.
 - `BACKGROUND_AGENT_INTERVAL_SECONDS=3600`: cadence for heavier enrichment, history, backtest, and governance agents.
 - `EXTERNAL_ODDS_CAPTURE_WINDOW_MINUTES=180`: spend external-odds quota only on matches close enough to feed the registered T-60 to T-120 study.
+- A dedicated `external_odds_primary_horizon_capture` thread checks the T-60 to T-120
+  window every `LIVE_FAST_REFRESH_MINUTES` minutes. It runs odds-only, so news or weather
+  timeouts cannot delay the primary market snapshot, and it skips matches already captured
+  in that horizon. A successful snapshot immediately triggers feature, prospective,
+  challenger, and readiness evidence tasks.
 - `ODDS_API_REGIONS=eu`: request one bookmaker region by default to conserve quota while retaining multi-book consensus.
 - `ODDS_API_MIN_REQUESTS_REMAINING=20`: preserve an emergency quota reserve instead of exhausting the account before the primary horizon.
 
-The API process must remain running for these in-process agents to execute. The scheduler runs immediately on startup; official SP capture then runs every 15 minutes, a closing-capture thread runs every 5 minutes while matches are imminent, the heavier agents run hourly, and a separate db-cleanup thread prunes mutable tables and VACUUMs the database every 24 hours by default.
+The API process must remain running for these in-process agents to execute. The scheduler runs immediately on startup; official SP capture then runs every 15 minutes, official closing and external primary-horizon capture threads check every 5 minutes while matches are imminent, the heavier agents run hourly, and a separate db-cleanup thread prunes mutable tables and VACUUMs the database every 24 hours by default.
 
 ## 7.1 Secret Safety
 

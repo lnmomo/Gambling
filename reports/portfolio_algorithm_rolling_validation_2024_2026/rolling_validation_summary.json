@@ -1,0 +1,281 @@
+{
+  "method": {
+    "training_months": 6,
+    "holdout_months": 3,
+    "folds": 4,
+    "selection": "training profit divided by maximum drawdown",
+    "rule": "all results are updated only after every decision for that match date is frozen"
+  },
+  "folds": [
+    {
+      "train_window": "2024-03-01..2024-08-31",
+      "holdout_window": "2024-09-01..2024-11-30",
+      "selected_on_train": "R-max-edge-fav040-edge104",
+      "selected_holdout": {
+        "name": "R-max-edge-fav040-edge104",
+        "bets": 311,
+        "staked": 2255.0,
+        "profit": -41.17,
+        "roi_pct": -1.83,
+        "win_rate": 0.4887,
+        "max_drawdown": 112.01,
+        "ending_equity": 958.83,
+        "residual_retention": 0.5,
+        "min_ev": -0.05,
+        "drawdown_control": true
+      },
+      "baseline_holdout": {
+        "name": "A-baseline-ensemble",
+        "bets": 176,
+        "staked": 250.72,
+        "profit": -81.28,
+        "roi_pct": -32.42,
+        "win_rate": 0.1989,
+        "max_drawdown": 81.28,
+        "ending_equity": 918.72,
+        "residual_retention": 1.0,
+        "min_ev": 0.03,
+        "drawdown_control": true
+      }
+    },
+    {
+      "train_window": "2024-09-01..2025-02-28",
+      "holdout_window": "2025-03-01..2025-05-31",
+      "selected_on_train": "V-max-edge-fav040-edge105-no-drawdown-control",
+      "selected_holdout": {
+        "name": "V-max-edge-fav040-edge105-no-drawdown-control",
+        "bets": 160,
+        "staked": 1600.0,
+        "profit": -30.8,
+        "roi_pct": -1.93,
+        "win_rate": 0.4813,
+        "max_drawdown": 225.5,
+        "ending_equity": 969.2,
+        "residual_retention": 0.5,
+        "min_ev": -0.05,
+        "drawdown_control": false
+      },
+      "baseline_holdout": {
+        "name": "A-baseline-ensemble",
+        "bets": 280,
+        "staked": 584.04,
+        "profit": -61.01,
+        "roi_pct": -10.45,
+        "win_rate": 0.3107,
+        "max_drawdown": 85.86,
+        "ending_equity": 938.99,
+        "residual_retention": 1.0,
+        "min_ev": 0.03,
+        "drawdown_control": true
+      }
+    },
+    {
+      "train_window": "2025-03-01..2025-08-31",
+      "holdout_window": "2025-09-01..2025-11-30",
+      "selected_on_train": "K-strong-fav-market-anchored-50pct",
+      "selected_holdout": {
+        "name": "K-strong-fav-market-anchored-50pct",
+        "bets": 1,
+        "staked": 1.78,
+        "profit": 1.32,
+        "roi_pct": 74.16,
+        "win_rate": 1.0,
+        "max_drawdown": 0.0,
+        "ending_equity": 1001.32,
+        "residual_retention": 0.5,
+        "min_ev": 0.03,
+        "drawdown_control": true
+      },
+      "baseline_holdout": {
+        "name": "A-baseline-ensemble",
+        "bets": 513,
+        "staked": 699.64,
+        "profit": -59.44,
+        "roi_pct": -8.5,
+        "win_rate": 0.2534,
+        "max_drawdown": 62.28,
+        "ending_equity": 940.56,
+        "residual_retention": 1.0,
+        "min_ev": 0.03,
+        "drawdown_control": true
+      }
+    },
+    {
+      "train_window": "2025-09-01..2026-02-28",
+      "holdout_window": "2026-03-01..2026-05-31",
+      "selected_on_train": "Q-max-edge-fav040-edge105",
+      "selected_holdout": {
+        "name": "Q-max-edge-fav040-edge105",
+        "bets": 239,
+        "staked": 2295.0,
+        "profit": 291.97,
+        "roi_pct": 12.72,
+        "win_rate": 0.59,
+        "max_drawdown": 62.39,
+        "ending_equity": 1291.97,
+        "residual_retention": 0.5,
+        "min_ev": -0.05,
+        "drawdown_control": true
+      },
+      "baseline_holdout": {
+        "name": "A-baseline-ensemble",
+        "bets": 92,
+        "staked": 114.51,
+        "profit": -40.33,
+        "roi_pct": -35.22,
+        "win_rate": 0.2717,
+        "max_drawdown": 40.33,
+        "ending_equity": 959.67,
+        "residual_retention": 1.0,
+        "min_ev": 0.03,
+        "drawdown_control": true
+      }
+    }
+  ],
+  "train_selected_aggregate": {
+    "folds": 4,
+    "positive_folds": 2,
+    "bets": 711,
+    "staked": 6151.78,
+    "profit": 221.32,
+    "roi_pct": 3.6,
+    "median_fold_roi_pct": 5.45,
+    "worst_fold_roi_pct": -1.93,
+    "max_fold_drawdown": 225.5
+  },
+  "fixed_candidate_holdout_aggregate": {
+    "A-baseline-ensemble": {
+      "folds": 4,
+      "positive_folds": 0,
+      "bets": 1061,
+      "staked": 1648.91,
+      "profit": -242.06,
+      "roi_pct": -14.68,
+      "median_fold_roi_pct": -21.44,
+      "worst_fold_roi_pct": -35.22,
+      "max_fold_drawdown": 85.86
+    },
+    "B-market-anchored-50pct": {
+      "folds": 4,
+      "positive_folds": 0,
+      "bets": 841,
+      "staked": 630.85,
+      "profit": -96.3,
+      "roi_pct": -15.27,
+      "median_fold_roi_pct": -20.41,
+      "worst_fold_roi_pct": -44.1,
+      "max_fold_drawdown": 42.46
+    },
+    "C-market-anchored-25pct": {
+      "folds": 4,
+      "positive_folds": 0,
+      "bets": 507,
+      "staked": 198.0,
+      "profit": -44.41,
+      "roi_pct": -22.43,
+      "median_fold_roi_pct": -22.82,
+      "worst_fold_roi_pct": -29.09,
+      "max_fold_drawdown": 17.53
+    },
+    "K-strong-fav-market-anchored-50pct": {
+      "folds": 4,
+      "positive_folds": 3,
+      "bets": 55,
+      "staked": 88.97,
+      "profit": 6.92,
+      "roi_pct": 7.78,
+      "median_fold_roi_pct": 19.71,
+      "worst_fold_roi_pct": -3.55,
+      "max_fold_drawdown": 6.26
+    },
+    "Q-max-edge-fav040-edge105": {
+      "folds": 4,
+      "positive_folds": 2,
+      "bets": 737,
+      "staked": 6010.0,
+      "profit": 273.37,
+      "roi_pct": 4.55,
+      "median_fold_roi_pct": 1.11,
+      "worst_fold_roi_pct": -3.92,
+      "max_fold_drawdown": 171.28
+    },
+    "R-max-edge-fav040-edge104": {
+      "folds": 4,
+      "positive_folds": 2,
+      "bets": 901,
+      "staked": 6815.0,
+      "profit": 179.17,
+      "roi_pct": 2.63,
+      "median_fold_roi_pct": 2.44,
+      "worst_fold_roi_pct": -16.66,
+      "max_fold_drawdown": 136.01
+    },
+    "S-max-edge-fav045-edge105": {
+      "folds": 4,
+      "positive_folds": 3,
+      "bets": 367,
+      "staked": 3320.0,
+      "profit": 111.5,
+      "roi_pct": 3.36,
+      "median_fold_roi_pct": 3.35,
+      "worst_fold_roi_pct": -31.92,
+      "max_fold_drawdown": 101.98
+    },
+    "T-max-edge-fav040-edge105-pure-market": {
+      "folds": 4,
+      "positive_folds": 2,
+      "bets": 921,
+      "staked": 7230.0,
+      "profit": 269.83,
+      "roi_pct": 3.73,
+      "median_fold_roi_pct": -2.31,
+      "worst_fold_roi_pct": -9.74,
+      "max_fold_drawdown": 187.18
+    },
+    "U-max-edge-fav040-edge105-half-kelly": {
+      "folds": 4,
+      "positive_folds": 2,
+      "bets": 737,
+      "staked": 6010.0,
+      "profit": 273.37,
+      "roi_pct": 4.55,
+      "median_fold_roi_pct": 1.11,
+      "worst_fold_roi_pct": -3.92,
+      "max_fold_drawdown": 171.28
+    },
+    "V-max-edge-fav040-edge105-no-drawdown-control": {
+      "folds": 4,
+      "positive_folds": 3,
+      "bets": 725,
+      "staked": 7250.0,
+      "profit": 354.3,
+      "roi_pct": 4.89,
+      "median_fold_roi_pct": 2.22,
+      "worst_fold_roi_pct": -1.93,
+      "max_fold_drawdown": 225.5
+    },
+    "W-max-edge-fav040-edge105-multibet": {
+      "folds": 4,
+      "positive_folds": 2,
+      "bets": 921,
+      "staked": 7230.0,
+      "profit": 269.83,
+      "roi_pct": 3.73,
+      "median_fold_roi_pct": -2.31,
+      "worst_fold_roi_pct": -9.74,
+      "max_fold_drawdown": 187.18
+    },
+    "X-max-edge-fav040-edge105-hardkill30": {
+      "folds": 4,
+      "positive_folds": 3,
+      "bets": 725,
+      "staked": 7220.0,
+      "profit": 365.04,
+      "roi_pct": 5.06,
+      "median_fold_roi_pct": 2.22,
+      "worst_fold_roi_pct": -1.28,
+      "max_fold_drawdown": 223.0
+    }
+  },
+  "interpretation": "A candidate requires positive cross-fold aggregate profit and broad positive fold coverage before it can be treated as a research survivor. This remains a closing-price backtest, not proof of executable China Sporttery SP profitability."
+}

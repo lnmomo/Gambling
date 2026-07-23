@@ -277,6 +277,18 @@ def test_build_sp1_home_package_preserves_shadow_only_calibration_state(tmp_path
         "decision": "OFFICIAL_SP_PROSPECTIVE_BLOCKED",
         "decision_reasons": ["settled_selected<200"],
         "monthly": [],
+        "daily_portfolio": {
+            "method": "frozen official-SP fixed-daily-budget portfolio replay",
+            "daily_budget": 100.0,
+            "max_single_stake": 10.0,
+            "same_day_results_hidden_until_allocation": True,
+            "monthly": [{"month": "2026-06", "profit": 12.0, "staked": 100.0}],
+            "daily": [{"date": "2026-06-01", "profit": 12.0, "staked": 100.0}],
+            "summary": {
+                "profit": 12.0, "roi_pct": 12.0, "max_drawdown": 8.0,
+                "active_months": 1, "positive_months": 1, "negative_months": 0,
+            },
+        },
     }), encoding="utf-8")
 
     package = build_market_anchored_sp1_home_research_package(
@@ -289,4 +301,7 @@ def test_build_sp1_home_package_preserves_shadow_only_calibration_state(tmp_path
     assert package["calibration"]["decision"] == "POSITIVE_EDGE_BUT_NOT_CONSERVATIVE"
     assert package["cross_source_validation"]["passes_all_sources"] is True
     assert package["official_validation"]["settled_selected_snapshots"] == 0
+    assert package["official_validation"]["portfolio_daily_budget"] == 100.0
+    assert package["official_validation"]["profit"] == 12.0
+    assert package["official_validation"]["monthly"][0]["staked"] == 100.0
     assert package["selection"]["outcome"] == "HOME"

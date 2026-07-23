@@ -1,0 +1,186 @@
+{
+  "method": {
+    "training_months": 6,
+    "holdout_months": 3,
+    "folds": 4,
+    "variants": [
+      "D-attack-defence-anchor25",
+      "E-attack-defence-anchor15",
+      "F-attack-defence-anchor10"
+    ],
+    "selection": "training profit divided by maximum drawdown",
+    "rule": "all results are updated only after every decision for that match date is frozen",
+    "execution": "each fold was run independently; this file combines immutable fold outputs"
+  },
+  "folds": [
+    {
+      "train_window": "2024-03-01..2024-08-31",
+      "holdout_window": "2024-09-01..2024-11-30",
+      "selected_on_train": "E-attack-defence-anchor15",
+      "selected_holdout": {
+        "name": "E-attack-defence-anchor15",
+        "bets": 45,
+        "staked": 5.49,
+        "profit": -3.4,
+        "roi_pct": -61.93,
+        "win_rate": 0.0667,
+        "max_drawdown": 3.4,
+        "ending_equity": 996.6,
+        "residual_retention": 0.15,
+        "min_ev": 0.015,
+        "drawdown_control": true
+      },
+      "baseline_holdout": null
+    },
+    {
+      "train_window": "2024-09-01..2025-02-28",
+      "holdout_window": "2025-03-01..2025-05-31",
+      "selected_on_train": "F-attack-defence-anchor10",
+      "selected_holdout": {
+        "name": "F-attack-defence-anchor10",
+        "bets": 13,
+        "staked": 0.72,
+        "profit": 0.04,
+        "roi_pct": 5.56,
+        "win_rate": 0.0769,
+        "max_drawdown": 0.48,
+        "ending_equity": 1000.04,
+        "residual_retention": 0.1,
+        "min_ev": 0.01,
+        "drawdown_control": true
+      },
+      "baseline_holdout": null
+    },
+    {
+      "train_window": "2025-03-01..2025-08-31",
+      "holdout_window": "2025-09-01..2025-11-30",
+      "selected_on_train": "E-attack-defence-anchor15",
+      "selected_holdout": {
+        "name": "E-attack-defence-anchor15",
+        "bets": 44,
+        "staked": 5.63,
+        "profit": -0.17,
+        "roi_pct": -3.02,
+        "win_rate": 0.0909,
+        "max_drawdown": 1.75,
+        "ending_equity": 999.83,
+        "residual_retention": 0.15,
+        "min_ev": 0.015,
+        "drawdown_control": true
+      },
+      "baseline_holdout": null
+    },
+    {
+      "train_window": "2025-09-01..2026-02-28",
+      "holdout_window": "2026-03-01..2026-05-31",
+      "selected_on_train": "E-attack-defence-anchor15",
+      "selected_holdout": {
+        "name": "E-attack-defence-anchor15",
+        "bets": 19,
+        "staked": 1.91,
+        "profit": -0.33,
+        "roi_pct": -17.28,
+        "win_rate": 0.1579,
+        "max_drawdown": 0.9,
+        "ending_equity": 999.67,
+        "residual_retention": 0.15,
+        "min_ev": 0.015,
+        "drawdown_control": true
+      },
+      "baseline_holdout": null
+    }
+  ],
+  "train_selected_aggregate": {
+    "folds": 4,
+    "positive_folds": 1,
+    "bets": 121,
+    "staked": 13.75,
+    "profit": -3.86,
+    "roi_pct": -28.07,
+    "median_fold_roi_pct": -10.15,
+    "worst_fold_roi_pct": -61.93,
+    "max_fold_drawdown": 3.4
+  },
+  "fixed_candidate_holdout_aggregate": {
+    "D-attack-defence-anchor25": {
+      "folds": 4,
+      "positive_folds": 0,
+      "bets": 298,
+      "staked": 68.48,
+      "profit": -15.62,
+      "roi_pct": -22.81,
+      "median_fold_roi_pct": -20.71,
+      "worst_fold_roi_pct": -52.81,
+      "max_fold_drawdown": 7.89
+    },
+    "E-attack-defence-anchor15": {
+      "folds": 4,
+      "positive_folds": 1,
+      "bets": 129,
+      "staked": 15.68,
+      "profit": -3.65,
+      "roi_pct": -23.28,
+      "median_fold_roi_pct": -10.15,
+      "worst_fold_roi_pct": -61.93,
+      "max_fold_drawdown": 3.4
+    },
+    "F-attack-defence-anchor10": {
+      "folds": 4,
+      "positive_folds": 2,
+      "bets": 64,
+      "staked": 4.36,
+      "profit": -1.36,
+      "roi_pct": -31.19,
+      "median_fold_roi_pct": -4.79,
+      "worst_fold_roi_pct": -72.13,
+      "max_fold_drawdown": 1.32
+    }
+  },
+  "candidate_decisions": {
+    "D-attack-defence-anchor25": {
+      "status": "REJECTED",
+      "requirements": {
+        "positive_aggregate_profit": false,
+        "positive_folds_at_least_3": false,
+        "holdout_bets_at_least_200": true,
+        "holdout_staked_at_least_100": false
+      },
+      "failed_requirements": [
+        "positive_aggregate_profit",
+        "positive_folds_at_least_3",
+        "holdout_staked_at_least_100"
+      ]
+    },
+    "E-attack-defence-anchor15": {
+      "status": "REJECTED",
+      "requirements": {
+        "positive_aggregate_profit": false,
+        "positive_folds_at_least_3": false,
+        "holdout_bets_at_least_200": false,
+        "holdout_staked_at_least_100": false
+      },
+      "failed_requirements": [
+        "positive_aggregate_profit",
+        "positive_folds_at_least_3",
+        "holdout_bets_at_least_200",
+        "holdout_staked_at_least_100"
+      ]
+    },
+    "F-attack-defence-anchor10": {
+      "status": "REJECTED",
+      "requirements": {
+        "positive_aggregate_profit": false,
+        "positive_folds_at_least_3": false,
+        "holdout_bets_at_least_200": false,
+        "holdout_staked_at_least_100": false
+      },
+      "failed_requirements": [
+        "positive_aggregate_profit",
+        "positive_folds_at_least_3",
+        "holdout_bets_at_least_200",
+        "holdout_staked_at_least_100"
+      ]
+    }
+  },
+  "interpretation": "Candidates require positive aggregate profit, at least three positive folds, and material stake volume before they can continue. A positive result on a few cents of staking is not evidence."
+}

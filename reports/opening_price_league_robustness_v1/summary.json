@@ -1,0 +1,4759 @@
+{
+  "method": {
+    "price_timing": "pre-match opening only; closing fields are rejected by the backtest",
+    "folds": [
+      "2022-03",
+      "2022-09",
+      "2023-03",
+      "2023-09",
+      "2024-03",
+      "2024-09",
+      "2025-03",
+      "2025-09"
+    ],
+    "selection": "none; candidates were fixed before the league breakdown",
+    "purpose": "concentration-risk diagnosis, not automatic strategy selection"
+  },
+  "variants": [
+    "Q-max-edge-fav040-edge105",
+    "V-max-edge-fav040-edge105-no-drawdown-control",
+    "X-max-edge-fav040-edge105-hardkill30"
+  ],
+  "leagues": {
+    "B1": {
+      "Q-max-edge-fav040-edge105": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 5,
+          "bets": 87,
+          "staked": 837.5,
+          "profit": 94.03,
+          "roi_pct": 11.23,
+          "median_fold_roi_pct": 11.5,
+          "worst_fold_roi_pct": -73.36,
+          "max_fold_drawdown": 45.85
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 36,
+            "staked": 350.0,
+            "profit": 73.04,
+            "roi_pct": 20.87,
+            "max_drawdown": 24.8
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 11,
+            "staked": 107.5,
+            "profit": 2.28,
+            "roi_pct": 2.12,
+            "max_drawdown": 30.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 6,
+            "staked": 55.0,
+            "profit": -18.48,
+            "roi_pct": -33.6,
+            "max_drawdown": 32.78
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 9,
+            "staked": 87.5,
+            "profit": 32.92,
+            "roi_pct": 37.62,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 7,
+            "staked": 62.5,
+            "profit": -45.85,
+            "roi_pct": -73.36,
+            "max_drawdown": 45.85
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 7,
+            "staked": 65.0,
+            "profit": -11.18,
+            "roi_pct": -17.2,
+            "max_drawdown": 29.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 5,
+            "staked": 50.0,
+            "profit": 13.3,
+            "roi_pct": 26.6,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 6,
+            "staked": 60.0,
+            "profit": 48.0,
+            "roi_pct": 80.0,
+            "max_drawdown": 10.0
+          }
+        ]
+      },
+      "V-max-edge-fav040-edge105-no-drawdown-control": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 5,
+          "bets": 87,
+          "staked": 870.0,
+          "profit": 95.7,
+          "roi_pct": 11.0,
+          "median_fold_roi_pct": 12.12,
+          "worst_fold_roi_pct": -68.29,
+          "max_fold_drawdown": 47.8
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 36,
+            "staked": 360.0,
+            "profit": 73.5,
+            "roi_pct": 20.42,
+            "max_drawdown": 24.8
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 11,
+            "staked": 110.0,
+            "profit": 4.2,
+            "roi_pct": 3.82,
+            "max_drawdown": 30.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 6,
+            "staked": 60.0,
+            "profit": -19.4,
+            "roi_pct": -32.33,
+            "max_drawdown": 33.7
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 9,
+            "staked": 90.0,
+            "profit": 35.3,
+            "roi_pct": 39.22,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 7,
+            "staked": 70.0,
+            "profit": -47.8,
+            "roi_pct": -68.29,
+            "max_drawdown": 47.8
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 7,
+            "staked": 70.0,
+            "profit": -11.4,
+            "roi_pct": -16.29,
+            "max_drawdown": 31.5
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 5,
+            "staked": 50.0,
+            "profit": 13.3,
+            "roi_pct": 26.6,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 6,
+            "staked": 60.0,
+            "profit": 48.0,
+            "roi_pct": 80.0,
+            "max_drawdown": 10.0
+          }
+        ]
+      },
+      "X-max-edge-fav040-edge105-hardkill30": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 5,
+          "bets": 87,
+          "staked": 870.0,
+          "profit": 95.7,
+          "roi_pct": 11.0,
+          "median_fold_roi_pct": 12.12,
+          "worst_fold_roi_pct": -68.29,
+          "max_fold_drawdown": 47.8
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 36,
+            "staked": 360.0,
+            "profit": 73.5,
+            "roi_pct": 20.42,
+            "max_drawdown": 24.8
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 11,
+            "staked": 110.0,
+            "profit": 4.2,
+            "roi_pct": 3.82,
+            "max_drawdown": 30.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 6,
+            "staked": 60.0,
+            "profit": -19.4,
+            "roi_pct": -32.33,
+            "max_drawdown": 33.7
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 9,
+            "staked": 90.0,
+            "profit": 35.3,
+            "roi_pct": 39.22,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 7,
+            "staked": 70.0,
+            "profit": -47.8,
+            "roi_pct": -68.29,
+            "max_drawdown": 47.8
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 7,
+            "staked": 70.0,
+            "profit": -11.4,
+            "roi_pct": -16.29,
+            "max_drawdown": 31.5
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 5,
+            "staked": 50.0,
+            "profit": 13.3,
+            "roi_pct": 26.6,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 6,
+            "staked": 60.0,
+            "profit": 48.0,
+            "roi_pct": 80.0,
+            "max_drawdown": 10.0
+          }
+        ]
+      }
+    },
+    "D1": {
+      "Q-max-edge-fav040-edge105": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 3,
+          "bets": 92,
+          "staked": 870.0,
+          "profit": -5.55,
+          "roi_pct": -0.64,
+          "median_fold_roi_pct": -10.5,
+          "worst_fold_roi_pct": -33.4,
+          "max_fold_drawdown": 46.08
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": false,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 25,
+            "staked": 245.0,
+            "profit": 48.72,
+            "roi_pct": 19.89,
+            "max_drawdown": 34.3
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 14,
+            "staked": 130.0,
+            "profit": -5.2,
+            "roi_pct": -4.0,
+            "max_drawdown": 38.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 15,
+            "staked": 137.5,
+            "profit": -28.07,
+            "roi_pct": -20.41,
+            "max_drawdown": 35.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 13,
+            "staked": 125.0,
+            "profit": 7.23,
+            "roi_pct": 5.78,
+            "max_drawdown": 20.75
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 8,
+            "staked": 75.0,
+            "profit": -25.05,
+            "roi_pct": -33.4,
+            "max_drawdown": 26.25
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 12,
+            "staked": 107.5,
+            "profit": -18.48,
+            "roi_pct": -17.19,
+            "max_drawdown": 46.08
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 2,
+            "staked": 20.0,
+            "profit": -3.4,
+            "roi_pct": -17.0,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 3,
+            "staked": 30.0,
+            "profit": 18.7,
+            "roi_pct": 62.33,
+            "max_drawdown": 10.0
+          }
+        ]
+      },
+      "V-max-edge-fav040-edge105-no-drawdown-control": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 3,
+          "bets": 92,
+          "staked": 920.0,
+          "profit": -0.9,
+          "roi_pct": -0.1,
+          "median_fold_roi_pct": -8.98,
+          "worst_fold_roi_pct": -31.75,
+          "max_fold_drawdown": 52.7
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": false,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 25,
+            "staked": 250.0,
+            "profit": 48.9,
+            "roi_pct": 19.56,
+            "max_drawdown": 34.3
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 14,
+            "staked": 140.0,
+            "profit": -3.2,
+            "roi_pct": -2.29,
+            "max_drawdown": 40.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 15,
+            "staked": 150.0,
+            "profit": -23.5,
+            "roi_pct": -15.67,
+            "max_drawdown": 40.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 13,
+            "staked": 130.0,
+            "profit": 12.1,
+            "roi_pct": 9.31,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 8,
+            "staked": 80.0,
+            "profit": -25.4,
+            "roi_pct": -31.75,
+            "max_drawdown": 26.6
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 12,
+            "staked": 120.0,
+            "profit": -25.1,
+            "roi_pct": -20.92,
+            "max_drawdown": 52.7
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 2,
+            "staked": 20.0,
+            "profit": -3.4,
+            "roi_pct": -17.0,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 3,
+            "staked": 30.0,
+            "profit": 18.7,
+            "roi_pct": 62.33,
+            "max_drawdown": 10.0
+          }
+        ]
+      },
+      "X-max-edge-fav040-edge105-hardkill30": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 3,
+          "bets": 92,
+          "staked": 920.0,
+          "profit": -0.9,
+          "roi_pct": -0.1,
+          "median_fold_roi_pct": -8.98,
+          "worst_fold_roi_pct": -31.75,
+          "max_fold_drawdown": 52.7
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": false,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 25,
+            "staked": 250.0,
+            "profit": 48.9,
+            "roi_pct": 19.56,
+            "max_drawdown": 34.3
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 14,
+            "staked": 140.0,
+            "profit": -3.2,
+            "roi_pct": -2.29,
+            "max_drawdown": 40.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 15,
+            "staked": 150.0,
+            "profit": -23.5,
+            "roi_pct": -15.67,
+            "max_drawdown": 40.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 13,
+            "staked": 130.0,
+            "profit": 12.1,
+            "roi_pct": 9.31,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 8,
+            "staked": 80.0,
+            "profit": -25.4,
+            "roi_pct": -31.75,
+            "max_drawdown": 26.6
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 12,
+            "staked": 120.0,
+            "profit": -25.1,
+            "roi_pct": -20.92,
+            "max_drawdown": 52.7
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 2,
+            "staked": 20.0,
+            "profit": -3.4,
+            "roi_pct": -17.0,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 3,
+            "staked": 30.0,
+            "profit": 18.7,
+            "roi_pct": 62.33,
+            "max_drawdown": 10.0
+          }
+        ]
+      }
+    },
+    "D2": {
+      "Q-max-edge-fav040-edge105": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 5,
+          "bets": 79,
+          "staked": 765.0,
+          "profit": 88.65,
+          "roi_pct": 11.59,
+          "median_fold_roi_pct": 8.59,
+          "worst_fold_roi_pct": -13.82,
+          "max_fold_drawdown": 35.45
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 19,
+            "staked": 182.5,
+            "profit": 8.72,
+            "roi_pct": 4.78,
+            "max_drawdown": 31.77
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 12,
+            "staked": 112.5,
+            "profit": -15.55,
+            "roi_pct": -13.82,
+            "max_drawdown": 35.45
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 8,
+            "staked": 80.0,
+            "profit": 45.1,
+            "roi_pct": 56.38,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 7,
+            "staked": 70.0,
+            "profit": -5.7,
+            "roi_pct": -8.14,
+            "max_drawdown": 19.5
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 8,
+            "staked": 80.0,
+            "profit": 23.4,
+            "roi_pct": 29.25,
+            "max_drawdown": 10.5
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 2,
+            "staked": 20.0,
+            "profit": -2.1,
+            "roi_pct": -10.5,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 11,
+            "staked": 102.5,
+            "profit": 12.7,
+            "roi_pct": 12.39,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 12,
+            "staked": 117.5,
+            "profit": 22.08,
+            "roi_pct": 18.79,
+            "max_drawdown": 20.0
+          }
+        ]
+      },
+      "V-max-edge-fav040-edge105-no-drawdown-control": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 5,
+          "bets": 79,
+          "staked": 790.0,
+          "profit": 106.1,
+          "roi_pct": 13.43,
+          "median_fold_roi_pct": 14.14,
+          "worst_fold_roi_pct": -14.0,
+          "max_fold_drawdown": 36.7
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 19,
+            "staked": 190.0,
+            "profit": 16.8,
+            "roi_pct": 8.84,
+            "max_drawdown": 30.0
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 12,
+            "staked": 120.0,
+            "profit": -16.8,
+            "roi_pct": -14.0,
+            "max_drawdown": 36.7
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 8,
+            "staked": 80.0,
+            "profit": 45.1,
+            "roi_pct": 56.38,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 7,
+            "staked": 70.0,
+            "profit": -5.7,
+            "roi_pct": -8.14,
+            "max_drawdown": 19.5
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 8,
+            "staked": 80.0,
+            "profit": 23.4,
+            "roi_pct": 29.25,
+            "max_drawdown": 10.5
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 2,
+            "staked": 20.0,
+            "profit": -2.1,
+            "roi_pct": -10.5,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 11,
+            "staked": 110.0,
+            "profit": 21.4,
+            "roi_pct": 19.45,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 12,
+            "staked": 120.0,
+            "profit": 24.0,
+            "roi_pct": 20.0,
+            "max_drawdown": 20.0
+          }
+        ]
+      },
+      "X-max-edge-fav040-edge105-hardkill30": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 5,
+          "bets": 79,
+          "staked": 790.0,
+          "profit": 106.1,
+          "roi_pct": 13.43,
+          "median_fold_roi_pct": 14.14,
+          "worst_fold_roi_pct": -14.0,
+          "max_fold_drawdown": 36.7
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 19,
+            "staked": 190.0,
+            "profit": 16.8,
+            "roi_pct": 8.84,
+            "max_drawdown": 30.0
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 12,
+            "staked": 120.0,
+            "profit": -16.8,
+            "roi_pct": -14.0,
+            "max_drawdown": 36.7
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 8,
+            "staked": 80.0,
+            "profit": 45.1,
+            "roi_pct": 56.38,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 7,
+            "staked": 70.0,
+            "profit": -5.7,
+            "roi_pct": -8.14,
+            "max_drawdown": 19.5
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 8,
+            "staked": 80.0,
+            "profit": 23.4,
+            "roi_pct": 29.25,
+            "max_drawdown": 10.5
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 2,
+            "staked": 20.0,
+            "profit": -2.1,
+            "roi_pct": -10.5,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 11,
+            "staked": 110.0,
+            "profit": 21.4,
+            "roi_pct": 19.45,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 12,
+            "staked": 120.0,
+            "profit": 24.0,
+            "roi_pct": 20.0,
+            "max_drawdown": 20.0
+          }
+        ]
+      }
+    },
+    "E0": {
+      "Q-max-edge-fav040-edge105": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 3,
+          "bets": 84,
+          "staked": 790.0,
+          "profit": -54.14,
+          "roi_pct": -6.85,
+          "median_fold_roi_pct": -10.64,
+          "worst_fold_roi_pct": -100.0,
+          "max_fold_drawdown": 43.7
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": false,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 19,
+            "staked": 180.0,
+            "profit": -17.93,
+            "roi_pct": -9.96,
+            "max_drawdown": 29.03
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 18,
+            "staked": 160.0,
+            "profit": 2.95,
+            "roi_pct": 1.84,
+            "max_drawdown": 43.7
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 13,
+            "staked": 122.5,
+            "profit": -23.11,
+            "roi_pct": -18.87,
+            "max_drawdown": 33.21
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 14,
+            "staked": 130.0,
+            "profit": 7.6,
+            "roi_pct": 5.85,
+            "max_drawdown": 35.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 7,
+            "staked": 67.5,
+            "profit": -13.25,
+            "roi_pct": -19.63,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 6,
+            "staked": 60.0,
+            "profit": 6.4,
+            "roi_pct": 10.67,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 1,
+            "staked": 10.0,
+            "profit": -10.0,
+            "roi_pct": -100.0,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 6,
+            "staked": 60.0,
+            "profit": -6.8,
+            "roi_pct": -11.33,
+            "max_drawdown": 27.8
+          }
+        ]
+      },
+      "V-max-edge-fav040-edge105-no-drawdown-control": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 3,
+          "bets": 84,
+          "staked": 840.0,
+          "profit": -48.3,
+          "roi_pct": -5.75,
+          "median_fold_roi_pct": -10.27,
+          "worst_fold_roi_pct": -100.0,
+          "max_fold_drawdown": 51.6
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": false,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 19,
+            "staked": 190.0,
+            "profit": -17.5,
+            "roi_pct": -9.21,
+            "max_drawdown": 30.0
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 18,
+            "staked": 180.0,
+            "profit": 2.2,
+            "roi_pct": 1.22,
+            "max_drawdown": 51.6
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 13,
+            "staked": 130.0,
+            "profit": -20.1,
+            "roi_pct": -15.46,
+            "max_drawdown": 31.9
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 14,
+            "staked": 140.0,
+            "profit": 8.7,
+            "roi_pct": 6.21,
+            "max_drawdown": 40.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 7,
+            "staked": 70.0,
+            "profit": -11.2,
+            "roi_pct": -16.0,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 6,
+            "staked": 60.0,
+            "profit": 6.4,
+            "roi_pct": 10.67,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 1,
+            "staked": 10.0,
+            "profit": -10.0,
+            "roi_pct": -100.0,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 6,
+            "staked": 60.0,
+            "profit": -6.8,
+            "roi_pct": -11.33,
+            "max_drawdown": 27.8
+          }
+        ]
+      },
+      "X-max-edge-fav040-edge105-hardkill30": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 3,
+          "bets": 84,
+          "staked": 840.0,
+          "profit": -48.3,
+          "roi_pct": -5.75,
+          "median_fold_roi_pct": -10.27,
+          "worst_fold_roi_pct": -100.0,
+          "max_fold_drawdown": 51.6
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": false,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 19,
+            "staked": 190.0,
+            "profit": -17.5,
+            "roi_pct": -9.21,
+            "max_drawdown": 30.0
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 18,
+            "staked": 180.0,
+            "profit": 2.2,
+            "roi_pct": 1.22,
+            "max_drawdown": 51.6
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 13,
+            "staked": 130.0,
+            "profit": -20.1,
+            "roi_pct": -15.46,
+            "max_drawdown": 31.9
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 14,
+            "staked": 140.0,
+            "profit": 8.7,
+            "roi_pct": 6.21,
+            "max_drawdown": 40.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 7,
+            "staked": 70.0,
+            "profit": -11.2,
+            "roi_pct": -16.0,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 6,
+            "staked": 60.0,
+            "profit": 6.4,
+            "roi_pct": 10.67,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 1,
+            "staked": 10.0,
+            "profit": -10.0,
+            "roi_pct": -100.0,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 6,
+            "staked": 60.0,
+            "profit": -6.8,
+            "roi_pct": -11.33,
+            "max_drawdown": 27.8
+          }
+        ]
+      }
+    },
+    "E1": {
+      "Q-max-edge-fav040-edge105": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 3,
+          "bets": 158,
+          "staked": 1500.0,
+          "profit": 46.43,
+          "roi_pct": 3.1,
+          "median_fold_roi_pct": -3.97,
+          "worst_fold_roi_pct": -60.9,
+          "max_fold_drawdown": 69.54
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 21,
+            "staked": 200.0,
+            "profit": -17.38,
+            "roi_pct": -8.69,
+            "max_drawdown": 46.85
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 17,
+            "staked": 160.0,
+            "profit": -7.9,
+            "roi_pct": -4.94,
+            "max_drawdown": 42.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 5,
+            "staked": 45.0,
+            "profit": -5.12,
+            "roi_pct": -11.38,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 10,
+            "staked": 97.5,
+            "profit": 26.0,
+            "roi_pct": 26.67,
+            "max_drawdown": 26.6
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 25,
+            "staked": 242.5,
+            "profit": 27.57,
+            "roi_pct": 11.37,
+            "max_drawdown": 26.3
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 13,
+            "staked": 105.0,
+            "profit": -63.94,
+            "roi_pct": -60.9,
+            "max_drawdown": 69.54
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 32,
+            "staked": 320.0,
+            "profit": 97.1,
+            "roi_pct": 30.34,
+            "max_drawdown": 19.2
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 35,
+            "staked": 330.0,
+            "profit": -9.9,
+            "roi_pct": -3.0,
+            "max_drawdown": 27.55
+          }
+        ]
+      },
+      "V-max-edge-fav040-edge105-no-drawdown-control": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 3,
+          "bets": 158,
+          "staked": 1580.0,
+          "profit": 58.2,
+          "roi_pct": 3.68,
+          "median_fold_roi_pct": -3.92,
+          "worst_fold_roi_pct": -52.46,
+          "max_fold_drawdown": 79.4
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 21,
+            "staked": 210.0,
+            "profit": -10.4,
+            "roi_pct": -4.95,
+            "max_drawdown": 45.8
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 17,
+            "staked": 170.0,
+            "profit": -6.7,
+            "roi_pct": -3.94,
+            "max_drawdown": 47.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 5,
+            "staked": 50.0,
+            "profit": -4.0,
+            "roi_pct": -8.0,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 10,
+            "staked": 100.0,
+            "profit": 28.9,
+            "roi_pct": 28.9,
+            "max_drawdown": 25.3
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 25,
+            "staked": 250.0,
+            "profit": 35.2,
+            "roi_pct": 14.08,
+            "max_drawdown": 26.3
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 13,
+            "staked": 130.0,
+            "profit": -68.2,
+            "roi_pct": -52.46,
+            "max_drawdown": 79.4
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 32,
+            "staked": 320.0,
+            "profit": 97.1,
+            "roi_pct": 30.34,
+            "max_drawdown": 19.2
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 35,
+            "staked": 350.0,
+            "profit": -13.7,
+            "roi_pct": -3.91,
+            "max_drawdown": 31.6
+          }
+        ]
+      },
+      "X-max-edge-fav040-edge105-hardkill30": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 3,
+          "bets": 158,
+          "staked": 1580.0,
+          "profit": 58.2,
+          "roi_pct": 3.68,
+          "median_fold_roi_pct": -3.92,
+          "worst_fold_roi_pct": -52.46,
+          "max_fold_drawdown": 79.4
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 21,
+            "staked": 210.0,
+            "profit": -10.4,
+            "roi_pct": -4.95,
+            "max_drawdown": 45.8
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 17,
+            "staked": 170.0,
+            "profit": -6.7,
+            "roi_pct": -3.94,
+            "max_drawdown": 47.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 5,
+            "staked": 50.0,
+            "profit": -4.0,
+            "roi_pct": -8.0,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 10,
+            "staked": 100.0,
+            "profit": 28.9,
+            "roi_pct": 28.9,
+            "max_drawdown": 25.3
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 25,
+            "staked": 250.0,
+            "profit": 35.2,
+            "roi_pct": 14.08,
+            "max_drawdown": 26.3
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 13,
+            "staked": 130.0,
+            "profit": -68.2,
+            "roi_pct": -52.46,
+            "max_drawdown": 79.4
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 32,
+            "staked": 320.0,
+            "profit": 97.1,
+            "roi_pct": 30.34,
+            "max_drawdown": 19.2
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 35,
+            "staked": 350.0,
+            "profit": -13.7,
+            "roi_pct": -3.91,
+            "max_drawdown": 31.6
+          }
+        ]
+      }
+    },
+    "E2": {
+      "Q-max-edge-fav040-edge105": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 6,
+          "bets": 161,
+          "staked": 1520.0,
+          "profit": 181.67,
+          "roi_pct": 11.95,
+          "median_fold_roi_pct": 15.62,
+          "worst_fold_roi_pct": -47.29,
+          "max_fold_drawdown": 55.63
+        },
+        "decision": {
+          "status": "ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 22,
+            "staked": 212.5,
+            "profit": 33.95,
+            "roi_pct": 15.98,
+            "max_drawdown": 29.9
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 17,
+            "staked": 162.5,
+            "profit": 43.07,
+            "roi_pct": 26.5,
+            "max_drawdown": 35.7
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 11,
+            "staked": 85.0,
+            "profit": -40.2,
+            "roi_pct": -47.29,
+            "max_drawdown": 51.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 9,
+            "staked": 90.0,
+            "profit": 49.0,
+            "roi_pct": 54.44,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 14,
+            "staked": 130.0,
+            "profit": 44.74,
+            "roi_pct": 34.42,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 17,
+            "staked": 165.0,
+            "profit": 4.34,
+            "roi_pct": 2.63,
+            "max_drawdown": 22.16
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 27,
+            "staked": 242.5,
+            "profit": -19.28,
+            "roi_pct": -7.95,
+            "max_drawdown": 55.63
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 44,
+            "staked": 432.5,
+            "profit": 66.05,
+            "roi_pct": 15.27,
+            "max_drawdown": 33.95
+          }
+        ]
+      },
+      "V-max-edge-fav040-edge105-no-drawdown-control": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 7,
+          "bets": 161,
+          "staked": 1610.0,
+          "profit": 218.3,
+          "roi_pct": 13.56,
+          "median_fold_roi_pct": 15.04,
+          "worst_fold_roi_pct": -40.36,
+          "max_fold_drawdown": 66.0
+        },
+        "decision": {
+          "status": "ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 22,
+            "staked": 220.0,
+            "profit": 31.7,
+            "roi_pct": 14.41,
+            "max_drawdown": 32.4
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 17,
+            "staked": 170.0,
+            "profit": 47.6,
+            "roi_pct": 28.0,
+            "max_drawdown": 35.7
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 11,
+            "staked": 110.0,
+            "profit": -44.4,
+            "roi_pct": -40.36,
+            "max_drawdown": 66.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 9,
+            "staked": 90.0,
+            "profit": 49.0,
+            "roi_pct": 54.44,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 14,
+            "staked": 140.0,
+            "profit": 54.9,
+            "roi_pct": 39.21,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 17,
+            "staked": 170.0,
+            "profit": 9.6,
+            "roi_pct": 5.65,
+            "max_drawdown": 21.4
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 27,
+            "staked": 270.0,
+            "profit": 1.0,
+            "roi_pct": 0.37,
+            "max_drawdown": 56.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 44,
+            "staked": 440.0,
+            "profit": 68.9,
+            "roi_pct": 15.66,
+            "max_drawdown": 31.1
+          }
+        ]
+      },
+      "X-max-edge-fav040-edge105-hardkill30": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 7,
+          "bets": 161,
+          "staked": 1610.0,
+          "profit": 218.3,
+          "roi_pct": 13.56,
+          "median_fold_roi_pct": 15.04,
+          "worst_fold_roi_pct": -40.36,
+          "max_fold_drawdown": 66.0
+        },
+        "decision": {
+          "status": "ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 22,
+            "staked": 220.0,
+            "profit": 31.7,
+            "roi_pct": 14.41,
+            "max_drawdown": 32.4
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 17,
+            "staked": 170.0,
+            "profit": 47.6,
+            "roi_pct": 28.0,
+            "max_drawdown": 35.7
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 11,
+            "staked": 110.0,
+            "profit": -44.4,
+            "roi_pct": -40.36,
+            "max_drawdown": 66.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 9,
+            "staked": 90.0,
+            "profit": 49.0,
+            "roi_pct": 54.44,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 14,
+            "staked": 140.0,
+            "profit": 54.9,
+            "roi_pct": 39.21,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 17,
+            "staked": 170.0,
+            "profit": 9.6,
+            "roi_pct": 5.65,
+            "max_drawdown": 21.4
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 27,
+            "staked": 270.0,
+            "profit": 1.0,
+            "roi_pct": 0.37,
+            "max_drawdown": 56.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 44,
+            "staked": 440.0,
+            "profit": 68.9,
+            "roi_pct": 15.66,
+            "max_drawdown": 31.1
+          }
+        ]
+      }
+    },
+    "E3": {
+      "Q-max-edge-fav040-edge105": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 2,
+          "bets": 159,
+          "staked": 1472.5,
+          "profit": -156.25,
+          "roi_pct": -10.61,
+          "median_fold_roi_pct": -26.61,
+          "worst_fold_roi_pct": -78.84,
+          "max_fold_drawdown": 108.4
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": false,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 17,
+            "staked": 167.5,
+            "profit": 32.22,
+            "roi_pct": 19.24,
+            "max_drawdown": 24.38
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 12,
+            "staked": 102.5,
+            "profit": -31.92,
+            "roi_pct": -31.14,
+            "max_drawdown": 31.92
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 8,
+            "staked": 75.0,
+            "profit": -16.55,
+            "roi_pct": -22.07,
+            "max_drawdown": 25.25
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 6,
+            "staked": 55.0,
+            "profit": -18.03,
+            "roi_pct": -32.78,
+            "max_drawdown": 27.5
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 21,
+            "staked": 197.5,
+            "profit": -79.47,
+            "roi_pct": -40.24,
+            "max_drawdown": 82.57
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 17,
+            "staked": 137.5,
+            "profit": -108.4,
+            "roi_pct": -78.84,
+            "max_drawdown": 108.4
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 35,
+            "staked": 320.0,
+            "profit": -1.65,
+            "roi_pct": -0.52,
+            "max_drawdown": 54.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 43,
+            "staked": 417.5,
+            "profit": 67.55,
+            "roi_pct": 16.18,
+            "max_drawdown": 20.0
+          }
+        ]
+      },
+      "V-max-edge-fav040-edge105-no-drawdown-control": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 3,
+          "bets": 166,
+          "staked": 1660.0,
+          "profit": -190.4,
+          "roi_pct": -11.47,
+          "median_fold_roi_pct": -23.9,
+          "worst_fold_roi_pct": -65.21,
+          "max_fold_drawdown": 156.5
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": false,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 17,
+            "staked": 170.0,
+            "profit": 34.1,
+            "roi_pct": 20.06,
+            "max_drawdown": 22.5
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 12,
+            "staked": 120.0,
+            "profit": -32.9,
+            "roi_pct": -27.42,
+            "max_drawdown": 32.9
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 8,
+            "staked": 80.0,
+            "profit": -16.3,
+            "roi_pct": -20.38,
+            "max_drawdown": 25.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 6,
+            "staked": 60.0,
+            "profit": -17.7,
+            "roi_pct": -29.5,
+            "max_drawdown": 30.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 21,
+            "staked": 210.0,
+            "profit": -81.1,
+            "roi_pct": -38.62,
+            "max_drawdown": 84.2
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 24,
+            "staked": 240.0,
+            "profit": -156.5,
+            "roi_pct": -65.21,
+            "max_drawdown": 156.5
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 35,
+            "staked": 350.0,
+            "profit": 11.3,
+            "roi_pct": 3.23,
+            "max_drawdown": 52.7
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 43,
+            "staked": 430.0,
+            "profit": 68.7,
+            "roi_pct": 15.98,
+            "max_drawdown": 20.0
+          }
+        ]
+      },
+      "X-max-edge-fav040-edge105-hardkill30": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 3,
+          "bets": 166,
+          "staked": 1660.0,
+          "profit": -190.4,
+          "roi_pct": -11.47,
+          "median_fold_roi_pct": -23.9,
+          "worst_fold_roi_pct": -65.21,
+          "max_fold_drawdown": 156.5
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": false,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 17,
+            "staked": 170.0,
+            "profit": 34.1,
+            "roi_pct": 20.06,
+            "max_drawdown": 22.5
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 12,
+            "staked": 120.0,
+            "profit": -32.9,
+            "roi_pct": -27.42,
+            "max_drawdown": 32.9
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 8,
+            "staked": 80.0,
+            "profit": -16.3,
+            "roi_pct": -20.38,
+            "max_drawdown": 25.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 6,
+            "staked": 60.0,
+            "profit": -17.7,
+            "roi_pct": -29.5,
+            "max_drawdown": 30.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 21,
+            "staked": 210.0,
+            "profit": -81.1,
+            "roi_pct": -38.62,
+            "max_drawdown": 84.2
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 24,
+            "staked": 240.0,
+            "profit": -156.5,
+            "roi_pct": -65.21,
+            "max_drawdown": 156.5
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 35,
+            "staked": 350.0,
+            "profit": 11.3,
+            "roi_pct": 3.23,
+            "max_drawdown": 52.7
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 43,
+            "staked": 430.0,
+            "profit": 68.7,
+            "roi_pct": 15.98,
+            "max_drawdown": 20.0
+          }
+        ]
+      }
+    },
+    "F1": {
+      "Q-max-edge-fav040-edge105": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 5,
+          "bets": 108,
+          "staked": 1040.0,
+          "profit": 78.25,
+          "roi_pct": 7.52,
+          "median_fold_roi_pct": 16.3,
+          "worst_fold_roi_pct": -26.46,
+          "max_fold_drawdown": 43.52
+        },
+        "decision": {
+          "status": "ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 19,
+            "staked": 182.5,
+            "profit": -10.71,
+            "roi_pct": -5.87,
+            "max_drawdown": 28.78
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 19,
+            "staked": 175.0,
+            "profit": -22.36,
+            "roi_pct": -12.78,
+            "max_drawdown": 31.73
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 14,
+            "staked": 132.5,
+            "profit": 41.5,
+            "roi_pct": 31.32,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 19,
+            "staked": 187.5,
+            "profit": 37.02,
+            "roi_pct": 19.74,
+            "max_drawdown": 16.98
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 15,
+            "staked": 142.5,
+            "profit": -37.7,
+            "roi_pct": -26.46,
+            "max_drawdown": 43.52
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 12,
+            "staked": 120.0,
+            "profit": 51.1,
+            "roi_pct": 42.58,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 3,
+            "staked": 30.0,
+            "profit": 10.4,
+            "roi_pct": 34.67,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 7,
+            "staked": 70.0,
+            "profit": 9.0,
+            "roi_pct": 12.86,
+            "max_drawdown": 24.0
+          }
+        ]
+      },
+      "V-max-edge-fav040-edge105-no-drawdown-control": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 5,
+          "bets": 108,
+          "staked": 1080.0,
+          "profit": 97.4,
+          "roi_pct": 9.02,
+          "median_fold_roi_pct": 16.85,
+          "worst_fold_roi_pct": -23.47,
+          "max_fold_drawdown": 43.9
+        },
+        "decision": {
+          "status": "ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 19,
+            "staked": 190.0,
+            "profit": -4.1,
+            "roi_pct": -2.16,
+            "max_drawdown": 27.6
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 19,
+            "staked": 190.0,
+            "profit": -21.6,
+            "roi_pct": -11.37,
+            "max_drawdown": 34.8
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 14,
+            "staked": 140.0,
+            "profit": 48.2,
+            "roi_pct": 34.43,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 19,
+            "staked": 190.0,
+            "profit": 39.6,
+            "roi_pct": 20.84,
+            "max_drawdown": 14.7
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 15,
+            "staked": 150.0,
+            "profit": -35.2,
+            "roi_pct": -23.47,
+            "max_drawdown": 43.9
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 12,
+            "staked": 120.0,
+            "profit": 51.1,
+            "roi_pct": 42.58,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 3,
+            "staked": 30.0,
+            "profit": 10.4,
+            "roi_pct": 34.67,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 7,
+            "staked": 70.0,
+            "profit": 9.0,
+            "roi_pct": 12.86,
+            "max_drawdown": 24.0
+          }
+        ]
+      },
+      "X-max-edge-fav040-edge105-hardkill30": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 5,
+          "bets": 108,
+          "staked": 1080.0,
+          "profit": 97.4,
+          "roi_pct": 9.02,
+          "median_fold_roi_pct": 16.85,
+          "worst_fold_roi_pct": -23.47,
+          "max_fold_drawdown": 43.9
+        },
+        "decision": {
+          "status": "ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 19,
+            "staked": 190.0,
+            "profit": -4.1,
+            "roi_pct": -2.16,
+            "max_drawdown": 27.6
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 19,
+            "staked": 190.0,
+            "profit": -21.6,
+            "roi_pct": -11.37,
+            "max_drawdown": 34.8
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 14,
+            "staked": 140.0,
+            "profit": 48.2,
+            "roi_pct": 34.43,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 19,
+            "staked": 190.0,
+            "profit": 39.6,
+            "roi_pct": 20.84,
+            "max_drawdown": 14.7
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 15,
+            "staked": 150.0,
+            "profit": -35.2,
+            "roi_pct": -23.47,
+            "max_drawdown": 43.9
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 12,
+            "staked": 120.0,
+            "profit": 51.1,
+            "roi_pct": 42.58,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 3,
+            "staked": 30.0,
+            "profit": 10.4,
+            "roi_pct": 34.67,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 7,
+            "staked": 70.0,
+            "profit": 9.0,
+            "roi_pct": 12.86,
+            "max_drawdown": 24.0
+          }
+        ]
+      }
+    },
+    "F2": {
+      "Q-max-edge-fav040-edge105": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 5,
+          "bets": 122,
+          "staked": 1170.0,
+          "profit": 141.83,
+          "roi_pct": 12.12,
+          "median_fold_roi_pct": 18.27,
+          "worst_fold_roi_pct": -100.0,
+          "max_fold_drawdown": 63.87
+        },
+        "decision": {
+          "status": "ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 22,
+            "staked": 220.0,
+            "profit": 112.5,
+            "roi_pct": 51.14,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 25,
+            "staked": 250.0,
+            "profit": -0.2,
+            "roi_pct": -0.08,
+            "max_drawdown": 40.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 8,
+            "staked": 60.0,
+            "profit": -60.0,
+            "roi_pct": -100.0,
+            "max_drawdown": 60.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 18,
+            "staked": 157.5,
+            "profit": -63.87,
+            "roi_pct": -40.55,
+            "max_drawdown": 63.87
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 17,
+            "staked": 167.5,
+            "profit": 46.68,
+            "roi_pct": 27.87,
+            "max_drawdown": 17.5
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 5,
+            "staked": 50.0,
+            "profit": 27.5,
+            "roi_pct": 55.0,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 11,
+            "staked": 110.0,
+            "profit": 65.8,
+            "roi_pct": 59.82,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 16,
+            "staked": 155.0,
+            "profit": 13.42,
+            "roi_pct": 8.66,
+            "max_drawdown": 28.28
+          }
+        ]
+      },
+      "V-max-edge-fav040-edge105-no-drawdown-control": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 5,
+          "bets": 123,
+          "staked": 1230.0,
+          "profit": 116.6,
+          "roi_pct": 9.48,
+          "median_fold_roi_pct": 19.95,
+          "worst_fold_roi_pct": -100.0,
+          "max_fold_drawdown": 90.0
+        },
+        "decision": {
+          "status": "ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 22,
+            "staked": 220.0,
+            "profit": 112.5,
+            "roi_pct": 51.14,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 25,
+            "staked": 250.0,
+            "profit": -0.2,
+            "roi_pct": -0.08,
+            "max_drawdown": 40.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 9,
+            "staked": 90.0,
+            "profit": -90.0,
+            "roi_pct": -100.0,
+            "max_drawdown": 90.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 18,
+            "staked": 180.0,
+            "profit": -65.8,
+            "roi_pct": -36.56,
+            "max_drawdown": 65.8
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 17,
+            "staked": 170.0,
+            "profit": 49.8,
+            "roi_pct": 29.29,
+            "max_drawdown": 17.5
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 5,
+            "staked": 50.0,
+            "profit": 27.5,
+            "roi_pct": 55.0,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 11,
+            "staked": 110.0,
+            "profit": 65.8,
+            "roi_pct": 59.82,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 16,
+            "staked": 160.0,
+            "profit": 17.0,
+            "roi_pct": 10.62,
+            "max_drawdown": 24.7
+          }
+        ]
+      },
+      "X-max-edge-fav040-edge105-hardkill30": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 5,
+          "bets": 123,
+          "staked": 1230.0,
+          "profit": 116.6,
+          "roi_pct": 9.48,
+          "median_fold_roi_pct": 19.95,
+          "worst_fold_roi_pct": -100.0,
+          "max_fold_drawdown": 90.0
+        },
+        "decision": {
+          "status": "ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 22,
+            "staked": 220.0,
+            "profit": 112.5,
+            "roi_pct": 51.14,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 25,
+            "staked": 250.0,
+            "profit": -0.2,
+            "roi_pct": -0.08,
+            "max_drawdown": 40.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 9,
+            "staked": 90.0,
+            "profit": -90.0,
+            "roi_pct": -100.0,
+            "max_drawdown": 90.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 18,
+            "staked": 180.0,
+            "profit": -65.8,
+            "roi_pct": -36.56,
+            "max_drawdown": 65.8
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 17,
+            "staked": 170.0,
+            "profit": 49.8,
+            "roi_pct": 29.29,
+            "max_drawdown": 17.5
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 5,
+            "staked": 50.0,
+            "profit": 27.5,
+            "roi_pct": 55.0,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 11,
+            "staked": 110.0,
+            "profit": 65.8,
+            "roi_pct": 59.82,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 16,
+            "staked": 160.0,
+            "profit": 17.0,
+            "roi_pct": 10.62,
+            "max_drawdown": 24.7
+          }
+        ]
+      }
+    },
+    "G1": {
+      "Q-max-edge-fav040-edge105": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 2,
+          "bets": 43,
+          "staked": 412.5,
+          "profit": -78.95,
+          "roi_pct": -19.14,
+          "median_fold_roi_pct": -26.81,
+          "worst_fold_roi_pct": -100.0,
+          "max_fold_drawdown": 33.52
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": false,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 3,
+            "staked": 30.0,
+            "profit": -11.6,
+            "roi_pct": -38.67,
+            "max_drawdown": 11.6
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 9,
+            "staked": 90.0,
+            "profit": -2.9,
+            "roi_pct": -3.22,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 2,
+            "staked": 20.0,
+            "profit": -20.0,
+            "roi_pct": -100.0,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 3,
+            "staked": 30.0,
+            "profit": 12.0,
+            "roi_pct": 40.0,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 1,
+            "staked": 10.0,
+            "profit": 9.5,
+            "roi_pct": 95.0,
+            "max_drawdown": 0.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 4,
+            "staked": 35.0,
+            "profit": -22.1,
+            "roi_pct": -63.14,
+            "max_drawdown": 22.1
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 6,
+            "staked": 60.0,
+            "profit": -23.3,
+            "roi_pct": -38.83,
+            "max_drawdown": 25.3
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 15,
+            "staked": 137.5,
+            "profit": -20.55,
+            "roi_pct": -14.95,
+            "max_drawdown": 33.52
+          }
+        ]
+      },
+      "V-max-edge-fav040-edge105-no-drawdown-control": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 2,
+          "bets": 43,
+          "staked": 430.0,
+          "profit": -72.1,
+          "roi_pct": -16.77,
+          "median_fold_roi_pct": -23.67,
+          "worst_fold_roi_pct": -100.0,
+          "max_fold_drawdown": 30.5
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": false,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 3,
+            "staked": 30.0,
+            "profit": -11.6,
+            "roi_pct": -38.67,
+            "max_drawdown": 11.6
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 9,
+            "staked": 90.0,
+            "profit": -2.9,
+            "roi_pct": -3.22,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 2,
+            "staked": 20.0,
+            "profit": -20.0,
+            "roi_pct": -100.0,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 3,
+            "staked": 30.0,
+            "profit": 12.0,
+            "roi_pct": 40.0,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 1,
+            "staked": 10.0,
+            "profit": 9.5,
+            "roi_pct": 95.0,
+            "max_drawdown": 0.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 4,
+            "staked": 40.0,
+            "profit": -22.8,
+            "roi_pct": -57.0,
+            "max_drawdown": 22.8
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 6,
+            "staked": 60.0,
+            "profit": -23.3,
+            "roi_pct": -38.83,
+            "max_drawdown": 25.3
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 15,
+            "staked": 150.0,
+            "profit": -13.0,
+            "roi_pct": -8.67,
+            "max_drawdown": 30.5
+          }
+        ]
+      },
+      "X-max-edge-fav040-edge105-hardkill30": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 2,
+          "bets": 43,
+          "staked": 430.0,
+          "profit": -72.1,
+          "roi_pct": -16.77,
+          "median_fold_roi_pct": -23.67,
+          "worst_fold_roi_pct": -100.0,
+          "max_fold_drawdown": 30.5
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": false,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 3,
+            "staked": 30.0,
+            "profit": -11.6,
+            "roi_pct": -38.67,
+            "max_drawdown": 11.6
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 9,
+            "staked": 90.0,
+            "profit": -2.9,
+            "roi_pct": -3.22,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 2,
+            "staked": 20.0,
+            "profit": -20.0,
+            "roi_pct": -100.0,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 3,
+            "staked": 30.0,
+            "profit": 12.0,
+            "roi_pct": 40.0,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 1,
+            "staked": 10.0,
+            "profit": 9.5,
+            "roi_pct": 95.0,
+            "max_drawdown": 0.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 4,
+            "staked": 40.0,
+            "profit": -22.8,
+            "roi_pct": -57.0,
+            "max_drawdown": 22.8
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 6,
+            "staked": 60.0,
+            "profit": -23.3,
+            "roi_pct": -38.83,
+            "max_drawdown": 25.3
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 15,
+            "staked": 150.0,
+            "profit": -13.0,
+            "roi_pct": -8.67,
+            "max_drawdown": 30.5
+          }
+        ]
+      }
+    },
+    "I1": {
+      "Q-max-edge-fav040-edge105": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 6,
+          "bets": 103,
+          "staked": 967.5,
+          "profit": 41.73,
+          "roi_pct": 4.31,
+          "median_fold_roi_pct": 14.03,
+          "worst_fold_roi_pct": -80.73,
+          "max_fold_drawdown": 56.9
+        },
+        "decision": {
+          "status": "ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 8,
+            "staked": 55.0,
+            "profit": -44.4,
+            "roi_pct": -80.73,
+            "max_drawdown": 44.4
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 14,
+            "staked": 117.5,
+            "profit": -42.5,
+            "roi_pct": -36.17,
+            "max_drawdown": 56.9
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 22,
+            "staked": 220.0,
+            "profit": 25.1,
+            "roi_pct": 11.41,
+            "max_drawdown": 38.5
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 22,
+            "staked": 215.0,
+            "profit": 35.8,
+            "roi_pct": 16.65,
+            "max_drawdown": 35.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 14,
+            "staked": 137.5,
+            "profit": 10.35,
+            "roi_pct": 7.53,
+            "max_drawdown": 21.65
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 13,
+            "staked": 130.0,
+            "profit": 23.9,
+            "roi_pct": 18.38,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 1,
+            "staked": 10.0,
+            "profit": 13.8,
+            "roi_pct": 138.0,
+            "max_drawdown": 0.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 9,
+            "staked": 82.5,
+            "profit": 19.68,
+            "roi_pct": 23.85,
+            "max_drawdown": 27.5
+          }
+        ]
+      },
+      "V-max-edge-fav040-edge105-no-drawdown-control": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 6,
+          "bets": 113,
+          "staked": 1130.0,
+          "profit": 42.9,
+          "roi_pct": 3.8,
+          "median_fold_roi_pct": 12.71,
+          "worst_fold_roi_pct": -30.54,
+          "max_fold_drawdown": 66.2
+        },
+        "decision": {
+          "status": "ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 13,
+            "staked": 130.0,
+            "profit": -39.7,
+            "roi_pct": -30.54,
+            "max_drawdown": 58.8
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 19,
+            "staked": 190.0,
+            "profit": -43.2,
+            "roi_pct": -22.74,
+            "max_drawdown": 66.2
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 22,
+            "staked": 220.0,
+            "profit": 25.1,
+            "roi_pct": 11.41,
+            "max_drawdown": 38.5
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 22,
+            "staked": 220.0,
+            "profit": 30.8,
+            "roi_pct": 14.0,
+            "max_drawdown": 40.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 14,
+            "staked": 140.0,
+            "profit": 13.9,
+            "roi_pct": 9.93,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 13,
+            "staked": 130.0,
+            "profit": 23.9,
+            "roi_pct": 18.38,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 1,
+            "staked": 10.0,
+            "profit": 13.8,
+            "roi_pct": 138.0,
+            "max_drawdown": 0.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 9,
+            "staked": 90.0,
+            "profit": 18.3,
+            "roi_pct": 20.33,
+            "max_drawdown": 30.0
+          }
+        ]
+      },
+      "X-max-edge-fav040-edge105-hardkill30": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 6,
+          "bets": 113,
+          "staked": 1130.0,
+          "profit": 42.9,
+          "roi_pct": 3.8,
+          "median_fold_roi_pct": 12.71,
+          "worst_fold_roi_pct": -30.54,
+          "max_fold_drawdown": 66.2
+        },
+        "decision": {
+          "status": "ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 13,
+            "staked": 130.0,
+            "profit": -39.7,
+            "roi_pct": -30.54,
+            "max_drawdown": 58.8
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 19,
+            "staked": 190.0,
+            "profit": -43.2,
+            "roi_pct": -22.74,
+            "max_drawdown": 66.2
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 22,
+            "staked": 220.0,
+            "profit": 25.1,
+            "roi_pct": 11.41,
+            "max_drawdown": 38.5
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 22,
+            "staked": 220.0,
+            "profit": 30.8,
+            "roi_pct": 14.0,
+            "max_drawdown": 40.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 14,
+            "staked": 140.0,
+            "profit": 13.9,
+            "roi_pct": 9.93,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 13,
+            "staked": 130.0,
+            "profit": 23.9,
+            "roi_pct": 18.38,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 1,
+            "staked": 10.0,
+            "profit": 13.8,
+            "roi_pct": 138.0,
+            "max_drawdown": 0.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 9,
+            "staked": 90.0,
+            "profit": 18.3,
+            "roi_pct": 20.33,
+            "max_drawdown": 30.0
+          }
+        ]
+      }
+    },
+    "I2": {
+      "Q-max-edge-fav040-edge105": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 4,
+          "bets": 122,
+          "staked": 1125.0,
+          "profit": -25.1,
+          "roi_pct": -2.23,
+          "median_fold_roi_pct": 10.2,
+          "worst_fold_roi_pct": -49.11,
+          "max_fold_drawdown": 74.18
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": false,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 26,
+            "staked": 217.5,
+            "profit": -50.08,
+            "roi_pct": -23.03,
+            "max_drawdown": 74.18
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 12,
+            "staked": 92.5,
+            "profit": -45.43,
+            "roi_pct": -49.11,
+            "max_drawdown": 61.98
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 9,
+            "staked": 87.5,
+            "profit": 19.1,
+            "roi_pct": 21.83,
+            "max_drawdown": 20.1
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 8,
+            "staked": 77.5,
+            "profit": 23.1,
+            "roi_pct": 29.81,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 12,
+            "staked": 117.5,
+            "profit": 38.02,
+            "roi_pct": 32.36,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 12,
+            "staked": 120.0,
+            "profit": 26.5,
+            "roi_pct": 22.08,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 13,
+            "staked": 120.0,
+            "profit": -32.13,
+            "roi_pct": -26.78,
+            "max_drawdown": 44.13
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 30,
+            "staked": 292.5,
+            "profit": -4.18,
+            "roi_pct": -1.43,
+            "max_drawdown": 39.18
+          }
+        ]
+      },
+      "V-max-edge-fav040-edge105-no-drawdown-control": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 4,
+          "bets": 122,
+          "staked": 1220.0,
+          "profit": -35.4,
+          "roi_pct": -2.9,
+          "median_fold_roi_pct": 10.02,
+          "worst_fold_roi_pct": -30.17,
+          "max_fold_drawdown": 101.3
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": false,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 26,
+            "staked": 260.0,
+            "profit": -77.2,
+            "roi_pct": -29.69,
+            "max_drawdown": 101.3
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 12,
+            "staked": 120.0,
+            "profit": -36.2,
+            "roi_pct": -30.17,
+            "max_drawdown": 69.3
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 9,
+            "staked": 90.0,
+            "profit": 22.4,
+            "roi_pct": 24.89,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 8,
+            "staked": 80.0,
+            "profit": 26.3,
+            "roi_pct": 32.88,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 12,
+            "staked": 120.0,
+            "profit": 41.4,
+            "roi_pct": 34.5,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 12,
+            "staked": 120.0,
+            "profit": 26.5,
+            "roi_pct": 22.08,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 13,
+            "staked": 130.0,
+            "profit": -32.5,
+            "roi_pct": -25.0,
+            "max_drawdown": 44.5
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 30,
+            "staked": 300.0,
+            "profit": -6.1,
+            "roi_pct": -2.03,
+            "max_drawdown": 41.1
+          }
+        ]
+      },
+      "X-max-edge-fav040-edge105-hardkill30": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 4,
+          "bets": 122,
+          "staked": 1220.0,
+          "profit": -35.4,
+          "roi_pct": -2.9,
+          "median_fold_roi_pct": 10.02,
+          "worst_fold_roi_pct": -30.17,
+          "max_fold_drawdown": 101.3
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": false,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 26,
+            "staked": 260.0,
+            "profit": -77.2,
+            "roi_pct": -29.69,
+            "max_drawdown": 101.3
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 12,
+            "staked": 120.0,
+            "profit": -36.2,
+            "roi_pct": -30.17,
+            "max_drawdown": 69.3
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 9,
+            "staked": 90.0,
+            "profit": 22.4,
+            "roi_pct": 24.89,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 8,
+            "staked": 80.0,
+            "profit": 26.3,
+            "roi_pct": 32.88,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 12,
+            "staked": 120.0,
+            "profit": 41.4,
+            "roi_pct": 34.5,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 12,
+            "staked": 120.0,
+            "profit": 26.5,
+            "roi_pct": 22.08,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 13,
+            "staked": 130.0,
+            "profit": -32.5,
+            "roi_pct": -25.0,
+            "max_drawdown": 44.5
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 30,
+            "staked": 300.0,
+            "profit": -6.1,
+            "roi_pct": -2.03,
+            "max_drawdown": 41.1
+          }
+        ]
+      }
+    },
+    "N1": {
+      "Q-max-edge-fav040-edge105": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 3,
+          "bets": 32,
+          "staked": 310.0,
+          "profit": 27.12,
+          "roi_pct": 8.75,
+          "median_fold_roi_pct": -1.38,
+          "worst_fold_roi_pct": -100.0,
+          "max_fold_drawdown": 35.0
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 5,
+            "staked": 47.5,
+            "profit": -33.85,
+            "roi_pct": -71.26,
+            "max_drawdown": 33.85
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 6,
+            "staked": 60.0,
+            "profit": 40.9,
+            "roi_pct": 68.17,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 7,
+            "staked": 65.0,
+            "profit": -5.5,
+            "roi_pct": -8.46,
+            "max_drawdown": 35.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 4,
+            "staked": 37.5,
+            "profit": -1.03,
+            "roi_pct": -2.75,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 4,
+            "staked": 40.0,
+            "profit": 43.0,
+            "roi_pct": 107.5,
+            "max_drawdown": 0.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 4,
+            "staked": 40.0,
+            "profit": 3.6,
+            "roi_pct": 9.0,
+            "max_drawdown": 10.2
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 0,
+            "staked": 0,
+            "profit": 0,
+            "roi_pct": 0.0,
+            "max_drawdown": 0.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 2,
+            "staked": 20.0,
+            "profit": -20.0,
+            "roi_pct": -100.0,
+            "max_drawdown": 20.0
+          }
+        ]
+      },
+      "V-max-edge-fav040-edge105-no-drawdown-control": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 4,
+          "bets": 32,
+          "staked": 320.0,
+          "profit": 26.8,
+          "roi_pct": 8.38,
+          "median_fold_roi_pct": 2.0,
+          "worst_fold_roi_pct": -100.0,
+          "max_fold_drawdown": 40.0
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 5,
+            "staked": 50.0,
+            "profit": -31.8,
+            "roi_pct": -63.6,
+            "max_drawdown": 31.8
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 6,
+            "staked": 60.0,
+            "profit": 40.9,
+            "roi_pct": 68.17,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 7,
+            "staked": 70.0,
+            "profit": -10.5,
+            "roi_pct": -15.0,
+            "max_drawdown": 40.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 4,
+            "staked": 40.0,
+            "profit": 1.6,
+            "roi_pct": 4.0,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 4,
+            "staked": 40.0,
+            "profit": 43.0,
+            "roi_pct": 107.5,
+            "max_drawdown": 0.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 4,
+            "staked": 40.0,
+            "profit": 3.6,
+            "roi_pct": 9.0,
+            "max_drawdown": 10.2
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 0,
+            "staked": 0,
+            "profit": 0,
+            "roi_pct": 0.0,
+            "max_drawdown": 0.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 2,
+            "staked": 20.0,
+            "profit": -20.0,
+            "roi_pct": -100.0,
+            "max_drawdown": 20.0
+          }
+        ]
+      },
+      "X-max-edge-fav040-edge105-hardkill30": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 4,
+          "bets": 32,
+          "staked": 320.0,
+          "profit": 26.8,
+          "roi_pct": 8.38,
+          "median_fold_roi_pct": 2.0,
+          "worst_fold_roi_pct": -100.0,
+          "max_fold_drawdown": 40.0
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 5,
+            "staked": 50.0,
+            "profit": -31.8,
+            "roi_pct": -63.6,
+            "max_drawdown": 31.8
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 6,
+            "staked": 60.0,
+            "profit": 40.9,
+            "roi_pct": 68.17,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 7,
+            "staked": 70.0,
+            "profit": -10.5,
+            "roi_pct": -15.0,
+            "max_drawdown": 40.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 4,
+            "staked": 40.0,
+            "profit": 1.6,
+            "roi_pct": 4.0,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 4,
+            "staked": 40.0,
+            "profit": 43.0,
+            "roi_pct": 107.5,
+            "max_drawdown": 0.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 4,
+            "staked": 40.0,
+            "profit": 3.6,
+            "roi_pct": 9.0,
+            "max_drawdown": 10.2
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 0,
+            "staked": 0,
+            "profit": 0,
+            "roi_pct": 0.0,
+            "max_drawdown": 0.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 2,
+            "staked": 20.0,
+            "profit": -20.0,
+            "roi_pct": -100.0,
+            "max_drawdown": 20.0
+          }
+        ]
+      }
+    },
+    "P1": {
+      "Q-max-edge-fav040-edge105": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 6,
+          "bets": 92,
+          "staked": 895.0,
+          "profit": 159.43,
+          "roi_pct": 17.81,
+          "median_fold_roi_pct": 20.67,
+          "worst_fold_roi_pct": -24.5,
+          "max_fold_drawdown": 40.42
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 18,
+            "staked": 165.0,
+            "profit": 10.68,
+            "roi_pct": 6.47,
+            "max_drawdown": 38.0
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 18,
+            "staked": 180.0,
+            "profit": 59.8,
+            "roi_pct": 33.22,
+            "max_drawdown": 17.2
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 8,
+            "staked": 75.0,
+            "profit": -17.73,
+            "roi_pct": -23.64,
+            "max_drawdown": 27.78
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 4,
+            "staked": 40.0,
+            "profit": 30.8,
+            "roi_pct": 77.0,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 8,
+            "staked": 80.0,
+            "profit": 6.5,
+            "roi_pct": 8.12,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 9,
+            "staked": 90.0,
+            "profit": 74.5,
+            "roi_pct": 82.78,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 10,
+            "staked": 100.0,
+            "profit": 35.3,
+            "roi_pct": 35.3,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 17,
+            "staked": 165.0,
+            "profit": -40.42,
+            "roi_pct": -24.5,
+            "max_drawdown": 40.42
+          }
+        ]
+      },
+      "V-max-edge-fav040-edge105-no-drawdown-control": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 6,
+          "bets": 92,
+          "staked": 920.0,
+          "profit": 172.2,
+          "roi_pct": 18.72,
+          "median_fold_roi_pct": 20.67,
+          "worst_fold_roi_pct": -19.76,
+          "max_fold_drawdown": 41.6
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 18,
+            "staked": 180.0,
+            "profit": 10.6,
+            "roi_pct": 5.89,
+            "max_drawdown": 41.6
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 18,
+            "staked": 180.0,
+            "profit": 59.8,
+            "roi_pct": 33.22,
+            "max_drawdown": 17.2
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 8,
+            "staked": 80.0,
+            "profit": -11.7,
+            "roi_pct": -14.62,
+            "max_drawdown": 25.1
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 4,
+            "staked": 40.0,
+            "profit": 30.8,
+            "roi_pct": 77.0,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 8,
+            "staked": 80.0,
+            "profit": 6.5,
+            "roi_pct": 8.12,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 9,
+            "staked": 90.0,
+            "profit": 74.5,
+            "roi_pct": 82.78,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 10,
+            "staked": 100.0,
+            "profit": 35.3,
+            "roi_pct": 35.3,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 17,
+            "staked": 170.0,
+            "profit": -33.6,
+            "roi_pct": -19.76,
+            "max_drawdown": 40.0
+          }
+        ]
+      },
+      "X-max-edge-fav040-edge105-hardkill30": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 6,
+          "bets": 92,
+          "staked": 920.0,
+          "profit": 172.2,
+          "roi_pct": 18.72,
+          "median_fold_roi_pct": 20.67,
+          "worst_fold_roi_pct": -19.76,
+          "max_fold_drawdown": 41.6
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 18,
+            "staked": 180.0,
+            "profit": 10.6,
+            "roi_pct": 5.89,
+            "max_drawdown": 41.6
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 18,
+            "staked": 180.0,
+            "profit": 59.8,
+            "roi_pct": 33.22,
+            "max_drawdown": 17.2
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 8,
+            "staked": 80.0,
+            "profit": -11.7,
+            "roi_pct": -14.62,
+            "max_drawdown": 25.1
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 4,
+            "staked": 40.0,
+            "profit": 30.8,
+            "roi_pct": 77.0,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 8,
+            "staked": 80.0,
+            "profit": 6.5,
+            "roi_pct": 8.12,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 9,
+            "staked": 90.0,
+            "profit": 74.5,
+            "roi_pct": 82.78,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 10,
+            "staked": 100.0,
+            "profit": 35.3,
+            "roi_pct": 35.3,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 17,
+            "staked": 170.0,
+            "profit": -33.6,
+            "roi_pct": -19.76,
+            "max_drawdown": 40.0
+          }
+        ]
+      }
+    },
+    "SC0": {
+      "Q-max-edge-fav040-edge105": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 1,
+          "bets": 52,
+          "staked": 497.5,
+          "profit": -77.99,
+          "roi_pct": -15.68,
+          "median_fold_roi_pct": -30.34,
+          "worst_fold_roi_pct": -100.0,
+          "max_fold_drawdown": 47.5
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": false,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 7,
+            "staked": 65.0,
+            "profit": -0.37,
+            "roi_pct": -0.57,
+            "max_drawdown": 22.4
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 7,
+            "staked": 67.5,
+            "profit": -27.0,
+            "roi_pct": -40.0,
+            "max_drawdown": 47.5
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 3,
+            "staked": 27.5,
+            "profit": -13.85,
+            "roi_pct": -50.36,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 1,
+            "staked": 10.0,
+            "profit": -10.0,
+            "roi_pct": -100.0,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 3,
+            "staked": 30.0,
+            "profit": -6.2,
+            "roi_pct": -20.67,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 4,
+            "staked": 37.5,
+            "profit": -19.5,
+            "roi_pct": -52.0,
+            "max_drawdown": 30.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 13,
+            "staked": 122.5,
+            "profit": -12.55,
+            "roi_pct": -10.24,
+            "max_drawdown": 27.5
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 14,
+            "staked": 137.5,
+            "profit": 11.48,
+            "roi_pct": 8.35,
+            "max_drawdown": 26.7
+          }
+        ]
+      },
+      "V-max-edge-fav040-edge105-no-drawdown-control": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 2,
+          "bets": 52,
+          "staked": 520.0,
+          "profit": -66.9,
+          "roi_pct": -12.87,
+          "median_fold_roi_pct": -30.0,
+          "worst_fold_roi_pct": -100.0,
+          "max_fold_drawdown": 50.0
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": false,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 7,
+            "staked": 70.0,
+            "profit": 3.3,
+            "roi_pct": 4.71,
+            "max_drawdown": 22.4
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 7,
+            "staked": 70.0,
+            "profit": -29.5,
+            "roi_pct": -42.14,
+            "max_drawdown": 50.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 3,
+            "staked": 30.0,
+            "profit": -11.8,
+            "roi_pct": -39.33,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 1,
+            "staked": 10.0,
+            "profit": -10.0,
+            "roi_pct": -100.0,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 3,
+            "staked": 30.0,
+            "profit": -6.2,
+            "roi_pct": -20.67,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 4,
+            "staked": 40.0,
+            "profit": -16.0,
+            "roi_pct": -40.0,
+            "max_drawdown": 30.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 13,
+            "staked": 130.0,
+            "profit": -10.3,
+            "roi_pct": -7.92,
+            "max_drawdown": 30.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 14,
+            "staked": 140.0,
+            "profit": 13.6,
+            "roi_pct": 9.71,
+            "max_drawdown": 26.7
+          }
+        ]
+      },
+      "X-max-edge-fav040-edge105-hardkill30": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 2,
+          "bets": 52,
+          "staked": 520.0,
+          "profit": -66.9,
+          "roi_pct": -12.87,
+          "median_fold_roi_pct": -30.0,
+          "worst_fold_roi_pct": -100.0,
+          "max_fold_drawdown": 50.0
+        },
+        "decision": {
+          "status": "NOT_ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": false,
+            "positive_folds_at_least_5": false,
+            "holdout_bets_at_least_100": false
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 7,
+            "staked": 70.0,
+            "profit": 3.3,
+            "roi_pct": 4.71,
+            "max_drawdown": 22.4
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 7,
+            "staked": 70.0,
+            "profit": -29.5,
+            "roi_pct": -42.14,
+            "max_drawdown": 50.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 3,
+            "staked": 30.0,
+            "profit": -11.8,
+            "roi_pct": -39.33,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 1,
+            "staked": 10.0,
+            "profit": -10.0,
+            "roi_pct": -100.0,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 3,
+            "staked": 30.0,
+            "profit": -6.2,
+            "roi_pct": -20.67,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 4,
+            "staked": 40.0,
+            "profit": -16.0,
+            "roi_pct": -40.0,
+            "max_drawdown": 30.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 13,
+            "staked": 130.0,
+            "profit": -10.3,
+            "roi_pct": -7.92,
+            "max_drawdown": 30.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 14,
+            "staked": 140.0,
+            "profit": 13.6,
+            "roi_pct": 9.71,
+            "max_drawdown": 26.7
+          }
+        ]
+      }
+    },
+    "SP1": {
+      "Q-max-edge-fav040-edge105": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 6,
+          "bets": 119,
+          "staked": 1125.0,
+          "profit": 172.14,
+          "roi_pct": 15.3,
+          "median_fold_roi_pct": 17.11,
+          "worst_fold_roi_pct": -20.2,
+          "max_fold_drawdown": 62.5
+        },
+        "decision": {
+          "status": "ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 19,
+            "staked": 185.0,
+            "profit": 13.57,
+            "roi_pct": 7.34,
+            "max_drawdown": 39.88
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 26,
+            "staked": 245.0,
+            "profit": 51.75,
+            "roi_pct": 21.12,
+            "max_drawdown": 24.25
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 14,
+            "staked": 137.5,
+            "profit": 24.72,
+            "roi_pct": 17.98,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 14,
+            "staked": 140.0,
+            "profit": 65.8,
+            "roi_pct": 47.0,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 15,
+            "staked": 127.5,
+            "profit": -25.75,
+            "roi_pct": -20.2,
+            "max_drawdown": 62.5
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 23,
+            "staked": 212.5,
+            "profit": 34.48,
+            "roi_pct": 16.23,
+            "max_drawdown": 40.7
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 5,
+            "staked": 47.5,
+            "profit": 10.67,
+            "roi_pct": 22.46,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 3,
+            "staked": 30.0,
+            "profit": -3.1,
+            "roi_pct": -10.33,
+            "max_drawdown": 10.0
+          }
+        ]
+      },
+      "V-max-edge-fav040-edge105-no-drawdown-control": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 6,
+          "bets": 119,
+          "staked": 1190.0,
+          "profit": 183.9,
+          "roi_pct": 15.45,
+          "median_fold_roi_pct": 17.96,
+          "worst_fold_roi_pct": -19.73,
+          "max_fold_drawdown": 70.0
+        },
+        "decision": {
+          "status": "ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 19,
+            "staked": 190.0,
+            "profit": 20.1,
+            "roi_pct": 10.58,
+            "max_drawdown": 36.5
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 26,
+            "staked": 260.0,
+            "profit": 52.2,
+            "roi_pct": 20.08,
+            "max_drawdown": 29.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 14,
+            "staked": 140.0,
+            "profit": 27.1,
+            "roi_pct": 19.36,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 14,
+            "staked": 140.0,
+            "profit": 65.8,
+            "roi_pct": 47.0,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 15,
+            "staked": 150.0,
+            "profit": -29.6,
+            "roi_pct": -19.73,
+            "max_drawdown": 70.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 23,
+            "staked": 230.0,
+            "profit": 38.1,
+            "roi_pct": 16.57,
+            "max_drawdown": 38.6
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 5,
+            "staked": 50.0,
+            "profit": 13.3,
+            "roi_pct": 26.6,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 3,
+            "staked": 30.0,
+            "profit": -3.1,
+            "roi_pct": -10.33,
+            "max_drawdown": 10.0
+          }
+        ]
+      },
+      "X-max-edge-fav040-edge105-hardkill30": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 6,
+          "bets": 119,
+          "staked": 1190.0,
+          "profit": 183.9,
+          "roi_pct": 15.45,
+          "median_fold_roi_pct": 17.96,
+          "worst_fold_roi_pct": -19.73,
+          "max_fold_drawdown": 70.0
+        },
+        "decision": {
+          "status": "ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 19,
+            "staked": 190.0,
+            "profit": 20.1,
+            "roi_pct": 10.58,
+            "max_drawdown": 36.5
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 26,
+            "staked": 260.0,
+            "profit": 52.2,
+            "roi_pct": 20.08,
+            "max_drawdown": 29.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 14,
+            "staked": 140.0,
+            "profit": 27.1,
+            "roi_pct": 19.36,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 14,
+            "staked": 140.0,
+            "profit": 65.8,
+            "roi_pct": 47.0,
+            "max_drawdown": 10.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 15,
+            "staked": 150.0,
+            "profit": -29.6,
+            "roi_pct": -19.73,
+            "max_drawdown": 70.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 23,
+            "staked": 230.0,
+            "profit": 38.1,
+            "roi_pct": 16.57,
+            "max_drawdown": 38.6
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 5,
+            "staked": 50.0,
+            "profit": 13.3,
+            "roi_pct": 26.6,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 3,
+            "staked": 30.0,
+            "profit": -3.1,
+            "roi_pct": -10.33,
+            "max_drawdown": 10.0
+          }
+        ]
+      }
+    },
+    "SP2": {
+      "Q-max-edge-fav040-edge105": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 6,
+          "bets": 136,
+          "staked": 1310.0,
+          "profit": 147.59,
+          "roi_pct": 11.27,
+          "median_fold_roi_pct": 5.8,
+          "worst_fold_roi_pct": -100.0,
+          "max_fold_drawdown": 57.85
+        },
+        "decision": {
+          "status": "ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 22,
+            "staked": 217.5,
+            "profit": 73.6,
+            "roi_pct": 33.84,
+            "max_drawdown": 30.0
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 16,
+            "staked": 152.5,
+            "profit": 5.49,
+            "roi_pct": 3.6,
+            "max_drawdown": 27.5
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 23,
+            "staked": 225.0,
+            "profit": 18.02,
+            "roi_pct": 8.01,
+            "max_drawdown": 31.83
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 19,
+            "staked": 180.0,
+            "profit": -45.35,
+            "roi_pct": -25.19,
+            "max_drawdown": 57.85
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 12,
+            "staked": 120.0,
+            "profit": 37.0,
+            "roi_pct": 30.83,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 8,
+            "staked": 77.5,
+            "profit": 2.43,
+            "roi_pct": 3.14,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 6,
+            "staked": 45.0,
+            "profit": -45.0,
+            "roi_pct": -100.0,
+            "max_drawdown": 45.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 30,
+            "staked": 292.5,
+            "profit": 101.4,
+            "roi_pct": 34.67,
+            "max_drawdown": 28.2
+          }
+        ]
+      },
+      "V-max-edge-fav040-edge105-no-drawdown-control": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 6,
+          "bets": 144,
+          "staked": 1440.0,
+          "profit": 168.5,
+          "roi_pct": 11.7,
+          "median_fold_roi_pct": 8.01,
+          "worst_fold_roi_pct": -25.79,
+          "max_fold_drawdown": 60.0
+        },
+        "decision": {
+          "status": "ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 22,
+            "staked": 220.0,
+            "profit": 77.0,
+            "roi_pct": 35.0,
+            "max_drawdown": 30.0
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 16,
+            "staked": 160.0,
+            "profit": 7.7,
+            "roi_pct": 4.81,
+            "max_drawdown": 30.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 23,
+            "staked": 230.0,
+            "profit": 24.2,
+            "roi_pct": 10.52,
+            "max_drawdown": 30.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 19,
+            "staked": 190.0,
+            "profit": -45.4,
+            "roi_pct": -23.89,
+            "max_drawdown": 58.8
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 12,
+            "staked": 120.0,
+            "profit": 37.0,
+            "roi_pct": 30.83,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 8,
+            "staked": 80.0,
+            "profit": 4.4,
+            "roi_pct": 5.5,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 14,
+            "staked": 140.0,
+            "profit": -36.1,
+            "roi_pct": -25.79,
+            "max_drawdown": 60.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 30,
+            "staked": 300.0,
+            "profit": 99.7,
+            "roi_pct": 33.23,
+            "max_drawdown": 30.0
+          }
+        ]
+      },
+      "X-max-edge-fav040-edge105-hardkill30": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 6,
+          "bets": 144,
+          "staked": 1440.0,
+          "profit": 168.5,
+          "roi_pct": 11.7,
+          "median_fold_roi_pct": 8.01,
+          "worst_fold_roi_pct": -25.79,
+          "max_fold_drawdown": 60.0
+        },
+        "decision": {
+          "status": "ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 22,
+            "staked": 220.0,
+            "profit": 77.0,
+            "roi_pct": 35.0,
+            "max_drawdown": 30.0
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 16,
+            "staked": 160.0,
+            "profit": 7.7,
+            "roi_pct": 4.81,
+            "max_drawdown": 30.0
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 23,
+            "staked": 230.0,
+            "profit": 24.2,
+            "roi_pct": 10.52,
+            "max_drawdown": 30.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 19,
+            "staked": 190.0,
+            "profit": -45.4,
+            "roi_pct": -23.89,
+            "max_drawdown": 58.8
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 12,
+            "staked": 120.0,
+            "profit": 37.0,
+            "roi_pct": 30.83,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 8,
+            "staked": 80.0,
+            "profit": 4.4,
+            "roi_pct": 5.5,
+            "max_drawdown": 20.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 14,
+            "staked": 140.0,
+            "profit": -36.1,
+            "roi_pct": -25.79,
+            "max_drawdown": 60.0
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 30,
+            "staked": 300.0,
+            "profit": 99.7,
+            "roi_pct": 33.23,
+            "max_drawdown": 30.0
+          }
+        ]
+      }
+    },
+    "T1": {
+      "Q-max-edge-fav040-edge105": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 5,
+          "bets": 151,
+          "staked": 1405.0,
+          "profit": 63.71,
+          "roi_pct": 4.53,
+          "median_fold_roi_pct": 2.92,
+          "worst_fold_roi_pct": -52.48,
+          "max_fold_drawdown": 65.0
+        },
+        "decision": {
+          "status": "ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 24,
+            "staked": 230.0,
+            "profit": -9.57,
+            "roi_pct": -4.16,
+            "max_drawdown": 44.37
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 29,
+            "staked": 280.0,
+            "profit": 55.63,
+            "roi_pct": 19.87,
+            "max_drawdown": 35.77
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 26,
+            "staked": 200.0,
+            "profit": -41.75,
+            "roi_pct": -20.88,
+            "max_drawdown": 65.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 14,
+            "staked": 137.5,
+            "profit": 30.75,
+            "roi_pct": 22.36,
+            "max_drawdown": 23.25
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 13,
+            "staked": 127.5,
+            "profit": 4.5,
+            "roi_pct": 3.53,
+            "max_drawdown": 33.7
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 8,
+            "staked": 72.5,
+            "profit": -38.05,
+            "roi_pct": -52.48,
+            "max_drawdown": 38.25
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 22,
+            "staked": 215.0,
+            "profit": 58.9,
+            "roi_pct": 27.4,
+            "max_drawdown": 26.2
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 15,
+            "staked": 142.5,
+            "profit": 3.3,
+            "roi_pct": 2.32,
+            "max_drawdown": 36.0
+          }
+        ]
+      },
+      "V-max-edge-fav040-edge105-no-drawdown-control": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 5,
+          "bets": 151,
+          "staked": 1510.0,
+          "profit": 89.9,
+          "roi_pct": 5.95,
+          "median_fold_roi_pct": 4.21,
+          "worst_fold_roi_pct": -51.0,
+          "max_fold_drawdown": 80.0
+        },
+        "decision": {
+          "status": "ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 24,
+            "staked": 240.0,
+            "profit": -8.7,
+            "roi_pct": -3.62,
+            "max_drawdown": 43.5
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 29,
+            "staked": 290.0,
+            "profit": 59.0,
+            "roi_pct": 20.34,
+            "max_drawdown": 32.4
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 26,
+            "staked": 260.0,
+            "profit": -22.6,
+            "roi_pct": -8.69,
+            "max_drawdown": 80.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 14,
+            "staked": 140.0,
+            "profit": 33.0,
+            "roi_pct": 23.57,
+            "max_drawdown": 21.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 13,
+            "staked": 130.0,
+            "profit": 6.6,
+            "roi_pct": 5.08,
+            "max_drawdown": 31.6
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 8,
+            "staked": 80.0,
+            "profit": -40.8,
+            "roi_pct": -51.0,
+            "max_drawdown": 41.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 22,
+            "staked": 220.0,
+            "profit": 58.4,
+            "roi_pct": 26.55,
+            "max_drawdown": 26.7
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 15,
+            "staked": 150.0,
+            "profit": 5.0,
+            "roi_pct": 3.33,
+            "max_drawdown": 36.0
+          }
+        ]
+      },
+      "X-max-edge-fav040-edge105-hardkill30": {
+        "aggregate": {
+          "folds": 8,
+          "positive_folds": 5,
+          "bets": 151,
+          "staked": 1510.0,
+          "profit": 89.9,
+          "roi_pct": 5.95,
+          "median_fold_roi_pct": 4.21,
+          "worst_fold_roi_pct": -51.0,
+          "max_fold_drawdown": 80.0
+        },
+        "decision": {
+          "status": "ROBUST_WITHIN_LEAGUE",
+          "requirements": {
+            "positive_aggregate_profit": true,
+            "positive_folds_at_least_5": true,
+            "holdout_bets_at_least_100": true
+          }
+        },
+        "folds": [
+          {
+            "holdout_window": "2022-09-01..2022-11-30",
+            "bets": 24,
+            "staked": 240.0,
+            "profit": -8.7,
+            "roi_pct": -3.62,
+            "max_drawdown": 43.5
+          },
+          {
+            "holdout_window": "2023-03-01..2023-05-31",
+            "bets": 29,
+            "staked": 290.0,
+            "profit": 59.0,
+            "roi_pct": 20.34,
+            "max_drawdown": 32.4
+          },
+          {
+            "holdout_window": "2023-09-01..2023-11-30",
+            "bets": 26,
+            "staked": 260.0,
+            "profit": -22.6,
+            "roi_pct": -8.69,
+            "max_drawdown": 80.0
+          },
+          {
+            "holdout_window": "2024-03-01..2024-05-31",
+            "bets": 14,
+            "staked": 140.0,
+            "profit": 33.0,
+            "roi_pct": 23.57,
+            "max_drawdown": 21.0
+          },
+          {
+            "holdout_window": "2024-09-01..2024-11-30",
+            "bets": 13,
+            "staked": 130.0,
+            "profit": 6.6,
+            "roi_pct": 5.08,
+            "max_drawdown": 31.6
+          },
+          {
+            "holdout_window": "2025-03-01..2025-05-31",
+            "bets": 8,
+            "staked": 80.0,
+            "profit": -40.8,
+            "roi_pct": -51.0,
+            "max_drawdown": 41.0
+          },
+          {
+            "holdout_window": "2025-09-01..2025-11-30",
+            "bets": 22,
+            "staked": 220.0,
+            "profit": 58.4,
+            "roi_pct": 26.55,
+            "max_drawdown": 26.7
+          },
+          {
+            "holdout_window": "2026-03-01..2026-05-31",
+            "bets": 15,
+            "staked": 150.0,
+            "profit": 5.0,
+            "roi_pct": 3.33,
+            "max_drawdown": 36.0
+          }
+        ]
+      }
+    }
+  },
+  "guardrail": "These are cross-book opening-price research results and are not executable China Sporttery SP evidence."
+}

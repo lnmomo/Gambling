@@ -1,0 +1,157 @@
+{
+  "method": {
+    "price_source": "pinnacle_opening",
+    "timing": "opening",
+    "folds": 2,
+    "holdout_months": 3,
+    "rule": "all same-date decisions freeze before any same-date result is revealed",
+    "excluded": "MaxH/MaxD/MaxA aggregated cross-book prices"
+  },
+  "folds": [
+    {
+      "holdout_window": "2022-09-01..2022-11-30",
+      "candidates": {
+        "P1-pinnacle-anchor10": {
+          "config_name": "P1-pinnacle-anchor10",
+          "matches_in_window": 1950,
+          "bets": 90,
+          "staked": 7.65,
+          "profit": -2.41,
+          "roi_pct": -31.5,
+          "win_rate": 0.0667,
+          "max_drawdown": 3.33,
+          "execution_price_source": "pinnacle_opening"
+        },
+        "P2-pinnacle-anchor20": {
+          "config_name": "P2-pinnacle-anchor20",
+          "matches_in_window": 1950,
+          "bets": 187,
+          "staked": 42.72,
+          "profit": -3.54,
+          "roi_pct": -8.29,
+          "win_rate": 0.1551,
+          "max_drawdown": 6.78,
+          "execution_price_source": "pinnacle_opening"
+        },
+        "P3-pinnacle-favorite-anchor15": {
+          "config_name": "P3-pinnacle-favorite-anchor15",
+          "matches_in_window": 1950,
+          "bets": 0,
+          "staked": 0,
+          "profit": 0,
+          "roi_pct": 0.0,
+          "win_rate": 0.0,
+          "max_drawdown": 0.0,
+          "execution_price_source": "pinnacle_opening"
+        },
+        "P4-pinnacle-midhome-anchor15": {
+          "config_name": "P4-pinnacle-midhome-anchor15",
+          "matches_in_window": 1950,
+          "bets": 0,
+          "staked": 0,
+          "profit": 0,
+          "roi_pct": 0.0,
+          "win_rate": 0.0,
+          "max_drawdown": 0.0,
+          "execution_price_source": "pinnacle_opening"
+        }
+      }
+    },
+    {
+      "holdout_window": "2023-03-01..2023-05-31",
+      "candidates": {
+        "P1-pinnacle-anchor10": {
+          "config_name": "P1-pinnacle-anchor10",
+          "matches_in_window": 2097,
+          "bets": 13,
+          "staked": 0.67,
+          "profit": -0.67,
+          "roi_pct": -100.0,
+          "win_rate": 0.0,
+          "max_drawdown": 0.67,
+          "execution_price_source": "pinnacle_opening"
+        },
+        "P2-pinnacle-anchor20": {
+          "config_name": "P2-pinnacle-anchor20",
+          "matches_in_window": 2097,
+          "bets": 52,
+          "staked": 7.72,
+          "profit": -3.29,
+          "roi_pct": -42.62,
+          "win_rate": 0.0769,
+          "max_drawdown": 4.36,
+          "execution_price_source": "pinnacle_opening"
+        },
+        "P3-pinnacle-favorite-anchor15": {
+          "config_name": "P3-pinnacle-favorite-anchor15",
+          "matches_in_window": 2097,
+          "bets": 0,
+          "staked": 0,
+          "profit": 0,
+          "roi_pct": 0.0,
+          "win_rate": 0.0,
+          "max_drawdown": 0.0,
+          "execution_price_source": "pinnacle_opening"
+        },
+        "P4-pinnacle-midhome-anchor15": {
+          "config_name": "P4-pinnacle-midhome-anchor15",
+          "matches_in_window": 2097,
+          "bets": 0,
+          "staked": 0,
+          "profit": 0,
+          "roi_pct": 0.0,
+          "win_rate": 0.0,
+          "max_drawdown": 0.0,
+          "execution_price_source": "pinnacle_opening"
+        }
+      }
+    }
+  ],
+  "aggregate": {
+    "P1-pinnacle-anchor10": {
+      "folds": 2,
+      "positive_folds": 0,
+      "bets": 103,
+      "staked": 8.32,
+      "profit": -3.08,
+      "roi_pct": -37.02,
+      "median_fold_roi_pct": -65.75,
+      "worst_fold_roi_pct": -100.0,
+      "max_fold_drawdown": 3.33
+    },
+    "P2-pinnacle-anchor20": {
+      "folds": 2,
+      "positive_folds": 0,
+      "bets": 239,
+      "staked": 50.44,
+      "profit": -6.83,
+      "roi_pct": -13.54,
+      "median_fold_roi_pct": -25.45,
+      "worst_fold_roi_pct": -42.62,
+      "max_fold_drawdown": 6.78
+    },
+    "P3-pinnacle-favorite-anchor15": {
+      "folds": 2,
+      "positive_folds": 0,
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": null,
+      "median_fold_roi_pct": 0.0,
+      "worst_fold_roi_pct": 0.0,
+      "max_fold_drawdown": 0.0
+    },
+    "P4-pinnacle-midhome-anchor15": {
+      "folds": 2,
+      "positive_folds": 0,
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": null,
+      "median_fold_roi_pct": 0.0,
+      "worst_fold_roi_pct": 0.0,
+      "max_fold_drawdown": 0.0
+    }
+  },
+  "promotion_rule": "Research-only unless a fixed candidate has positive aggregate profit, broad positive-fold coverage, and later prospective evidence using the same executable price source."
+}

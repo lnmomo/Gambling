@@ -4,7 +4,7 @@ from pathlib import Path
 
 from football_agents.db import Database
 from football_agents.historical_data import HistoricalDataService
-from football_agents.historical_agent import HistoricalCollectionAgent, HistoricalSource
+from football_agents.historical_agent import ExtraHistoricalSource, HistoricalCollectionAgent, HistoricalSource
 from football_agents.repository import Repository
 
 
@@ -66,6 +66,17 @@ class HistoricalDataTests(unittest.TestCase):
         self.assertEqual(rows[0]["league"], "Veikkausliiga")
         self.assertEqual(rows[0]["home_team"], "HJK")
         self.assertEqual(rows[0]["played_at"], "2026-06-01")
+
+    def test_collection_agent_normalizes_extra_csv_with_fixed_league(self):
+        agent = HistoricalCollectionAgent(self.repository, Path(self.temp.name) / "archive")
+        source = ExtraHistoricalSource("k-league-1-2025", "https://licensed.example/k.csv", "K League 1")
+        rows = agent.normalize_csv(
+            "date,home_team,away_team,home_score,away_score\n"
+            "2025-03-01,Jeju United FC,Gangwon FC,1,0\n",
+            source,
+        )
+        self.assertEqual(rows[0]["league"], "K League 1")
+        self.assertEqual(agent.archive_path(source).name, "k-league-1-2025.csv")
 
     def test_worldwide_source_uses_new_csv_url(self):
         agent = HistoricalCollectionAgent(self.repository, Path(self.temp.name) / "archive")

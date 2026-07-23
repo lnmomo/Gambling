@@ -82,6 +82,119 @@ def _max_drawdown(profits: list[float]) -> float:
     return round(worst, 2)
 
 
+def build_fixed_daily_budget_portfolio(
+    frozen_selected: list[dict[str, Any]],
+    daily_budget: float = 100.0,
+    max_single_stake: float = 10.0,
+) -> dict[str, Any]:
+    """Replay frozen official-SP selections under a fixed daily portfolio cap.
+
+    Candidate ranking uses only the EV frozen before kickoff. Every candidate
+    for a calendar day is allocated before that day's outcomes are read, so a
+    result cannot influence another same-day stake.
+    """
+    budget = max(0.0, float(daily_budget))
+    single_cap = max(0.0, min(float(max_single_stake), budget))
+    by_day: dict[str, list[dict[str, Any]]] = {}
+    for row in frozen_selected:
+        if not bool(row.get("passes_scorer")):
+            continue
+        by_day.setdefault(str(row["kickoff_time"])[:10], []).append(row)
+
+    cumulative_profit = 0.0
+    bets: list[dict[str, Any]] = []
+    daily: list[dict[str, Any]] = []
+    for day in sorted(by_day):
+        # Stable IDs make an EV tie deterministic without using the result.
+        candidates = sorted(
+            by_day[day],
+            key=lambda row: (-float(row["predicted_ev"]), int(row["official_odds_observation_id"])),
+        )
+        remaining = budget
+        day_bets: list[dict[str, Any]] = []
+        for row in candidates:
+            stake = round(min(single_cap, remaining), 2)
+            if stake <= 0:
+                break
+            remaining = round(remaining - stake, 2)
+            actual = str(row.get("actual_outcome") or "").lower()
+            outcome = str(row["selected_outcome"]).lower()
+            settled = bool(row.get("settled"))
+            profit = None
+            if settled:
+                profit = round(stake * (float(row["selected_sp"]) - 1.0) if actual == outcome else -stake, 2)
+            day_bets.append({
+                "date": day,
+                "official_match_id": row["official_match_id"],
+                "official_odds_observation_id": row["official_odds_observation_id"],
+                "outcome": outcome,
+                "predicted_ev": row["predicted_ev"],
+                "selected_sp": row["selected_sp"],
+                "stake": stake,
+                "settled": settled,
+                "actual_outcome": row.get("actual_outcome") if settled else None,
+                "profit": profit,
+            })
+        day_profit = round(sum(float(row["profit"] or 0) for row in day_bets), 2)
+        cumulative_profit = round(cumulative_profit + day_profit, 2)
+        daily.append({
+            "date": day,
+            "candidates": len(candidates),
+            "bets": len(day_bets),
+            "staked": round(sum(float(row["stake"]) for row in day_bets), 2),
+            "settled_bets": sum(bool(row["settled"]) for row in day_bets),
+            "profit": day_profit,
+            "cumulative_profit": cumulative_profit,
+        })
+        bets.extend(day_bets)
+    settled_bets = [row for row in bets if row["settled"]]
+    total_staked = round(sum(float(row["stake"]) for row in settled_bets), 2)
+    total_profit = round(sum(float(row["profit"] or 0) for row in settled_bets), 2)
+    monthly_totals: dict[str, dict[str, Any]] = {}
+    for row in daily:
+        month = str(row["date"])[:7]
+        aggregate = monthly_totals.setdefault(month, {
+            "month": month,
+            "days": 0,
+            "bets": 0,
+            "settled_bets": 0,
+            "staked": 0.0,
+            "profit": 0.0,
+        })
+        aggregate["days"] += 1
+        aggregate["bets"] += int(row["bets"])
+        aggregate["settled_bets"] += int(row["settled_bets"])
+        aggregate["staked"] += float(row["staked"])
+        aggregate["profit"] += float(row["profit"])
+    monthly = []
+    for month in sorted(monthly_totals):
+        row = monthly_totals[month]
+        row["staked"] = round(float(row["staked"]), 2)
+        row["profit"] = round(float(row["profit"]), 2)
+        row["roi_pct"] = round(row["profit"] / row["staked"] * 100, 2) if row["staked"] else 0.0
+        monthly.append(row)
+    return {
+        "method": "frozen official-SP fixed-daily-budget portfolio replay",
+        "daily_budget": budget,
+        "max_single_stake": single_cap,
+        "same_day_results_hidden_until_allocation": True,
+        "bets": bets,
+        "daily": daily,
+        "monthly": monthly,
+        "summary": {
+            "allocated_bets": len(bets),
+            "settled_bets": len(settled_bets),
+            "staked": total_staked,
+            "profit": total_profit,
+            "roi_pct": round(total_profit / total_staked * 100, 2) if total_staked else 0.0,
+            "max_drawdown": _max_drawdown([float(row["profit"] or 0) for row in settled_bets]),
+            "active_months": len(monthly),
+            "positive_months": sum(1 for row in monthly if row["profit"] > 0),
+            "negative_months": sum(1 for row in monthly if row["profit"] < 0),
+        },
+    }
+
+
 def _parse_time(value: str | datetime) -> datetime:
     if isinstance(value, datetime):
         parsed = value
@@ -114,6 +227,8 @@ def validate_profit_scorer_on_official_sp(
     scorer_artifact: Path | str = DEFAULT_SCORER_ARTIFACT,
     limit: int = 100_000,
     as_of: str | datetime | None = None,
+    daily_budget: float = 100.0,
+    max_single_stake: float = 10.0,
 ) -> dict[str, Any]:
     artifact_path = Path(scorer_artifact)
     artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
@@ -254,6 +369,9 @@ def validate_profit_scorer_on_official_sp(
         })
     selected = [row for row in scored if row["passes_scorer"]]
     settled_selected = [row for row in selected if row["settled"]]
+    daily_portfolio = build_fixed_daily_budget_portfolio(
+        selected, daily_budget=daily_budget, max_single_stake=max_single_stake
+    )
     profits = [float(row["profit"]) for row in settled_selected if row.get("profit") is not None]
     clv_values = [float(row["clv"]) for row in settled_selected if row.get("clv") is not None]
     wins = sum(1 for row in settled_selected if float(row.get("profit") or 0) > 0)
@@ -370,6 +488,7 @@ def validate_profit_scorer_on_official_sp(
         "negative_months": sum(1 for row in monthly if row["profit"] < 0),
         "monthly": monthly,
         "daily": daily,
+        "daily_portfolio": daily_portfolio,
         "blocker_counts": [
             {"reason": reason, "snapshots": count}
             for reason, count in sorted(blocker_counts.items(), key=lambda item: item[1], reverse=True)

@@ -13,8 +13,8 @@ ledgers and has no order-placement interface. ENABLE_AUTO_BETTING stays false.
 Honest finding (documented in the run output): on this real football-data.co.uk
 sample, the model (online Elo + Poisson + Ensemble) is poorly calibrated and
 produces negative-EV bets; the one structurally +EV lever is *line shopping*
-(bet the soft book's strong favourite at the sharp book's longer best closing
-price, when the best line beats the soft baseline by >= 5%). That edge is in
+(bet the soft book's strong favourite at the best contemporaneous opening
+price, when that price beats the soft opening baseline by >= 5%). That edge is in
 the price gap, not the model, so the winning variant trusts the de-vigged
 market (residual_retention=0.5) and selects by probability (the strong
 favourite), not by model EV. Drawdown control is a *governance* layer on top:
@@ -84,12 +84,19 @@ def window_bounds(start_year: int, start_month: int, num_months: int) -> tuple[d
 #
 # The "max_edge" family is the structurally +EV idea on this data: bet the soft
 # book's strong favourite at the sharp book's longer price when the best
-# closing line beats the soft baseline by >= max_edge_ratio. This is a
+# opening line beats the soft baseline by >= max_edge_ratio. This is a
 # line-shopping edge, independent of the (poorly calibrated) model.
 VARIANTS: list[BacktestConfig] = [
-    BacktestConfig(name="A-baseline-ensemble", min_ev=0.03, residual_retention=1.0),
-    BacktestConfig(name="B-market-anchored-50pct", min_ev=0.03, residual_retention=0.5),
-    BacktestConfig(name="C-market-anchored-25pct", min_ev=0.03, residual_retention=0.25),
+    BacktestConfig(name="A-baseline-ensemble", min_ev=0.03, residual_retention=1.0, lambda_engine="legacy"),
+    BacktestConfig(name="B-market-anchored-50pct", min_ev=0.03, residual_retention=0.5, lambda_engine="legacy"),
+    BacktestConfig(name="C-market-anchored-25pct", min_ev=0.03, residual_retention=0.25, lambda_engine="legacy"),
+    # Production-aligned attack/defence Poisson candidates. These use the
+    # exact shrinkage shape used by HistoricalFeatureBuilder, while retaining
+    # a small market anchor to avoid inventing a large residual from sparse
+    # team history.
+    BacktestConfig(name="D-attack-defence-anchor25", min_ev=0.02, residual_retention=0.25),
+    BacktestConfig(name="E-attack-defence-anchor15", min_ev=0.015, residual_retention=0.15),
+    BacktestConfig(name="F-attack-defence-anchor10", min_ev=0.01, residual_retention=0.10),
     # Structural region filters — bet only where the closing market has edge.
     BacktestConfig(
         name="K-strong-fav-market-anchored-50pct",

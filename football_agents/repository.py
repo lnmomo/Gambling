@@ -732,6 +732,17 @@ class Repository:
                 ORDER BY p.provider""").fetchall()
             return [dict(row) for row in rows]
 
+    def has_external_odds_capture_in_horizon(self, match_id: int, lower_minutes: float,
+                                             upper_minutes: float) -> bool:
+        with self.db.connect() as c:
+            row = c.execute("""SELECT 1
+                FROM external_bookmaker_odds e
+                JOIN matches m ON m.id=e.match_id
+                WHERE e.match_id=?
+                  AND (unixepoch(m.kickoff_time)-unixepoch(e.fetched_at))/60.0 BETWEEN ? AND ?
+                LIMIT 1""", (match_id, lower_minutes, upper_minutes)).fetchone()
+        return row is not None
+
     def start_agent_run(self, trigger_name: str) -> str:
         run_id = uuid.uuid4().hex
         with self.db.connect() as c:

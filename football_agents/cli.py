@@ -140,6 +140,8 @@ def main() -> None:
     worldwide = sub.add_parser("sync-worldwide-history", help="Sync Football-Data worldwide CSV history")
     worldwide.add_argument("--divisions", default="", help="Comma-separated codes, e.g. FIN,USA,BRA,JPN")
 
+    sub.add_parser("sync-extra-history", help="Sync licensed CSV URLs from HISTORICAL_DATA_EXTRA_CSV_SOURCES")
+
     sub.add_parser("sync-international-history", help="Sync real international-team historical results")
     international_odds = sub.add_parser("sync-international-odds-history", help="Sync international-team historical 1X2 odds where available")
     international_odds.add_argument("--provider", choices=["football-data-world-cup", "footiqo", "odds-api"], default="football-data-world-cup")
@@ -214,6 +216,12 @@ def main() -> None:
         divisions = [item.strip().upper() for item in args.divisions.split(",") if item.strip()]
         report = HistoricalCollectionAgent().sync_worldwide(divisions or None)
         print(json.dumps(QwenOpsAgent().attach("historical-worldwide-data-agent", report), ensure_ascii=False, indent=2))
+    elif args.command == "sync-extra-history":
+        from .historical_agent import HistoricalCollectionAgent
+        from .llm import QwenOpsAgent
+        db.initialize()
+        report = HistoricalCollectionAgent().sync_extra()
+        print(json.dumps(QwenOpsAgent().attach("historical-extra-data-agent", report), ensure_ascii=False, indent=2))
     elif args.command == "sync-international-history":
         from .international_history_agent import InternationalHistoryAgent
         from .llm import QwenOpsAgent

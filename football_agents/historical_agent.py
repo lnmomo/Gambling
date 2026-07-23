@@ -63,6 +63,15 @@ class HistoricalSource:
         return f"{settings.historical_data_base_url}/{self.season}/{self.division}.csv"
 
 
+@dataclass(frozen=True)
+class ExtraHistoricalSource:
+    """An authorized, externally hosted CSV with optional fixed league name."""
+
+    name: str
+    url: str
+    league: str = ""
+
+
 class HistoricalCollectionAgent:
     def __init__(self, repository: Repository | None = None, archive_dir: Path | None = None) -> None:
         self.repository = repository or Repository()
@@ -92,11 +101,16 @@ class HistoricalCollectionAgent:
                 continue
         raise ValueError(f"unsupported date: {value}")
 
-    def normalize_csv(self, text: str, source: HistoricalSource) -> list[dict[str, Any]]:
-        rows, _report = normalize_historical_matches(read_csv_text(text), source=source.url, division_names=DIVISION_NAMES)
+    def normalize_csv(self, text: str, source: HistoricalSource | ExtraHistoricalSource) -> list[dict[str, Any]]:
+        division_names = DIVISION_NAMES if isinstance(source, HistoricalSource) else None
+        league_override = source.league if isinstance(source, ExtraHistoricalSource) else None
+        rows, _report = normalize_historical_matches(
+            read_csv_text(text), source=source.url, division_names=division_names,
+            league_override=league_override,
+        )
         return rows
 
-    def fetch(self, source: HistoricalSource, timeout: int | None = None) -> str:
+    def fetch(self, source: HistoricalSource | ExtraHistoricalSource, timeout: int | None = None) -> str:
         attempts = max(1, settings.historical_data_retries + 1)
         last_error: Exception | None = None
         for attempt in range(attempts):
@@ -119,7 +133,10 @@ class HistoricalCollectionAgent:
                 continue
         raise UnicodeDecodeError("utf-8", data, 0, 1, "unsupported CSV encoding")
 
-    def archive_path(self, source: HistoricalSource) -> Path:
+    def archive_path(self, source: HistoricalSource | ExtraHistoricalSource) -> Path:
+        if isinstance(source, ExtraHistoricalSource):
+            safe_name = "".join(char if char.isalnum() or char in {"-", "_"} else "_" for char in source.name)
+            return self.archive_dir / "extra" / f"{safe_name}.csv"
         return self.archive_dir / source.season / f"{source.division}.csv"
 
     def sync(self, years_back: int = 3, divisions: list[str] | None = None) -> dict[str, Any]:
@@ -128,12 +145,21 @@ class HistoricalCollectionAgent:
     def sync_worldwide(self, divisions: list[str] | None = None) -> dict[str, Any]:
         return self._sync_sources(self.worldwide_sources(divisions))
 
-    def _sync_sources(self, sources: list[HistoricalSource]) -> dict[str, Any]:
+    def extra_sources(self) -> list[ExtraHistoricalSource]:
+        return [
+            ExtraHistoricalSource(item["name"], item["url"], item.get("league", ""))
+            for item in settings.historical_data_extra_csv_sources
+        ]
+
+    def sync_extra(self) -> dict[str, Any]:
+        return self._sync_sources(self.extra_sources())
+
+    def _sync_sources(self, sources: list[HistoricalSource | ExtraHistoricalSource]) -> dict[str, Any]:
         self.archive_dir.mkdir(parents=True, exist_ok=True)
         totals = {"imported": 0, "updated": 0, "dropped": 0, "downloaded": 0,
                   "cached": 0, "stale": 0, "failed": 0}
         reports: list[dict[str, Any]] = []
-        fetched: dict[HistoricalSource, str | Exception] = {}
+        fetched: dict[HistoricalSource | ExtraHistoricalSource, str | Exception] = {}
         with ThreadPoolExecutor(max_workers=min(settings.historical_data_workers, len(sources) or 1)) as executor:
             futures = {executor.submit(self.fetch, source): source for source in sources}
             for future in as_completed(futures):

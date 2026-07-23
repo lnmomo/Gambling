@@ -50,6 +50,14 @@ TEAM_ALIASES.update({
     "\u683c\u96f7\u7c73\u5965": "gremio",
     "\u7eb3\u4ec0\u7ef4\u5c14": "nashvillesc",
     "\u4e9a\u7279\u8054": "atlantaunited",
+    # K League official-pool names. The Odds API publishes these clubs in
+    # English, while the official Sporttery source uses Chinese short names.
+    "\u6d4e\u5ddesk": "jejuunitedfc",
+    "\u6c5f\u539ffc": "gangwonfc",
+    "\u5168\u5317\u73b0\u4ee3": "jeonbukhundaimotors",
+    "\u5927\u7530\u5e02\u6c11": "daejeoncitizen",
+    "\u851a\u5c71\u73b0\u4ee3": "ulsanhyundaifc",
+    "\u4ec1\u5ddd\u8054": "incheonunited",
 })
 
 LEAGUE_SPORT_KEYS = {

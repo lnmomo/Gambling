@@ -123,13 +123,14 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
             external_latest_status = str(external_latest["status"]) if external_latest else "unknown"
             external_failed = bool(
                 external_latest and external_latest_status not in {
-                    "success", "not_configured", "waiting_metadata", "waiting_horizon"
+                    "success", "not_configured", "waiting_metadata", "waiting_horizon",
+                    "horizon_captured",
                 }
             )
             recent_errors = int(c.execute("""SELECT
                 (SELECT COUNT(*) FROM official_fetch_logs WHERE success=0)
                 + (SELECT COUNT(*) FROM provider_sync_logs WHERE status NOT IN (
-                    'success','not_configured','waiting_metadata','waiting_horizon'
+                    'success','not_configured','waiting_metadata','waiting_horizon','horizon_captured'
                 ))
                 + (SELECT COUNT(*) FROM task_runs WHERE status='FAILED')""").fetchone()[0])
             data_quality["invalidSnapshots"] = int(c.execute("""SELECT
@@ -146,7 +147,7 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
                 _effective_external_refresh_minutes(),
                 external_failed,
             )
-            if external_latest_status == "waiting_horizon":
+            if external_latest_status in {"waiting_horizon", "horizon_captured"}:
                 external_status = "IDLE_NO_NEAR_TERM_MATCHES"
             shadow_validation["activeShadowConfigCount"] = int(c.execute("SELECT COUNT(*) FROM true_odds_config_versions WHERE status='SHADOW_RUNNING'").fetchone()[0])
             shadow_validation["pendingShadowPredictions"] = int(c.execute("SELECT COUNT(*) FROM live_shadow_predictions WHERE lifecycle_status='PENDING_RESULT'").fetchone()[0])

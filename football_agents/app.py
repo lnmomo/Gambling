@@ -416,7 +416,7 @@ def system_overview() -> dict:
     provider_names = {"the_odds_api":"璧旂巼閲囬泦Agent", "news_aggregator":"鏂伴椈Agent", "gdelt":"鏂伴椈Agent", "open_meteo":"澶╂皵Agent"}
     for item in providers:
         state = "RUNNING" if item["status"] == "success" else "DELAYED" if item["status"] in {
-            "waiting_metadata", "waiting_horizon", "not_configured"
+            "waiting_metadata", "waiting_horizon", "horizon_captured", "not_configured"
         } else "WARNING"
         agents.append({"id": item["provider"], "name": provider_names.get(item["provider"], item["provider"]),
                        "state": state, "success_rate": 100 if state == "RUNNING" else 0,

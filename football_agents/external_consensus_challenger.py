@@ -19,11 +19,12 @@ from .research.prospective import ProspectiveResearchService
 
 OUTCOMES = ("home", "draw", "away")
 POLICY_CONFIG: dict[str, Any] = {
-    "version": "external-consensus-normalized-sem-v3",
+    "version": "external-consensus-favorite-portfolio-v4",
     "model_source": "pure_football_baseline",
     "minimum_bookmakers": 10,
     "maximum_external_age_minutes": 120,
     "maximum_official_sp_age_minutes": 30,
+    "maximum_official_external_skew_minutes": 15,
     "maximum_model_age_minutes": 120,
     "maximum_bookmaker_last_update_age_minutes": 180,
     "maximum_probability_dispersion": 0.03,
@@ -35,11 +36,12 @@ POLICY_CONFIG: dict[str, Any] = {
     "uncertainty_method": "conservative_effective_sample_standard_error",
     "minimum_expected_ev": 0.03,
     "minimum_conservative_ev": 0.0,
+    "minimum_external_probability": 0.40,
     "minimum_odds": 1.50,
     "maximum_odds": 6.00,
     "primary_horizon_minutes": 60,
     "horizon_tolerance_minutes": 60,
-    "maximum_bets_per_day": 1,
+    "maximum_bets_per_day": 3,
     "minimum_settled_selections": 200,
     "minimum_active_months": 6,
     "minimum_calendar_days": 180,
@@ -561,6 +563,10 @@ class ExternalConsensusChallengerService:
             official = connection.execute("""SELECT * FROM official_odds_observations
                 WHERE match_id=? AND is_pre_match=1 AND datetime(observed_at)<=datetime(?)
                 ORDER BY observed_at DESC LIMIT 1""", (match_id, decided_at.isoformat())).fetchone()
+            availability = connection.execute("""SELECT raw_sale_status,normalized_status,
+                has_valid_three_way_sp,missing_reason FROM official_market_availability_observations
+                WHERE match_id=? AND datetime(observed_at)<=datetime(?)
+                ORDER BY observed_at DESC LIMIT 1""", (match_id, decided_at.isoformat())).fetchone()
             prediction = connection.execute("""SELECT * FROM prospective_predictions
                 WHERE match_id=? AND study_id=? AND datetime(predicted_at)<=datetime(?)
                 ORDER BY predicted_at DESC,created_at DESC LIMIT 1""",
@@ -578,7 +584,15 @@ class ExternalConsensusChallengerService:
                 WHERE match_id=? AND fetched_at=? ORDER BY bookmaker_key,bookmaker""",
                 (match_id, external_time)).fetchall() if external_time else []
         if not official:
-            return None, "missing_official_sp"
+            if availability:
+                reason = str(availability["missing_reason"] or "")
+                if reason == "not_on_sale":
+                    return None, "official_sp_not_on_sale"
+                if reason == "invalid_or_incomplete_three_way_sp":
+                    return None, "official_sp_invalid_or_incomplete"
+                if reason == "post_match":
+                    return None, "official_sp_post_match"
+            return None, "missing_official_sp_no_availability"
         if not prediction:
             return None, "missing_frozen_model_prediction"
         if not pure_model:
@@ -589,6 +603,11 @@ class ExternalConsensusChallengerService:
             return None, "stale_official_sp"
         if _minutes_between(decided_at, external_time) > config["maximum_external_age_minutes"]:
             return None, "stale_external_consensus"
+        official_external_skew = abs(
+            (_parse_time(official["observed_at"]) - _parse_time(external_time)).total_seconds() / 60.0
+        )
+        if official_external_skew > config["maximum_official_external_skew_minutes"]:
+            return None, "official_external_time_skew>15m"
         if _minutes_between(decided_at, prediction["predicted_at"]) > config["maximum_model_age_minutes"]:
             return None, "stale_frozen_model_prediction"
         if _minutes_between(decided_at, pure_model["predicted_at"]) > config["maximum_model_age_minutes"]:
@@ -646,6 +665,8 @@ class ExternalConsensusChallengerService:
             expected_ev = probability * sp - 1.0
             conservative_ev = conservative_probability * sp - 1.0
             reasons: list[str] = []
+            if external[outcome] < config["minimum_external_probability"]:
+                reasons.append("external_probability<0.40")
             if not config["minimum_odds"] <= sp <= config["maximum_odds"]:
                 reasons.append("selected_sp_outside_[1.5,6.0]")
             if dispersion[outcome] > config["maximum_probability_dispersion"]:
@@ -656,12 +677,17 @@ class ExternalConsensusChallengerService:
                 reasons.append("conservative_ev<0")
             candidates.append({
                 "outcome": outcome, "sp": sp, "probability": probability,
+                "external_probability": external[outcome],
                 "conservative_probability": conservative_probability,
                 "probability_uncertainty": uncertainty[outcome],
                 "expected_ev": expected_ev, "conservative_ev": conservative_ev,
                 "reasons": reasons,
             })
-        selected = max(candidates, key=lambda row: (row["conservative_ev"], row["expected_ev"]))
+        eligible_candidates = [row for row in candidates if not row["reasons"]]
+        selected = max(
+            eligible_candidates or candidates,
+            key=lambda row: (row["conservative_ev"], row["expected_ev"]),
+        )
         action = "CANDIDATE" if not selected["reasons"] else "NO_BET"
         payload = {
             "policy_id": policy["policy_id"], "study_id": study["study_id"],

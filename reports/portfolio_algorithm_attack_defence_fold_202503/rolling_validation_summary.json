@@ -1,0 +1,82 @@
+{
+  "method": {
+    "training_months": 6,
+    "holdout_months": 3,
+    "folds": 1,
+    "variants": [
+      "D-attack-defence-anchor25",
+      "E-attack-defence-anchor15",
+      "F-attack-defence-anchor10"
+    ],
+    "selection": "training profit divided by maximum drawdown",
+    "rule": "all results are updated only after every decision for that match date is frozen"
+  },
+  "folds": [
+    {
+      "train_window": "2025-03-01..2025-08-31",
+      "holdout_window": "2025-09-01..2025-11-30",
+      "selected_on_train": "E-attack-defence-anchor15",
+      "selected_holdout": {
+        "name": "E-attack-defence-anchor15",
+        "bets": 44,
+        "staked": 5.63,
+        "profit": -0.17,
+        "roi_pct": -3.02,
+        "win_rate": 0.0909,
+        "max_drawdown": 1.75,
+        "ending_equity": 999.83,
+        "residual_retention": 0.15,
+        "min_ev": 0.015,
+        "drawdown_control": true
+      },
+      "baseline_holdout": null
+    }
+  ],
+  "train_selected_aggregate": {
+    "folds": 1,
+    "positive_folds": 0,
+    "bets": 44,
+    "staked": 5.63,
+    "profit": -0.17,
+    "roi_pct": -3.02,
+    "median_fold_roi_pct": -3.02,
+    "worst_fold_roi_pct": -3.02,
+    "max_fold_drawdown": 1.75
+  },
+  "fixed_candidate_holdout_aggregate": {
+    "D-attack-defence-anchor25": {
+      "folds": 1,
+      "positive_folds": 0,
+      "bets": 149,
+      "staked": 35.09,
+      "profit": -5.98,
+      "roi_pct": -17.04,
+      "median_fold_roi_pct": -17.04,
+      "worst_fold_roi_pct": -17.04,
+      "max_fold_drawdown": 7.89
+    },
+    "E-attack-defence-anchor15": {
+      "folds": 1,
+      "positive_folds": 0,
+      "bets": 44,
+      "staked": 5.63,
+      "profit": -0.17,
+      "roi_pct": -3.02,
+      "median_fold_roi_pct": -3.02,
+      "worst_fold_roi_pct": -3.02,
+      "max_fold_drawdown": 1.75
+    },
+    "F-attack-defence-anchor10": {
+      "folds": 1,
+      "positive_folds": 0,
+      "bets": 23,
+      "staked": 1.65,
+      "profit": -0.25,
+      "roi_pct": -15.15,
+      "median_fold_roi_pct": -15.15,
+      "worst_fold_roi_pct": -15.15,
+      "max_fold_drawdown": 0.91
+    }
+  },
+  "interpretation": "A candidate requires positive cross-fold aggregate profit and broad positive fold coverage before it can be treated as a research survivor. This remains a closing-price backtest, not proof of executable China Sporttery SP profitability."
+}

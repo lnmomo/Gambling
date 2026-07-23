@@ -1,0 +1,157 @@
+{
+  "method": {
+    "price_source": "bet365_opening",
+    "timing": "opening",
+    "folds": 2,
+    "holdout_months": 3,
+    "rule": "all same-date decisions freeze before any same-date result is revealed",
+    "excluded": "MaxH/MaxD/MaxA aggregated cross-book prices"
+  },
+  "folds": [
+    {
+      "holdout_window": "2024-09-01..2024-11-30",
+      "candidates": {
+        "P1-bet365-anchor10": {
+          "config_name": "P1-bet365-anchor10",
+          "matches_in_window": 1878,
+          "bets": 14,
+          "staked": 1.02,
+          "profit": -1.02,
+          "roi_pct": -100.0,
+          "win_rate": 0.0,
+          "max_drawdown": 1.02,
+          "execution_price_source": "bet365_opening"
+        },
+        "P2-bet365-anchor20": {
+          "config_name": "P2-bet365-anchor20",
+          "matches_in_window": 1878,
+          "bets": 34,
+          "staked": 5.5,
+          "profit": -3.65,
+          "roi_pct": -66.36,
+          "win_rate": 0.0588,
+          "max_drawdown": 3.65,
+          "execution_price_source": "bet365_opening"
+        },
+        "P3-bet365-favorite-anchor15": {
+          "config_name": "P3-bet365-favorite-anchor15",
+          "matches_in_window": 1878,
+          "bets": 0,
+          "staked": 0,
+          "profit": 0,
+          "roi_pct": 0.0,
+          "win_rate": 0.0,
+          "max_drawdown": 0.0,
+          "execution_price_source": "bet365_opening"
+        },
+        "P4-bet365-midhome-anchor15": {
+          "config_name": "P4-bet365-midhome-anchor15",
+          "matches_in_window": 1878,
+          "bets": 0,
+          "staked": 0,
+          "profit": 0,
+          "roi_pct": 0.0,
+          "win_rate": 0.0,
+          "max_drawdown": 0.0,
+          "execution_price_source": "bet365_opening"
+        }
+      }
+    },
+    {
+      "holdout_window": "2025-03-01..2025-05-31",
+      "candidates": {
+        "P1-bet365-anchor10": {
+          "config_name": "P1-bet365-anchor10",
+          "matches_in_window": 1992,
+          "bets": 6,
+          "staked": 0.47,
+          "profit": -0.47,
+          "roi_pct": -100.0,
+          "win_rate": 0.0,
+          "max_drawdown": 0.47,
+          "execution_price_source": "bet365_opening"
+        },
+        "P2-bet365-anchor20": {
+          "config_name": "P2-bet365-anchor20",
+          "matches_in_window": 1992,
+          "bets": 26,
+          "staked": 4.37,
+          "profit": -0.72,
+          "roi_pct": -16.48,
+          "win_rate": 0.0769,
+          "max_drawdown": 1.4,
+          "execution_price_source": "bet365_opening"
+        },
+        "P3-bet365-favorite-anchor15": {
+          "config_name": "P3-bet365-favorite-anchor15",
+          "matches_in_window": 1992,
+          "bets": 0,
+          "staked": 0,
+          "profit": 0,
+          "roi_pct": 0.0,
+          "win_rate": 0.0,
+          "max_drawdown": 0.0,
+          "execution_price_source": "bet365_opening"
+        },
+        "P4-bet365-midhome-anchor15": {
+          "config_name": "P4-bet365-midhome-anchor15",
+          "matches_in_window": 1992,
+          "bets": 0,
+          "staked": 0,
+          "profit": 0,
+          "roi_pct": 0.0,
+          "win_rate": 0.0,
+          "max_drawdown": 0.0,
+          "execution_price_source": "bet365_opening"
+        }
+      }
+    }
+  ],
+  "aggregate": {
+    "P1-bet365-anchor10": {
+      "folds": 2,
+      "positive_folds": 0,
+      "bets": 20,
+      "staked": 1.49,
+      "profit": -1.49,
+      "roi_pct": -100.0,
+      "median_fold_roi_pct": -100.0,
+      "worst_fold_roi_pct": -100.0,
+      "max_fold_drawdown": 1.02
+    },
+    "P2-bet365-anchor20": {
+      "folds": 2,
+      "positive_folds": 0,
+      "bets": 60,
+      "staked": 9.87,
+      "profit": -4.37,
+      "roi_pct": -44.28,
+      "median_fold_roi_pct": -41.42,
+      "worst_fold_roi_pct": -66.36,
+      "max_fold_drawdown": 3.65
+    },
+    "P3-bet365-favorite-anchor15": {
+      "folds": 2,
+      "positive_folds": 0,
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": null,
+      "median_fold_roi_pct": 0.0,
+      "worst_fold_roi_pct": 0.0,
+      "max_fold_drawdown": 0.0
+    },
+    "P4-bet365-midhome-anchor15": {
+      "folds": 2,
+      "positive_folds": 0,
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": null,
+      "median_fold_roi_pct": 0.0,
+      "worst_fold_roi_pct": 0.0,
+      "max_fold_drawdown": 0.0
+    }
+  },
+  "promotion_rule": "Research-only unless a fixed candidate has positive aggregate profit, broad positive-fold coverage, and later prospective evidence using the same executable price source."
+}
