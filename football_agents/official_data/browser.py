@@ -78,6 +78,26 @@ Array.from(document.querySelectorAll('.m-cardList')).map(el => {
 })})
 """
 
+
+def _restricted_access_error(page_text: str, request_id: str | None = None) -> RuntimeError | None:
+    """Turn an upstream WAF page into an actionable sync failure.
+
+    The public Sporttery page may return an EdgeOne 567 document instead of
+    the schedule.  Treating that as an empty fixture list hides the real
+    source state and leaves the dashboard showing stale data without context.
+    """
+    # The Chinese EdgeOne page's visible text contains just the 567 code and
+    # request ID; its English wording lives in an inline translation script.
+    is_restricted = (
+        "Restricted Access" in page_text
+        or "Access Restricted" in page_text
+        or ("567" in page_text and bool(request_id))
+    )
+    if not is_restricted:
+        return None
+    suffix = f" (request ID: {request_id})" if request_id else ""
+    return RuntimeError(f"Official source access restricted by upstream WAF (HTTP 567){suffix}")
+
 class CdpConnection:
     def __init__(self, url: str) -> None:
         if connect is None:
@@ -124,7 +144,18 @@ class SportteryBrowserClient:
                     result=connection.command("Runtime.evaluate",{"expression":"document.querySelectorAll('.m-cardList').length","returnByValue":True},session)
                     count=result["result"].get("value",count)
                     break
-            if not count: raise RuntimeError("Official page returned no match cards")
+            if not count:
+                diagnostic = connection.command("Runtime.evaluate", {"expression": (
+                    "JSON.stringify({text:document.body.innerText||'',"
+                    "requestId:document.querySelector('#requestId')?.textContent||''})"
+                ), "returnByValue": True}, session)
+                details = json.loads(diagnostic["result"].get("value") or "{}")
+                restricted = _restricted_access_error(
+                    str(details.get("text") or ""), str(details.get("requestId") or "") or None,
+                )
+                if restricted:
+                    raise restricted
+                raise RuntimeError("Official page returned no match cards")
             result=connection.command("Runtime.evaluate",{"expression":EXTRACT_EXPRESSION,"returnByValue":True},session)
             return json.loads(result["result"]["value"])
         finally:

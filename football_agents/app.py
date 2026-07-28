@@ -25,6 +25,7 @@ from .health import build_health_report
 from .international_history_agent import InternationalHistoryAgent
 from .features import build_features_for_official_matches
 from .external_consensus_challenger import ExternalConsensusChallengerService
+from .named_book_gap_research import NamedBookGapResearchService
 from .profit_allocation_readiness import build_profit_allocation_readiness
 from .paper_portfolio import PaperPortfolioService
 from .profit_data_domain_readiness import build_profit_data_domain_readiness
@@ -69,6 +70,7 @@ task_runner = TaskRunnerService()
 background_scheduler = BackgroundAgentScheduler(repository, task_runner)
 prospective_research = ProspectiveResearchService(repository.db, repository, workflow)
 external_consensus_challenger = ExternalConsensusChallengerService(repository.db, repository)
+named_book_gap_research = NamedBookGapResearchService(repository.db, repository)
 
 
 @app.on_event("startup")
@@ -259,6 +261,23 @@ def capture_external_consensus_challenger(limit: int = 100) -> dict:
     path = Path(settings.external_consensus_challenger_report_path)
     if not path.is_absolute():
         path = settings.project_dir / path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(result["report"], ensure_ascii=False, indent=2), encoding="utf-8")
+    return result
+
+
+@app.get("/api/research/named-book-gap")
+def named_book_gap_research_status(policy_id: str | None = None) -> dict:
+    try:
+        return named_book_gap_research.report(policy_id)
+    except KeyError as exc:
+        raise HTTPException(404, f"Unknown named book gap policy: {exc}") from exc
+
+
+@app.post("/api/research/named-book-gap/capture")
+def capture_named_book_gap_research(limit: int = 100) -> dict:
+    result = named_book_gap_research.capture(limit)
+    path = settings.project_dir / "reports" / "named_book_gap_research" / "summary.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(result["report"], ensure_ascii=False, indent=2), encoding="utf-8")
     return result

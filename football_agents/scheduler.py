@@ -10,6 +10,7 @@ from .backtesting import BacktestEngine
 from .config import settings
 from .features import build_features_for_official_matches
 from .external_consensus_challenger import ExternalConsensusChallengerService
+from .named_book_gap_research import NamedBookGapResearchService
 from .historical_agent import HistoricalCollectionAgent
 from .integrations import DataEnrichmentService
 from .international_history_agent import InternationalHistoryAgent
@@ -165,6 +166,7 @@ class BackgroundAgentScheduler:
         if settings.enable_prospective_research:
             tasks.append(("prospective_research_capture", self._capture_prospective_research))
             tasks.append(("external_consensus_challenger_capture", self._capture_external_consensus_challenger))
+            tasks.append(("named_book_gap_research_capture", self._capture_named_book_gap_research))
         tasks.extend([
             ("qwen_news_analysis", self._analyze_news),
             ("market_bias_shadow_monitor", self._refresh_market_bias_monitor),
@@ -479,6 +481,22 @@ class BackgroundAgentScheduler:
             **result,
             "snapshots": result.get("decisions", 0),
             "warnings": list(result.get("warnings", [])) + input_blockers,
+        }
+
+    def _capture_named_book_gap_research(self) -> dict[str, Any]:
+        result = NamedBookGapResearchService(self.repository.db, self.repository).capture(
+            settings.agent_match_limit
+        )
+        self._write_report("reports/named_book_gap_research/summary.json", result["report"])
+        blockers = [
+            f'{item.get("reason")}:{int(item.get("matches") or 0)}'
+            for item in result.get("blocker_counts", [])
+            if int(item.get("matches") or 0) > 0
+        ]
+        return {
+            **result,
+            "snapshots": result.get("decisions", 0),
+            "warnings": list(result.get("warnings", [])) + blockers,
         }
 
     def _target_matches(self, limit: int) -> list[dict[str, Any]]:
