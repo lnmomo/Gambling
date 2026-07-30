@@ -13,6 +13,9 @@ TASK_NAMES = {
     "profit_allocation_readiness",
     "external_odds_sync",
     "external_odds_news_weather_sync",
+    "free_prospective_odds_capture",
+    "external_odds_primary_horizon_capture",
+    "named_book_gap_primary_horizon_capture",
     "feature_build",
     "qwen_news_analysis",
     "historical_data_sync",
@@ -20,6 +23,7 @@ TASK_NAMES = {
     "recommendation_lifecycle_check",
     "backtest_run",
     "model_governance_check",
+    "named_book_gap_research_capture",
     "db_retention_cleanup",
 }
 

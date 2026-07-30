@@ -175,7 +175,30 @@ def test_odds_api_conversion_joins_settled_results_and_averages_bookmakers():
 
     assert report["matched"] == 1
     assert report["scanned_events"] == 1
-    assert "World,UEFA Nations League,2024,06/09/2024,France,Italy,1,3,A,1.85,3.3,4.5" in csv_text
+    assert "World,UEFA Nations League,2024,06/09/2024,France,Italy,1,3,A,1.971749,3.516421,4.797174" in csv_text
+
+
+def test_odds_api_conversion_rejects_snapshot_at_or_after_kickoff():
+    snapshots = [{
+        "sport_key": "soccer_uefa_nations_league",
+        "timestamp": "2024-09-06T20:00:00Z",
+        "data": [{
+            "id": "evt-after-kickoff",
+            "commence_time": "2024-09-06T19:00:00Z",
+            "home_team": "France",
+            "away_team": "Italy",
+            "bookmakers": [{"markets": [{"key": "h2h", "outcomes": [
+                {"name": "France", "price": 1.8}, {"name": "Draw", "price": 3.4}, {"name": "Italy", "price": 4.6},
+            ]}]}],
+        }],
+    }]
+    results = [{"league": "UEFA Nations League", "home_team": "France", "away_team": "Italy", "home_goals": 1,
+                "away_goals": 3, "played_at": "2024-09-06", "match_type": "CUP"}]
+
+    _csv_text, report = InternationalOddsHistoryAgent.build_odds_api_csv(snapshots, results)
+
+    assert report["matched"] == 0
+    assert report["dropped"]["snapshot_not_pre_match"] == 1
 
 
 def test_odds_api_conversion_drops_unmatched_results():

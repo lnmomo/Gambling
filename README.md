@@ -80,6 +80,111 @@ True Odds Engine is FILTER_ONLY by default. ADJUST_PROBABILITY is not enabled by
 - No soccerdata dependency is required.
 - News, lineup, and weather are supported as structured signals or future extensions; they should not be assumed stable real-time sources unless configured and validated.
 
+### Historical Odds Evidence
+
+The project supports three distinct evidence paths. They must not be mixed when
+evaluating an odds-edge strategy:
+
+1. `football-data.co.uk` World Cup workbook: a free, reproducible World Cup and
+   qualifier results/1X2 archive. Run `python -m football_agents.cli
+   sync-international-odds-history --provider football-data-world-cup`.
+2. The Odds API historical endpoint: a paid, timestamped multi-bookmaker feed.
+   Configure `THE_ODDS_API_KEY`, obtain historical access from the provider, then
+   run `python -m football_agents.cli sync-international-odds-history --provider
+   odds-api --sport-keys soccer_uefa_nations_league --from-date 2025-03-01
+   --to-date 2025-03-31 --step-days 1 --max-snapshots 31`. Raw JSON snapshots are
+   archived under `data/historical_csv/the_odds_api`; the importer rejects any
+   snapshot captured at or after kickoff and creates a bookmaker-de-vigged 1X2
+   consensus rather than averaging prices directly.
+3. A licensed vendor CSV export: configure a pre-signed HTTPS export URL in
+   `HISTORICAL_DATA_EXTRA_CSV_SOURCES` and run `python -m football_agents.cli
+   sync-extra-history`. The CSV needs a date, teams, final score, and pre-match
+   1X2 odds columns. Provider API tokens belong in its credential store or signed
+   URL, never in source control.
+
+Use the source-specific archive and source timestamp for walk-forward cutoffs.
+Results-only sources improve team features but are not evidence for a betting-edge
+claim.
+
+### Free Data Plan
+
+Run the no-cost international plan with:
+
+```powershell
+python -m football_agents.cli sync-free-historical-data
+```
+
+It archives broad international results for feature construction and the
+football-data.co.uk World Cup workbook for market-calibration research. The workbook
+contains average/max closing prices rather than a named bookmaker's executable price,
+so it must not be used to claim executable profit or to allocate the daily 100 budget.
+Its machine-readable evidence boundary is saved to
+`data/historical_csv/free_plan_manifest.json`; use it to keep results-only and
+average/max-price rows out of price/EV validation. The equivalent API is
+`POST /api/historical-matches/sync-free-plan`.
+
+### Free Prospective Odds Plan
+
+The free prospective collector runs on startup and then in the hourly background
+pipeline. It targets only official-pool matches around T-6h and T-1h, requests one
+region and the H2H market, and stops before either the configured monthly budget or
+provider reserve is breached.
+
+```env
+PROSPECTIVE_FREE_MODE=true
+PROSPECTIVE_MONTHLY_CREDIT_BUDGET=450
+PROSPECTIVE_CREDIT_RESERVE=50
+PROSPECTIVE_MAX_ACTIVE_SPORTS=3
+PROSPECTIVE_SNAPSHOT_OFFSETS_HOURS=6,1
+ODDS_API_REGIONS=eu
+```
+
+Manual capture and status checks:
+
+```powershell
+python -m football_agents.cli capture-free-prospective-odds --limit 100
+Invoke-RestMethod http://127.0.0.1:8000/api/research/free-prospective/status
+```
+
+Every accepted quote is stored in `prospective_external_odds_snapshots` with the
+event id, named bookmaker, provider update time, capture time, kickoff, capture
+window, raw event JSON, and SHA256. Database triggers forbid updates and deletes.
+`odds_api_quota_ledger` is also immutable.
+
+The named-book prospective challenger uses the best available named-book price as
+the execution quote and a robust de-vigged consensus that excludes that bookmaker
+as the reference. It requires at least four independent reference books. A
+pre-decision pure-football model may
+move each market probability by at most two percentage points. Candidate EV uses
+the recorded execution price, a dispersion-aware probability lower bound, and a
+two-percent execution haircut. Its paper curve uses quarter Kelly, a 10-unit
+single-match cap, a 100-unit daily cap, and cash reserve on days without qualified
+selections. Decision and settlement dates are separate; a result is ignored unless
+its `settled_at` timestamp is later than both the frozen decision and kickoff. No
+real order placement is implemented.
+
+For a non-cherry-picked historical bridge replay, use the two-stage latest-month
+protocol. `prepare` selects from the preceding six months and seals the latest
+complete month before `evaluate` can reveal it. A dataset hash prevents the source
+from changing between stages, and a second evaluation of the same sealed month is
+rejected. `audit` separates nominal P/L from minimum-sample and direction-concentration
+requirements:
+
+```powershell
+python -m scripts.robust_consensus_latest_month_holdout prepare
+python -m scripts.robust_consensus_latest_month_holdout evaluate
+python -m scripts.robust_consensus_latest_month_holdout audit
+```
+
+The live research path freezes two policies against the same immutable T-1 snapshot:
+v3.1 remains the broad control, while v4.1 requires reference probability >=25%, odds
+<=4.0, and conservative EV >=1%. Both convert exchange gross odds to net executable
+odds before EV and settlement using `EXCHANGE_COMMISSION_RATE` (5% is only the
+conservative default; configure the actual account/package rate). Slippage is applied
+to the profit component, so selection and paper settlement share one price formula.
+Compare them at
+`GET /api/research/named-book-gap/experiment`; neither policy can place orders.
+
 ## 6. Installation
 
 Windows PowerShell:

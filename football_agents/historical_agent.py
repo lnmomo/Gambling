@@ -80,7 +80,11 @@ class HistoricalCollectionAgent:
     @staticmethod
     def season_codes(years_back: int = 3, today: date | None = None) -> list[str]:
         today = today or date.today()
-        start = today.year if today.month >= 7 else today.year - 1
+        # football-data.co.uk publishes a season file after the season has
+        # started.  In July the next European season is normally not present
+        # yet, so start from the season that just ended instead of repeatedly
+        # requesting a predictable 404 such as ``2627``.
+        start = today.year if today.month >= 8 else today.year - 1
         return [f"{str(start - offset)[-2:]}{str(start - offset + 1)[-2:]}" for offset in range(max(1, years_back))]
 
     def sources(self, years_back: int = 3, divisions: list[str] | None = None) -> list[HistoricalSource]:

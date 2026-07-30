@@ -133,6 +133,27 @@ class IntegrationTests(unittest.TestCase):
             ("soccer_brazil_campeonato", "soccer_norway_eliteserien", "soccer_usa_mls"),
         )
 
+    def test_sport_keys_cover_champions_league_qualifying_label(self) -> None:
+        self.assertEqual(
+            OddsApiClient.sport_keys_for_leagues({"\u6b27\u51a0"}),
+            ("soccer_uefa_champs_league_qualification",),
+        )
+
+    def test_event_match_uses_current_pool_chinese_aliases(self) -> None:
+        match = {
+            "kickoff_time": "2026-07-28T23:00:00+08:00",
+            "home_team": "\u5e93\u5965\u76ae\u5965",
+            "away_team": "\u8428\u5df4\u8d6b",
+        }
+        event = {
+            "id": "kups-sabah",
+            "commence_time": "2026-07-28T15:00:00Z",
+            "home_team": "KuPS Kuopio",
+            "away_team": "Sabah FK",
+        }
+
+        self.assertEqual(OddsApiClient.match_event(match, [event])["id"], "kups-sabah")
+
     def test_market_consensus_averages_devigged_bookmaker_probabilities(self) -> None:
         event = {"home_team": "Canada", "away_team": "Bosnia and Herzegovina", "bookmakers": [
             {"markets": [{"key": "h2h", "outcomes": [

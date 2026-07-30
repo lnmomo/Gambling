@@ -1,0 +1,54 @@
+{
+  "method": "settlement-aware market-bias portfolio simulation",
+  "config": {
+    "daily_limit": 100.0,
+    "max_single_stake": 10.0,
+    "settlement_delay_days": 1,
+    "stop_after_losing_settlement_days": 3,
+    "cooldown_days": 3,
+    "stake_mode": "split_daily_limit_evenly_across_selected_bets",
+    "same_day_results_hidden_until_settlement": true
+  },
+  "overall": {
+    "bets": 0,
+    "winning_bets": 0,
+    "active_bet_days": 0,
+    "skipped_cooldown_days": 0,
+    "total_staked": 0.0,
+    "profit": 0.0,
+    "roi_pct": 0.0,
+    "ending_equity": 0.0,
+    "max_drawdown": 0.0
+  },
+  "monthly": [],
+  "season_summary": [],
+  "warnings": [
+    "no bets selected by upstream walk-forward rule"
+  ],
+  "walk_forward_config": {
+    "odds_source": "AVG_OPEN",
+    "lookback_months": 30,
+    "min_active_months": 6,
+    "min_bets": 120,
+    "min_roi": 0.02,
+    "max_rules": 1,
+    "daily_limit": 100.0,
+    "rules": [
+      "league|outcome|custom_i2_draw_band=I2|draw|[2.80,3.50)"
+    ]
+  },
+  "walk_forward_overall_unit_stake": {
+    "bets": 0,
+    "winning_bets": 0,
+    "total_staked": 0.0,
+    "profit": 0.0,
+    "roi_pct": 0.0,
+    "max_drawdown": 0.0,
+    "max_daily_stake": 0.0,
+    "active_days": 0
+  },
+  "custom_i2_draw_band": [
+    2.8,
+    3.5
+  ]
+}

@@ -212,6 +212,7 @@ def test_primary_horizon_odds_capture_is_lightweight_and_runs_evidence_chain(tmp
         "feature_build_primary_horizon",
         "prospective_research_primary_horizon_capture",
         "external_consensus_challenger_primary_horizon_capture",
+        "named_book_gap_primary_horizon_capture",
         "profit_allocation_readiness_primary_horizon",
     ]
 
@@ -237,6 +238,7 @@ def test_primary_horizon_rechecks_fresh_existing_odds_without_new_fetch(tmp_path
 
     assert child_tasks == [
         "external_consensus_challenger_primary_horizon_capture",
+        "named_book_gap_primary_horizon_capture",
         "profit_allocation_readiness_primary_horizon",
     ]
 

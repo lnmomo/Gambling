@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from datetime import datetime
 from difflib import SequenceMatcher
@@ -22,6 +24,23 @@ TEAM_ALIASES = {
 # Source pages use abbreviated Chinese club names while The Odds API uses the
 # clubs' international names. Unicode escapes keep this mapping encoding-safe.
 TEAM_ALIASES.update({
+    # Current official-pool abbreviations for The Odds API's Champions League
+    # qualifying and Brazilian Serie A fixtures. These mappings are exact
+    # transliterations, never time-only guesses.
+    "\u5e93\u5965\u76ae\u5965": "kupskuopio",
+    "\u8428\u5df4\u8d6b": "sabahfk",
+    "\u54c8\u8328": "hearts",
+    "\u683c\u98ce\u66b4": "sksturm",
+    "\u963f\u62c9\u6728\u56fe": "fckairat",
+    "\u5965\u83ab\u5c3c\u4e9a": "omonoiafc",
+    "\u6ce2\u5179\u5357": "lechpoznan",
+    "\u5965\u80e1\u65af": "agfaarhus",
+    "\u91cc\u83ab": "remo",
+    "\u5df4\u897f\u56fd\u9645": "internacional",
+    "\u5f17\u62c9\u95e8\u6208": "flamengo",
+    "\u5e15\u6885\u62c9\u65af": "palmeiras",
+    "\u79d1\u6797\u8482\u5b89": "corinthians",
+    "\u5df4\u7ade\u6280": "atleticoparanaense",
     "\u74e6\u52d2\u4f26\u52a0": "valerenga",
     "\u5965\u52d2\u677e": "alesund",
     "\u535a\u5854\u5f17\u6208": "botafogo",
@@ -62,6 +81,7 @@ TEAM_ALIASES.update({
 
 LEAGUE_SPORT_KEYS = {
     "\u4e16\u754c\u676f": "soccer_fifa_world_cup",
+    "\u6b27\u51a0": "soccer_uefa_champs_league_qualification",
     "\u5df4\u7532": "soccer_brazil_campeonato",
     "\u5df4\u897f\u7532": "soccer_brazil_campeonato",
     "\u7f8e\u804c": "soccer_usa_mls",
@@ -108,6 +128,7 @@ def normalize_team(name: str) -> str:
 class OddsApiClient:
     def __init__(self) -> None:
         self.warnings: list[str] = []
+        self.request_audits: list[dict[str, Any]] = []
 
     def configured(self) -> bool:
         return bool(settings.odds_api_key)
@@ -125,6 +146,7 @@ class OddsApiClient:
         if not self.configured():
             return [], {}
         self.warnings = []
+        self.request_audits = []
         output: list[dict[str, Any]] = []
         response_headers: dict[str, str] = {}
         sports, response_headers = get_json(
@@ -136,6 +158,11 @@ class OddsApiClient:
         derived = self.sport_keys_for_leagues(leagues or set())
         requested = derived if settings.odds_api_auto_sport_keys and derived else configured
         selected = [sport for sport in requested if sport in active_keys]
+        try:
+            max_sports = max(1, int(settings.prospective_max_active_sports))
+        except (TypeError, ValueError):
+            max_sports = 3
+        selected = selected[:max_sports]
         missing = [sport for sport in requested if sport not in active_keys]
         if missing:
             self.warnings.append("The Odds API 当前无可用项目: " + ", ".join(missing))
@@ -148,6 +175,19 @@ class OddsApiClient:
                  "markets": "h2h", "oddsFormat": "decimal"},
                 settings.enrichment_timeout_seconds,
             )
+            canonical = json.dumps(data, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+            self.request_audits.append({
+                "sport_key": sport,
+                "endpoint": f"/sports/{sport}/odds",
+                "regions": settings.odds_api_regions,
+                "markets": "h2h",
+                "estimated_cost": max(1, len([item for item in settings.odds_api_regions.split(",") if item.strip()])),
+                "credits_last": response_headers.get("x-requests-last"),
+                "credits_remaining": response_headers.get("x-requests-remaining"),
+                "credits_used": response_headers.get("x-requests-used"),
+                "events_returned": len(data),
+                "response_hash": hashlib.sha256(canonical.encode("utf-8")).hexdigest(),
+            })
             output.extend(data)
         return output, response_headers
 

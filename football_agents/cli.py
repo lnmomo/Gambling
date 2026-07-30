@@ -143,6 +143,11 @@ def main() -> None:
     sub.add_parser("sync-extra-history", help="Sync licensed CSV URLs from HISTORICAL_DATA_EXTRA_CSV_SOURCES")
 
     sub.add_parser("sync-international-history", help="Sync real international-team historical results")
+    free_history = sub.add_parser("sync-free-historical-data", help="Sync the free international results and World Cup odds evidence plan")
+    free_history.add_argument("--with-footiqo-fallback", action="store_true",
+                              help="Use Footiqo World Cup closing odds only if the primary free workbook fails")
+    free_capture = sub.add_parser("capture-free-prospective-odds", help="Capture quota-aware T-6h/T-1h named-book odds evidence")
+    free_capture.add_argument("--limit", type=int, default=settings.agent_match_limit)
     international_odds = sub.add_parser("sync-international-odds-history", help="Sync international-team historical 1X2 odds where available")
     international_odds.add_argument("--provider", choices=["football-data-world-cup", "footiqo", "odds-api"], default="football-data-world-cup")
     international_odds.add_argument("--sport-keys", default="", help="Comma-separated The Odds API sport keys")
@@ -228,6 +233,15 @@ def main() -> None:
         db.initialize()
         report = InternationalHistoryAgent().sync()
         print(json.dumps(QwenOpsAgent().attach("international-history-agent", report), ensure_ascii=False, indent=2))
+    elif args.command == "sync-free-historical-data":
+        from .free_historical_data_plan import FreeHistoricalDataPlan
+        db.initialize()
+        report = FreeHistoricalDataPlan().sync(args.with_footiqo_fallback)
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+    elif args.command == "capture-free-prospective-odds":
+        from .free_prospective import FreeProspectiveOddsService
+        db.initialize()
+        print(json.dumps(FreeProspectiveOddsService().capture(args.limit), ensure_ascii=False, indent=2))
     elif args.command == "sync-international-odds-history":
         from .international_odds_agent import InternationalOddsHistoryAgent
         from .llm import QwenOpsAgent

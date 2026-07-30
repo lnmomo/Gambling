@@ -1,0 +1,1510 @@
+{
+  "method": "v6 Ridge CLV ranker; prior six months train, last two train months tune, immediate next month evaluate",
+  "feature_contract": {
+    "numeric": [
+      "probability",
+      "conservative_probability",
+      "odds",
+      "raw_odds",
+      "conservative_ev_pct",
+      "reference_dispersion",
+      "reference_bookmakers",
+      "execution_cost_rate"
+    ],
+    "categorical": [
+      "outcome",
+      "odds_band",
+      "source_type",
+      "execution_bookmaker",
+      "league"
+    ],
+    "forbidden": [
+      "actual_outcome",
+      "won",
+      "profit",
+      "closing_edge_pct in test features"
+    ]
+  },
+  "strategy": {
+    "name": "RC-F-v6-clv-ridge-broad",
+    "minimum_price_ratio": 0.97,
+    "minimum_conservative_ev": -0.05,
+    "dispersion_multiplier": 1.0,
+    "minimum_probability": 0.12,
+    "maximum_odds": 8.0,
+    "minimum_reference_bookmakers": 4,
+    "uncertainty_floor": 0.002,
+    "slippage_rate": 0.02,
+    "exchange_commission_rate": 0.025,
+    "daily_budget": 100.0,
+    "maximum_single_stake": 5.0,
+    "kelly_fraction": 0.1
+  },
+  "policy": {
+    "daily_budget": 100.0,
+    "maximum_single_stake": 5.0,
+    "kelly_fraction": 0.1,
+    "minimum_inner_validation_positions": 30,
+    "minimum_inner_positive_clv_rate": 0.55
+  },
+  "exchange_commission_rate": 0.025,
+  "latest_sealed_month_excluded": "2026-05",
+  "folds": 16,
+  "active_months": 12,
+  "positive_active_months": 6,
+  "bets": 158,
+  "staked": 24.49,
+  "profit": -0.01,
+  "roi_pct": -0.04,
+  "available_capacity": 48500.0,
+  "capital_utilization_pct": 0.0505,
+  "outcome_counts": {
+    "draw": 38,
+    "away": 98,
+    "home": 22
+  },
+  "maximum_outcome_concentration_pct": 62.03,
+  "average_closing_edge_pct": 7.571,
+  "positive_clv_rate": 0.7532,
+  "monthly_bootstrap_roi": {
+    "status": "READY",
+    "folds": 16,
+    "iterations": 5000,
+    "seed": 42,
+    "lower_95_pct": -28.161,
+    "median_pct": -0.2412,
+    "upper_95_pct": 44.9048
+  },
+  "decision": "ROLLING_REJECTED",
+  "decision_reasons": [
+    "positive_active_month_rate<60pct",
+    "aggregate_profit<=0",
+    "monthly_bootstrap_roi_lower_95<=0",
+    "capital_utilization<0.5pct"
+  ],
+  "monthly": [
+    {
+      "month": "2024-08",
+      "train_window": "2024-02-01..2024-07-31",
+      "status": "ABSTAIN_INNER_VALIDATION",
+      "training_candidates": 6,
+      "bets": 0,
+      "active_days": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "available_capacity": 3100.0
+    },
+    {
+      "month": "2024-09",
+      "train_window": "2024-03-01..2024-08-31",
+      "status": "ABSTAIN_INNER_VALIDATION",
+      "training_candidates": 405,
+      "bets": 0,
+      "active_days": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "available_capacity": 3000.0
+    },
+    {
+      "month": "2024-10",
+      "train_window": "2024-04-01..2024-09-30",
+      "status": "ABSTAIN_INNER_VALIDATION",
+      "training_candidates": 888,
+      "bets": 0,
+      "active_days": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "available_capacity": 3100.0
+    },
+    {
+      "month": "2024-11",
+      "train_window": "2024-05-01..2024-10-31",
+      "status": "FROZEN_MODEL_EVALUATED",
+      "training_candidates": 1369,
+      "test_candidates": 463,
+      "alpha": 100.0,
+      "safety_margin": 0.25,
+      "validation_rmse_pct": 8.4529,
+      "inner_validation": [
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 964,
+          "selected": 278,
+          "rmse_pct": 8.8831,
+          "average_closing_edge_pct": 1.8819,
+          "positive_clv_rate": 0.5683,
+          "eligible": true
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 964,
+          "selected": 136,
+          "rmse_pct": 8.8831,
+          "average_closing_edge_pct": 2.3449,
+          "positive_clv_rate": 0.5735,
+          "eligible": true
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 964,
+          "selected": 59,
+          "rmse_pct": 8.8831,
+          "average_closing_edge_pct": 2.2135,
+          "positive_clv_rate": 0.6102,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 964,
+          "selected": 264,
+          "rmse_pct": 8.6396,
+          "average_closing_edge_pct": 1.6209,
+          "positive_clv_rate": 0.5758,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 964,
+          "selected": 103,
+          "rmse_pct": 8.6396,
+          "average_closing_edge_pct": 3.0206,
+          "positive_clv_rate": 0.6311,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 964,
+          "selected": 36,
+          "rmse_pct": 8.6396,
+          "average_closing_edge_pct": 4.2699,
+          "positive_clv_rate": 0.6944,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 964,
+          "selected": 208,
+          "rmse_pct": 8.4529,
+          "average_closing_edge_pct": 2.0354,
+          "positive_clv_rate": 0.6154,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 964,
+          "selected": 52,
+          "rmse_pct": 8.4529,
+          "average_closing_edge_pct": 4.5388,
+          "positive_clv_rate": 0.6346,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 964,
+          "selected": 8,
+          "rmse_pct": 8.4529,
+          "average_closing_edge_pct": 9.2777,
+          "positive_clv_rate": 0.875,
+          "eligible": false
+        }
+      ],
+      "bets": 3,
+      "active_days": 2,
+      "staked": 0.39,
+      "profit": 0.17,
+      "roi_pct": 43.59,
+      "average_closing_edge_pct": 7.8897,
+      "positive_clv_rate": 1.0,
+      "outcome_counts": {
+        "draw": 2,
+        "away": 1
+      },
+      "available_capacity": 3000.0
+    },
+    {
+      "month": "2025-01",
+      "train_window": "2024-07-01..2024-12-31",
+      "status": "FROZEN_MODEL_EVALUATED",
+      "training_candidates": 2372,
+      "test_candidates": 499,
+      "alpha": 100.0,
+      "safety_margin": 0.25,
+      "validation_rmse_pct": 8.489,
+      "inner_validation": [
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1003,
+          "selected": 280,
+          "rmse_pct": 8.6083,
+          "average_closing_edge_pct": 0.6985,
+          "positive_clv_rate": 0.5036,
+          "eligible": false
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1003,
+          "selected": 89,
+          "rmse_pct": 8.6083,
+          "average_closing_edge_pct": 2.8073,
+          "positive_clv_rate": 0.5618,
+          "eligible": true
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1003,
+          "selected": 29,
+          "rmse_pct": 8.6083,
+          "average_closing_edge_pct": 9.7292,
+          "positive_clv_rate": 0.7241,
+          "eligible": false
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1003,
+          "selected": 263,
+          "rmse_pct": 8.5746,
+          "average_closing_edge_pct": 0.8678,
+          "positive_clv_rate": 0.5095,
+          "eligible": false
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1003,
+          "selected": 80,
+          "rmse_pct": 8.5746,
+          "average_closing_edge_pct": 2.4888,
+          "positive_clv_rate": 0.575,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1003,
+          "selected": 24,
+          "rmse_pct": 8.5746,
+          "average_closing_edge_pct": 11.9213,
+          "positive_clv_rate": 0.75,
+          "eligible": false
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1003,
+          "selected": 220,
+          "rmse_pct": 8.489,
+          "average_closing_edge_pct": 1.445,
+          "positive_clv_rate": 0.5409,
+          "eligible": false
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1003,
+          "selected": 55,
+          "rmse_pct": 8.489,
+          "average_closing_edge_pct": 3.8063,
+          "positive_clv_rate": 0.6,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1003,
+          "selected": 19,
+          "rmse_pct": 8.489,
+          "average_closing_edge_pct": 13.1974,
+          "positive_clv_rate": 0.7368,
+          "eligible": false
+        }
+      ],
+      "bets": 7,
+      "active_days": 6,
+      "staked": 0.91,
+      "profit": -0.4,
+      "roi_pct": -43.96,
+      "average_closing_edge_pct": 12.9771,
+      "positive_clv_rate": 0.8571,
+      "outcome_counts": {
+        "draw": 4,
+        "away": 3
+      },
+      "available_capacity": 3100.0
+    },
+    {
+      "month": "2025-02",
+      "train_window": "2024-08-01..2025-01-31",
+      "status": "FROZEN_MODEL_EVALUATED",
+      "training_candidates": 2865,
+      "test_candidates": 519,
+      "alpha": 100.0,
+      "safety_margin": 0.25,
+      "validation_rmse_pct": 8.3328,
+      "inner_validation": [
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1039,
+          "selected": 272,
+          "rmse_pct": 8.436,
+          "average_closing_edge_pct": 1.3695,
+          "positive_clv_rate": 0.5368,
+          "eligible": false
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1039,
+          "selected": 78,
+          "rmse_pct": 8.436,
+          "average_closing_edge_pct": 2.9098,
+          "positive_clv_rate": 0.5385,
+          "eligible": false
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1039,
+          "selected": 27,
+          "rmse_pct": 8.436,
+          "average_closing_edge_pct": 12.3703,
+          "positive_clv_rate": 0.7778,
+          "eligible": false
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1039,
+          "selected": 265,
+          "rmse_pct": 8.4035,
+          "average_closing_edge_pct": 1.6574,
+          "positive_clv_rate": 0.5547,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1039,
+          "selected": 73,
+          "rmse_pct": 8.4035,
+          "average_closing_edge_pct": 3.1419,
+          "positive_clv_rate": 0.5616,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1039,
+          "selected": 23,
+          "rmse_pct": 8.4035,
+          "average_closing_edge_pct": 14.5887,
+          "positive_clv_rate": 0.8261,
+          "eligible": false
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1039,
+          "selected": 227,
+          "rmse_pct": 8.3328,
+          "average_closing_edge_pct": 2.0562,
+          "positive_clv_rate": 0.5947,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1039,
+          "selected": 52,
+          "rmse_pct": 8.3328,
+          "average_closing_edge_pct": 7.8223,
+          "positive_clv_rate": 0.7115,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1039,
+          "selected": 17,
+          "rmse_pct": 8.3328,
+          "average_closing_edge_pct": 17.5222,
+          "positive_clv_rate": 0.8235,
+          "eligible": false
+        }
+      ],
+      "bets": 9,
+      "active_days": 7,
+      "staked": 1.33,
+      "profit": 2.2,
+      "roi_pct": 165.41,
+      "average_closing_edge_pct": 5.6642,
+      "positive_clv_rate": 0.8889,
+      "outcome_counts": {
+        "away": 3,
+        "draw": 4,
+        "home": 2
+      },
+      "available_capacity": 2800.0
+    },
+    {
+      "month": "2025-03",
+      "train_window": "2024-09-01..2025-02-28",
+      "status": "FROZEN_MODEL_EVALUATED",
+      "training_candidates": 2985,
+      "test_candidates": 499,
+      "alpha": 100.0,
+      "safety_margin": 0.0,
+      "validation_rmse_pct": 7.9189,
+      "inner_validation": [
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1018,
+          "selected": 246,
+          "rmse_pct": 7.9828,
+          "average_closing_edge_pct": 2.9484,
+          "positive_clv_rate": 0.7195,
+          "eligible": true
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1018,
+          "selected": 79,
+          "rmse_pct": 7.9828,
+          "average_closing_edge_pct": 4.84,
+          "positive_clv_rate": 0.7848,
+          "eligible": true
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1018,
+          "selected": 26,
+          "rmse_pct": 7.9828,
+          "average_closing_edge_pct": 8.0277,
+          "positive_clv_rate": 0.8846,
+          "eligible": false
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1018,
+          "selected": 237,
+          "rmse_pct": 7.963,
+          "average_closing_edge_pct": 2.9959,
+          "positive_clv_rate": 0.7257,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1018,
+          "selected": 75,
+          "rmse_pct": 7.963,
+          "average_closing_edge_pct": 4.9419,
+          "positive_clv_rate": 0.8,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1018,
+          "selected": 22,
+          "rmse_pct": 7.963,
+          "average_closing_edge_pct": 10.1646,
+          "positive_clv_rate": 0.9091,
+          "eligible": false
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1018,
+          "selected": 216,
+          "rmse_pct": 7.9189,
+          "average_closing_edge_pct": 3.4016,
+          "positive_clv_rate": 0.7454,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1018,
+          "selected": 65,
+          "rmse_pct": 7.9189,
+          "average_closing_edge_pct": 5.4521,
+          "positive_clv_rate": 0.7846,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1018,
+          "selected": 21,
+          "rmse_pct": 7.9189,
+          "average_closing_edge_pct": 10.5735,
+          "positive_clv_rate": 0.9524,
+          "eligible": false
+        }
+      ],
+      "bets": 22,
+      "active_days": 10,
+      "staked": 2.96,
+      "profit": -2.06,
+      "roi_pct": -69.59,
+      "average_closing_edge_pct": 6.7331,
+      "positive_clv_rate": 0.8182,
+      "outcome_counts": {
+        "away": 9,
+        "draw": 13
+      },
+      "available_capacity": 3100.0
+    },
+    {
+      "month": "2025-04",
+      "train_window": "2024-10-01..2025-03-31",
+      "status": "FROZEN_MODEL_EVALUATED",
+      "training_candidates": 3001,
+      "test_candidates": 524,
+      "alpha": 100.0,
+      "safety_margin": 0.25,
+      "validation_rmse_pct": 7.7048,
+      "inner_validation": [
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1018,
+          "selected": 184,
+          "rmse_pct": 7.7458,
+          "average_closing_edge_pct": 2.2253,
+          "positive_clv_rate": 0.7174,
+          "eligible": true
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1018,
+          "selected": 84,
+          "rmse_pct": 7.7458,
+          "average_closing_edge_pct": 4.0993,
+          "positive_clv_rate": 0.7857,
+          "eligible": true
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1018,
+          "selected": 31,
+          "rmse_pct": 7.7458,
+          "average_closing_edge_pct": 6.3194,
+          "positive_clv_rate": 0.8065,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1018,
+          "selected": 176,
+          "rmse_pct": 7.7352,
+          "average_closing_edge_pct": 2.2906,
+          "positive_clv_rate": 0.7386,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1018,
+          "selected": 75,
+          "rmse_pct": 7.7352,
+          "average_closing_edge_pct": 4.3216,
+          "positive_clv_rate": 0.7733,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1018,
+          "selected": 31,
+          "rmse_pct": 7.7352,
+          "average_closing_edge_pct": 6.3194,
+          "positive_clv_rate": 0.8065,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1018,
+          "selected": 145,
+          "rmse_pct": 7.7048,
+          "average_closing_edge_pct": 2.4923,
+          "positive_clv_rate": 0.7655,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1018,
+          "selected": 64,
+          "rmse_pct": 7.7048,
+          "average_closing_edge_pct": 4.7234,
+          "positive_clv_rate": 0.7812,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1018,
+          "selected": 25,
+          "rmse_pct": 7.7048,
+          "average_closing_edge_pct": 6.5046,
+          "positive_clv_rate": 0.84,
+          "eligible": false
+        }
+      ],
+      "bets": 2,
+      "active_days": 2,
+      "staked": 0.32,
+      "profit": -0.32,
+      "roi_pct": -100.0,
+      "average_closing_edge_pct": 6.381,
+      "positive_clv_rate": 0.5,
+      "outcome_counts": {
+        "draw": 2
+      },
+      "available_capacity": 3000.0
+    },
+    {
+      "month": "2025-05",
+      "train_window": "2024-11-01..2025-04-30",
+      "status": "FROZEN_MODEL_EVALUATED",
+      "training_candidates": 3044,
+      "test_candidates": 353,
+      "alpha": 10.0,
+      "safety_margin": 0.5,
+      "validation_rmse_pct": 7.8103,
+      "inner_validation": [
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1023,
+          "selected": 197,
+          "rmse_pct": 7.8246,
+          "average_closing_edge_pct": 0.6708,
+          "positive_clv_rate": 0.5838,
+          "eligible": true
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1023,
+          "selected": 76,
+          "rmse_pct": 7.8246,
+          "average_closing_edge_pct": 1.881,
+          "positive_clv_rate": 0.6447,
+          "eligible": true
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1023,
+          "selected": 35,
+          "rmse_pct": 7.8246,
+          "average_closing_edge_pct": 3.8548,
+          "positive_clv_rate": 0.6571,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1023,
+          "selected": 196,
+          "rmse_pct": 7.8103,
+          "average_closing_edge_pct": 0.6819,
+          "positive_clv_rate": 0.5867,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1023,
+          "selected": 74,
+          "rmse_pct": 7.8103,
+          "average_closing_edge_pct": 1.2294,
+          "positive_clv_rate": 0.6216,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1023,
+          "selected": 34,
+          "rmse_pct": 7.8103,
+          "average_closing_edge_pct": 4.1268,
+          "positive_clv_rate": 0.6765,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1023,
+          "selected": 173,
+          "rmse_pct": 7.7573,
+          "average_closing_edge_pct": 0.4928,
+          "positive_clv_rate": 0.5665,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1023,
+          "selected": 61,
+          "rmse_pct": 7.7573,
+          "average_closing_edge_pct": 0.9491,
+          "positive_clv_rate": 0.6066,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1023,
+          "selected": 23,
+          "rmse_pct": 7.7573,
+          "average_closing_edge_pct": 6.0789,
+          "positive_clv_rate": 0.6957,
+          "eligible": false
+        }
+      ],
+      "bets": 4,
+      "active_days": 2,
+      "staked": 1.28,
+      "profit": 0.23,
+      "roi_pct": 17.97,
+      "average_closing_edge_pct": 32.9774,
+      "positive_clv_rate": 1.0,
+      "outcome_counts": {
+        "away": 2,
+        "home": 1,
+        "draw": 1
+      },
+      "available_capacity": 3100.0
+    },
+    {
+      "month": "2025-08",
+      "train_window": "2025-02-01..2025-07-31",
+      "status": "ABSTAIN_INNER_VALIDATION",
+      "training_candidates": 1907,
+      "bets": 0,
+      "active_days": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0,
+      "available_capacity": 3100.0
+    },
+    {
+      "month": "2025-09",
+      "train_window": "2025-03-01..2025-08-31",
+      "status": "FROZEN_MODEL_EVALUATED",
+      "training_candidates": 1877,
+      "test_candidates": 477,
+      "alpha": 10.0,
+      "safety_margin": 0.25,
+      "validation_rmse_pct": 9.4122,
+      "inner_validation": [
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 494,
+          "selected": 155,
+          "rmse_pct": 9.4356,
+          "average_closing_edge_pct": 1.4267,
+          "positive_clv_rate": 0.5484,
+          "eligible": false
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 494,
+          "selected": 46,
+          "rmse_pct": 9.4356,
+          "average_closing_edge_pct": 4.5612,
+          "positive_clv_rate": 0.6957,
+          "eligible": true
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 494,
+          "selected": 8,
+          "rmse_pct": 9.4356,
+          "average_closing_edge_pct": 6.6638,
+          "positive_clv_rate": 0.875,
+          "eligible": false
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 494,
+          "selected": 141,
+          "rmse_pct": 9.4122,
+          "average_closing_edge_pct": 1.7438,
+          "positive_clv_rate": 0.5816,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 494,
+          "selected": 38,
+          "rmse_pct": 9.4122,
+          "average_closing_edge_pct": 5.7506,
+          "positive_clv_rate": 0.7105,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 494,
+          "selected": 9,
+          "rmse_pct": 9.4122,
+          "average_closing_edge_pct": 8.3039,
+          "positive_clv_rate": 0.8889,
+          "eligible": false
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 494,
+          "selected": 94,
+          "rmse_pct": 9.3758,
+          "average_closing_edge_pct": 3.3591,
+          "positive_clv_rate": 0.6383,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 494,
+          "selected": 26,
+          "rmse_pct": 9.3758,
+          "average_closing_edge_pct": 5.8855,
+          "positive_clv_rate": 0.7308,
+          "eligible": false
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 494,
+          "selected": 7,
+          "rmse_pct": 9.3758,
+          "average_closing_edge_pct": 8.8256,
+          "positive_clv_rate": 0.8571,
+          "eligible": false
+        }
+      ],
+      "bets": 6,
+      "active_days": 4,
+      "staked": 0.88,
+      "profit": 1.68,
+      "roi_pct": 190.91,
+      "average_closing_edge_pct": 12.4433,
+      "positive_clv_rate": 1.0,
+      "outcome_counts": {
+        "away": 4,
+        "home": 1,
+        "draw": 1
+      },
+      "available_capacity": 3000.0
+    },
+    {
+      "month": "2025-10",
+      "train_window": "2025-04-01..2025-09-30",
+      "status": "FROZEN_MODEL_EVALUATED",
+      "training_candidates": 1855,
+      "test_candidates": 482,
+      "alpha": 100.0,
+      "safety_margin": 0.25,
+      "validation_rmse_pct": 9.0222,
+      "inner_validation": [
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 966,
+          "selected": 212,
+          "rmse_pct": 9.1604,
+          "average_closing_edge_pct": 2.4575,
+          "positive_clv_rate": 0.5849,
+          "eligible": true
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 966,
+          "selected": 72,
+          "rmse_pct": 9.1604,
+          "average_closing_edge_pct": 4.2539,
+          "positive_clv_rate": 0.6944,
+          "eligible": true
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 966,
+          "selected": 15,
+          "rmse_pct": 9.1604,
+          "average_closing_edge_pct": 5.0273,
+          "positive_clv_rate": 0.7333,
+          "eligible": false
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 966,
+          "selected": 188,
+          "rmse_pct": 9.088,
+          "average_closing_edge_pct": 3.0189,
+          "positive_clv_rate": 0.617,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 966,
+          "selected": 57,
+          "rmse_pct": 9.088,
+          "average_closing_edge_pct": 5.2457,
+          "positive_clv_rate": 0.7018,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 966,
+          "selected": 12,
+          "rmse_pct": 9.088,
+          "average_closing_edge_pct": 8.2365,
+          "positive_clv_rate": 0.9167,
+          "eligible": false
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 966,
+          "selected": 126,
+          "rmse_pct": 9.0222,
+          "average_closing_edge_pct": 3.6836,
+          "positive_clv_rate": 0.6349,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 966,
+          "selected": 36,
+          "rmse_pct": 9.0222,
+          "average_closing_edge_pct": 7.5766,
+          "positive_clv_rate": 0.75,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 966,
+          "selected": 8,
+          "rmse_pct": 9.0222,
+          "average_closing_edge_pct": 11.5887,
+          "positive_clv_rate": 1.0,
+          "eligible": false
+        }
+      ],
+      "bets": 11,
+      "active_days": 9,
+      "staked": 1.89,
+      "profit": -0.21,
+      "roi_pct": -11.11,
+      "average_closing_edge_pct": 5.8492,
+      "positive_clv_rate": 0.7273,
+      "outcome_counts": {
+        "away": 9,
+        "home": 2
+      },
+      "available_capacity": 3100.0
+    },
+    {
+      "month": "2025-11",
+      "train_window": "2025-05-01..2025-10-31",
+      "status": "FROZEN_MODEL_EVALUATED",
+      "training_candidates": 1813,
+      "test_candidates": 525,
+      "alpha": 100.0,
+      "safety_margin": 0.0,
+      "validation_rmse_pct": 8.1915,
+      "inner_validation": [
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 959,
+          "selected": 226,
+          "rmse_pct": 8.5149,
+          "average_closing_edge_pct": 2.3785,
+          "positive_clv_rate": 0.5664,
+          "eligible": true
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 959,
+          "selected": 108,
+          "rmse_pct": 8.5149,
+          "average_closing_edge_pct": 4.711,
+          "positive_clv_rate": 0.7037,
+          "eligible": true
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 959,
+          "selected": 49,
+          "rmse_pct": 8.5149,
+          "average_closing_edge_pct": 5.3272,
+          "positive_clv_rate": 0.6531,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 959,
+          "selected": 201,
+          "rmse_pct": 8.3893,
+          "average_closing_edge_pct": 3.2841,
+          "positive_clv_rate": 0.6119,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 959,
+          "selected": 100,
+          "rmse_pct": 8.3893,
+          "average_closing_edge_pct": 4.7082,
+          "positive_clv_rate": 0.69,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 959,
+          "selected": 44,
+          "rmse_pct": 8.3893,
+          "average_closing_edge_pct": 5.6698,
+          "positive_clv_rate": 0.6591,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 959,
+          "selected": 163,
+          "rmse_pct": 8.1915,
+          "average_closing_edge_pct": 4.0896,
+          "positive_clv_rate": 0.6564,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 959,
+          "selected": 70,
+          "rmse_pct": 8.1915,
+          "average_closing_edge_pct": 5.573,
+          "positive_clv_rate": 0.6857,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 959,
+          "selected": 31,
+          "rmse_pct": 8.1915,
+          "average_closing_edge_pct": 6.775,
+          "positive_clv_rate": 0.6774,
+          "eligible": true
+        }
+      ],
+      "bets": 46,
+      "active_days": 11,
+      "staked": 7.83,
+      "profit": -1.28,
+      "roi_pct": -16.35,
+      "average_closing_edge_pct": 6.1944,
+      "positive_clv_rate": 0.6957,
+      "outcome_counts": {
+        "draw": 3,
+        "home": 10,
+        "away": 33
+      },
+      "available_capacity": 3000.0
+    },
+    {
+      "month": "2026-01",
+      "train_window": "2025-07-01..2025-12-31",
+      "status": "FROZEN_MODEL_EVALUATED",
+      "training_candidates": 2458,
+      "test_candidates": 541,
+      "alpha": 10.0,
+      "safety_margin": 0.25,
+      "validation_rmse_pct": 8.1311,
+      "inner_validation": [
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1005,
+          "selected": 271,
+          "rmse_pct": 8.1445,
+          "average_closing_edge_pct": 2.1621,
+          "positive_clv_rate": 0.5793,
+          "eligible": true
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1005,
+          "selected": 129,
+          "rmse_pct": 8.1445,
+          "average_closing_edge_pct": 4.4531,
+          "positive_clv_rate": 0.6744,
+          "eligible": true
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1005,
+          "selected": 59,
+          "rmse_pct": 8.1445,
+          "average_closing_edge_pct": 6.4909,
+          "positive_clv_rate": 0.7119,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1005,
+          "selected": 272,
+          "rmse_pct": 8.1311,
+          "average_closing_edge_pct": 2.2582,
+          "positive_clv_rate": 0.5846,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1005,
+          "selected": 129,
+          "rmse_pct": 8.1311,
+          "average_closing_edge_pct": 4.6045,
+          "positive_clv_rate": 0.6744,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1005,
+          "selected": 56,
+          "rmse_pct": 8.1311,
+          "average_closing_edge_pct": 6.4758,
+          "positive_clv_rate": 0.7143,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1005,
+          "selected": 263,
+          "rmse_pct": 8.1112,
+          "average_closing_edge_pct": 2.668,
+          "positive_clv_rate": 0.6084,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1005,
+          "selected": 114,
+          "rmse_pct": 8.1112,
+          "average_closing_edge_pct": 4.2638,
+          "positive_clv_rate": 0.6579,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1005,
+          "selected": 53,
+          "rmse_pct": 8.1112,
+          "average_closing_edge_pct": 6.8115,
+          "positive_clv_rate": 0.717,
+          "eligible": true
+        }
+      ],
+      "bets": 13,
+      "active_days": 10,
+      "staked": 1.97,
+      "profit": -1.01,
+      "roi_pct": -51.27,
+      "average_closing_edge_pct": 10.9645,
+      "positive_clv_rate": 0.8462,
+      "outcome_counts": {
+        "draw": 2,
+        "away": 10,
+        "home": 1
+      },
+      "available_capacity": 3100.0
+    },
+    {
+      "month": "2026-02",
+      "train_window": "2025-08-01..2026-01-31",
+      "status": "FROZEN_MODEL_EVALUATED",
+      "training_candidates": 2994,
+      "test_candidates": 527,
+      "alpha": 10.0,
+      "safety_margin": 0.0,
+      "validation_rmse_pct": 8.1867,
+      "inner_validation": [
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1021,
+          "selected": 233,
+          "rmse_pct": 8.1942,
+          "average_closing_edge_pct": 2.84,
+          "positive_clv_rate": 0.618,
+          "eligible": true
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1021,
+          "selected": 103,
+          "rmse_pct": 8.1942,
+          "average_closing_edge_pct": 3.988,
+          "positive_clv_rate": 0.7087,
+          "eligible": true
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1021,
+          "selected": 45,
+          "rmse_pct": 8.1942,
+          "average_closing_edge_pct": 6.6306,
+          "positive_clv_rate": 0.7778,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1021,
+          "selected": 234,
+          "rmse_pct": 8.1867,
+          "average_closing_edge_pct": 3.0759,
+          "positive_clv_rate": 0.6325,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1021,
+          "selected": 102,
+          "rmse_pct": 8.1867,
+          "average_closing_edge_pct": 4.25,
+          "positive_clv_rate": 0.7157,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1021,
+          "selected": 46,
+          "rmse_pct": 8.1867,
+          "average_closing_edge_pct": 6.5751,
+          "positive_clv_rate": 0.7826,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1021,
+          "selected": 233,
+          "rmse_pct": 8.1667,
+          "average_closing_edge_pct": 2.5998,
+          "positive_clv_rate": 0.618,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1021,
+          "selected": 92,
+          "rmse_pct": 8.1667,
+          "average_closing_edge_pct": 4.6943,
+          "positive_clv_rate": 0.7391,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1021,
+          "selected": 37,
+          "rmse_pct": 8.1667,
+          "average_closing_edge_pct": 6.6724,
+          "positive_clv_rate": 0.7568,
+          "eligible": true
+        }
+      ],
+      "bets": 25,
+      "active_days": 12,
+      "staked": 3.43,
+      "profit": 0.69,
+      "roi_pct": 20.12,
+      "average_closing_edge_pct": 4.6278,
+      "positive_clv_rate": 0.6,
+      "outcome_counts": {
+        "away": 17,
+        "draw": 5,
+        "home": 3
+      },
+      "available_capacity": 2800.0
+    },
+    {
+      "month": "2026-03",
+      "train_window": "2025-09-01..2026-02-28",
+      "status": "FROZEN_MODEL_EVALUATED",
+      "training_candidates": 3032,
+      "test_candidates": 471,
+      "alpha": 100.0,
+      "safety_margin": 0.25,
+      "validation_rmse_pct": 8.0328,
+      "inner_validation": [
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1068,
+          "selected": 180,
+          "rmse_pct": 8.0819,
+          "average_closing_edge_pct": 2.5242,
+          "positive_clv_rate": 0.6111,
+          "eligible": true
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1068,
+          "selected": 75,
+          "rmse_pct": 8.0819,
+          "average_closing_edge_pct": 5.5116,
+          "positive_clv_rate": 0.7067,
+          "eligible": true
+        },
+        {
+          "alpha": 1.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1068,
+          "selected": 35,
+          "rmse_pct": 8.0819,
+          "average_closing_edge_pct": 6.7299,
+          "positive_clv_rate": 0.6857,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1068,
+          "selected": 178,
+          "rmse_pct": 8.0704,
+          "average_closing_edge_pct": 2.6359,
+          "positive_clv_rate": 0.6124,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1068,
+          "selected": 73,
+          "rmse_pct": 8.0704,
+          "average_closing_edge_pct": 5.1245,
+          "positive_clv_rate": 0.6849,
+          "eligible": true
+        },
+        {
+          "alpha": 10.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1068,
+          "selected": 34,
+          "rmse_pct": 8.0704,
+          "average_closing_edge_pct": 6.5539,
+          "positive_clv_rate": 0.6765,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.0,
+          "validation_candidates": 1068,
+          "selected": 173,
+          "rmse_pct": 8.0328,
+          "average_closing_edge_pct": 2.3252,
+          "positive_clv_rate": 0.6069,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.25,
+          "validation_candidates": 1068,
+          "selected": 65,
+          "rmse_pct": 8.0328,
+          "average_closing_edge_pct": 6.0229,
+          "positive_clv_rate": 0.7385,
+          "eligible": true
+        },
+        {
+          "alpha": 100.0,
+          "safety_margin": 0.5,
+          "validation_candidates": 1068,
+          "selected": 28,
+          "rmse_pct": 8.0328,
+          "average_closing_edge_pct": 6.7339,
+          "positive_clv_rate": 0.7143,
+          "eligible": false
+        }
+      ],
+      "bets": 10,
+      "active_days": 6,
+      "staked": 1.3,
+      "profit": 0.3,
+      "roi_pct": 23.08,
+      "average_closing_edge_pct": 5.575,
+      "positive_clv_rate": 0.7,
+      "outcome_counts": {
+        "home": 2,
+        "away": 7,
+        "draw": 1
+      },
+      "available_capacity": 3100.0
+    }
+  ],
+  "guardrail": "Exploratory historical evidence only. No live order or automatic promotion is possible."
+}

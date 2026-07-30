@@ -315,7 +315,7 @@ class InternationalOddsHistoryAgent:
         away_team = str(event.get("away_team") or "").strip()
         if not home_team or not away_team:
             return None
-        prices: dict[str, list[float]] = {"home": [], "draw": [], "away": []}
+        bookmaker_probabilities: list[dict[str, float]] = []
         for bookmaker in event.get("bookmakers") or []:
             for market in bookmaker.get("markets") or []:
                 if market.get("key") != "h2h":
@@ -333,11 +333,20 @@ class InternationalOddsHistoryAgent:
                     elif name.casefold() == "draw":
                         seen["draw"] = price
                 if set(seen) == {"home", "draw", "away"}:
-                    for key, value in seen.items():
-                        prices[key].append(value)
-        if not all(prices.values()):
+                    implied = {key: 1 / value for key, value in seen.items()}
+                    overround = sum(implied.values())
+                    if overround > 0:
+                        bookmaker_probabilities.append({
+                            key: probability / overround
+                            for key, probability in implied.items()
+                        })
+        if not bookmaker_probabilities:
             return None
-        return {key: round(sum(values) / len(values), 6) for key, values in prices.items()}
+        consensus_probability = {
+            key: sum(item[key] for item in bookmaker_probabilities) / len(bookmaker_probabilities)
+            for key in ("home", "draw", "away")
+        }
+        return {key: round(1 / probability, 6) for key, probability in consensus_probability.items()}
 
     @staticmethod
     def build_odds_api_csv(
@@ -354,6 +363,7 @@ class InternationalOddsHistoryAgent:
             "unmatched_result": 0,
             "duplicate": 0,
             "invalid_event": 0,
+            "snapshot_not_pre_match": 0,
         }
         scanned_events = 0
         for snapshot in snapshots:
@@ -376,6 +386,21 @@ class InternationalOddsHistoryAgent:
                 except ValueError:
                     dropped["invalid_event"] += 1
                     continue
+                snapshot_timestamp = str(snapshot.get("timestamp") or snapshot.get("snapshot_timestamp") or "").strip()
+                if snapshot_timestamp:
+                    try:
+                        snapshot_time = datetime.fromisoformat(snapshot_timestamp.replace("Z", "+00:00"))
+                        event_time = datetime.fromisoformat(commence_time.replace("Z", "+00:00"))
+                        if snapshot_time.tzinfo is None:
+                            snapshot_time = snapshot_time.replace(tzinfo=timezone.utc)
+                        if event_time.tzinfo is None:
+                            event_time = event_time.replace(tzinfo=timezone.utc)
+                        if snapshot_time >= event_time:
+                            dropped["snapshot_not_pre_match"] += 1
+                            continue
+                    except ValueError:
+                        dropped["invalid_event"] += 1
+                        continue
                 consensus = InternationalOddsHistoryAgent._event_consensus_1x2(event)
                 if consensus is None:
                     dropped["missing_consensus"] += 1
@@ -405,7 +430,7 @@ class InternationalOddsHistoryAgent:
                     "AvgCD": consensus["draw"],
                     "AvgCA": consensus["away"],
                     "Bookmaker": "The Odds API consensus",
-                    "Source": "The Odds API historical odds",
+                    "Source": "The Odds API historical odds" + (f" @ {snapshot_timestamp}" if snapshot_timestamp else ""),
                     "SourceMatchId": event.get("id") or "",
                 })
         output_rows.sort(key=lambda row: (datetime.strptime(row["Date"], "%d/%m/%Y"), str(row["League"]), str(row["Home"])))
@@ -454,7 +479,7 @@ class InternationalOddsHistoryAgent:
             f"{settings.odds_api_base_url}/historical/sports/{sport_key}/odds",
             {
                 "apiKey": settings.odds_api_key,
-                "regions": "uk,eu",
+                "regions": settings.international_odds_api_regions,
                 "markets": "h2h",
                 "oddsFormat": "decimal",
                 "date": f"{snapshot_date.isoformat()}T12:00:00Z",
@@ -530,6 +555,7 @@ class InternationalOddsHistoryAgent:
         report = {
             "source": "The Odds API historical odds",
             "source_note": "Historical h2h snapshots converted to football-data-style settled international CSV",
+            "consensus_method": "equal-weight bookmaker devig probability consensus",
             "sport_keys": selected_keys,
             "snapshot_dates": [item.isoformat() for item in snapshot_dates],
             "archive_root": str(archive_root),

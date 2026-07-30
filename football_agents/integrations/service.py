@@ -35,6 +35,17 @@ def _requests_remaining(provider_rows: list[dict[str, Any]]) -> int | None:
     return int(match.group(1)) if match else None
 
 
+def _capture_window_label(match: dict[str, Any], captured_at: datetime) -> str:
+    minutes = (_parse_time(match["kickoff_time"]) - captured_at).total_seconds() / 60.0
+    if 1320 <= minutes <= 1560:
+        return "T_MINUS_24H"
+    if 300 <= minutes <= 420:
+        return "T_MINUS_6H"
+    if 30 <= minutes <= 120:
+        return "T_MINUS_1H"
+    return "OTHER_PRE_MATCH"
+
+
 class DataEnrichmentService:
     _odds_sync_lock = threading.Lock()
 
@@ -158,16 +169,26 @@ class DataEnrichmentService:
         summary["market_target_matches"] = len(odds_matches)
         remaining = _requests_remaining(self.repository.provider_status())
         summary["odds_requests_remaining_before"] = remaining
-        quota_reserved = (
-            remaining is not None
-            and remaining <= settings.odds_api_min_requests_remaining
-            and bool(odds_matches)
+        quota_status = self.repository.free_prospective_odds_status(now)
+        monthly_spent = int(quota_status["monthly_quota"].get("spent") or 0)
+        requested_keys = self.odds.sport_keys_for_leagues({
+            str(match.get("league") or "") for match in odds_matches
+        }) or settings.odds_api_sport_keys
+        planned_sports = min(len(requested_keys), max(1, settings.prospective_max_active_sports))
+        region_cost = max(1, len([item for item in settings.odds_api_regions.split(",") if item.strip()]))
+        estimated_cost = planned_sports * region_cost
+        summary["odds_monthly_credits_spent"] = monthly_spent
+        summary["odds_estimated_request_cost"] = estimated_cost
+        effective_reserve = max(settings.odds_api_min_requests_remaining, settings.prospective_credit_reserve)
+        quota_reserved = bool(odds_matches) and (
+            (remaining is not None and remaining <= effective_reserve)
+            or (settings.prospective_free_mode and monthly_spent + estimated_cost > settings.prospective_monthly_credit_budget)
         )
         events: list[dict[str, Any]] = []
         if quota_reserved:
             message = (
-                f"requests_remaining={remaining}; reserve={settings.odds_api_min_requests_remaining}; "
-                f"target_matches={len(odds_matches)}"
+                f"requests_remaining={remaining}; reserve={effective_reserve}; monthly_spent={monthly_spent}; "
+                f"monthly_budget={settings.prospective_monthly_credit_budget}; target_matches={len(odds_matches)}"
             )
             self.repository.log_provider_sync("the_odds_api", "quota_reserved", message=message)
             summary["errors"].append("external_odds: request quota reserve reached")
@@ -176,6 +197,8 @@ class DataEnrichmentService:
                 events, headers = self.odds.events({
                     str(match.get("league") or "") for match in odds_matches
                 })
+                for audit in self.odds.request_audits:
+                    self.repository.record_odds_api_request(audit, now.isoformat())
                 summary["market_events_fetched"] = len(events)
                 self.repository.log_provider_sync("the_odds_api", "success", len(events),
                     f'requests_remaining={headers.get("x-requests-remaining", "unknown")}')
@@ -207,10 +230,16 @@ class DataEnrichmentService:
                 consensus = self.odds.consensus(event) if event else None
                 if consensus:
                     fetched_at = utcnow()
+                    bookmaker_rows = self.odds.bookmaker_odds(event)
                     self.repository.add_odds(match["id"], consensus, "The Odds API consensus", fetched_at, external=True)
                     self.repository.add_external_bookmaker_odds(
-                        match["id"], self.odds.bookmaker_odds(event), fetched_at
+                        match["id"], bookmaker_rows, fetched_at
                     )
+                    summary["prospective_snapshots"] = summary.get("prospective_snapshots", 0) + \
+                        self.repository.archive_prospective_external_odds(
+                            match, event, bookmaker_rows, fetched_at,
+                            _capture_window_label(match, _parse_time(fetched_at)),
+                        )
                     summary["market_odds"] += 1
                 else:
                     summary["market_unmatched"] += 1

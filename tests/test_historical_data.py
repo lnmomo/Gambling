@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+from datetime import date
 from pathlib import Path
 
 from football_agents.db import Database
@@ -15,6 +16,12 @@ CSV = """date,league,home_team,away_team,home_score,away_score
 
 
 class HistoricalDataTests(unittest.TestCase):
+    def test_season_codes_do_not_request_unpublished_next_season_in_july(self) -> None:
+        self.assertEqual(
+            HistoricalCollectionAgent.season_codes(2, today=date(2026, 7, 28)),
+            ["2526", "2425"],
+        )
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         database = Database(Path(self.temp.name) / "history.db")

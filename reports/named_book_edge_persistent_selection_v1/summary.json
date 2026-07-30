@@ -1,0 +1,1325 @@
+{
+  "method": "six-month train, three-month holdout nested B365-vs-Pinnacle threshold selection",
+  "daily_budget_limit": 100.0,
+  "execution_price": "B365 opening",
+  "reference_probability": "Pinnacle opening multiplicative de-vig",
+  "same_day_results_hidden_until_settlement": true,
+  "timing_limitation": "Opening columns lack intraday quote timestamps; research-only until prospective aligned snapshots mature.",
+  "folds": [
+    {
+      "holdout_window": "2022-09-01..2022-11-30",
+      "candidates": {
+        "B365-vs-Pinnacle-edge1.02": {
+          "config_name": "B365-vs-Pinnacle-edge1.02",
+          "matches_in_window": 1950,
+          "bets": 163,
+          "staked": 22.21,
+          "profit": -0.13,
+          "roi_pct": -0.59,
+          "win_rate": 0.2393,
+          "max_drawdown": 2.91,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.02
+        },
+        "B365-vs-Pinnacle-edge1.04": {
+          "config_name": "B365-vs-Pinnacle-edge1.04",
+          "matches_in_window": 1950,
+          "bets": 96,
+          "staked": 19.87,
+          "profit": 1.03,
+          "roi_pct": 5.18,
+          "win_rate": 0.25,
+          "max_drawdown": 2.85,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.04
+        },
+        "B365-vs-Pinnacle-edge1.06": {
+          "config_name": "B365-vs-Pinnacle-edge1.06",
+          "matches_in_window": 1950,
+          "bets": 42,
+          "staked": 12.95,
+          "profit": 3.15,
+          "roi_pct": 24.32,
+          "win_rate": 0.3095,
+          "max_drawdown": 2.36,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.06
+        }
+      },
+      "train_window": "2022-03-01..2022-08-31",
+      "train_candidates": {
+        "B365-vs-Pinnacle-edge1.02": {
+          "config_name": "B365-vs-Pinnacle-edge1.02",
+          "matches_in_window": 2768,
+          "bets": 203,
+          "staked": 34.37,
+          "profit": 11.35,
+          "roi_pct": 33.02,
+          "win_rate": 0.3547,
+          "max_drawdown": 2.38,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.02
+        },
+        "B365-vs-Pinnacle-edge1.04": {
+          "config_name": "B365-vs-Pinnacle-edge1.04",
+          "matches_in_window": 2768,
+          "bets": 151,
+          "staked": 32.96,
+          "profit": 10.09,
+          "roi_pct": 30.61,
+          "win_rate": 0.3642,
+          "max_drawdown": 3.17,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.04
+        },
+        "B365-vs-Pinnacle-edge1.06": {
+          "config_name": "B365-vs-Pinnacle-edge1.06",
+          "matches_in_window": 2768,
+          "bets": 81,
+          "staked": 24.69,
+          "profit": 6.05,
+          "roi_pct": 24.5,
+          "win_rate": 0.3333,
+          "max_drawdown": 3.16,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.06
+        }
+      },
+      "train_segments": {
+        "B365-vs-Pinnacle-edge1.02": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.02",
+            "matches_in_window": 1962,
+            "bets": 203,
+            "staked": 34.37,
+            "profit": 11.35,
+            "roi_pct": 33.02,
+            "win_rate": 0.3547,
+            "max_drawdown": 2.38,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.02
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.02",
+            "matches_in_window": 806,
+            "bets": 84,
+            "staked": 12.26,
+            "profit": -0.08,
+            "roi_pct": -0.65,
+            "win_rate": 0.3214,
+            "max_drawdown": 2.25,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.02
+          }
+        ],
+        "B365-vs-Pinnacle-edge1.04": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.04",
+            "matches_in_window": 1962,
+            "bets": 151,
+            "staked": 32.96,
+            "profit": 10.09,
+            "roi_pct": 30.61,
+            "win_rate": 0.3642,
+            "max_drawdown": 3.17,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.04
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.04",
+            "matches_in_window": 806,
+            "bets": 54,
+            "staked": 11.14,
+            "profit": -0.29,
+            "roi_pct": -2.6,
+            "win_rate": 0.3148,
+            "max_drawdown": 2.2,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.04
+          }
+        ],
+        "B365-vs-Pinnacle-edge1.06": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.06",
+            "matches_in_window": 1962,
+            "bets": 81,
+            "staked": 24.69,
+            "profit": 6.05,
+            "roi_pct": 24.5,
+            "win_rate": 0.3333,
+            "max_drawdown": 3.16,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.06
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.06",
+            "matches_in_window": 806,
+            "bets": 18,
+            "staked": 5.54,
+            "profit": -1.95,
+            "roi_pct": -35.2,
+            "win_rate": 0.1667,
+            "max_drawdown": 2.42,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.06
+          }
+        ]
+      },
+      "selected_on_train": "ABSTAIN",
+      "selection_reason": "no_train_candidate_passed_fixed_eligibility"
+    },
+    {
+      "holdout_window": "2023-03-01..2023-05-31",
+      "candidates": {
+        "B365-vs-Pinnacle-edge1.02": {
+          "config_name": "B365-vs-Pinnacle-edge1.02",
+          "matches_in_window": 2089,
+          "bets": 153,
+          "staked": 22.08,
+          "profit": 2.32,
+          "roi_pct": 10.51,
+          "win_rate": 0.3072,
+          "max_drawdown": 2.95,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.02
+        },
+        "B365-vs-Pinnacle-edge1.04": {
+          "config_name": "B365-vs-Pinnacle-edge1.04",
+          "matches_in_window": 2089,
+          "bets": 115,
+          "staked": 22.06,
+          "profit": 1.5,
+          "roi_pct": 6.8,
+          "win_rate": 0.287,
+          "max_drawdown": 3.41,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.04
+        },
+        "B365-vs-Pinnacle-edge1.06": {
+          "config_name": "B365-vs-Pinnacle-edge1.06",
+          "matches_in_window": 2089,
+          "bets": 43,
+          "staked": 12.16,
+          "profit": 0.79,
+          "roi_pct": 6.5,
+          "win_rate": 0.2558,
+          "max_drawdown": 2.94,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.06
+        }
+      },
+      "train_window": "2022-09-01..2023-02-28",
+      "train_candidates": {
+        "B365-vs-Pinnacle-edge1.02": {
+          "config_name": "B365-vs-Pinnacle-edge1.02",
+          "matches_in_window": 3749,
+          "bets": 163,
+          "staked": 22.21,
+          "profit": -0.13,
+          "roi_pct": -0.59,
+          "win_rate": 0.2393,
+          "max_drawdown": 2.91,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.02
+        },
+        "B365-vs-Pinnacle-edge1.04": {
+          "config_name": "B365-vs-Pinnacle-edge1.04",
+          "matches_in_window": 3749,
+          "bets": 96,
+          "staked": 19.87,
+          "profit": 1.03,
+          "roi_pct": 5.18,
+          "win_rate": 0.25,
+          "max_drawdown": 2.85,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.04
+        },
+        "B365-vs-Pinnacle-edge1.06": {
+          "config_name": "B365-vs-Pinnacle-edge1.06",
+          "matches_in_window": 3749,
+          "bets": 42,
+          "staked": 12.95,
+          "profit": 3.15,
+          "roi_pct": 24.32,
+          "win_rate": 0.3095,
+          "max_drawdown": 2.36,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.06
+        }
+      },
+      "train_segments": {
+        "B365-vs-Pinnacle-edge1.02": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.02",
+            "matches_in_window": 1950,
+            "bets": 163,
+            "staked": 22.21,
+            "profit": -0.13,
+            "roi_pct": -0.59,
+            "win_rate": 0.2393,
+            "max_drawdown": 2.91,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.02
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.02",
+            "matches_in_window": 1799,
+            "bets": 16,
+            "staked": 1.77,
+            "profit": -0.52,
+            "roi_pct": -29.38,
+            "win_rate": 0.1875,
+            "max_drawdown": 1.29,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.02
+          }
+        ],
+        "B365-vs-Pinnacle-edge1.04": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.04",
+            "matches_in_window": 1950,
+            "bets": 96,
+            "staked": 19.87,
+            "profit": 1.03,
+            "roi_pct": 5.18,
+            "win_rate": 0.25,
+            "max_drawdown": 2.85,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.04
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.04",
+            "matches_in_window": 1799,
+            "bets": 99,
+            "staked": 19.53,
+            "profit": 2.16,
+            "roi_pct": 11.06,
+            "win_rate": 0.2525,
+            "max_drawdown": 4.23,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.04
+          }
+        ],
+        "B365-vs-Pinnacle-edge1.06": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.06",
+            "matches_in_window": 1950,
+            "bets": 42,
+            "staked": 12.95,
+            "profit": 3.15,
+            "roi_pct": 24.32,
+            "win_rate": 0.3095,
+            "max_drawdown": 2.36,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.06
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.06",
+            "matches_in_window": 1799,
+            "bets": 57,
+            "staked": 18.6,
+            "profit": 5.45,
+            "roi_pct": 29.3,
+            "win_rate": 0.3158,
+            "max_drawdown": 2.49,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.06
+          }
+        ]
+      },
+      "selected_on_train": "B365-vs-Pinnacle-edge1.06",
+      "selection_reason": "positive_profit_min30_bets_min10_staked_and_two_positive_3month_segments_risk_adjusted_score"
+    },
+    {
+      "holdout_window": "2023-09-01..2023-11-30",
+      "candidates": {
+        "B365-vs-Pinnacle-edge1.02": {
+          "config_name": "B365-vs-Pinnacle-edge1.02",
+          "matches_in_window": 1958,
+          "bets": 223,
+          "staked": 29.76,
+          "profit": 5.75,
+          "roi_pct": 19.32,
+          "win_rate": 0.3094,
+          "max_drawdown": 2.05,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.02
+        },
+        "B365-vs-Pinnacle-edge1.04": {
+          "config_name": "B365-vs-Pinnacle-edge1.04",
+          "matches_in_window": 1958,
+          "bets": 114,
+          "staked": 21.45,
+          "profit": 4.21,
+          "roi_pct": 19.63,
+          "win_rate": 0.2807,
+          "max_drawdown": 1.89,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.04
+        },
+        "B365-vs-Pinnacle-edge1.06": {
+          "config_name": "B365-vs-Pinnacle-edge1.06",
+          "matches_in_window": 1958,
+          "bets": 43,
+          "staked": 11.72,
+          "profit": 2.86,
+          "roi_pct": 24.4,
+          "win_rate": 0.2326,
+          "max_drawdown": 2.33,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.06
+        }
+      },
+      "train_window": "2023-03-01..2023-08-31",
+      "train_candidates": {
+        "B365-vs-Pinnacle-edge1.02": {
+          "config_name": "B365-vs-Pinnacle-edge1.02",
+          "matches_in_window": 2709,
+          "bets": 153,
+          "staked": 22.08,
+          "profit": 2.32,
+          "roi_pct": 10.51,
+          "win_rate": 0.3072,
+          "max_drawdown": 2.95,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.02
+        },
+        "B365-vs-Pinnacle-edge1.04": {
+          "config_name": "B365-vs-Pinnacle-edge1.04",
+          "matches_in_window": 2709,
+          "bets": 115,
+          "staked": 22.06,
+          "profit": 1.5,
+          "roi_pct": 6.8,
+          "win_rate": 0.287,
+          "max_drawdown": 3.41,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.04
+        },
+        "B365-vs-Pinnacle-edge1.06": {
+          "config_name": "B365-vs-Pinnacle-edge1.06",
+          "matches_in_window": 2709,
+          "bets": 43,
+          "staked": 12.16,
+          "profit": 0.79,
+          "roi_pct": 6.5,
+          "win_rate": 0.2558,
+          "max_drawdown": 2.94,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.06
+        }
+      },
+      "train_segments": {
+        "B365-vs-Pinnacle-edge1.02": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.02",
+            "matches_in_window": 2089,
+            "bets": 153,
+            "staked": 22.08,
+            "profit": 2.32,
+            "roi_pct": 10.51,
+            "win_rate": 0.3072,
+            "max_drawdown": 2.95,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.02
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.02",
+            "matches_in_window": 620,
+            "bets": 74,
+            "staked": 9.71,
+            "profit": -0.67,
+            "roi_pct": -6.9,
+            "win_rate": 0.2432,
+            "max_drawdown": 4.81,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.02
+          }
+        ],
+        "B365-vs-Pinnacle-edge1.04": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.04",
+            "matches_in_window": 2089,
+            "bets": 115,
+            "staked": 22.06,
+            "profit": 1.5,
+            "roi_pct": 6.8,
+            "win_rate": 0.287,
+            "max_drawdown": 3.41,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.04
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.04",
+            "matches_in_window": 620,
+            "bets": 31,
+            "staked": 4.64,
+            "profit": 0.45,
+            "roi_pct": 9.7,
+            "win_rate": 0.2258,
+            "max_drawdown": 2.06,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.04
+          }
+        ],
+        "B365-vs-Pinnacle-edge1.06": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.06",
+            "matches_in_window": 2089,
+            "bets": 43,
+            "staked": 12.16,
+            "profit": 0.79,
+            "roi_pct": 6.5,
+            "win_rate": 0.2558,
+            "max_drawdown": 2.94,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.06
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.06",
+            "matches_in_window": 620,
+            "bets": 7,
+            "staked": 2.05,
+            "profit": 0.03,
+            "roi_pct": 1.46,
+            "win_rate": 0.1429,
+            "max_drawdown": 1.57,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.06
+          }
+        ]
+      },
+      "selected_on_train": "ABSTAIN",
+      "selection_reason": "no_train_candidate_passed_fixed_eligibility"
+    },
+    {
+      "holdout_window": "2024-03-01..2024-05-31",
+      "candidates": {
+        "B365-vs-Pinnacle-edge1.02": {
+          "config_name": "B365-vs-Pinnacle-edge1.02",
+          "matches_in_window": 1993,
+          "bets": 230,
+          "staked": 37.26,
+          "profit": -0.76,
+          "roi_pct": -2.04,
+          "win_rate": 0.2913,
+          "max_drawdown": 5.94,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.02
+        },
+        "B365-vs-Pinnacle-edge1.04": {
+          "config_name": "B365-vs-Pinnacle-edge1.04",
+          "matches_in_window": 1993,
+          "bets": 204,
+          "staked": 36.1,
+          "profit": -1.3,
+          "roi_pct": -3.6,
+          "win_rate": 0.2843,
+          "max_drawdown": 6.53,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.04
+        },
+        "B365-vs-Pinnacle-edge1.06": {
+          "config_name": "B365-vs-Pinnacle-edge1.06",
+          "matches_in_window": 1993,
+          "bets": 32,
+          "staked": 8.51,
+          "profit": 0.29,
+          "roi_pct": 3.41,
+          "win_rate": 0.25,
+          "max_drawdown": 2.46,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.06
+        }
+      },
+      "train_window": "2023-09-01..2024-02-29",
+      "train_candidates": {
+        "B365-vs-Pinnacle-edge1.02": {
+          "config_name": "B365-vs-Pinnacle-edge1.02",
+          "matches_in_window": 4130,
+          "bets": 223,
+          "staked": 29.76,
+          "profit": 5.75,
+          "roi_pct": 19.32,
+          "win_rate": 0.3094,
+          "max_drawdown": 2.05,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.02
+        },
+        "B365-vs-Pinnacle-edge1.04": {
+          "config_name": "B365-vs-Pinnacle-edge1.04",
+          "matches_in_window": 4130,
+          "bets": 114,
+          "staked": 21.45,
+          "profit": 4.21,
+          "roi_pct": 19.63,
+          "win_rate": 0.2807,
+          "max_drawdown": 1.89,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.04
+        },
+        "B365-vs-Pinnacle-edge1.06": {
+          "config_name": "B365-vs-Pinnacle-edge1.06",
+          "matches_in_window": 4130,
+          "bets": 43,
+          "staked": 11.72,
+          "profit": 2.86,
+          "roi_pct": 24.4,
+          "win_rate": 0.2326,
+          "max_drawdown": 2.33,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.06
+        }
+      },
+      "train_segments": {
+        "B365-vs-Pinnacle-edge1.02": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.02",
+            "matches_in_window": 1958,
+            "bets": 223,
+            "staked": 29.76,
+            "profit": 5.75,
+            "roi_pct": 19.32,
+            "win_rate": 0.3094,
+            "max_drawdown": 2.05,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.02
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.02",
+            "matches_in_window": 2172,
+            "bets": 88,
+            "staked": 11.18,
+            "profit": -0.08,
+            "roi_pct": -0.72,
+            "win_rate": 0.25,
+            "max_drawdown": 1.95,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.02
+          }
+        ],
+        "B365-vs-Pinnacle-edge1.04": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.04",
+            "matches_in_window": 1958,
+            "bets": 114,
+            "staked": 21.45,
+            "profit": 4.21,
+            "roi_pct": 19.63,
+            "win_rate": 0.2807,
+            "max_drawdown": 1.89,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.04
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.04",
+            "matches_in_window": 2172,
+            "bets": 53,
+            "staked": 9.09,
+            "profit": -0.72,
+            "roi_pct": -7.92,
+            "win_rate": 0.2075,
+            "max_drawdown": 2.04,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.04
+          }
+        ],
+        "B365-vs-Pinnacle-edge1.06": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.06",
+            "matches_in_window": 1958,
+            "bets": 43,
+            "staked": 11.72,
+            "profit": 2.86,
+            "roi_pct": 24.4,
+            "win_rate": 0.2326,
+            "max_drawdown": 2.33,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.06
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.06",
+            "matches_in_window": 2172,
+            "bets": 25,
+            "staked": 6.02,
+            "profit": 0.96,
+            "roi_pct": 15.95,
+            "win_rate": 0.24,
+            "max_drawdown": 1.35,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.06
+          }
+        ]
+      },
+      "selected_on_train": "B365-vs-Pinnacle-edge1.06",
+      "selection_reason": "positive_profit_min30_bets_min10_staked_and_two_positive_3month_segments_risk_adjusted_score"
+    },
+    {
+      "holdout_window": "2024-09-01..2024-11-30",
+      "candidates": {
+        "B365-vs-Pinnacle-edge1.02": {
+          "config_name": "B365-vs-Pinnacle-edge1.02",
+          "matches_in_window": 1878,
+          "bets": 52,
+          "staked": 8.66,
+          "profit": -1.51,
+          "roi_pct": -17.44,
+          "win_rate": 0.2885,
+          "max_drawdown": 2.36,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.02
+        },
+        "B365-vs-Pinnacle-edge1.04": {
+          "config_name": "B365-vs-Pinnacle-edge1.04",
+          "matches_in_window": 1878,
+          "bets": 50,
+          "staked": 8.6,
+          "profit": -1.64,
+          "roi_pct": -19.07,
+          "win_rate": 0.26,
+          "max_drawdown": 2.49,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.04
+        },
+        "B365-vs-Pinnacle-edge1.06": {
+          "config_name": "B365-vs-Pinnacle-edge1.06",
+          "matches_in_window": 1878,
+          "bets": 130,
+          "staked": 29.93,
+          "profit": 3.21,
+          "roi_pct": 10.73,
+          "win_rate": 0.2846,
+          "max_drawdown": 3.8,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.06
+        }
+      },
+      "train_window": "2024-03-01..2024-08-31",
+      "train_candidates": {
+        "B365-vs-Pinnacle-edge1.02": {
+          "config_name": "B365-vs-Pinnacle-edge1.02",
+          "matches_in_window": 2566,
+          "bets": 282,
+          "staked": 47.63,
+          "profit": -3.21,
+          "roi_pct": -6.74,
+          "win_rate": 0.2801,
+          "max_drawdown": 7.88,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.02
+        },
+        "B365-vs-Pinnacle-edge1.04": {
+          "config_name": "B365-vs-Pinnacle-edge1.04",
+          "matches_in_window": 2566,
+          "bets": 251,
+          "staked": 46.26,
+          "profit": -3.64,
+          "roi_pct": -7.87,
+          "win_rate": 0.2749,
+          "max_drawdown": 8.39,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.04
+        },
+        "B365-vs-Pinnacle-edge1.06": {
+          "config_name": "B365-vs-Pinnacle-edge1.06",
+          "matches_in_window": 2566,
+          "bets": 32,
+          "staked": 8.51,
+          "profit": 0.29,
+          "roi_pct": 3.41,
+          "win_rate": 0.25,
+          "max_drawdown": 2.46,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.06
+        }
+      },
+      "train_segments": {
+        "B365-vs-Pinnacle-edge1.02": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.02",
+            "matches_in_window": 1993,
+            "bets": 230,
+            "staked": 37.26,
+            "profit": -0.76,
+            "roi_pct": -2.04,
+            "win_rate": 0.2913,
+            "max_drawdown": 5.94,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.02
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.02",
+            "matches_in_window": 573,
+            "bets": 52,
+            "staked": 10.37,
+            "profit": -2.45,
+            "roi_pct": -23.63,
+            "win_rate": 0.2308,
+            "max_drawdown": 2.94,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.02
+          }
+        ],
+        "B365-vs-Pinnacle-edge1.04": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.04",
+            "matches_in_window": 1993,
+            "bets": 204,
+            "staked": 36.1,
+            "profit": -1.3,
+            "roi_pct": -3.6,
+            "win_rate": 0.2843,
+            "max_drawdown": 6.53,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.04
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.04",
+            "matches_in_window": 573,
+            "bets": 47,
+            "staked": 10.16,
+            "profit": -2.34,
+            "roi_pct": -23.03,
+            "win_rate": 0.234,
+            "max_drawdown": 2.86,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.04
+          }
+        ],
+        "B365-vs-Pinnacle-edge1.06": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.06",
+            "matches_in_window": 1993,
+            "bets": 32,
+            "staked": 8.51,
+            "profit": 0.29,
+            "roi_pct": 3.41,
+            "win_rate": 0.25,
+            "max_drawdown": 2.46,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.06
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.06",
+            "matches_in_window": 573,
+            "bets": 31,
+            "staked": 9.06,
+            "profit": -1.61,
+            "roi_pct": -17.77,
+            "win_rate": 0.2258,
+            "max_drawdown": 2.29,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.06
+          }
+        ]
+      },
+      "selected_on_train": "ABSTAIN",
+      "selection_reason": "no_train_candidate_passed_fixed_eligibility"
+    },
+    {
+      "holdout_window": "2025-03-01..2025-05-31",
+      "candidates": {
+        "B365-vs-Pinnacle-edge1.02": {
+          "config_name": "B365-vs-Pinnacle-edge1.02",
+          "matches_in_window": 1992,
+          "bets": 200,
+          "staked": 36.93,
+          "profit": 0.2,
+          "roi_pct": 0.54,
+          "win_rate": 0.28,
+          "max_drawdown": 6.19,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.02
+        },
+        "B365-vs-Pinnacle-edge1.04": {
+          "config_name": "B365-vs-Pinnacle-edge1.04",
+          "matches_in_window": 1992,
+          "bets": 193,
+          "staked": 36.74,
+          "profit": -0.18,
+          "roi_pct": -0.49,
+          "win_rate": 0.2694,
+          "max_drawdown": 6.43,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.04
+        },
+        "B365-vs-Pinnacle-edge1.06": {
+          "config_name": "B365-vs-Pinnacle-edge1.06",
+          "matches_in_window": 1992,
+          "bets": 136,
+          "staked": 33.65,
+          "profit": -0.72,
+          "roi_pct": -2.14,
+          "win_rate": 0.2721,
+          "max_drawdown": 6.19,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.06
+        }
+      },
+      "train_window": "2024-09-01..2025-02-28",
+      "train_candidates": {
+        "B365-vs-Pinnacle-edge1.02": {
+          "config_name": "B365-vs-Pinnacle-edge1.02",
+          "matches_in_window": 4025,
+          "bets": 52,
+          "staked": 8.66,
+          "profit": -1.51,
+          "roi_pct": -17.44,
+          "win_rate": 0.2885,
+          "max_drawdown": 2.36,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.02
+        },
+        "B365-vs-Pinnacle-edge1.04": {
+          "config_name": "B365-vs-Pinnacle-edge1.04",
+          "matches_in_window": 4025,
+          "bets": 50,
+          "staked": 8.6,
+          "profit": -1.64,
+          "roi_pct": -19.07,
+          "win_rate": 0.26,
+          "max_drawdown": 2.49,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.04
+        },
+        "B365-vs-Pinnacle-edge1.06": {
+          "config_name": "B365-vs-Pinnacle-edge1.06",
+          "matches_in_window": 4025,
+          "bets": 236,
+          "staked": 54.27,
+          "profit": 9.22,
+          "roi_pct": 16.99,
+          "win_rate": 0.3051,
+          "max_drawdown": 3.8,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.06
+        }
+      },
+      "train_segments": {
+        "B365-vs-Pinnacle-edge1.02": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.02",
+            "matches_in_window": 1878,
+            "bets": 52,
+            "staked": 8.66,
+            "profit": -1.51,
+            "roi_pct": -17.44,
+            "win_rate": 0.2885,
+            "max_drawdown": 2.36,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.02
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.02",
+            "matches_in_window": 2147,
+            "bets": 169,
+            "staked": 29.42,
+            "profit": 5.55,
+            "roi_pct": 18.86,
+            "win_rate": 0.2959,
+            "max_drawdown": 3.27,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.02
+          }
+        ],
+        "B365-vs-Pinnacle-edge1.04": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.04",
+            "matches_in_window": 1878,
+            "bets": 50,
+            "staked": 8.6,
+            "profit": -1.64,
+            "roi_pct": -19.07,
+            "win_rate": 0.26,
+            "max_drawdown": 2.49,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.04
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.04",
+            "matches_in_window": 2147,
+            "bets": 162,
+            "staked": 29.19,
+            "profit": 5.78,
+            "roi_pct": 19.8,
+            "win_rate": 0.3086,
+            "max_drawdown": 3.18,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.04
+          }
+        ],
+        "B365-vs-Pinnacle-edge1.06": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.06",
+            "matches_in_window": 1878,
+            "bets": 130,
+            "staked": 29.93,
+            "profit": 3.21,
+            "roi_pct": 10.73,
+            "win_rate": 0.2846,
+            "max_drawdown": 3.8,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.06
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.06",
+            "matches_in_window": 2147,
+            "bets": 106,
+            "staked": 24.34,
+            "profit": 6.01,
+            "roi_pct": 24.69,
+            "win_rate": 0.3302,
+            "max_drawdown": 2.54,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.06
+          }
+        ]
+      },
+      "selected_on_train": "B365-vs-Pinnacle-edge1.06",
+      "selection_reason": "positive_profit_min30_bets_min10_staked_and_two_positive_3month_segments_risk_adjusted_score"
+    },
+    {
+      "holdout_window": "2025-09-01..2025-11-30",
+      "candidates": {
+        "B365-vs-Pinnacle-edge1.02": {
+          "config_name": "B365-vs-Pinnacle-edge1.02",
+          "matches_in_window": 1877,
+          "bets": 101,
+          "staked": 22.81,
+          "profit": -8.4,
+          "roi_pct": -36.83,
+          "win_rate": 0.2079,
+          "max_drawdown": 10.38,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.02
+        },
+        "B365-vs-Pinnacle-edge1.04": {
+          "config_name": "B365-vs-Pinnacle-edge1.04",
+          "matches_in_window": 1877,
+          "bets": 103,
+          "staked": 25.28,
+          "profit": -6.22,
+          "roi_pct": -24.6,
+          "win_rate": 0.2039,
+          "max_drawdown": 10.42,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.04
+        },
+        "B365-vs-Pinnacle-edge1.06": {
+          "config_name": "B365-vs-Pinnacle-edge1.06",
+          "matches_in_window": 1877,
+          "bets": 43,
+          "staked": 13.42,
+          "profit": -2.61,
+          "roi_pct": -19.45,
+          "win_rate": 0.186,
+          "max_drawdown": 4.81,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.06
+        }
+      },
+      "train_window": "2025-03-01..2025-08-31",
+      "train_candidates": {
+        "B365-vs-Pinnacle-edge1.02": {
+          "config_name": "B365-vs-Pinnacle-edge1.02",
+          "matches_in_window": 2617,
+          "bets": 207,
+          "staked": 38.23,
+          "profit": -0.99,
+          "roi_pct": -2.59,
+          "win_rate": 0.2754,
+          "max_drawdown": 6.19,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.02
+        },
+        "B365-vs-Pinnacle-edge1.04": {
+          "config_name": "B365-vs-Pinnacle-edge1.04",
+          "matches_in_window": 2617,
+          "bets": 200,
+          "staked": 38.04,
+          "profit": -1.37,
+          "roi_pct": -3.6,
+          "win_rate": 0.265,
+          "max_drawdown": 6.43,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.04
+        },
+        "B365-vs-Pinnacle-edge1.06": {
+          "config_name": "B365-vs-Pinnacle-edge1.06",
+          "matches_in_window": 2617,
+          "bets": 142,
+          "staked": 34.92,
+          "profit": -1.99,
+          "roi_pct": -5.7,
+          "win_rate": 0.2606,
+          "max_drawdown": 6.19,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.06
+        }
+      },
+      "train_segments": {
+        "B365-vs-Pinnacle-edge1.02": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.02",
+            "matches_in_window": 1992,
+            "bets": 200,
+            "staked": 36.93,
+            "profit": 0.2,
+            "roi_pct": 0.54,
+            "win_rate": 0.28,
+            "max_drawdown": 6.19,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.02
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.02",
+            "matches_in_window": 625,
+            "bets": 37,
+            "staked": 6.05,
+            "profit": -3.94,
+            "roi_pct": -65.12,
+            "win_rate": 0.1622,
+            "max_drawdown": 3.94,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.02
+          }
+        ],
+        "B365-vs-Pinnacle-edge1.04": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.04",
+            "matches_in_window": 1992,
+            "bets": 193,
+            "staked": 36.74,
+            "profit": -0.18,
+            "roi_pct": -0.49,
+            "win_rate": 0.2694,
+            "max_drawdown": 6.43,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.04
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.04",
+            "matches_in_window": 625,
+            "bets": 34,
+            "staked": 6.34,
+            "profit": -3.52,
+            "roi_pct": -55.52,
+            "win_rate": 0.1765,
+            "max_drawdown": 3.74,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.04
+          }
+        ],
+        "B365-vs-Pinnacle-edge1.06": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.06",
+            "matches_in_window": 1992,
+            "bets": 136,
+            "staked": 33.65,
+            "profit": -0.72,
+            "roi_pct": -2.14,
+            "win_rate": 0.2721,
+            "max_drawdown": 6.19,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.06
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.06",
+            "matches_in_window": 625,
+            "bets": 22,
+            "staked": 5.39,
+            "profit": -3.36,
+            "roi_pct": -62.34,
+            "win_rate": 0.1364,
+            "max_drawdown": 3.74,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.06
+          }
+        ]
+      },
+      "selected_on_train": "ABSTAIN",
+      "selection_reason": "no_train_candidate_passed_fixed_eligibility"
+    },
+    {
+      "holdout_window": "2026-03-01..2026-05-31",
+      "candidates": {
+        "B365-vs-Pinnacle-edge1.02": {
+          "config_name": "B365-vs-Pinnacle-edge1.02",
+          "matches_in_window": 1912,
+          "bets": 0,
+          "staked": 0,
+          "profit": 0,
+          "roi_pct": 0.0,
+          "win_rate": 0.0,
+          "max_drawdown": 0.0,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.02
+        },
+        "B365-vs-Pinnacle-edge1.04": {
+          "config_name": "B365-vs-Pinnacle-edge1.04",
+          "matches_in_window": 1912,
+          "bets": 0,
+          "staked": 0,
+          "profit": 0,
+          "roi_pct": 0.0,
+          "win_rate": 0.0,
+          "max_drawdown": 0.0,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.04
+        },
+        "B365-vs-Pinnacle-edge1.06": {
+          "config_name": "B365-vs-Pinnacle-edge1.06",
+          "matches_in_window": 1912,
+          "bets": 0,
+          "staked": 0,
+          "profit": 0,
+          "roi_pct": 0.0,
+          "win_rate": 0.0,
+          "max_drawdown": 0.0,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.06
+        }
+      },
+      "train_window": "2025-09-01..2026-02-28",
+      "train_candidates": {
+        "B365-vs-Pinnacle-edge1.02": {
+          "config_name": "B365-vs-Pinnacle-edge1.02",
+          "matches_in_window": 4015,
+          "bets": 101,
+          "staked": 22.81,
+          "profit": -8.4,
+          "roi_pct": -36.83,
+          "win_rate": 0.2079,
+          "max_drawdown": 10.38,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.02
+        },
+        "B365-vs-Pinnacle-edge1.04": {
+          "config_name": "B365-vs-Pinnacle-edge1.04",
+          "matches_in_window": 4015,
+          "bets": 122,
+          "staked": 28.01,
+          "profit": -5.87,
+          "roi_pct": -20.96,
+          "win_rate": 0.2213,
+          "max_drawdown": 10.42,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.04
+        },
+        "B365-vs-Pinnacle-edge1.06": {
+          "config_name": "B365-vs-Pinnacle-edge1.06",
+          "matches_in_window": 4015,
+          "bets": 43,
+          "staked": 13.42,
+          "profit": -2.61,
+          "roi_pct": -19.45,
+          "win_rate": 0.186,
+          "max_drawdown": 4.81,
+          "execution_price_source": "bet365_opening",
+          "named_book_edge_ratio": 1.06
+        }
+      },
+      "train_segments": {
+        "B365-vs-Pinnacle-edge1.02": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.02",
+            "matches_in_window": 1877,
+            "bets": 101,
+            "staked": 22.81,
+            "profit": -8.4,
+            "roi_pct": -36.83,
+            "win_rate": 0.2079,
+            "max_drawdown": 10.38,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.02
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.02",
+            "matches_in_window": 2138,
+            "bets": 20,
+            "staked": 3.13,
+            "profit": 0.4,
+            "roi_pct": 12.78,
+            "win_rate": 0.35,
+            "max_drawdown": 1.0,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.02
+          }
+        ],
+        "B365-vs-Pinnacle-edge1.04": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.04",
+            "matches_in_window": 1877,
+            "bets": 103,
+            "staked": 25.28,
+            "profit": -6.22,
+            "roi_pct": -24.6,
+            "win_rate": 0.2039,
+            "max_drawdown": 10.42,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.04
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.04",
+            "matches_in_window": 2138,
+            "bets": 19,
+            "staked": 3.1,
+            "profit": 0.31,
+            "roi_pct": 10.0,
+            "win_rate": 0.3158,
+            "max_drawdown": 1.09,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.04
+          }
+        ],
+        "B365-vs-Pinnacle-edge1.06": [
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.06",
+            "matches_in_window": 1877,
+            "bets": 43,
+            "staked": 13.42,
+            "profit": -2.61,
+            "roi_pct": -19.45,
+            "win_rate": 0.186,
+            "max_drawdown": 4.81,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.06
+          },
+          {
+            "config_name": "B365-vs-Pinnacle-edge1.06",
+            "matches_in_window": 2138,
+            "bets": 5,
+            "staked": 1.66,
+            "profit": 0.03,
+            "roi_pct": 1.81,
+            "win_rate": 0.4,
+            "max_drawdown": 1.09,
+            "execution_price_source": "bet365_opening",
+            "named_book_edge_ratio": 1.06
+          }
+        ]
+      },
+      "selected_on_train": "ABSTAIN",
+      "selection_reason": "no_train_candidate_passed_fixed_eligibility"
+    }
+  ],
+  "selected_holdout_aggregate": {
+    "folds": 3,
+    "positive_folds": 2,
+    "bets": 211,
+    "staked": 54.32,
+    "profit": 0.36,
+    "roi_pct": 0.66,
+    "median_fold_roi_pct": 3.41,
+    "worst_fold_roi_pct": -2.14,
+    "max_fold_drawdown": 6.19
+  },
+  "abstained_folds": 5,
+  "decision": "REJECTED_NESTED_SELECTION",
+  "reasons": [
+    "active_holdout_folds<5",
+    "positive_holdout_folds<3",
+    "staked<100_units"
+  ],
+  "promotion_guardrail": "A research survivor still requires timestamp-aligned prospective validation; it never creates live positions."
+}

@@ -72,6 +72,9 @@ def test_formal_i2_configs_are_fixed_research_candidate() -> None:
 
     assert [config.odds_source for config in configs] == ["AVG_OPEN", "AVG_CLOSE"]
     assert all(config.train_months == 30 for config in configs)
+    assert all(config.require_probability_improvement for config in configs)
+    assert all(config.validation_months == 6 for config in configs)
+    assert all(config.min_validation_rows == 80 for config in configs)
     assert all(config.min_train_rows == 120 for config in configs)
     assert all(config.min_predicted_ev == 0.02 for config in configs)
     assert all(config.selected_rules == ("I2_draw_2p8_3p5",) for config in configs)

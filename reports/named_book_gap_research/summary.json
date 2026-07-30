@@ -1,37 +1,1625 @@
 {
-  "method": "timestamp-aligned Bet365 execution versus Pinnacle de-vig prospective shadow study",
-  "policy": {
-    "policy_id": "named-book-gap-7500c78d25ae7b5a2947",
-    "policy_hash": "7500c78d25ae7b5a2947c05c9711131c8dca0f792cc7dcd3ee75216cfc17b86b",
-    "config_json": "{\"execution_bookmaker_key\":\"bet365\",\"horizon_tolerance_minutes\":60,\"maximum_bookmaker_last_update_age_minutes\":15,\"maximum_bookmaker_update_skew_minutes\":10,\"maximum_odds\":6.0,\"maximum_snapshot_age_minutes\":15,\"minimum_expected_ev\":0.0,\"minimum_odds\":1.5,\"minimum_price_ratio\":1.06,\"primary_horizon_minutes\":60,\"reference_bookmaker_key\":\"pinnacle\",\"version\":\"named-book-gap-prospective-v1\"}",
-    "source_sha256": "4daffbd58045794697161c8bd2999bdd1469c6feba1a303a746a871812dfb460",
-    "registered_at": "2026-07-28T02:57:09.695201+00:00",
-    "config": {
-      "execution_bookmaker_key": "bet365",
-      "horizon_tolerance_minutes": 60,
-      "maximum_bookmaker_last_update_age_minutes": 15,
-      "maximum_bookmaker_update_skew_minutes": 10,
-      "maximum_odds": 6.0,
-      "maximum_snapshot_age_minutes": 15,
-      "minimum_expected_ev": 0.0,
-      "minimum_odds": 1.5,
-      "minimum_price_ratio": 1.06,
-      "primary_horizon_minutes": 60,
-      "reference_bookmaker_key": "pinnacle",
-      "version": "named-book-gap-prospective-v1"
+  "experiment": "v3.1-v4.1-market-vs-v6.2-v6.3-clv-ridge-shadow",
+  "selection_locked_before_future_results": true,
+  "policies": [
+    {
+      "method": "timestamp-aligned best named-book quote versus robust leave-one-book-out consensus",
+      "policy": {
+        "policy_id": "named-book-gap-8501d66fb6636acaee13",
+        "policy_hash": "8501d66fb6636acaee1364ea5aa6299ab9c88ffc3b23c418bc9b7a397b447617",
+        "config_json": "{\"daily_budget\":100.0,\"dispersion_uncertainty_multiplier\":1.5,\"exchange_bookmaker_keys\":[\"betfair_ex_eu\",\"betfair_ex_uk\",\"smarkets\",\"matchbook\"],\"exchange_commission_rate\":0.05,\"horizon_tolerance_minutes\":60,\"kelly_fraction\":0.25,\"maximum_bookmaker_last_update_age_minutes\":15,\"maximum_bookmaker_update_skew_minutes\":10,\"maximum_odds\":6.0,\"maximum_probability_shift\":0.02,\"maximum_single_stake\":10.0,\"maximum_snapshot_age_minutes\":15,\"minimum_conservative_ev\":0.02,\"minimum_odds\":1.5,\"minimum_price_ratio\":1.02,\"minimum_reference_bookmakers\":4,\"minimum_reference_probability\":0.0,\"model_disagreement_uncertainty_multiplier\":0.25,\"model_residual_reliability\":0.15,\"primary_horizon_minutes\":60,\"reference_method\":\"normalized_component_median_leave_execution_book_out\",\"slippage_rate\":0.02,\"uncertainty_floor\":0.005,\"version\":\"robust-leave-one-book-out-market-residual-prospective-v3.1-cost-aware\"}",
+        "source_sha256": "c3d1cbaabfc2d21db6df9615bc4353f615bdc26cc032981023805bf3bb52e927",
+        "registered_at": "2026-07-28T09:50:55.508345+00:00",
+        "config": {
+          "daily_budget": 100.0,
+          "dispersion_uncertainty_multiplier": 1.5,
+          "exchange_bookmaker_keys": [
+            "betfair_ex_eu",
+            "betfair_ex_uk",
+            "smarkets",
+            "matchbook"
+          ],
+          "exchange_commission_rate": 0.05,
+          "horizon_tolerance_minutes": 60,
+          "kelly_fraction": 0.25,
+          "maximum_bookmaker_last_update_age_minutes": 15,
+          "maximum_bookmaker_update_skew_minutes": 10,
+          "maximum_odds": 6.0,
+          "maximum_probability_shift": 0.02,
+          "maximum_single_stake": 10.0,
+          "maximum_snapshot_age_minutes": 15,
+          "minimum_conservative_ev": 0.02,
+          "minimum_odds": 1.5,
+          "minimum_price_ratio": 1.02,
+          "minimum_reference_bookmakers": 4,
+          "minimum_reference_probability": 0.0,
+          "model_disagreement_uncertainty_multiplier": 0.25,
+          "model_residual_reliability": 0.15,
+          "primary_horizon_minutes": 60,
+          "reference_method": "normalized_component_median_leave_execution_book_out",
+          "slippage_rate": 0.02,
+          "uncertainty_floor": 0.005,
+          "version": "robust-leave-one-book-out-market-residual-prospective-v3.1-cost-aware"
+        }
+      },
+      "decision": "NAMED_BOOK_GAP_PROSPECTIVE_COLLECTING",
+      "decision_reasons": [
+        "settled_selections<200",
+        "active_months<6"
+      ],
+      "decisions": 0,
+      "candidate_decisions": 0,
+      "settled_selections": 0,
+      "active_months": 0,
+      "profit": 0,
+      "roi_pct": 0.0,
+      "average_expected_ev": null,
+      "calibration": {
+        "selected_binary_brier": null,
+        "reference_binary_brier": null
+      },
+      "selection_diagnostics": {
+        "outcome_counts": {},
+        "maximum_outcome_concentration_pct": 0.0,
+        "execution_bookmaker_counts": {},
+        "ranker_evidence_rows": 0,
+        "average_predicted_closing_edge_pct": null,
+        "ranker_model_sha256": null
+      },
+      "settlement_day_bootstrap_roi": {
+        "status": "INSUFFICIENT_SAMPLE",
+        "settled_bets": 0,
+        "settlement_days": 0,
+        "minimum_bets": 30,
+        "minimum_days": 10,
+        "lower_95_pct": null,
+        "median_pct": null,
+        "upper_95_pct": null
+      },
+      "prospective_warnings": [],
+      "paper_portfolio": {
+        "daily_budget_limit": 100.0,
+        "maximum_single_stake": 10.0,
+        "staking": "0.25_kelly_with_cash_reserve",
+        "same_day_results_hidden": true,
+        "daily_window": "latest_30_calendar_days_Asia/Shanghai",
+        "bets": 0,
+        "pending_bets": 0,
+        "settled_bets": 0,
+        "staked": 0,
+        "settled_staked": 0,
+        "profit": 0,
+        "roi_pct": 0.0,
+        "ending_equity": 0,
+        "max_drawdown": 0.0,
+        "positive_months": 0,
+        "negative_months": 0,
+        "monthly": [],
+        "daily": [
+          {
+            "date": "2026-07-01",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-02",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-03",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-04",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-05",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-06",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-07",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-08",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-09",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-10",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-11",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-12",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-13",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-14",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-15",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-16",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-17",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-18",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-19",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-20",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-21",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-22",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-23",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-24",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-25",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-26",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-27",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-28",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-29",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-30",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          }
+        ],
+        "positions": []
+      },
+      "anti_leakage": "A result is usable only when settled_at is after both kickoff_time and decided_at.",
+      "guardrail": "Research-only immutable paper simulation. It never creates real orders."
+    },
+    {
+      "method": "timestamp-aligned best named-book quote versus robust leave-one-book-out consensus",
+      "policy": {
+        "policy_id": "named-book-gap-ffce39905e0e92d482ed",
+        "policy_hash": "ffce39905e0e92d482ed98b46c18afb7340b7837f84da98152a8a9172780534a",
+        "config_json": "{\"daily_budget\":100.0,\"dispersion_uncertainty_multiplier\":1.0,\"exchange_bookmaker_keys\":[\"betfair_ex_eu\",\"betfair_ex_uk\",\"smarkets\",\"matchbook\"],\"exchange_commission_rate\":0.05,\"horizon_tolerance_minutes\":60,\"kelly_fraction\":0.25,\"maximum_bookmaker_last_update_age_minutes\":15,\"maximum_bookmaker_update_skew_minutes\":10,\"maximum_odds\":4.0,\"maximum_probability_shift\":0.02,\"maximum_single_stake\":10.0,\"maximum_snapshot_age_minutes\":15,\"minimum_conservative_ev\":0.01,\"minimum_odds\":1.5,\"minimum_price_ratio\":1.01,\"minimum_reference_bookmakers\":4,\"minimum_reference_probability\":0.25,\"model_disagreement_uncertainty_multiplier\":0.25,\"model_residual_reliability\":0.15,\"primary_horizon_minutes\":60,\"reference_method\":\"normalized_component_median_leave_execution_book_out\",\"slippage_rate\":0.02,\"uncertainty_floor\":0.005,\"version\":\"robust-consensus-no-longshot-prospective-v4.1-cost-aware\"}",
+        "source_sha256": "c3d1cbaabfc2d21db6df9615bc4353f615bdc26cc032981023805bf3bb52e927",
+        "registered_at": "2026-07-28T09:50:55.539114+00:00",
+        "config": {
+          "daily_budget": 100.0,
+          "dispersion_uncertainty_multiplier": 1.0,
+          "exchange_bookmaker_keys": [
+            "betfair_ex_eu",
+            "betfair_ex_uk",
+            "smarkets",
+            "matchbook"
+          ],
+          "exchange_commission_rate": 0.05,
+          "horizon_tolerance_minutes": 60,
+          "kelly_fraction": 0.25,
+          "maximum_bookmaker_last_update_age_minutes": 15,
+          "maximum_bookmaker_update_skew_minutes": 10,
+          "maximum_odds": 4.0,
+          "maximum_probability_shift": 0.02,
+          "maximum_single_stake": 10.0,
+          "maximum_snapshot_age_minutes": 15,
+          "minimum_conservative_ev": 0.01,
+          "minimum_odds": 1.5,
+          "minimum_price_ratio": 1.01,
+          "minimum_reference_bookmakers": 4,
+          "minimum_reference_probability": 0.25,
+          "model_disagreement_uncertainty_multiplier": 0.25,
+          "model_residual_reliability": 0.15,
+          "primary_horizon_minutes": 60,
+          "reference_method": "normalized_component_median_leave_execution_book_out",
+          "slippage_rate": 0.02,
+          "uncertainty_floor": 0.005,
+          "version": "robust-consensus-no-longshot-prospective-v4.1-cost-aware"
+        }
+      },
+      "decision": "NAMED_BOOK_GAP_PROSPECTIVE_COLLECTING",
+      "decision_reasons": [
+        "settled_selections<200",
+        "active_months<6"
+      ],
+      "decisions": 0,
+      "candidate_decisions": 0,
+      "settled_selections": 0,
+      "active_months": 0,
+      "profit": 0,
+      "roi_pct": 0.0,
+      "average_expected_ev": null,
+      "calibration": {
+        "selected_binary_brier": null,
+        "reference_binary_brier": null
+      },
+      "selection_diagnostics": {
+        "outcome_counts": {},
+        "maximum_outcome_concentration_pct": 0.0,
+        "execution_bookmaker_counts": {},
+        "ranker_evidence_rows": 0,
+        "average_predicted_closing_edge_pct": null,
+        "ranker_model_sha256": null
+      },
+      "settlement_day_bootstrap_roi": {
+        "status": "INSUFFICIENT_SAMPLE",
+        "settled_bets": 0,
+        "settlement_days": 0,
+        "minimum_bets": 30,
+        "minimum_days": 10,
+        "lower_95_pct": null,
+        "median_pct": null,
+        "upper_95_pct": null
+      },
+      "prospective_warnings": [],
+      "paper_portfolio": {
+        "daily_budget_limit": 100.0,
+        "maximum_single_stake": 10.0,
+        "staking": "0.25_kelly_with_cash_reserve",
+        "same_day_results_hidden": true,
+        "daily_window": "latest_30_calendar_days_Asia/Shanghai",
+        "bets": 0,
+        "pending_bets": 0,
+        "settled_bets": 0,
+        "staked": 0,
+        "settled_staked": 0,
+        "profit": 0,
+        "roi_pct": 0.0,
+        "ending_equity": 0,
+        "max_drawdown": 0.0,
+        "positive_months": 0,
+        "negative_months": 0,
+        "monthly": [],
+        "daily": [
+          {
+            "date": "2026-07-01",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-02",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-03",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-04",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-05",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-06",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-07",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-08",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-09",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-10",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-11",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-12",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-13",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-14",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-15",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-16",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-17",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-18",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-19",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-20",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-21",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-22",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-23",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-24",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-25",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-26",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-27",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-28",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-29",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-30",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          }
+        ],
+        "positions": []
+      },
+      "anti_leakage": "A result is usable only when settled_at is after both kickoff_time and decided_at.",
+      "guardrail": "Research-only immutable paper simulation. It never creates real orders."
+    },
+    {
+      "method": "timestamp-aligned best named-book quote versus robust leave-one-book-out consensus",
+      "policy": {
+        "policy_id": "named-book-gap-85a03b71be4e814e8ad1",
+        "policy_hash": "85a03b71be4e814e8ad11f37162d62cc9362e1c5a1447be7d94b8b8f0be658ec",
+        "config_json": "{\"daily_budget\":100.0,\"decision_model\":\"frozen_json_clv_ridge\",\"dispersion_uncertainty_multiplier\":1.0,\"exchange_bookmaker_keys\":[\"betfair_ex_eu\",\"betfair_ex_uk\",\"smarkets\",\"matchbook\"],\"exchange_commission_rate\":0.05,\"feature_portability_status\":\"PROSPECTIVE_VALIDATION_REQUIRED\",\"horizon_tolerance_minutes\":60,\"kelly_fraction\":0.1,\"live_feature_contract\":\"unmapped_official_league_uses_zero_coefficient\",\"maximum_bookmaker_last_update_age_minutes\":15,\"maximum_bookmaker_update_skew_minutes\":10,\"maximum_odds\":5.0,\"maximum_probability_shift\":0.02,\"maximum_single_stake\":5.0,\"maximum_snapshot_age_minutes\":15,\"minimum_conservative_ev\":-0.05,\"minimum_lower_clv_pct\":1.0,\"minimum_odds\":1.5,\"minimum_price_ratio\":0.97,\"minimum_reference_bookmakers\":4,\"minimum_reference_probability\":0.12,\"model_disagreement_uncertainty_multiplier\":0.0,\"model_residual_reliability\":0.0,\"primary_horizon_minutes\":60,\"ranker_model_sha256\":\"e3dfec0e859b7a7ba9ba45ab97c02d9290eed70fa20020f7e28da5799e793ec4\",\"ranker_training_window\":\"2025-09-01..2026-02-28\",\"reference_method\":\"normalized_component_median_leave_execution_book_out\",\"slippage_rate\":0.02,\"uncertainty_floor\":0.002,\"version\":\"clv-ridge-v6.2-fixed-cap5-prospective-shadow\"}",
+        "source_sha256": "c3d1cbaabfc2d21db6df9615bc4353f615bdc26cc032981023805bf3bb52e927",
+        "registered_at": "2026-07-28T09:50:55.564222+00:00",
+        "config": {
+          "daily_budget": 100.0,
+          "decision_model": "frozen_json_clv_ridge",
+          "dispersion_uncertainty_multiplier": 1.0,
+          "exchange_bookmaker_keys": [
+            "betfair_ex_eu",
+            "betfair_ex_uk",
+            "smarkets",
+            "matchbook"
+          ],
+          "exchange_commission_rate": 0.05,
+          "feature_portability_status": "PROSPECTIVE_VALIDATION_REQUIRED",
+          "horizon_tolerance_minutes": 60,
+          "kelly_fraction": 0.1,
+          "live_feature_contract": "unmapped_official_league_uses_zero_coefficient",
+          "maximum_bookmaker_last_update_age_minutes": 15,
+          "maximum_bookmaker_update_skew_minutes": 10,
+          "maximum_odds": 5.0,
+          "maximum_probability_shift": 0.02,
+          "maximum_single_stake": 5.0,
+          "maximum_snapshot_age_minutes": 15,
+          "minimum_conservative_ev": -0.05,
+          "minimum_lower_clv_pct": 1.0,
+          "minimum_odds": 1.5,
+          "minimum_price_ratio": 0.97,
+          "minimum_reference_bookmakers": 4,
+          "minimum_reference_probability": 0.12,
+          "model_disagreement_uncertainty_multiplier": 0.0,
+          "model_residual_reliability": 0.0,
+          "primary_horizon_minutes": 60,
+          "ranker_model_sha256": "e3dfec0e859b7a7ba9ba45ab97c02d9290eed70fa20020f7e28da5799e793ec4",
+          "ranker_training_window": "2025-09-01..2026-02-28",
+          "reference_method": "normalized_component_median_leave_execution_book_out",
+          "slippage_rate": 0.02,
+          "uncertainty_floor": 0.002,
+          "version": "clv-ridge-v6.2-fixed-cap5-prospective-shadow"
+        }
+      },
+      "decision": "NAMED_BOOK_GAP_PROSPECTIVE_COLLECTING",
+      "decision_reasons": [
+        "settled_selections<200",
+        "active_months<6"
+      ],
+      "decisions": 0,
+      "candidate_decisions": 0,
+      "settled_selections": 0,
+      "active_months": 0,
+      "profit": 0,
+      "roi_pct": 0.0,
+      "average_expected_ev": null,
+      "calibration": {
+        "selected_binary_brier": null,
+        "reference_binary_brier": null
+      },
+      "selection_diagnostics": {
+        "outcome_counts": {},
+        "maximum_outcome_concentration_pct": 0.0,
+        "execution_bookmaker_counts": {},
+        "ranker_evidence_rows": 0,
+        "average_predicted_closing_edge_pct": null,
+        "ranker_model_sha256": "e3dfec0e859b7a7ba9ba45ab97c02d9290eed70fa20020f7e28da5799e793ec4"
+      },
+      "settlement_day_bootstrap_roi": {
+        "status": "INSUFFICIENT_SAMPLE",
+        "settled_bets": 0,
+        "settlement_days": 0,
+        "minimum_bets": 30,
+        "minimum_days": 10,
+        "lower_95_pct": null,
+        "median_pct": null,
+        "upper_95_pct": null
+      },
+      "prospective_warnings": [
+        "historical_league_codes_do_not_match_official_pool_labels; unknown-category fallback is under validation"
+      ],
+      "paper_portfolio": {
+        "daily_budget_limit": 100.0,
+        "maximum_single_stake": 5.0,
+        "staking": "0.1_kelly_with_cash_reserve",
+        "same_day_results_hidden": true,
+        "daily_window": "latest_30_calendar_days_Asia/Shanghai",
+        "bets": 0,
+        "pending_bets": 0,
+        "settled_bets": 0,
+        "staked": 0,
+        "settled_staked": 0,
+        "profit": 0,
+        "roi_pct": 0.0,
+        "ending_equity": 0,
+        "max_drawdown": 0.0,
+        "positive_months": 0,
+        "negative_months": 0,
+        "monthly": [],
+        "daily": [
+          {
+            "date": "2026-07-01",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-02",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-03",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-04",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-05",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-06",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-07",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-08",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-09",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-10",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-11",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-12",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-13",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-14",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-15",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-16",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-17",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-18",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-19",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-20",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-21",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-22",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-23",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-24",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-25",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-26",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-27",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-28",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-29",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-30",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          }
+        ],
+        "positions": []
+      },
+      "anti_leakage": "A result is usable only when settled_at is after both kickoff_time and decided_at.",
+      "guardrail": "Research-only immutable paper simulation. It never creates real orders."
+    },
+    {
+      "method": "timestamp-aligned best named-book quote versus robust leave-one-book-out consensus",
+      "policy": {
+        "policy_id": "named-book-gap-6c62702de133bc384c2b",
+        "policy_hash": "6c62702de133bc384c2bcc13280d474e6740d9560cefdd69cc9ecfffc5800726",
+        "config_json": "{\"daily_budget\":100.0,\"decision_model\":\"frozen_json_clv_ridge\",\"dispersion_uncertainty_multiplier\":1.0,\"exchange_bookmaker_keys\":[\"betfair_ex_eu\",\"betfair_ex_uk\",\"smarkets\",\"matchbook\"],\"exchange_commission_rate\":0.05,\"feature_portability_status\":\"PROSPECTIVE_VALIDATION_REQUIRED\",\"horizon_tolerance_minutes\":60,\"kelly_fraction\":0.5,\"live_feature_contract\":\"unmapped_official_league_uses_zero_coefficient\",\"maximum_bookmaker_last_update_age_minutes\":15,\"maximum_bookmaker_update_skew_minutes\":10,\"maximum_odds\":5.0,\"maximum_probability_shift\":0.02,\"maximum_single_stake\":15.0,\"maximum_snapshot_age_minutes\":15,\"minimum_conservative_ev\":-0.05,\"minimum_lower_clv_pct\":1.0,\"minimum_odds\":1.5,\"minimum_price_ratio\":0.97,\"minimum_reference_bookmakers\":4,\"minimum_reference_probability\":0.12,\"model_disagreement_uncertainty_multiplier\":0.0,\"model_residual_reliability\":0.0,\"primary_horizon_minutes\":60,\"ranker_model_sha256\":\"e3dfec0e859b7a7ba9ba45ab97c02d9290eed70fa20020f7e28da5799e793ec4\",\"ranker_training_window\":\"2025-09-01..2026-02-28\",\"reference_method\":\"normalized_component_median_leave_execution_book_out\",\"slippage_rate\":0.02,\"stake_challenger_of\":\"clv-ridge-v6.2-fixed-cap5-prospective-shadow\",\"uncertainty_floor\":0.002,\"version\":\"clv-ridge-v6.3-fixed-cap5-half-kelly-prospective-shadow\"}",
+        "source_sha256": "c3d1cbaabfc2d21db6df9615bc4353f615bdc26cc032981023805bf3bb52e927",
+        "registered_at": "2026-07-28T09:50:55.595891+00:00",
+        "config": {
+          "daily_budget": 100.0,
+          "decision_model": "frozen_json_clv_ridge",
+          "dispersion_uncertainty_multiplier": 1.0,
+          "exchange_bookmaker_keys": [
+            "betfair_ex_eu",
+            "betfair_ex_uk",
+            "smarkets",
+            "matchbook"
+          ],
+          "exchange_commission_rate": 0.05,
+          "feature_portability_status": "PROSPECTIVE_VALIDATION_REQUIRED",
+          "horizon_tolerance_minutes": 60,
+          "kelly_fraction": 0.5,
+          "live_feature_contract": "unmapped_official_league_uses_zero_coefficient",
+          "maximum_bookmaker_last_update_age_minutes": 15,
+          "maximum_bookmaker_update_skew_minutes": 10,
+          "maximum_odds": 5.0,
+          "maximum_probability_shift": 0.02,
+          "maximum_single_stake": 15.0,
+          "maximum_snapshot_age_minutes": 15,
+          "minimum_conservative_ev": -0.05,
+          "minimum_lower_clv_pct": 1.0,
+          "minimum_odds": 1.5,
+          "minimum_price_ratio": 0.97,
+          "minimum_reference_bookmakers": 4,
+          "minimum_reference_probability": 0.12,
+          "model_disagreement_uncertainty_multiplier": 0.0,
+          "model_residual_reliability": 0.0,
+          "primary_horizon_minutes": 60,
+          "ranker_model_sha256": "e3dfec0e859b7a7ba9ba45ab97c02d9290eed70fa20020f7e28da5799e793ec4",
+          "ranker_training_window": "2025-09-01..2026-02-28",
+          "reference_method": "normalized_component_median_leave_execution_book_out",
+          "slippage_rate": 0.02,
+          "stake_challenger_of": "clv-ridge-v6.2-fixed-cap5-prospective-shadow",
+          "uncertainty_floor": 0.002,
+          "version": "clv-ridge-v6.3-fixed-cap5-half-kelly-prospective-shadow"
+        }
+      },
+      "decision": "NAMED_BOOK_GAP_PROSPECTIVE_COLLECTING",
+      "decision_reasons": [
+        "settled_selections<200",
+        "active_months<6"
+      ],
+      "decisions": 0,
+      "candidate_decisions": 0,
+      "settled_selections": 0,
+      "active_months": 0,
+      "profit": 0,
+      "roi_pct": 0.0,
+      "average_expected_ev": null,
+      "calibration": {
+        "selected_binary_brier": null,
+        "reference_binary_brier": null
+      },
+      "selection_diagnostics": {
+        "outcome_counts": {},
+        "maximum_outcome_concentration_pct": 0.0,
+        "execution_bookmaker_counts": {},
+        "ranker_evidence_rows": 0,
+        "average_predicted_closing_edge_pct": null,
+        "ranker_model_sha256": "e3dfec0e859b7a7ba9ba45ab97c02d9290eed70fa20020f7e28da5799e793ec4"
+      },
+      "settlement_day_bootstrap_roi": {
+        "status": "INSUFFICIENT_SAMPLE",
+        "settled_bets": 0,
+        "settlement_days": 0,
+        "minimum_bets": 30,
+        "minimum_days": 10,
+        "lower_95_pct": null,
+        "median_pct": null,
+        "upper_95_pct": null
+      },
+      "prospective_warnings": [
+        "historical_league_codes_do_not_match_official_pool_labels; unknown-category fallback is under validation"
+      ],
+      "paper_portfolio": {
+        "daily_budget_limit": 100.0,
+        "maximum_single_stake": 15.0,
+        "staking": "0.5_kelly_with_cash_reserve",
+        "same_day_results_hidden": true,
+        "daily_window": "latest_30_calendar_days_Asia/Shanghai",
+        "bets": 0,
+        "pending_bets": 0,
+        "settled_bets": 0,
+        "staked": 0,
+        "settled_staked": 0,
+        "profit": 0,
+        "roi_pct": 0.0,
+        "ending_equity": 0,
+        "max_drawdown": 0.0,
+        "positive_months": 0,
+        "negative_months": 0,
+        "monthly": [],
+        "daily": [
+          {
+            "date": "2026-07-01",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-02",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-03",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-04",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-05",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-06",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-07",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-08",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-09",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-10",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-11",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-12",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-13",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-14",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-15",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-16",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-17",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-18",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-19",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-20",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-21",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-22",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-23",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-24",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-25",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-26",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-27",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-28",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-29",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          },
+          {
+            "date": "2026-07-30",
+            "bets": 0,
+            "staked": 0,
+            "pending": 0,
+            "settlements": 0,
+            "settled_profit": 0,
+            "equity": 0.0,
+            "cash_reserved": 100.0
+          }
+        ],
+        "positions": []
+      },
+      "anti_leakage": "A result is usable only when settled_at is after both kickoff_time and decided_at.",
+      "guardrail": "Research-only immutable paper simulation. It never creates real orders."
     }
-  },
-  "decision": "NAMED_BOOK_GAP_PROSPECTIVE_COLLECTING",
-  "decision_reasons": [
-    "settled_selections<200",
-    "active_months<6"
   ],
-  "decisions": 0,
-  "candidate_decisions": 0,
-  "settled_selections": 0,
-  "active_months": 0,
-  "profit": 0,
-  "roi_pct": 0.0,
-  "average_expected_ev": null,
-  "guardrail": "Research-only. This study never creates paper-portfolio positions or real orders."
+  "comparison_ready": false,
+  "guardrail": "All policies consume the same prospective snapshot; none places real orders."
 }

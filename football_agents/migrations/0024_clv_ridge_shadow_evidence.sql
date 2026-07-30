@@ -1,0 +1,3 @@
+ALTER TABLE named_book_gap_decisions ADD COLUMN predicted_closing_edge_pct REAL;
+ALTER TABLE named_book_gap_decisions ADD COLUMN lower_predicted_closing_edge_pct REAL;
+ALTER TABLE named_book_gap_decisions ADD COLUMN ranker_model_sha256 TEXT;

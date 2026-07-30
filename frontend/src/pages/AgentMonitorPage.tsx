@@ -46,6 +46,9 @@ type ExternalConsensusChallenger = {
 
 const WORKFLOW: WorkflowItem[] = [
   {task: "official_sp_sync", title: "官方赛事/SP", description: "中国竞彩网赛事池、状态、官方赔率"},
+  {task: "free_prospective_odds_capture", title: "免费前瞻赔率证据", description: "按 T-6h/T-1h 定向采集具名公司赔率，记录 API 额度并冻结原始证据", dependsOn: "official_sp_sync"},
+  {task: "external_odds_primary_horizon_capture", title: "T-1 快速赔率采集", description: "每 5 分钟检查 T-120 至 T-60 窗口，只在尚无快照时请求一次真实外部赔率", dependsOn: "free_prospective_odds_capture"},
+  {task: "named_book_gap_primary_horizon_capture", title: "v3.1/v4.1/v6.2/v6.3 四策略影子实验", description: "同一 T-1 快照并行冻结两条市场策略与 Ridge CLV 的 1/10、1/2 Kelly 仓位组；保存净执行价、预测 CLV、模型哈希和不可变证据", dependsOn: "external_odds_primary_horizon_capture"},
   {task: "official_results_sync", title: "官方赛果回填", description: "独立赛果页、90分钟比分、冲突隔离与不可变证据", dependsOn: "official_sp_sync"},
   {task: "paper_portfolio_settlement", title: "纸面组合结算", description: "用官方赛果和临场SP结算不可变持仓、收益与CLV", dependsOn: "official_results_sync"},
   {task: "official_sp_evidence_quality", title: "SP 证据质量", description: "采集新鲜度、临盘覆盖、赛果完整性与时间一致性", dependsOn: "paper_portfolio_settlement"},
@@ -55,6 +58,7 @@ const WORKFLOW: WorkflowItem[] = [
   {task: "feature_build", title: "球队特征", description: "历史样本、Elo、lambda、source confidence", dependsOn: "historical_data_sync"},
   {task: "prospective_research_capture", title: "完整前瞻研究归档", description: "小时级特征刷新后冻结模型、赛前赔率与不可覆盖赛前预测", dependsOn: "feature_build"},
   {task: "external_consensus_challenger_capture", title: "外部共识 Challenger", description: "冻结多家公司去水共识、官方SP、保守EV与真实NO_BET，禁止赛后改规则", dependsOn: "prospective_research_capture"},
+  {task: "named_book_gap_research_capture", title: "市场与仓位四策略验证", description: "比较 v3、v4、v6.2 与 v6.3 的候选量、纸面利润、ROI、回撤和方向集中度；模型与仓位规则固定且未达到前瞻样本门槛不晋级", dependsOn: "named_book_gap_primary_horizon_capture"},
   {task: "qwen_news_analysis", title: "Qwen 情报", description: "新闻摘要、伤停与上下文因子", dependsOn: "external_odds_news_weather_sync"},
   {task: "market_bias_shadow_monitor", title: "市场偏差影子验证", description: "冻结规则、影子预测、赛后评估与晋级门", dependsOn: "feature_build"},
   {task: "profit_scorer_official_pool_diagnosis", title: "盈利评分池诊断", description: "检查当前官方比赛是否进入冻结盈利评分器", dependsOn: "feature_build"},
@@ -151,6 +155,7 @@ export default function AgentMonitorPage() {
   const failed = WORKFLOW.filter(item => tasks.get(item.task)?.status === "FAILED").length;
   const runningCount = WORKFLOW.filter(item => tasks.get(item.task)?.status === "RUNNING").length;
   const evidence = health?.officialSpEvidenceQuality;
+  const freeOdds = health?.freeProspectiveOdds;
   const scorerEvidence = health?.profitScorerOfficialSp;
   const scorerStrategy = allocationReadiness.data.strategies.find(
     strategy => strategy.statistical_evidence?.bootstrap,
@@ -191,6 +196,19 @@ export default function AgentMonitorPage() {
       </section>
       <WorkflowGraph tasks={tasks}/>
       <TaskCards tasks={tasks}/>
+    </section>
+
+    <section className="panel" style={{marginBottom: 16}}>
+      <div className="panel-heading"><div><h2>免费前瞻赔率证据</h2><p>只统计开赛前、具名博彩公司且不可修改的赔率快照；平均价和最高价不计入可执行收益。</p></div></div>
+      <section className="summary-strip" style={{padding: 16, margin: 0}}>
+        <span>比赛<b>{freeOdds?.matches ?? 0}</b></span>
+        <span>快照<b>{freeOdds?.snapshots ?? 0}</b></span>
+        <span>博彩公司<b>{freeOdds?.bookmakers ?? 0}</b></span>
+        <span>本月请求<b>{freeOdds?.monthly_quota.requests ?? 0}</b></span>
+        <span>本月额度消耗<b>{freeOdds?.monthly_quota.spent ?? 0} / {freeOdds?.monthly_budget ?? 450}</b></span>
+        <span>供应商剩余<b>{freeOdds?.monthly_quota.minimum_remaining ?? "-"}</b></span>
+        <span>保留额度<b>{freeOdds?.credit_reserve ?? 50}</b></span>
+      </section>
     </section>
 
     <section className="panel" style={{marginBottom: 16}}>

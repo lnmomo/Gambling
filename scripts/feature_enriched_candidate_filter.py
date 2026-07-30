@@ -617,6 +617,9 @@ def formal_i2_configs(odds_sources: tuple[str, ...]) -> list[FeatureFilterConfig
             ridge=10.0,
             residual_cap=0.08,
             selected_rules=(I2_DRAW_RULE,),
+            validation_months=6,
+            min_validation_rows=80,
+            require_probability_improvement=True,
         )
         for odds_source in odds_sources
     ]

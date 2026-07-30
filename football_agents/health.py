@@ -74,6 +74,13 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
         "remainingMatches": settings.prospective_research_min_settled,
         "remainingDays": settings.prospective_research_min_days, "confirmationDecision": None,
     }
+    free_prospective_odds: dict[str, Any] = {
+        "enabled": settings.prospective_free_mode,
+        "snapshots": 0, "matches": 0, "bookmakers": 0, "windows": [],
+        "monthly_quota": {"requests": 0, "spent": 0, "minimum_remaining": None, "last_request": None},
+        "monthly_budget": settings.prospective_monthly_credit_budget,
+        "credit_reserve": settings.prospective_credit_reserve,
+    }
     profit_scorer_official_sp = {
         "status": "NOT_RUN",
         "poolDiagnosisStatus": "NOT_RUN",
@@ -107,6 +114,7 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
         with database.connect() as c:
             c.execute("SELECT 1").fetchone()
             connected = True
+            free_prospective_odds.update(Repository(database).free_prospective_odds_status())
             official = c.execute("""SELECT fetched_at FROM official_fetch_logs
                 WHERE success=1 AND source_name<>'sporttery_official_results'
                 ORDER BY fetched_at DESC LIMIT 1""").fetchone()
@@ -307,6 +315,8 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
         },
         "config": {
             "realSyncEnabled": settings.enable_real_sync,
+            "officialFeedMode": settings.official_feed_mode,
+            "officialAuthorizedFeedConfigured": bool(settings.official_authorized_api_url),
             "autoBettingEnabled": False,
             "autoBettingRequested": settings.enable_auto_betting,
             "oddsApiKeyConfigured": bool(settings.odds_api_key),
@@ -318,6 +328,9 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
             "externalOddsCaptureWindowMinutes": settings.external_odds_capture_window_minutes,
             "oddsApiRegions": settings.odds_api_regions,
             "oddsApiMinRequestsRemaining": settings.odds_api_min_requests_remaining,
+            "prospectiveMonthlyCreditBudget": settings.prospective_monthly_credit_budget,
+            "prospectiveCreditReserve": settings.prospective_credit_reserve,
+            "prospectiveSnapshotOffsetsHours": list(settings.prospective_snapshot_offsets_hours),
         },
         "recentErrors": recent_errors,
         "warnings": warnings,
@@ -325,6 +338,7 @@ def build_health_report(database: Database = db) -> dict[str, Any]:
         "dataQuality": data_quality,
         "shadowValidation": shadow_validation,
         "prospectiveResearch": prospective_research,
+        "freeProspectiveOdds": free_prospective_odds,
         "profitScorerOfficialSp": profit_scorer_official_sp,
         "officialSpEvidenceQuality": official_sp_evidence_quality,
     }

@@ -23,6 +23,8 @@ from .historical_data import HistoricalDataService
 from .historical_agent import HistoricalCollectionAgent
 from .health import build_health_report
 from .international_history_agent import InternationalHistoryAgent
+from .free_historical_data_plan import FreeHistoricalDataPlan
+from .free_prospective import FreeProspectiveOddsService
 from .features import build_features_for_official_matches
 from .external_consensus_challenger import ExternalConsensusChallengerService
 from .named_book_gap_research import NamedBookGapResearchService
@@ -65,6 +67,8 @@ qwen_ops = QwenOpsAgent()
 historical_data = HistoricalDataService(repository)
 historical_agent = HistoricalCollectionAgent(repository)
 international_history_agent = InternationalHistoryAgent(repository)
+free_historical_data_plan = FreeHistoricalDataPlan(repository)
+free_prospective_odds = FreeProspectiveOddsService(repository)
 agent_orchestrator = AgentOrchestrator(repository)
 task_runner = TaskRunnerService()
 background_scheduler = BackgroundAgentScheduler(repository, task_runner)
@@ -274,6 +278,11 @@ def named_book_gap_research_status(policy_id: str | None = None) -> dict:
         raise HTTPException(404, f"Unknown named book gap policy: {exc}") from exc
 
 
+@app.get("/api/research/named-book-gap/experiment")
+def named_book_gap_experiment_status() -> dict:
+    return named_book_gap_research.experiment_report()
+
+
 @app.post("/api/research/named-book-gap/capture")
 def capture_named_book_gap_research(limit: int = 100) -> dict:
     result = named_book_gap_research.capture(limit)
@@ -375,6 +384,25 @@ def sync_international_historical_matches() -> dict:
         return qwen_ops.attach("international-history-agent", international_history_agent.sync())
     except Exception as exc:
         raise HTTPException(502, f"鍥藉闃熷巻鍙叉暟鎹悓姝ュけ璐? {exc}") from exc
+
+
+@app.post("/api/historical-matches/sync-free-plan")
+def sync_free_historical_data_plan(use_footiqo_fallback: bool = False) -> dict:
+    """Sync free evidence without treating results-only rows as odds evidence."""
+    try:
+        return free_historical_data_plan.sync(use_footiqo_fallback)
+    except Exception as exc:
+        raise HTTPException(502, f"Free historical data sync failed: {exc}") from exc
+
+
+@app.get("/api/research/free-prospective/status")
+def free_prospective_status() -> dict:
+    return repository.free_prospective_odds_status()
+
+
+@app.post("/api/research/free-prospective/capture")
+def capture_free_prospective_odds(limit: int = settings.agent_match_limit) -> dict:
+    return free_prospective_odds.capture(max(1, min(limit, 100)))
 
 
 @app.post("/api/data/sync")

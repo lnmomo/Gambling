@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Iterable
 
 from .db import Database, db
+from .config import settings
 
 
 def utcnow() -> str:
@@ -356,6 +357,85 @@ class Repository:
                  item.get("last_update") or timestamp, timestamp) for item in valid
             ])
         return len(valid)
+
+    def archive_prospective_external_odds(
+        self,
+        match: dict[str, Any],
+        event: dict[str, Any],
+        bookmakers: list[dict[str, Any]],
+        captured_at: str,
+        capture_window: str,
+    ) -> int:
+        captured = datetime.fromisoformat(captured_at.replace("Z", "+00:00"))
+        kickoff = datetime.fromisoformat(str(match["kickoff_time"]).replace("Z", "+00:00"))
+        if captured.tzinfo is None:
+            captured = captured.replace(tzinfo=timezone.utc)
+        if kickoff.tzinfo is None:
+            kickoff = kickoff.replace(tzinfo=timezone.utc)
+        minutes = (kickoff - captured).total_seconds() / 60.0
+        if minutes <= 0:
+            raise ValueError("prospective external odds must be captured before kickoff")
+        raw_json = json.dumps(event, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        payload_hash = hashlib.sha256(raw_json.encode("utf-8")).hexdigest()
+        inserted = 0
+        with self.db.connect() as connection:
+            for item in bookmakers:
+                odds = item.get("odds") or {}
+                if not all(float(odds.get(key, 0)) > 1 for key in ("home", "draw", "away")):
+                    continue
+                bookmaker_key = str(item.get("bookmaker_key") or item.get("bookmaker") or "").strip()
+                if not bookmaker_key:
+                    continue
+                cursor = connection.execute("""INSERT OR IGNORE INTO prospective_external_odds_snapshots(
+                    snapshot_id,match_id,official_match_id,event_id,sport_key,bookmaker,bookmaker_key,market,
+                    home_odds,draw_odds,away_odds,bookmaker_last_update,captured_at,kickoff_time,
+                    minutes_to_kickoff,capture_window,source,payload_hash,raw_event_json
+                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
+                    uuid.uuid4().hex, int(match["id"]), str(match["official_match_id"]), str(event.get("id") or ""),
+                    str(event.get("sport_key") or "unknown"), str(item.get("bookmaker") or bookmaker_key), bookmaker_key,
+                    "H2H", float(odds["home"]), float(odds["draw"]), float(odds["away"]),
+                    str(item.get("last_update") or captured_at), captured_at, str(match["kickoff_time"]), minutes,
+                    capture_window, "The Odds API", payload_hash, raw_json,
+                ))
+                inserted += int(cursor.rowcount > 0)
+        return inserted
+
+    def record_odds_api_request(self, audit: dict[str, Any], requested_at: str | None = None) -> None:
+        timestamp = requested_at or utcnow()
+        def optional_int(value: Any) -> int | None:
+            try:
+                return int(value) if value is not None else None
+            except (TypeError, ValueError):
+                return None
+        with self.db.connect() as connection:
+            connection.execute("""INSERT INTO odds_api_quota_ledger(
+                request_id,requested_at,sport_key,endpoint,regions,markets,estimated_cost,
+                credits_last,credits_remaining,credits_used,events_returned,response_hash
+            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", (
+                uuid.uuid4().hex, timestamp, str(audit["sport_key"]), str(audit["endpoint"]),
+                str(audit["regions"]), str(audit["markets"]), int(audit["estimated_cost"]),
+                optional_int(audit.get("credits_last")), optional_int(audit.get("credits_remaining")),
+                optional_int(audit.get("credits_used")), int(audit.get("events_returned") or 0),
+                str(audit["response_hash"]),
+            ))
+
+    def free_prospective_odds_status(self, as_of: datetime | None = None) -> dict[str, Any]:
+        now = as_of or datetime.now(timezone.utc)
+        month_start = now.astimezone(timezone.utc).strftime("%Y-%m-01T00:00:00+00:00")
+        with self.db.connect() as connection:
+            snapshots = connection.execute("""SELECT COUNT(*) snapshots,COUNT(DISTINCT match_id) matches,
+                COUNT(DISTINCT bookmaker_key) bookmakers,MIN(captured_at) first_capture,MAX(captured_at) last_capture
+                FROM prospective_external_odds_snapshots""").fetchone()
+            windows = connection.execute("""SELECT capture_window,COUNT(*) snapshots,COUNT(DISTINCT match_id) matches
+                FROM prospective_external_odds_snapshots GROUP BY capture_window ORDER BY capture_window""").fetchall()
+            quota = connection.execute("""SELECT COUNT(*) requests,COALESCE(SUM(COALESCE(credits_last,estimated_cost)),0) spent,
+                MIN(credits_remaining) minimum_remaining,MAX(requested_at) last_request
+                FROM odds_api_quota_ledger WHERE requested_at>=?""", (month_start,)).fetchone()
+        return {
+            **dict(snapshots), "windows": [dict(row) for row in windows], "monthly_quota": dict(quota),
+            "monthly_budget": settings.prospective_monthly_credit_budget,
+            "credit_reserve": settings.prospective_credit_reserve,
+        }
 
     def latest_external_bookmaker_odds(self, match_id: int) -> list[dict[str, Any]]:
         with self.db.connect() as c:

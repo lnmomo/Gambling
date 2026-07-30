@@ -94,7 +94,11 @@ class Settings:
     max_weekly_exposure: float = _float("MAX_WEEKLY_EXPOSURE", 0.08)
     profit_daily_budget: float = _float("PROFIT_DAILY_BUDGET", 100.0)
     odds_max_age_minutes: int = int(os.getenv("ODDS_MAX_AGE_MINUTES", "10"))
+    official_feed_mode: str = os.getenv("OFFICIAL_FEED_MODE", "browser").strip().lower()
     official_source_url: str = os.getenv("OFFICIAL_SOURCE_URL", "https://m.sporttery.cn/mjc/zqsj/?tab=schedule")
+    official_authorized_api_url: str = os.getenv("OFFICIAL_AUTHORIZED_API_URL", "").strip()
+    official_authorized_api_token: str = os.getenv("OFFICIAL_AUTHORIZED_API_TOKEN", "")
+    official_authorized_api_headers_json: str = os.getenv("OFFICIAL_AUTHORIZED_API_HEADERS_JSON", "{}")
     official_results_source_url: str = os.getenv(
         "OFFICIAL_RESULTS_SOURCE_URL", "https://www.sporttery.cn/jc/zqsgkj/"
     )
@@ -140,6 +144,15 @@ class Settings:
     odds_api_base_url: str = os.getenv("ODDS_API_BASE_URL", "https://api.the-odds-api.com/v4")
     odds_api_regions: str = os.getenv("ODDS_API_REGIONS", "eu")
     odds_api_min_requests_remaining: int = int(os.getenv("ODDS_API_MIN_REQUESTS_REMAINING", "20"))
+    prospective_free_mode: bool = _bool("PROSPECTIVE_FREE_MODE", True)
+    prospective_monthly_credit_budget: int = int(os.getenv("PROSPECTIVE_MONTHLY_CREDIT_BUDGET", "450"))
+    prospective_credit_reserve: int = int(os.getenv("PROSPECTIVE_CREDIT_RESERVE", "50"))
+    prospective_max_active_sports: int = int(os.getenv("PROSPECTIVE_MAX_ACTIVE_SPORTS", "3"))
+    prospective_snapshot_offsets_hours: tuple[int, ...] = tuple(
+        int(item.strip()) for item in os.getenv("PROSPECTIVE_SNAPSHOT_OFFSETS_HOURS", "6,1").split(",")
+        if item.strip()
+    )
+    exchange_commission_rate: float = _float("EXCHANGE_COMMISSION_RATE", 0.05)
     external_odds_capture_window_minutes: int = int(os.getenv(
         "EXTERNAL_ODDS_CAPTURE_WINDOW_MINUTES", "180"
     ))
@@ -152,6 +165,7 @@ class Settings:
         "soccer_fifa_world_cup,soccer_uefa_european_championship,soccer_conmebol_copa_america,"
         "soccer_uefa_nations_league,soccer_fifa_world_cup_qualifiers",
     ).split(",")))
+    international_odds_api_regions: str = os.getenv("INTERNATIONAL_ODDS_API_REGIONS", "uk,eu")
     gdelt_api_url: str = os.getenv("GDELT_API_URL", "https://api.gdeltproject.org/api/v2/doc/doc")
     open_meteo_geocoding_url: str = os.getenv(
         "OPEN_METEO_GEOCODING_URL", "https://geocoding-api.open-meteo.com/v1/search"

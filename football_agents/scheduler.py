@@ -9,6 +9,7 @@ from typing import Any, Callable
 from .backtesting import BacktestEngine
 from .config import settings
 from .features import build_features_for_official_matches
+from .free_prospective import FreeProspectiveOddsService
 from .external_consensus_challenger import ExternalConsensusChallengerService
 from .named_book_gap_research import NamedBookGapResearchService
 from .historical_agent import HistoricalCollectionAgent
@@ -159,6 +160,7 @@ class BackgroundAgentScheduler:
     def _tasks(self) -> list[tuple[str, TaskAction]]:
         tasks = [
             ("official_sp_sync", self._sync_official),
+            ("free_prospective_odds_capture", self._capture_free_prospective_odds),
             ("external_odds_news_weather_sync", self._sync_external_news_weather),
             ("historical_data_sync", self._sync_history),
             ("feature_build", self._build_features),
@@ -176,6 +178,25 @@ class BackgroundAgentScheduler:
             ("model_governance_check", self._check_model_governance),
         ])
         return tasks
+
+    def _capture_free_prospective_odds(self) -> dict[str, Any]:
+        capture = FreeProspectiveOddsService(self.repository).capture(settings.agent_match_limit)
+        service = NamedBookGapResearchService(self.repository.db, self.repository)
+        decision = service.capture_experiment(
+            settings.agent_match_limit
+        )
+        self._write_report("reports/named_book_gap_research/summary.json", service.experiment_report())
+        return {
+            **capture,
+            "predictions": decision.get("predictions", 0),
+            "frozen_decisions": decision.get("decisions", 0),
+            "decision_blockers": decision.get("blocker_counts", []),
+            "warnings": list(capture.get("errors", [])) + [
+                f'{item.get("reason")}:{int(item.get("matches") or 0)}'
+                for item in decision.get("blocker_counts", [])
+                if int(item.get("matches") or 0) > 0
+            ],
+        }
 
     def _sync_official(self) -> dict[str, Any]:
         report = OfficialDataService(self.repository).sync()
@@ -296,6 +317,10 @@ class BackgroundAgentScheduler:
             self._run_task(
                 "external_consensus_challenger_primary_horizon_capture",
                 self._capture_external_consensus_challenger,
+            )
+            self._run_task(
+                "named_book_gap_primary_horizon_capture",
+                self._capture_named_book_gap_research,
             )
             self._run_task(
                 "profit_allocation_readiness_primary_horizon",
@@ -484,10 +509,11 @@ class BackgroundAgentScheduler:
         }
 
     def _capture_named_book_gap_research(self) -> dict[str, Any]:
-        result = NamedBookGapResearchService(self.repository.db, self.repository).capture(
+        service = NamedBookGapResearchService(self.repository.db, self.repository)
+        result = service.capture_experiment(
             settings.agent_match_limit
         )
-        self._write_report("reports/named_book_gap_research/summary.json", result["report"])
+        self._write_report("reports/named_book_gap_research/summary.json", service.experiment_report())
         blockers = [
             f'{item.get("reason")}:{int(item.get("matches") or 0)}'
             for item in result.get("blocker_counts", [])

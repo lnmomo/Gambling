@@ -45,6 +45,18 @@ export type SystemHealth = {
     remainingDays: number;
     confirmationDecision: string | null;
   };
+  freeProspectiveOdds?: {
+    enabled: boolean;
+    snapshots: number;
+    matches: number;
+    bookmakers: number;
+    first_capture?: string | null;
+    last_capture?: string | null;
+    windows: Array<{capture_window: string; snapshots: number; matches: number}>;
+    monthly_quota: {requests: number; spent: number; minimum_remaining: number | null; last_request: string | null};
+    monthly_budget: number;
+    credit_reserve: number;
+  };
   profitScorerOfficialSp?: {
     status: string;
     poolDiagnosisStatus?: string;

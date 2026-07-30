@@ -8,6 +8,7 @@ from typing import Any
 
 from ..config import settings
 from ..repository import Repository
+from .authorized_feed import AuthorizedOfficialFeedClient
 from .browser import SportteryBrowserClient
 
 STATUS_MAP = {
@@ -19,27 +20,47 @@ STATUS_MAP = {
 
 class OfficialDataService:
     _lock = threading.Lock()
-    def __init__(self, repository: Repository | None = None, client: SportteryBrowserClient | None = None) -> None:
+    def __init__(self, repository: Repository | None = None, client: Any | None = None) -> None:
         self.repository = repository or Repository()
-        self.client = client or SportteryBrowserClient(
-            settings.official_browser_path, settings.official_fetch_timeout_seconds)
+        self.feed_mode = settings.official_feed_mode
+        if self.feed_mode not in {"browser", "authorized_api"}:
+            raise ValueError("OFFICIAL_FEED_MODE must be 'browser' or 'authorized_api'")
+        self.source_url = (
+            settings.official_authorized_api_url
+            if self.feed_mode == "authorized_api"
+            else settings.official_source_url
+        )
+        if self.feed_mode == "authorized_api" and not self.source_url:
+            raise ValueError("OFFICIAL_AUTHORIZED_API_URL is required in authorized_api mode")
+        if client is not None:
+            self.client = client
+        elif self.feed_mode == "authorized_api":
+            self.client = AuthorizedOfficialFeedClient(
+                self.source_url,
+                settings.official_authorized_api_token,
+                settings.official_authorized_api_headers_json,
+                settings.official_fetch_timeout_seconds,
+            )
+        else:
+            self.client = SportteryBrowserClient(
+                settings.official_browser_path, settings.official_fetch_timeout_seconds)
 
     def sync(self, force: bool = False) -> dict[str, Any]:
         with self._lock:
-            latest = self.repository.latest_fetch_log(settings.official_source_url)
+            latest = self.repository.latest_fetch_log(self.source_url)
             if latest and latest["success"] and not force:
                 age = datetime.now(timezone.utc) - datetime.fromisoformat(latest["fetched_at"])
                 if age.total_seconds() < settings.official_min_sync_interval_seconds:
                     return {"status": "skipped", "reason": "minimum_sync_interval", "latest": latest}
             try:
-                payload = self.client.fetch(settings.official_source_url)
+                payload = self.client.fetch(self.source_url)
                 raw_hash = hashlib.sha256(payload["html"].encode("utf-8")).hexdigest()
                 fetched_at = datetime.now(timezone.utc).isoformat()
                 summary = {"created": 0, "updated": 0, "odds_snapshots": 0, "hourly_observations": 0,
                            "availability_observations": 0, "results_settled": 0, "incomplete_odds": 0,
                            "invalid": 0, "records": len(payload["matches"]), "raw_hash": raw_hash}
                 for raw in payload["matches"]:
-                    item = self._normalize(raw, raw_hash)
+                    item = self._normalize(raw, raw_hash, self.source_url)
                     if not item:
                         summary["invalid"] += 1
                         continue
@@ -59,19 +80,19 @@ class OfficialDataService:
                     self.repository.archive_official_market_availability(
                         match_id, item["official_match_id"], fetched_at, item["kickoff_time"],
                         raw_sale_status, item["status"], valid_sp, missing_reason,
-                        "中国竞彩网", settings.official_source_url, raw_hash,
+                        "中国竞彩网", self.source_url, raw_hash,
                     )
                     summary["availability_observations"] += 1
                     if valid_sp:
                         odds_hash = hashlib.sha256(json.dumps({"id": item["official_match_id"], "odds": odds},
                                                              sort_keys=True).encode()).hexdigest()
                         if self.repository.add_official_odds(match_id, odds, "中国竞彩网",
-                                                             fetched_at, settings.official_source_url, odds_hash):
+                                                             fetched_at, self.source_url, odds_hash):
                             summary["odds_snapshots"] += 1
                         self.repository.archive_official_odds_observation(
                             match_id, item["official_match_id"], odds, fetched_at,
                             item["kickoff_time"], item["status"], "中国竞彩网",
-                            settings.official_source_url, odds_hash,
+                            self.source_url, odds_hash,
                         )
                         summary["hourly_observations"] += 1
                     else:
@@ -79,16 +100,16 @@ class OfficialDataService:
                 valid_records = summary["created"] + summary["updated"]
                 if valid_records == 0:
                     raise RuntimeError("Official source returned no valid match records")
-                self.repository.save_fetch_log("中国竞彩网", settings.official_source_url, True,
+                self.repository.save_fetch_log("中国竞彩网", self.source_url, True,
                                                raw_hash, summary["records"], status_code=200)
                 return {"status": "success", **summary, "fetched_at": fetched_at}
             except Exception as exc:
-                self.repository.save_fetch_log("中国竞彩网", settings.official_source_url, False,
+                self.repository.save_fetch_log("中国竞彩网", self.source_url, False,
                                                error_message=str(exc))
                 raise
 
     @staticmethod
-    def _normalize(raw: dict[str, Any], raw_hash: str) -> dict[str, Any] | None:
+    def _normalize(raw: dict[str, Any], raw_hash: str, source_url: str) -> dict[str, Any] | None:
         required = [raw.get("source_match_id"), raw.get("league"), raw.get("home_team"),
                     raw.get("away_team"), raw.get("match_date"), raw.get("match_time")]
         if not all(required):
@@ -102,12 +123,13 @@ class OfficialDataService:
             "official_match_id": f'sporttery-{raw["source_match_id"]}', "match_no": raw.get("match_no"),
             "league": raw["league"], "home_team": raw["home_team"], "away_team": raw["away_team"],
             "kickoff_time": kickoff, "status": STATUS_MAP.get(raw.get("sale_status"), "unknown"),
-            "source_url": settings.official_source_url, "data_quality_score": quality, "raw_hash": raw_hash,
+            "source_url": source_url, "data_quality_score": quality, "raw_hash": raw_hash,
         }
 
     def status(self) -> dict[str, Any]:
-        latest = self.repository.latest_fetch_log(settings.official_source_url)
-        return {"source": "中国竞彩网", "source_url": settings.official_source_url,
+        latest = self.repository.latest_fetch_log(self.source_url)
+        return {"source": "中国竞彩网", "source_url": self.source_url,
+                "feed_mode": self.feed_mode,
                 "browser_path": settings.official_browser_path, "latest": latest,
                 "recent_logs": self.repository.list_fetch_logs(10),
                 "timeseries": self.repository.official_odds_timeseries_status()}

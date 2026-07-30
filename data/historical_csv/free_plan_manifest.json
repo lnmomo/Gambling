@@ -1,0 +1,91 @@
+{
+  "plan": "free-international-historical-data-v1",
+  "status": "success",
+  "synced_at": "2026-07-28T07:36:29.207815+00:00",
+  "steps": {
+    "international_results": {
+      "status": "success",
+      "evidence_class": "features_only",
+      "report": {
+        "imported": 0,
+        "updated": 49520,
+        "dropped": 0,
+        "rows": 49520,
+        "status": "success",
+        "database_matches": 146386,
+        "archive": "data\\historical_csv\\international\\results.csv",
+        "source_url": "https://raw.githubusercontent.com/martj42/international_results/master/results.csv",
+        "synced_at": "2026-07-28T07:36:25.921172+00:00"
+      }
+    },
+    "world_cup_odds": {
+      "status": "success",
+      "evidence_class": "market_calibration_research",
+      "price_execution_status": "not_executable_average_or_max_price",
+      "report": {
+        "source": "https://www.football-data.co.uk/WorldCup2026.xlsx",
+        "source_note": "football-data.co.uk World Cup workbook converted to football-data-style settled international CSV",
+        "archive_workbook": "data\\historical_csv\\footiqo\\world_cup_football_data.xlsx",
+        "csv_path": "data\\historical_csv\\football-data\\new\\WORLD_CUP.csv",
+        "raw_hash": "70601c277207882b933dda0c5facacf6e67e953bbf93cb5c5c27c881095eed05",
+        "conversion": {
+          "matched": 1178,
+          "dropped": 7,
+          "sheets": [
+            {
+              "sheet": "WorldCup2026",
+              "rows": 104,
+              "matched": 104,
+              "dropped": 0
+            },
+            {
+              "sheet": "WorldCup2026Qualifiers",
+              "rows": 889,
+              "matched": 882,
+              "dropped": 7
+            },
+            {
+              "sheet": "WorldCup2022",
+              "rows": 64,
+              "matched": 64,
+              "dropped": 0
+            },
+            {
+              "sheet": "WorldCup2018",
+              "rows": 64,
+              "matched": 64,
+              "dropped": 0
+            },
+            {
+              "sheet": "WorldCup2014",
+              "rows": 64,
+              "matched": 64,
+              "dropped": 0
+            }
+          ],
+          "first_date": "12/06/2014",
+          "last_date": "19/07/2026"
+        },
+        "import": {
+          "imported": 0,
+          "updated": 1178,
+          "dropped": 0,
+          "pandas_rows": 1178,
+          "pandas_dropped": 0
+        },
+        "synced_at": "2026-07-28T07:36:29.201113+00:00"
+      }
+    }
+  },
+  "rules": [
+    "Use World Cup and World Cup qualifier average/maximum closing-price rows for market calibration research only.",
+    "Use broad international results without odds only for team features and form estimates.",
+    "Do not simulate executable profit or claim an odds edge from average, maximum, or results-only data.",
+    "Do not use a price snapshot captured at or after kickoff in a pre-match backtest."
+  ],
+  "limitations": [
+    "The World Cup workbook supplies average/max closing prices, not a named bookmaker's executable price.",
+    "Free sources do not provide broad, timestamped multi-bookmaker international odds coverage.",
+    "This plan does not replace a licensed historical odds feed for Euro, Copa America, or Nations League edge validation."
+  ]
+}

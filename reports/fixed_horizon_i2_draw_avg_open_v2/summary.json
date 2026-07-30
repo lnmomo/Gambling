@@ -1,0 +1,110 @@
+{
+  "method": "settlement-aware market-bias portfolio simulation",
+  "config": {
+    "daily_limit": 100.0,
+    "max_single_stake": 10.0,
+    "settlement_delay_days": 1,
+    "stop_after_losing_settlement_days": 3,
+    "cooldown_days": 3,
+    "stake_mode": "split_daily_limit_evenly_across_selected_bets",
+    "same_day_results_hidden_until_settlement": true
+  },
+  "overall": {
+    "bets": 146,
+    "winning_bets": 48,
+    "active_bet_days": 41,
+    "skipped_cooldown_days": 4,
+    "total_staked": 1460.0,
+    "profit": 42.7,
+    "roi_pct": 2.92,
+    "ending_equity": 42.7,
+    "max_drawdown": 134.6
+  },
+  "monthly": [
+    {
+      "month": "2025-04",
+      "bets": 24,
+      "staked": 240.0,
+      "profit": 13.1,
+      "roi_pct": 5.46
+    },
+    {
+      "month": "2025-05",
+      "bets": 25,
+      "staked": 250.0,
+      "profit": -64.2,
+      "roi_pct": -25.68
+    },
+    {
+      "month": "2025-09",
+      "bets": 33,
+      "staked": 330.0,
+      "profit": 104.0,
+      "roi_pct": 31.52
+    },
+    {
+      "month": "2025-10",
+      "bets": 30,
+      "staked": 300.0,
+      "profit": 43.0,
+      "roi_pct": 14.33
+    },
+    {
+      "month": "2025-11",
+      "bets": 34,
+      "staked": 340.0,
+      "profit": -53.2,
+      "roi_pct": -15.65
+    }
+  ],
+  "positive_months": 3,
+  "negative_months": 2,
+  "season_summary": [
+    {
+      "season": "2024-25",
+      "bets": 49,
+      "staked": 490.0,
+      "profit": -51.1,
+      "roi_pct": -10.43
+    },
+    {
+      "season": "2025-26",
+      "bets": 97,
+      "staked": 970.0,
+      "profit": 93.8,
+      "roi_pct": 9.67
+    }
+  ],
+  "positive_seasons": 1,
+  "negative_seasons": 1,
+  "warnings": [
+    "Historical football-data odds are not Chinese official SP; keep official-SP shadow validation separate.",
+    "Cooling decisions use only already-settled results, not same-day final scores."
+  ],
+  "walk_forward_config": {
+    "odds_source": "AVG_OPEN",
+    "lookback_months": 30,
+    "min_active_months": 6,
+    "min_bets": 120,
+    "min_roi": 0.02,
+    "max_rules": 1,
+    "daily_limit": 100.0,
+    "rules": [
+      "league|outcome|custom_i2_draw_band=I2|draw|[2.80,3.50)"
+    ]
+  },
+  "walk_forward_overall_unit_stake": {
+    "bets": 166,
+    "winning_bets": 56,
+    "total_staked": 166.0,
+    "profit": 8.85,
+    "roi_pct": 5.33,
+    "max_drawdown": 13.22,
+    "max_daily_stake": 9.0,
+    "active_days": 45
+  },
+  "custom_i2_draw_band": [
+    2.8,
+    3.5
+  ]
+}

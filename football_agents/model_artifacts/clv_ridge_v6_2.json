@@ -1,0 +1,95 @@
+{
+  "model_version": "clv-ridge-v6.2-fixed-cap5-prospective-shadow",
+  "created_at": "2026-07-28T09:30:47.496466+00:00",
+  "training_window": "2025-09-01..2026-02-28",
+  "training_candidates": 2497,
+  "training_result_used_as_feature": false,
+  "target": "closing_edge_pct",
+  "alpha": 10.0,
+  "safety_margin": 0.0,
+  "validation_rmse_pct": 7.993422091520205,
+  "minimum_lower_clv_pct": 1.0,
+  "maximum_odds": 5.0,
+  "exchange_commission_rate": 0.05,
+  "slippage_rate": 0.02,
+  "intercept": -10.329608123925162,
+  "numeric_features": [
+    "probability",
+    "conservative_probability",
+    "odds",
+    "raw_odds",
+    "conservative_ev_pct",
+    "reference_dispersion",
+    "reference_bookmakers",
+    "execution_cost_rate"
+  ],
+  "categorical_features": [
+    "outcome",
+    "odds_band",
+    "source_type",
+    "execution_bookmaker",
+    "league"
+  ],
+  "numeric_coefficients": {
+    "probability": 4.886108776414062,
+    "conservative_probability": 4.67096544864182,
+    "odds": 1.5278417446606334,
+    "raw_odds": 0.11396064352526213,
+    "conservative_ev_pct": 0.7536595991559839,
+    "reference_dispersion": 180.66843525021028,
+    "reference_bookmakers": 0.18063300718276756,
+    "execution_cost_rate": -25.714973225850212
+  },
+  "categorical_coefficients": {
+    "outcome": {
+      "away": -0.05259916464734521,
+      "draw": 0.33151746696708856,
+      "home": -0.27891830231984277
+    },
+    "odds_band": {
+      "1.5-2.0": -0.9140923077612655,
+      "2.0-3.0": 0.3533563950876962,
+      "3.0-4.0": 0.12791208053827452,
+      "4.0-5.0": 0.840581542135703,
+      "5.0+": -0.4077577100006328
+    },
+    "source_type": {
+      "exchange": -0.30091053205229923,
+      "sportsbook": 0.3009105320523511
+    },
+    "execution_bookmaker": {
+      "B365": -1.3525398812464393,
+      "BFD": 0.6678564893813224,
+      "BFE": -0.30091053205229923,
+      "BMGM": 0.8955181363219401,
+      "BV": -0.797805186563309,
+      "BW": 0.698579645764945,
+      "CL": 0.5565071938101162,
+      "PS": -0.36720586541626615
+    },
+    "league": {
+      "B1": 3.3140453865731536,
+      "D1": 0.8802533656133732,
+      "D2": -0.29072459655965266,
+      "E0": 0.7408322064879621,
+      "E1": -0.47311296432092814,
+      "E2": -0.27368193180979294,
+      "E3": -0.4128271767617983,
+      "F1": 0.7135679648667508,
+      "F2": 1.0374082398895792,
+      "G1": -0.13841694209223082,
+      "I1": -0.6291557333804677,
+      "I2": -1.1612037250449172,
+      "N1": -0.9689172817841432,
+      "P1": -0.3658888873123143,
+      "SC0": -1.8690337880985504,
+      "SP1": -0.7667114485875847,
+      "SP2": -0.6554241991436024,
+      "T1": 1.3189915114651096
+    }
+  },
+  "unknown_category_policy": "zero_coefficient",
+  "export_parity_sample": 200,
+  "export_parity_max_abs_error": 2.6645352591003757e-15,
+  "model_sha256": "e3dfec0e859b7a7ba9ba45ab97c02d9290eed70fa20020f7e28da5799e793ec4"
+}
