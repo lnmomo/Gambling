@@ -4,11 +4,163 @@ import calendar
 from dataclasses import replace
 from datetime import date
 
+import pytest
+import pandas as pd
+
 from scripts.clv_ridge_walk_forward import (
+    _pipeline,
+    _outcome_probability_pipeline,
+    _fit_staking_calibration,
+    _fit_validated_market_residual_weight,
+    _fit_market_calibration_weight,
+    _validation_month_stability,
+    archived_complete_months,
+    export_live_ranker,
     market_structure_features,
     rolling_v6,
     sealed_latest_month_v6,
 )
+
+
+def test_extra_trees_ranker_is_deterministic_and_ignores_future_columns() -> None:
+    frame = pd.DataFrame({
+        "probability": [0.2, 0.3, 0.7, 0.8] * 30,
+        "odds": [4.0, 3.0, 1.5, 1.3] * 30,
+        "outcome": ["away", "draw", "home", "home"] * 30,
+        "actual_outcome": ["home"] * 120,
+        "profit": [999.0] * 120,
+    })
+    target = pd.Series([4.0, 2.0, 1.0, 3.0] * 30)
+    first = _pipeline(0.0, ("probability", "odds"), ("outcome",), "extra_trees")
+    second = _pipeline(0.0, ("probability", "odds"), ("outcome",), "extra_trees")
+    first.fit(frame, target)
+    second.fit(frame.assign(actual_outcome="away", profit=-999.0), target)
+
+    assert (first.predict(frame) == second.predict(frame)).all()
+
+
+def test_validated_market_residual_weight_improves_or_falls_back() -> None:
+    market = [0.5, 0.5, 0.5, 0.5] * 30
+    won = [0.0, 0.0, 1.0, 1.0] * 30
+    useful = [0.2, 0.3, 0.7, 0.8] * 30
+    harmful = [0.8, 0.7, 0.3, 0.2] * 30
+
+    weight, blended_brier, market_brier = _fit_validated_market_residual_weight(
+        market, useful, won
+    )
+    fallback_weight, fallback_brier, fallback_market_brier = (
+        _fit_validated_market_residual_weight(market, harmful, won)
+    )
+
+    assert 0.0 < weight <= 1.0
+    assert blended_brier < market_brier
+    assert fallback_weight == 0.0
+    assert fallback_brier == fallback_market_brier
+
+
+def test_outcome_probability_model_ignores_future_columns() -> None:
+    frame = pd.DataFrame({
+        "probability": [0.2, 0.3, 0.7, 0.8] * 30,
+        "odds": [4.0, 3.0, 1.5, 1.3] * 30,
+        "outcome": ["away", "draw", "home", "home"] * 30,
+        "actual_outcome": ["home"] * 120,
+        "profit": [999.0] * 120,
+    })
+    won = pd.Series([0, 0, 1, 1] * 30)
+    model = _outcome_probability_pipeline(
+        ("probability", "odds"), ("outcome",)
+    )
+    model.fit(frame, won)
+    before = model.predict_proba(frame)[:, 1]
+    changed = frame.assign(actual_outcome="away", profit=-999.0)
+    after = model.predict_proba(changed)[:, 1]
+
+    assert (before == after).all()
+    assert ((before > 0.0) & (before < 1.0)).all()
+
+
+def test_unpromoted_outcome_probability_model_cannot_be_exported(tmp_path) -> None:
+    with pytest.raises(ValueError, match="cannot be exported before promotion"):
+        export_live_ranker(
+            tmp_path / "candidate.json",
+            outcome_probability_profile="training_market_logistic",
+        )
+
+
+def test_training_market_calibration_uses_broad_training_probabilities() -> None:
+    training = pd.DataFrame({
+        "probability": [0.2, 0.3, 0.7, 0.8] * 30,
+        "unit_profit": [-1.0, -1.0, 1.0, 1.0] * 30,
+    })
+    validation = pd.DataFrame({
+        "probability": [0.5, 0.5], "odds": [2.0, 2.0],
+        "unit_profit": [1.0, -1.0],
+    })
+
+    intercept, slope = _fit_staking_calibration(
+        training, validation, [0.0, 0.0], "training_market_platt"
+    )
+
+    assert abs(intercept) < 0.1
+    assert slope > 1.0
+
+
+def test_market_calibration_weight_is_shrunk_from_validation_only() -> None:
+    validation = pd.DataFrame({
+        "probability": [0.7, 0.7, 0.3, 0.3],
+        "odds": [2.0, 2.0, 3.0, 3.0],
+        "unit_profit": [1.0, 1.0, -1.0, -1.0],
+    })
+
+    weight = _fit_market_calibration_weight(
+        validation, [0.0, 0.0, 0.0, 0.0], 0.0, 1.0, prior_strength=4.0
+    )
+
+    assert 0.0 <= weight <= 0.5
+
+
+def test_validation_month_stability_weights_months_not_row_counts() -> None:
+    frame = pd.DataFrame([
+        *[{"date": "2026-01-10", "closing_edge_pct": 2.0} for _ in range(20)],
+        {"date": "2026-02-10", "closing_edge_pct": -1.0},
+    ])
+
+    months, positive_rate = _validation_month_stability(frame)
+
+    assert months == 2
+    assert positive_rate == 0.5
+
+
+def test_archived_complete_months_do_not_require_matches_on_first_day() -> None:
+    rows = [
+        HistoricalMatch(date(2026, month, day), "E0", "H", "A", "home", (), "x", day)
+        for month, day in ((1, 5), (1, 20), (2, 8), (2, 24), (3, 31))
+    ]
+    assert archived_complete_months(rows, 2) == [
+        (date(2026, 1, 1), date(2026, 1, 31)),
+        (date(2026, 2, 1), date(2026, 2, 28)),
+    ]
+
+
+def test_include_latest_month_evaluates_latest_archive_after_prior_training(tmp_path) -> None:
+    matches = []
+    for month in range(1, 9):
+        last_day = calendar.monthrange(2026, month)[1]
+        for index in range(30):
+            matches.append(HistoricalMatch(
+                date(2026, month, last_day), "E0", f"H-{month}-{index}",
+                f"A-{month}-{index}", "home", _opening_books(),
+                f"month-{month}.csv", index + 2, _closing_books(),
+            ))
+
+    report = rolling_v6(
+        tmp_path / "latest", fold_count=1, minimum_month_rows=1, matches=matches,
+        month_completeness_profile="archived_count", include_latest_month=True,
+    )
+
+    assert report["latest_sealed_month_excluded"] is None
+    assert report["latest_archived_month_included"] == "2026-08"
+    assert report["monthly"][0]["month"] == "2026-08"
 from scripts.robust_consensus_latest_month_holdout import HistoricalMatch
 
 
@@ -35,7 +187,19 @@ def _closing_books() -> tuple[dict, ...]:
     } for index in range(6))
 
 
-def test_v6_test_month_results_cannot_change_model_or_frozen_stakes(tmp_path) -> None:
+@pytest.mark.parametrize(
+    ("target_profile", "uncertainty_profile", "selection_objective"),
+    [
+        ("closing_edge_pct", "rmse_grid", "profit_tuned_cap"),
+        ("closing_probability", "rmse_grid", "profit_tuned_cap"),
+        ("closing_probability_delta", "rmse_grid", "profit_tuned_cap"),
+        ("closing_probability_delta", "residual_quantile_25", "profit_tuned_cap"),
+        ("closing_edge_pct", "rmse_grid", "profit_gated_fixed_cap"),
+    ],
+)
+def test_v6_test_month_results_cannot_change_model_or_frozen_stakes(
+    tmp_path, target_profile: str, uncertainty_profile: str, selection_objective: str,
+) -> None:
     winners = []
     losers = []
     for month in range(1, 9):
@@ -50,10 +214,16 @@ def test_v6_test_month_results_cannot_change_model_or_frozen_stakes(tmp_path) ->
             losers.append(replace(match, actual_outcome="away") if month == 7 else match)
 
     positive = rolling_v6(
-        tmp_path / "positive", fold_count=1, minimum_month_rows=1, matches=winners,
+        tmp_path / f"positive-{target_profile}", fold_count=1,
+        minimum_month_rows=1, matches=winners, target_profile=target_profile,
+        uncertainty_profile=uncertainty_profile,
+        selection_objective=selection_objective,
     )
     negative = rolling_v6(
-        tmp_path / "negative", fold_count=1, minimum_month_rows=1, matches=losers,
+        tmp_path / f"negative-{target_profile}", fold_count=1,
+        minimum_month_rows=1, matches=losers, target_profile=target_profile,
+        uncertainty_profile=uncertainty_profile,
+        selection_objective=selection_objective,
     )
 
     positive_month = positive["monthly"][0]

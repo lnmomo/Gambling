@@ -29,7 +29,10 @@ from scripts.portfolio_algorithm_optimization import ALL_SEASONS, DATA_BASE, PRO
 
 OUTCOMES = ("home", "draw", "away")
 FTR = {"H": "home", "D": "draw", "A": "away"}
-BOOK_PREFIXES = ("B365", "BFD", "BMGM", "BV", "BW", "CL", "LB", "PS", "BFE", "BF", "WH", "1XB")
+BOOK_PREFIXES = (
+    "B365", "BFD", "BMGM", "BV", "BW", "CL", "IW", "LB", "PS", "BFE",
+    "BF", "VC", "WH", "1XB",
+)
 
 
 @dataclass(frozen=True)
@@ -47,6 +50,8 @@ class Strategy:
     daily_budget: float = 100.0
     maximum_single_stake: float = 10.0
     kelly_fraction: float = 0.25
+    exchange_bookmaker_keys: tuple[str, ...] = ("BFE",)
+    maximum_price_ratio: float | None = None
 
 
 STRATEGIES = (
@@ -161,7 +166,10 @@ def _priced_books(books: tuple[dict[str, Any], ...], strategy: Strategy) -> list
     priced_books = []
     for source in books:
         row = dict(source)
-        cost_rate = strategy.exchange_commission_rate if str(row["bookmaker_key"]) == "BFE" else 0.0
+        cost_rate = (
+            strategy.exchange_commission_rate
+            if str(row["bookmaker_key"]) in strategy.exchange_bookmaker_keys else 0.0
+        )
         row["execution_cost_rate"] = cost_rate
         for outcome in OUTCOMES:
             raw_odds = float(source[f"{outcome}_odds"])
@@ -192,11 +200,17 @@ def _candidate(match: HistoricalMatch, strategy: Strategy) -> dict[str, Any] | N
         )
         conservative_ev = conservative_probability * price - 1.0
         fair_price = 1.0 / probability
+        price_ratio = price * probability
         if not strategy.minimum_probability <= probability:
             continue
         if not 1.5 <= price <= strategy.maximum_odds:
             continue
         if price < fair_price * strategy.minimum_price_ratio:
+            continue
+        if (
+            strategy.maximum_price_ratio is not None
+            and price_ratio > strategy.maximum_price_ratio
+        ):
             continue
         if conservative_ev < strategy.minimum_conservative_ev:
             continue
@@ -206,6 +220,7 @@ def _candidate(match: HistoricalMatch, strategy: Strategy) -> dict[str, Any] | N
             "odds": price, "raw_odds": execution[f"raw_{outcome}_odds"],
             "execution_cost_rate": execution["execution_cost_rate"],
             "conservative_ev": conservative_ev,
+            "price_ratio": price_ratio,
             "execution_bookmaker": execution["bookmaker_key"],
             "reference_bookmakers": sorted(row["bookmaker_key"] for row in references),
             "reference_dispersion": dispersions[outcome],
@@ -245,7 +260,7 @@ def _odds_band(odds: float) -> str:
 
 
 def _candidate_buckets(candidate: dict[str, Any]) -> tuple[str, str, str]:
-    source_type = "exchange" if candidate["execution_bookmaker"] == "BFE" else "sportsbook"
+    source_type = "exchange" if float(candidate["execution_cost_rate"]) > 0.0 else "sportsbook"
     return (
         f"outcome:{candidate['outcome']}",
         f"odds:{_odds_band(float(candidate['odds']))}",
@@ -595,6 +610,12 @@ def _monthly_bootstrap(rows: list[dict[str, Any]], iterations: int = 5000, seed:
         if staked > 0:
             estimates.append(sum(float(row["profit"]) for row in sample) / staked * 100.0)
     estimates.sort()
+    if not estimates:
+        return {
+            "status": "NO_STAKED_POSITIONS", "folds": len(rows),
+            "iterations": iterations, "seed": seed,
+            "lower_95_pct": None, "median_pct": None, "upper_95_pct": None,
+        }
     def percentile(probability: float) -> float | None:
         if not estimates:
             return None

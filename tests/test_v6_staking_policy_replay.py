@@ -38,3 +38,14 @@ def test_results_cannot_change_frozen_stakes_and_daily_limit() -> None:
     loser_settled = settle_frozen(loser_stakes, losers)
     assert winner_settled["profit"].sum() > loser_settled["profit"].sum()
     assert winner_settled["closing_edge_pct"].tolist() == winners["closing_edge_pct"].tolist()[:20]
+
+
+def test_opening_evidence_stake_multiplier_scales_frozen_kelly_stake() -> None:
+    policy = StakePolicy("half_kelly", "kelly", 0.5, 15.0)
+    baseline = _decisions("home").head(1)
+    discounted = baseline.assign(stake_multiplier=0.5)
+
+    baseline_stake = float(freeze_stakes(baseline, policy).iloc[0]["stake"])
+    discounted_stake = float(freeze_stakes(discounted, policy).iloc[0]["stake"])
+
+    assert discounted_stake == round(baseline_stake * 0.5, 2)

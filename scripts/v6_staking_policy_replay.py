@@ -50,9 +50,14 @@ def freeze_stakes(decisions: pd.DataFrame, policy: StakePolicy) -> pd.DataFrame:
                 requested = policy.amount
             else:
                 lower_edge = float(row["lower_closing_edge_pct"]) / 100.0
-                probability = min(0.999, (1.0 + lower_edge) / odds)
+                probability = float(row.get(
+                    "staking_probability", min(0.999, (1.0 + lower_edge) / odds)
+                ))
+                probability = min(0.999, max(0.001, probability))
                 full_kelly = max(0.0, (probability * odds - 1.0) / max(odds - 1.0, 1e-9))
                 requested = policy.daily_budget * policy.amount * full_kelly
+            stake_multiplier = min(1.0, max(0.0, float(row.get("stake_multiplier", 1.0))))
+            requested *= stake_multiplier
             stake = round(min(policy.maximum_single_stake, remaining, requested), 2)
             if stake < 0.10:
                 continue

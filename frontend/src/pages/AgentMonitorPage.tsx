@@ -43,12 +43,40 @@ type ExternalConsensusChallenger = {
   decision_reasons: string[];
   blocker_counts: Array<{reason: string; decisions: number}>;
 };
+type NamedBookGapPolicyReport = {
+  policy: {config: {version: string; stress_exchange_commission_rate?: number}};
+  decision: string;
+  decision_reasons: string[];
+  paper_portfolio: {
+    daily_budget_limit: number;
+    maximum_daily_league_stake: number | null;
+    pending_bets: number;
+    settled_bets: number;
+    staked: number;
+    settled_staked: number;
+    profit: number;
+    roi_pct: number;
+    opening_equity: number;
+    ending_equity: number;
+    max_drawdown: number;
+    daily_window: string;
+    daily: Array<{
+      date: string; bets: number; staked: number; pending: number;
+      settlements: number; settled_profit: number; equity: number; cash_reserved: number;
+    }>;
+  };
+  guardrail: string;
+};
+type NamedBookGapExperiment = {
+  policies: NamedBookGapPolicyReport[];
+  guardrail: string;
+};
 
 const WORKFLOW: WorkflowItem[] = [
   {task: "official_sp_sync", title: "官方赛事/SP", description: "中国竞彩网赛事池、状态、官方赔率"},
   {task: "free_prospective_odds_capture", title: "免费前瞻赔率证据", description: "按 T-6h/T-1h 定向采集具名公司赔率，记录 API 额度并冻结原始证据", dependsOn: "official_sp_sync"},
   {task: "external_odds_primary_horizon_capture", title: "T-1 快速赔率采集", description: "每 5 分钟检查 T-120 至 T-60 窗口，只在尚无快照时请求一次真实外部赔率", dependsOn: "free_prospective_odds_capture"},
-  {task: "named_book_gap_primary_horizon_capture", title: "v3.1/v4.1/v6.2/v6.3 四策略影子实验", description: "同一 T-1 快照并行冻结两条市场策略与 Ridge CLV 的 1/10、1/2 Kelly 仓位组；保存净执行价、预测 CLV、模型哈希和不可变证据", dependsOn: "external_odds_primary_horizon_capture"},
+  {task: "named_book_gap_primary_horizon_capture", title: "v3.1 至 v8.33 十七策略影子实验", description: "同一 T-1 快照并行冻结全部策略；v8.33 使用 9m3m 核心窗，并在核心不合格时启用 18m9m 低仓位卫星窗", dependsOn: "external_odds_primary_horizon_capture"},
   {task: "official_results_sync", title: "官方赛果回填", description: "独立赛果页、90分钟比分、冲突隔离与不可变证据", dependsOn: "official_sp_sync"},
   {task: "paper_portfolio_settlement", title: "纸面组合结算", description: "用官方赛果和临场SP结算不可变持仓、收益与CLV", dependsOn: "official_results_sync"},
   {task: "official_sp_evidence_quality", title: "SP 证据质量", description: "采集新鲜度、临盘覆盖、赛果完整性与时间一致性", dependsOn: "paper_portfolio_settlement"},
@@ -58,7 +86,7 @@ const WORKFLOW: WorkflowItem[] = [
   {task: "feature_build", title: "球队特征", description: "历史样本、Elo、lambda、source confidence", dependsOn: "historical_data_sync"},
   {task: "prospective_research_capture", title: "完整前瞻研究归档", description: "小时级特征刷新后冻结模型、赛前赔率与不可覆盖赛前预测", dependsOn: "feature_build"},
   {task: "external_consensus_challenger_capture", title: "外部共识 Challenger", description: "冻结多家公司去水共识、官方SP、保守EV与真实NO_BET，禁止赛后改规则", dependsOn: "prospective_research_capture"},
-  {task: "named_book_gap_research_capture", title: "市场与仓位四策略验证", description: "比较 v3、v4、v6.2 与 v6.3 的候选量、纸面利润、ROI、回撤和方向集中度；模型与仓位规则固定且未达到前瞻样本门槛不晋级", dependsOn: "named_book_gap_primary_horizon_capture"},
+  {task: "named_book_gap_research_capture", title: "市场与仓位十七策略验证", description: "比较 v3 至 v8.33，重点监控 v8.33 的核心/卫星来源、真实 CLV、每日100元与联赛日15元约束；历史门禁通过也不会替代前瞻样本", dependsOn: "named_book_gap_primary_horizon_capture"},
   {task: "qwen_news_analysis", title: "Qwen 情报", description: "新闻摘要、伤停与上下文因子", dependsOn: "external_odds_news_weather_sync"},
   {task: "market_bias_shadow_monitor", title: "市场偏差影子验证", description: "冻结规则、影子预测、赛后评估与晋级门", dependsOn: "feature_build"},
   {task: "profit_scorer_official_pool_diagnosis", title: "盈利评分池诊断", description: "检查当前官方比赛是否进入冻结盈利评分器", dependsOn: "feature_build"},
@@ -142,6 +170,9 @@ export default function AgentMonitorPage() {
       expected_ev_gap_to_entry: null, conservative_ev_gap_to_entry: null,
       primary_horizon_candidates: 0, settled_selections: 0, elapsed_days: 0, decision_reasons: [], blocker_counts: []},
   );
+  const namedBookExperiment = useApi<NamedBookGapExperiment>(
+    "/api/research/named-book-gap/experiment", {policies: [], guardrail: ""},
+  );
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [running, setRunning] = useState(false), [message, setMessage] = useState("");
 
@@ -163,6 +194,10 @@ export default function AgentMonitorPage() {
   const scorerStatistics = scorerStrategy?.statistical_evidence;
   const scorerBootstrap = scorerStatistics?.bootstrap;
   const scorerPoint = scorerStatistics?.point_estimates;
+  const v833 = namedBookExperiment.data.policies.find(
+    row => row.policy.config.version.startsWith("clv-ridge-v8.33"),
+  );
+  const v833Daily = v833?.paper_portfolio.daily ?? [];
   const pct = (value?: number | null) => value == null ? "-" : `${value.toFixed(2)}%`;
   const decimal = (value?: number | null) => value == null ? "-" : value.toFixed(4);
 
@@ -196,6 +231,26 @@ export default function AgentMonitorPage() {
       </section>
       <WorkflowGraph tasks={tasks}/>
       <TaskCards tasks={tasks}/>
+    </section>
+
+    <section className="panel" style={{marginBottom: 16}}>
+      <div className="panel-heading"><div><h2>v8.33 多时间窗前瞻影子资金曲线</h2><p>仅显示 T-1 冻结仓位；9m3m 核心不合格时才启用 18m9m 卫星，按决策日占用每日 100 元预算，按赛果结算日更新权益。</p></div><button onClick={() => namedBookExperiment.reload()}>刷新组合</button></div>
+      <section className="summary-strip" style={{padding: 16, margin: 0}}>
+        <span>状态<b>{v833?.decision ?? "尚未注册"}</b></span>
+        <span>每日限额<b>{v833?.paper_portfolio.daily_budget_limit ?? 100} 元</b></span>
+        <span>联赛日上限<b>{v833?.paper_portfolio.maximum_daily_league_stake ?? 15} 元</b></span>
+        <span>待结算<b>{v833?.paper_portfolio.pending_bets ?? 0}</b></span>
+        <span>已结算<b>{v833?.paper_portfolio.settled_bets ?? 0}</b></span>
+        <span>总投入<b>{(v833?.paper_portfolio.staked ?? 0).toFixed(2)} 元</b></span>
+        <span>累计盈亏<b>{(v833?.paper_portfolio.profit ?? 0).toFixed(2)} 元</b></span>
+        <span>ROI<b>{(v833?.paper_portfolio.roi_pct ?? 0).toFixed(2)}%</b></span>
+        <span>窗口期初权益<b>{(v833?.paper_portfolio.opening_equity ?? 0).toFixed(2)} 元</b></span>
+        <span>当前权益<b>{(v833?.paper_portfolio.ending_equity ?? 0).toFixed(2)} 元</b></span>
+        <span>最大回撤<b>{(v833?.paper_portfolio.max_drawdown ?? 0).toFixed(2)} 元</b></span>
+      </section>
+      <div className="table-scroll"><table className="data-table"><thead><tr><th>日期</th><th>建仓场次</th><th>当日投入</th><th>待结算</th><th>结算场次</th><th>结算盈亏</th><th>累计权益</th><th>现金保留</th></tr></thead>
+        <tbody>{v833Daily.length ? v833Daily.map(row => <tr key={row.date}><td>{row.date}</td><td>{row.bets}</td><td>{row.staked.toFixed(2)}</td><td>{row.pending}</td><td>{row.settlements}</td><td>{row.settled_profit.toFixed(2)}</td><td>{row.equity.toFixed(2)}</td><td>{row.cash_reserved.toFixed(2)}</td></tr>) : <tr><td colSpan={8}>尚无前瞻资金记录</td></tr>}</tbody></table></div>
+      <p style={{padding: "0 16px", color: "var(--muted)"}}>{v833?.guardrail ?? namedBookExperiment.data.guardrail ?? "研究影子组合，不创建真实订单。"}</p>
     </section>
 
     <section className="panel" style={{marginBottom: 16}}>

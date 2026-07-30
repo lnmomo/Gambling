@@ -1,0 +1,34 @@
+{
+  "method": "fixed-position Bernoulli simulation from closing fair probability",
+  "simulations": 2000,
+  "bootstrap_iterations_per_simulation": 1000,
+  "block_size_months": 3,
+  "seed": 20260730,
+  "positions": 118,
+  "months": 48,
+  "closing_probability_expected_profit": 26.3827,
+  "closing_probability_expected_roi_pct": 7.7738,
+  "remove_top_5": {
+    "block_lower_95_positive_rate": 0.0095,
+    "aggregate_profit_positive_rate": 0.2485,
+    "median_block_lower_95_pct": -48.4005,
+    "median_retained_profit": -32.53
+  },
+  "remove_top_10": {
+    "aggregate_profit_positive_rate": 0.046,
+    "median_retained_profit": -71.9
+  },
+  "joint_current_concentration_gate_pass_rate": 0.009,
+  "guardrail": "Post-settlement gate-power diagnostic only; simulated outcomes never alter historical eligibility, direction, probability, or stake.",
+  "observed_calibrated_diagnostics": {
+    "remove_top_5_block_lower_95_pct": -19.6531,
+    "remove_top_5_block_lower_percentile": 0.936,
+    "remove_top_10_retained_profit": 6.43,
+    "remove_top_10_profit_percentile": 0.965,
+    "positive_active_months": 16,
+    "active_months": 24,
+    "positive_month_count_percentile": 0.9765,
+    "minimum_acceptable_percentile": 0.05,
+    "calibrated_concentration_gate_passed": true
+  }
+}

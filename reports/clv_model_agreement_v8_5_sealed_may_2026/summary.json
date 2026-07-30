@@ -1,0 +1,48 @@
+{
+  "method": "intersection of frozen direct-CLV and probability-movement selections",
+  "anti_leakage": "future columns removed before agreement and stake sizing; outcomes merged only for settlement",
+  "staking": {
+    "name": "model_agreement_half_kelly",
+    "mode": "kelly",
+    "amount": 0.5,
+    "maximum_single_stake": 15.0,
+    "daily_budget": 100.0
+  },
+  "daily_budget_limit": 100.0,
+  "disagreement_penalty": 0.0,
+  "minimum_reference_depth": 6,
+  "minimum_depth_stake_multiplier": 0.5,
+  "direct_positions": 5,
+  "movement_positions": 6,
+  "agreement_positions": 5,
+  "active_months": 1,
+  "positive_active_months": 1,
+  "staked": 2.22,
+  "profit": 2.71,
+  "roi_pct": 122.07,
+  "maximum_daily_stake": 0.62,
+  "maximum_drawdown": 0.55,
+  "monthly_bootstrap_roi": {
+    "status": "INSUFFICIENT_FOLDS",
+    "folds": 1,
+    "lower_95_pct": null,
+    "median_pct": null,
+    "upper_95_pct": null
+  },
+  "decision": "ROLLING_REJECTED",
+  "decision_reasons": [
+    "bets<100",
+    "active_months<8",
+    "monthly_bootstrap_roi_lower_95<=0"
+  ],
+  "monthly": [
+    {
+      "month": "2026-05",
+      "bets": 5,
+      "staked": 2.22,
+      "profit": 2.71,
+      "roi_pct": 122.07
+    }
+  ],
+  "live_promotion_allowed": false
+}

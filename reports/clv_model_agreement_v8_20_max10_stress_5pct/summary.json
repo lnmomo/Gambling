@@ -1,0 +1,695 @@
+{
+  "method": "intersection of frozen direct-CLV and probability-movement selections",
+  "anti_leakage": "future columns removed before agreement and stake sizing; outcomes merged only for settlement",
+  "staking": {
+    "name": "model_agreement_0.75_kelly",
+    "mode": "kelly",
+    "amount": 0.75,
+    "maximum_single_stake": 10.0,
+    "daily_budget": 100.0
+  },
+  "daily_budget_limit": 100.0,
+  "disagreement_penalty": 0.0,
+  "minimum_reference_depth": 4,
+  "minimum_depth_stake_multiplier": 0.5,
+  "minimum_staking_probability": 0.25,
+  "minimum_lower_clv_pct": 2.0,
+  "minimum_execution_odds": 0.0,
+  "short_odds_threshold": 0.0,
+  "short_odds_stake_multiplier": 1.0,
+  "staking_probability_profile": "training_market_platt",
+  "calibration_minimum_prior_positions": 30,
+  "calibration_prior_strength": 50.0,
+  "calibration_diagnostics": [],
+  "direct_positions": 209,
+  "movement_positions": 228,
+  "agreement_positions": 108,
+  "active_months": 24,
+  "positive_active_months": 16,
+  "staked": 309.16,
+  "profit": 113.23,
+  "roi_pct": 36.63,
+  "maximum_daily_stake": 22.92,
+  "maximum_drawdown": 22.29,
+  "monthly_bootstrap_roi": {
+    "status": "READY",
+    "folds": 48,
+    "iterations": 5000,
+    "seed": 42,
+    "lower_95_pct": 11.5576,
+    "median_pct": 37.2543,
+    "upper_95_pct": 61.1332
+  },
+  "moving_block_bootstrap_roi": {
+    "status": "READY",
+    "months": 48,
+    "block_size": 3,
+    "iterations": 5000,
+    "seed": 42,
+    "lower_95_pct": 23.2719,
+    "median_pct": 37.317,
+    "upper_95_pct": 62.1064
+  },
+  "leave_one_execution_source_out": {
+    "status": "READY",
+    "sources": [
+      {
+        "excluded_bookmaker": "1XB",
+        "retained_bets": 84,
+        "retained_staked": 294.78,
+        "retained_profit": 99.72,
+        "retained_roi_pct": 33.83,
+        "moving_block_lower_95_pct": 19.6842
+      },
+      {
+        "excluded_bookmaker": "B365",
+        "retained_bets": 99,
+        "retained_staked": 304.76,
+        "retained_profit": 116.26,
+        "retained_roi_pct": 38.15,
+        "moving_block_lower_95_pct": 24.4247
+      },
+      {
+        "excluded_bookmaker": "BFE",
+        "retained_bets": 107,
+        "retained_staked": 307.47,
+        "retained_profit": 114.92,
+        "retained_roi_pct": 37.38,
+        "moving_block_lower_95_pct": 23.7402
+      },
+      {
+        "excluded_bookmaker": "BMGM",
+        "retained_bets": 102,
+        "retained_staked": 301.13,
+        "retained_profit": 103.78,
+        "retained_roi_pct": 34.46,
+        "moving_block_lower_95_pct": 20.8063
+      },
+      {
+        "excluded_bookmaker": "BW",
+        "retained_bets": 98,
+        "retained_staked": 263.06,
+        "retained_profit": 94.32,
+        "retained_roi_pct": 35.85,
+        "moving_block_lower_95_pct": 19.7137
+      },
+      {
+        "excluded_bookmaker": "IW",
+        "retained_bets": 106,
+        "retained_staked": 294.48,
+        "retained_profit": 107.08,
+        "retained_roi_pct": 36.36,
+        "moving_block_lower_95_pct": 20.4331
+      },
+      {
+        "excluded_bookmaker": "PS",
+        "retained_bets": 95,
+        "retained_staked": 297.42,
+        "retained_profit": 107.5,
+        "retained_roi_pct": 36.14,
+        "moving_block_lower_95_pct": 22.0869
+      },
+      {
+        "excluded_bookmaker": "VC",
+        "retained_bets": 105,
+        "retained_staked": 293.1,
+        "retained_profit": 108.51,
+        "retained_roi_pct": 37.02,
+        "moving_block_lower_95_pct": 21.9743
+      },
+      {
+        "excluded_bookmaker": "WH",
+        "retained_bets": 68,
+        "retained_staked": 117.08,
+        "retained_profit": 53.75,
+        "retained_roi_pct": 45.91,
+        "moving_block_lower_95_pct": 8.0376
+      }
+    ],
+    "minimum_lower_95_pct": 8.0376
+  },
+  "leave_one_group_out": {
+    "league": {
+      "status": "READY",
+      "group_column": "league",
+      "groups": [
+        {
+          "excluded_group": "B1",
+          "retained_bets": 95,
+          "retained_staked": 261.05,
+          "retained_profit": 94.31,
+          "retained_roi_pct": 36.13,
+          "moving_block_lower_95_pct": 16.6465
+        },
+        {
+          "excluded_group": "D1",
+          "retained_bets": 105,
+          "retained_staked": 307.51,
+          "retained_profit": 112.97,
+          "retained_roi_pct": 36.74,
+          "moving_block_lower_95_pct": 23.2712
+        },
+        {
+          "excluded_group": "D2",
+          "retained_bets": 107,
+          "retained_staked": 308.24,
+          "retained_profit": 114.15,
+          "retained_roi_pct": 37.03,
+          "moving_block_lower_95_pct": 23.3732
+        },
+        {
+          "excluded_group": "E0",
+          "retained_bets": 107,
+          "retained_staked": 308.77,
+          "retained_profit": 113.62,
+          "retained_roi_pct": 36.8,
+          "moving_block_lower_95_pct": 23.3095
+        },
+        {
+          "excluded_group": "E1",
+          "retained_bets": 105,
+          "retained_staked": 299.52,
+          "retained_profit": 113.28,
+          "retained_roi_pct": 37.82,
+          "moving_block_lower_95_pct": 24.0113
+        },
+        {
+          "excluded_group": "E2",
+          "retained_bets": 106,
+          "retained_staked": 304.0,
+          "retained_profit": 106.51,
+          "retained_roi_pct": 35.04,
+          "moving_block_lower_95_pct": 21.4341
+        },
+        {
+          "excluded_group": "E3",
+          "retained_bets": 106,
+          "retained_staked": 306.57,
+          "retained_profit": 112.12,
+          "retained_roi_pct": 36.57,
+          "moving_block_lower_95_pct": 23.0322
+        },
+        {
+          "excluded_group": "F1",
+          "retained_bets": 106,
+          "retained_staked": 308.57,
+          "retained_profit": 113.82,
+          "retained_roi_pct": 36.89,
+          "moving_block_lower_95_pct": 23.3837
+        },
+        {
+          "excluded_group": "F2",
+          "retained_bets": 100,
+          "retained_staked": 294.49,
+          "retained_profit": 96.38,
+          "retained_roi_pct": 32.73,
+          "moving_block_lower_95_pct": 18.1509
+        },
+        {
+          "excluded_group": "G1",
+          "retained_bets": 104,
+          "retained_staked": 294.37,
+          "retained_profit": 107.19,
+          "retained_roi_pct": 36.41,
+          "moving_block_lower_95_pct": 20.4239
+        },
+        {
+          "excluded_group": "I1",
+          "retained_bets": 103,
+          "retained_staked": 303.85,
+          "retained_profit": 114.1,
+          "retained_roi_pct": 37.55,
+          "moving_block_lower_95_pct": 24.2697
+        },
+        {
+          "excluded_group": "I2",
+          "retained_bets": 85,
+          "retained_staked": 258.57,
+          "retained_profit": 95.71,
+          "retained_roi_pct": 37.02,
+          "moving_block_lower_95_pct": 23.2655
+        },
+        {
+          "excluded_group": "N1",
+          "retained_bets": 105,
+          "retained_staked": 304.85,
+          "retained_profit": 115.68,
+          "retained_roi_pct": 37.95,
+          "moving_block_lower_95_pct": 23.3669
+        },
+        {
+          "excluded_group": "P1",
+          "retained_bets": 107,
+          "retained_staked": 308.56,
+          "retained_profit": 113.83,
+          "retained_roi_pct": 36.89,
+          "moving_block_lower_95_pct": 23.35
+        },
+        {
+          "excluded_group": "SC0",
+          "retained_bets": 107,
+          "retained_staked": 308.71,
+          "retained_profit": 113.68,
+          "retained_roi_pct": 36.82,
+          "moving_block_lower_95_pct": 23.3315
+        },
+        {
+          "excluded_group": "SP1",
+          "retained_bets": 106,
+          "retained_staked": 308.2,
+          "retained_profit": 112.36,
+          "retained_roi_pct": 36.46,
+          "moving_block_lower_95_pct": 23.169
+        },
+        {
+          "excluded_group": "SP2",
+          "retained_bets": 85,
+          "retained_staked": 194.95,
+          "retained_profit": 76.63,
+          "retained_roi_pct": 39.31,
+          "moving_block_lower_95_pct": 7.309
+        },
+        {
+          "excluded_group": "T1",
+          "retained_bets": 97,
+          "retained_staked": 274.94,
+          "retained_profit": 98.57,
+          "retained_roi_pct": 35.85,
+          "moving_block_lower_95_pct": 20.5673
+        }
+      ],
+      "minimum_lower_95_pct": 7.309
+    },
+    "outcome": {
+      "status": "READY",
+      "group_column": "outcome",
+      "groups": [
+        {
+          "excluded_group": "away",
+          "retained_bets": 84,
+          "retained_staked": 229.81,
+          "retained_profit": 86.39,
+          "retained_roi_pct": 37.59,
+          "moving_block_lower_95_pct": 19.4477
+        },
+        {
+          "excluded_group": "draw",
+          "retained_bets": 68,
+          "retained_staked": 284.0,
+          "retained_profit": 110.56,
+          "retained_roi_pct": 38.93,
+          "moving_block_lower_95_pct": 23.0878
+        },
+        {
+          "excluded_group": "home",
+          "retained_bets": 64,
+          "retained_staked": 104.51,
+          "retained_profit": 29.51,
+          "retained_roi_pct": 28.24,
+          "moving_block_lower_95_pct": -16.0654
+        }
+      ],
+      "minimum_lower_95_pct": -16.0654
+    },
+    "odds_band": {
+      "status": "READY",
+      "group_column": "odds_band",
+      "groups": [
+        {
+          "excluded_group": "1.5-2.0",
+          "retained_bets": 92,
+          "retained_staked": 199.18,
+          "retained_profit": 100.38,
+          "retained_roi_pct": 50.4,
+          "moving_block_lower_95_pct": 21.9301
+        },
+        {
+          "excluded_group": "2.0-3.0",
+          "retained_bets": 77,
+          "retained_staked": 161.13,
+          "retained_profit": 28.37,
+          "retained_roi_pct": 17.61,
+          "moving_block_lower_95_pct": -5.1988
+        },
+        {
+          "excluded_group": "3.0-4.0",
+          "retained_bets": 54,
+          "retained_staked": 265.48,
+          "retained_profit": 104.78,
+          "retained_roi_pct": 39.47,
+          "moving_block_lower_95_pct": 24.3992
+        },
+        {
+          "excluded_group": "4.0-5.0",
+          "retained_bets": 101,
+          "retained_staked": 301.69,
+          "retained_profit": 106.16,
+          "retained_roi_pct": 35.19,
+          "moving_block_lower_95_pct": 21.6496
+        }
+      ],
+      "minimum_lower_95_pct": -5.1988
+    }
+  },
+  "decision": "ROLLING_RESEARCH_SURVIVOR",
+  "decision_reasons": [],
+  "monthly": [
+    {
+      "month": "2021-09",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2021-10",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2021-11",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2021-12",
+      "bets": 6,
+      "staked": 18.25,
+      "profit": 10.15,
+      "roi_pct": 55.62
+    },
+    {
+      "month": "2022-01",
+      "bets": 1,
+      "staked": 0.54,
+      "profit": 1.32,
+      "roi_pct": 244.44
+    },
+    {
+      "month": "2022-02",
+      "bets": 11,
+      "staked": 43.07,
+      "profit": 24.26,
+      "roi_pct": 56.33
+    },
+    {
+      "month": "2022-03",
+      "bets": 11,
+      "staked": 45.96,
+      "profit": -11.63,
+      "roi_pct": -25.3
+    },
+    {
+      "month": "2022-04",
+      "bets": 8,
+      "staked": 44.32,
+      "profit": 32.31,
+      "roi_pct": 72.9
+    },
+    {
+      "month": "2022-05",
+      "bets": 5,
+      "staked": 32.48,
+      "profit": 0.16,
+      "roi_pct": 0.49
+    },
+    {
+      "month": "2022-08",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2022-09",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2022-10",
+      "bets": 3,
+      "staked": 10.91,
+      "profit": 9.87,
+      "roi_pct": 90.47
+    },
+    {
+      "month": "2022-11",
+      "bets": 3,
+      "staked": 1.66,
+      "profit": -0.29,
+      "roi_pct": -17.47
+    },
+    {
+      "month": "2022-12",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2023-01",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2023-02",
+      "bets": 4,
+      "staked": 1.14,
+      "profit": -1.14,
+      "roi_pct": -100.0
+    },
+    {
+      "month": "2023-03",
+      "bets": 4,
+      "staked": 21.6,
+      "profit": -2.29,
+      "roi_pct": -10.6
+    },
+    {
+      "month": "2023-04",
+      "bets": 5,
+      "staked": 28.36,
+      "profit": 13.75,
+      "roi_pct": 48.48
+    },
+    {
+      "month": "2023-05",
+      "bets": 3,
+      "staked": 16.03,
+      "profit": 6.71,
+      "roi_pct": 41.86
+    },
+    {
+      "month": "2023-08",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2023-09",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2023-10",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2023-11",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2023-12",
+      "bets": 1,
+      "staked": 1.09,
+      "profit": -1.09,
+      "roi_pct": -100.0
+    },
+    {
+      "month": "2024-01",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2024-02",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2024-03",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2024-04",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2024-05",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2024-08",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2024-09",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2024-10",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2024-11",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2024-12",
+      "bets": 1,
+      "staked": 0.86,
+      "profit": 2.55,
+      "roi_pct": 296.51
+    },
+    {
+      "month": "2025-01",
+      "bets": 1,
+      "staked": 0.3,
+      "profit": 0.8,
+      "roi_pct": 266.67
+    },
+    {
+      "month": "2025-02",
+      "bets": 15,
+      "staked": 17.15,
+      "profit": 9.44,
+      "roi_pct": 55.04
+    },
+    {
+      "month": "2025-03",
+      "bets": 6,
+      "staked": 2.23,
+      "profit": 0.69,
+      "roi_pct": 30.94
+    },
+    {
+      "month": "2025-04",
+      "bets": 2,
+      "staked": 0.56,
+      "profit": -0.56,
+      "roi_pct": -100.0
+    },
+    {
+      "month": "2025-05",
+      "bets": 4,
+      "staked": 1.38,
+      "profit": -0.61,
+      "roi_pct": -44.2
+    },
+    {
+      "month": "2025-08",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2025-09",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2025-10",
+      "bets": 6,
+      "staked": 9.6,
+      "profit": 7.45,
+      "roi_pct": 77.6
+    },
+    {
+      "month": "2025-11",
+      "bets": 1,
+      "staked": 0.19,
+      "profit": -0.19,
+      "roi_pct": -100.0
+    },
+    {
+      "month": "2025-12",
+      "bets": 1,
+      "staked": 0.27,
+      "profit": 0.85,
+      "roi_pct": 314.81
+    },
+    {
+      "month": "2026-01",
+      "bets": 4,
+      "staked": 7.54,
+      "profit": 8.04,
+      "roi_pct": 106.63
+    },
+    {
+      "month": "2026-02",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2026-03",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2026-04",
+      "bets": 2,
+      "staked": 3.67,
+      "profit": 2.68,
+      "roi_pct": 73.02
+    }
+  ],
+  "live_promotion_allowed": false
+}
