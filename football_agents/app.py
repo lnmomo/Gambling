@@ -283,6 +283,45 @@ def named_book_gap_experiment_status() -> dict:
     return named_book_gap_research.experiment_report()
 
 
+@app.get("/api/research/clv-v835/fixed-month")
+def clv_v835_fixed_month_status() -> dict:
+    path = settings.project_dir / "reports" / "clv_v8_35_fixed_month_2026_05" / "summary.json"
+    if not path.exists():
+        raise HTTPException(404, "v8.35 fixed-month replay has not been generated")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    historical_path = (
+        settings.project_dir / "reports" / "clv_multi_horizon_v8_34_5pct"
+        / "summary.json"
+    )
+    if historical_path.exists():
+        historical = json.loads(historical_path.read_text(encoding="utf-8"))
+        stability = historical.get("closing_expected_monthly_stability", {})
+        payload["historical_closing_stability_5pct"] = {
+            "folds": historical.get("monthly_bootstrap_roi", {}).get("folds"),
+            "positions": historical.get("positions"),
+            "closing_expected_profit": (
+                historical.get("closing_value", {}).get("all", {})
+                .get("closing_expected_profit")
+            ),
+            "closing_expected_roi_pct": (
+                historical.get("closing_value", {}).get("all", {})
+                .get("closing_expected_roi_pct")
+            ),
+            "positive_expected_active_months": stability.get(
+                "positive_expected_active_months"
+            ),
+            "active_months": stability.get("active_months"),
+            "iid_lower_95_pct": (
+                stability.get("monthly_bootstrap_roi", {}).get("lower_95_pct")
+            ),
+            "moving_block_lower_95_pct": (
+                stability.get("moving_block_bootstrap_roi", {}).get("lower_95_pct")
+            ),
+            "benchmark": stability.get("benchmark"),
+        }
+    return payload
+
+
 @app.post("/api/research/named-book-gap/capture")
 def capture_named_book_gap_research(limit: int = 100) -> dict:
     result = named_book_gap_research.capture(limit)

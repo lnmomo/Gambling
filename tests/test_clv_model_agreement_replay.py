@@ -6,6 +6,7 @@ from scripts.clv_model_agreement_replay import (
     HALF_KELLY,
     agreement_opening,
     apply_stake_adjustments,
+    apply_cross_cost_positive_clv_consensus,
     leave_one_source_out_diagnostics,
     leave_one_group_out_diagnostics,
     moving_block_bootstrap_roi,
@@ -15,6 +16,7 @@ from scripts.clv_model_agreement_replay import (
     leave_one_team_out_diagnostics,
     top_winner_removal_diagnostics,
     filter_opening_by_eligibility_keys,
+    closing_expected_monthly_stability,
     closing_value_diagnostics,
 )
 from scripts.v6_staking_policy_replay import freeze_stakes
@@ -154,6 +156,63 @@ def test_short_odds_and_reference_depth_stake_multipliers_compose() -> None:
     assert adjusted["stake_multiplier"].tolist() == [0.125, 0.5, 0.25]
 
 
+def test_positive_clv_probability_soft_scaling_never_increases_stake() -> None:
+    opening = pd.DataFrame({
+        "reference_bookmakers": [4, 4, 4],
+        "odds": [2.0, 2.0, 2.0],
+        "lower_closing_edge_pct": [3.0, 3.0, 3.0],
+        "predicted_positive_clv_probability": [0.30, 0.45, 0.70],
+    })
+
+    adjusted = apply_stake_adjustments(
+        opening, minimum_depth=None, minimum_depth_stake_multiplier=1.0,
+        positive_clv_probability_soft_cap=0.60,
+        positive_clv_probability_minimum_multiplier=0.50,
+    )
+
+    assert adjusted["stake_multiplier"].tolist() == [0.5, 0.75, 1.0]
+
+
+def test_positive_clv_probability_can_reallocate_with_a_bounded_uplift() -> None:
+    opening = pd.DataFrame({
+        "reference_bookmakers": [4, 4, 4],
+        "odds": [2.0, 2.0, 2.0],
+        "lower_closing_edge_pct": [3.0, 3.0, 3.0],
+        "predicted_positive_clv_probability": [0.30, 0.75, 0.95],
+    })
+
+    adjusted = apply_stake_adjustments(
+        opening, minimum_depth=None, minimum_depth_stake_multiplier=1.0,
+        positive_clv_probability_soft_cap=0.75,
+        positive_clv_probability_minimum_multiplier=0.50,
+        positive_clv_probability_maximum_multiplier=1.25,
+    )
+
+    assert adjusted["stake_multiplier"].tolist() == [0.5, 1.0, 1.25]
+
+
+def test_cross_cost_positive_clv_consensus_uses_lower_probability_only() -> None:
+    opening = pd.DataFrame({
+        "candidate_id": ["a", "b"], "outcome": ["home", "away"],
+        "predicted_positive_clv_probability": [0.80, 0.90],
+    })
+    peer = pd.DataFrame({
+        "candidate_id": ["a"], "outcome": ["home"],
+        "predicted_positive_clv_probability": [0.70],
+        "actual_outcome": ["away"], "profit": [999.0],
+    })
+
+    result = apply_cross_cost_positive_clv_consensus(opening, peer)
+    changed_future = apply_cross_cost_positive_clv_consensus(
+        opening, peer.assign(actual_outcome="home", profit=-999.0)
+    )
+
+    assert result["predicted_positive_clv_probability"].tolist() == [0.70, 0.0]
+    assert changed_future["predicted_positive_clv_probability"].equals(
+        result["predicted_positive_clv_probability"]
+    )
+
+
 def test_low_clv_confidence_tier_composes_without_future_results() -> None:
     opening = pd.DataFrame([
         {"odds": 2.0, "reference_bookmakers": 4, "lower_closing_edge_pct": 1.5},
@@ -248,6 +307,29 @@ def test_closing_value_diagnostics_separates_expected_edge_from_result_luck() ->
     assert report["late"]["closing_expected_profit"] == 2.0
     assert report["realized_profit"] == 0.0
     assert report["realized_minus_closing_expected_profit"] == -3.0
+
+
+def test_closing_expected_monthly_stability_ignores_match_result_profit() -> None:
+    settled = pd.DataFrame([
+        {
+            "test_month": f"2025-{month:02d}", "stake": 10.0,
+            "odds": 2.0, "closing_probability": 0.55,
+            "profit": 10.0 if month % 2 else -10.0,
+        }
+        for month in range(1, 13)
+    ])
+    months = [f"2025-{month:02d}" for month in range(1, 13)]
+
+    baseline = closing_expected_monthly_stability(settled, months)
+    changed = closing_expected_monthly_stability(
+        settled.assign(profit=-settled["profit"]), months
+    )
+
+    assert baseline == changed
+    assert baseline["status"] == "READY"
+    assert baseline["positive_expected_active_months"] == 12
+    assert baseline["monthly_bootstrap_roi"]["lower_95_pct"] == 10.0
+    assert baseline["moving_block_bootstrap_roi"]["lower_95_pct"] == 10.0
 
 
 def test_moving_block_bootstrap_requires_staked_months_and_preserves_positive_series() -> None:

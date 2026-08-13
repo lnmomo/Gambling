@@ -1,0 +1,48 @@
+{
+  "decision": "HISTORICAL_STAKE_CHALLENGER_ACCEPTED_PROSPECTIVE_REQUIRED",
+  "checks": {
+    "same_frozen_v8_60_selections_and_directions": true,
+    "matched_candidate_and_direction_evidence_only": true,
+    "rule_selected_from_discovery_grid_only": true,
+    "current_month_excluded_from_multiplier_evidence": true,
+    "cross_cost_expected_profit_improvement_material": true,
+    "cross_cost_validation_expected_profit_positive": true,
+    "maximum_drawdown_not_increased_vs_v8_61": true,
+    "daily_budget_respected": true,
+    "closing_expected_bootstrap_lower_bounds_positive": true,
+    "closing_expected_leave_one_lower_bounds_positive": true,
+    "runtime_multiplier_frozen_on_immutable_decision": true
+  },
+  "selected_rule": {
+    "prior_active_evidence_months": 3,
+    "minimum_prior_matched_positions": 20,
+    "base_multiplier": 10.0,
+    "growth_multiplier": 20.0,
+    "discovery_end": "2024-05-31",
+    "validation_start": "2024-08-01"
+  },
+  "metrics": {
+    "matched_cross_cost_evidence_positions": 197,
+    "2_5pct": {
+      "positions": 237,
+      "closing_expected_profit": 122.7072,
+      "improvement_vs_v8_61_pct": 7.7073,
+      "validation_closing_expected_profit": 50.2089,
+      "maximum_drawdown": 90.27,
+      "validation_maximum_drawdown": 62.49,
+      "maximum_active_day_stake": 37.20,
+      "minimum_closing_expected_leave_one_lower_pct": 3.6207
+    },
+    "5pct": {
+      "positions": 225,
+      "closing_expected_profit": 110.9568,
+      "improvement_vs_v8_61_pct": 6.6762,
+      "validation_closing_expected_profit": 38.4586,
+      "maximum_drawdown": 90.27,
+      "validation_maximum_drawdown": 39.80,
+      "maximum_active_day_stake": 53.40,
+      "minimum_closing_expected_leave_one_lower_pct": 3.0096
+    }
+  },
+  "guardrail": "v8.64 is paper-only. The monthly multiplier is stored on the immutable decision before current-month closing prices or results exist. Historical acceptance cannot authorize real orders."
+}

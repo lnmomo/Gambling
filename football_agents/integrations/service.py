@@ -37,6 +37,8 @@ def _requests_remaining(provider_rows: list[dict[str, Any]]) -> int | None:
 
 def _capture_window_label(match: dict[str, Any], captured_at: datetime) -> str:
     minutes = (_parse_time(match["kickoff_time"]) - captured_at).total_seconds() / 60.0
+    if 0 <= minutes <= 15:
+        return "CLOSING"
     if 1320 <= minutes <= 1560:
         return "T_MINUS_24H"
     if 300 <= minutes <= 420:
@@ -62,7 +64,7 @@ class DataEnrichmentService:
              odds_minimum_minutes: int = 0,
              odds_window_minutes: int | None = None,
              skip_existing_horizon_capture: bool = False) -> dict[str, Any]:
-        matches = self.repository.list_active_official_matches(limit)
+        matches = self.repository.list_active_research_matches(limit)
         capture_window = odds_window_minutes or settings.external_odds_capture_window_minutes
         summary: dict[str, Any] = {
             "matches": len(matches), "market_events_fetched": 0, "market_odds": 0,

@@ -1,0 +1,140 @@
+{
+  "model_version": "positive-clv-v8.55-core-2_5pct",
+  "created_at": "2026-08-11T03:52:41.454507+00:00",
+  "training_window": "2025-09-01..2026-05-31",
+  "training_months": 9,
+  "validation_months": 3,
+  "validation_start": "2026-03-01",
+  "training_candidates": 4227,
+  "validation_candidates": 1202,
+  "validation_brier": 0.22764145562402222,
+  "positive_target_rate": 0.41211260941566125,
+  "feature_profile": "market_structure",
+  "exchange_commission_rate": 0.025,
+  "exchange_bookmaker_keys": [
+    "BFE",
+    "BF"
+  ],
+  "maximum_price_ratio": 1.15,
+  "minimum_reference_bookmakers": 4,
+  "regularization_c": 0.1,
+  "artifact_type": "positive_clv_logistic_v1",
+  "target": "closing_edge_pct>0",
+  "result_used_as_feature_or_target": false,
+  "intercept": -8.066899943186355,
+  "numeric_features": [
+    "probability",
+    "conservative_probability",
+    "odds",
+    "raw_odds",
+    "conservative_ev_pct",
+    "reference_dispersion",
+    "reference_bookmakers",
+    "execution_cost_rate",
+    "implied_probability",
+    "price_ratio",
+    "probability_uncertainty",
+    "relative_dispersion",
+    "log_odds",
+    "probability_squared",
+    "odds_probability_interaction",
+    "reference_depth_inverse",
+    "raw_net_odds_gap_pct"
+  ],
+  "categorical_features": [
+    "outcome",
+    "odds_band",
+    "source_type",
+    "execution_bookmaker",
+    "outcome_odds_band",
+    "outcome_source_type",
+    "source_odds_band"
+  ],
+  "numeric_coefficients": {
+    "probability": 0.21897189660341376,
+    "conservative_probability": 0.20334623067558,
+    "odds": 0.06343793330347594,
+    "raw_odds": 0.06444255009673433,
+    "conservative_ev_pct": 0.08507971275863861,
+    "reference_dispersion": 13.003091440978368,
+    "reference_bookmakers": 0.17736856345501414,
+    "execution_cost_rate": -9.557665064171404,
+    "implied_probability": -1.6045960477233,
+    "price_ratio": 2.02279171598646,
+    "probability_uncertainty": 13.00309144097082,
+    "relative_dispersion": -0.0854500049167812,
+    "log_odds": 0.41152319180643476,
+    "probability_squared": 2.1047949889060553,
+    "odds_probability_interaction": 7.449671028598056,
+    "reference_depth_inverse": 5.806040469045386,
+    "raw_net_odds_gap_pct": 0.1431809027890481
+  },
+  "categorical_coefficients": {
+    "outcome": {
+      "away": 0.00247849851174878,
+      "draw": -0.06199247606111474,
+      "home": 0.012461195645682025
+    },
+    "odds_band": {
+      "1.5-2.0": -0.007340279954133767,
+      "2.0-3.0": -0.06752241827808446,
+      "3.0-4.0": -0.07036053844046271,
+      "4.0-5.0": 0.006872829629497474,
+      "5.0+": 0.09129762513949784
+    },
+    "source_type": {
+      "exchange": -0.0853261058822221,
+      "sportsbook": 0.0382733239785394
+    },
+    "execution_bookmaker": {
+      "B365": -0.24606441881787122,
+      "BFD": 0.06392225580366141,
+      "BFE": -0.0853261058822221,
+      "BMGM": 0.1303598567191802,
+      "BV": 0.07637475485667224,
+      "BW": 5.4683588406537664e-05,
+      "CL": -0.13524654297985084,
+      "LB": 0.05581056681328796,
+      "PS": 0.09306216799505256
+    },
+    "outcome_odds_band": {
+      "away:1.5-2.0": 0.060435494162824364,
+      "away:2.0-3.0": -0.06451327185135179,
+      "away:3.0-4.0": 0.00710965152841042,
+      "away:4.0-5.0": 0.06089018445112005,
+      "away:5.0+": -0.061443559779254045,
+      "draw:3.0-4.0": -0.21523421682846955,
+      "draw:4.0-5.0": -0.05016476142295209,
+      "draw:5.0+": 0.20340650219030712,
+      "home:1.5-2.0": -0.06777577411695795,
+      "home:2.0-3.0": -0.0030091464267329115,
+      "home:3.0-4.0": 0.13776402685959746,
+      "home:4.0-5.0": -0.003852593398670404,
+      "home:5.0+": -0.05066531727155391
+    },
+    "outcome_source_type": {
+      "away:exchange": -0.012366270807686002,
+      "away:sportsbook": 0.014844769319434374,
+      "draw:exchange": -0.042846788875860645,
+      "draw:sportsbook": -0.01914568718525323,
+      "home:exchange": -0.03011304619867606,
+      "home:sportsbook": 0.04257424184435756
+    },
+    "source_odds_band": {
+      "exchange:1.5-2.0": -0.2283347282579164,
+      "exchange:2.0-3.0": -0.0972088816466207,
+      "exchange:3.0-4.0": 0.006925850303060438,
+      "exchange:4.0-5.0": 0.1097090123798319,
+      "exchange:5.0+": 0.12358264133942395,
+      "sportsbook:1.5-2.0": 0.22099444830378262,
+      "sportsbook:2.0-3.0": 0.029686463368535736,
+      "sportsbook:3.0-4.0": -0.07728638874352156,
+      "sportsbook:4.0-5.0": -0.1028361827503343,
+      "sportsbook:5.0+": -0.03228501619992478
+    }
+  },
+  "unknown_category_policy": "zero_coefficient",
+  "export_parity_sample": 200,
+  "export_parity_max_abs_error": 3.3306690738754696e-16,
+  "model_sha256": "13c1d78757a661e6fc1fde327be25ecf2ce22f6e84397856897d293c4590750f"
+}

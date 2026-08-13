@@ -1,0 +1,3 @@
+ALTER TABLE named_book_gap_decisions ADD COLUMN positive_clv_probability REAL;
+ALTER TABLE named_book_gap_decisions ADD COLUMN stake_confidence_multiplier REAL;
+ALTER TABLE named_book_gap_decisions ADD COLUMN confidence_model_sha256 TEXT;

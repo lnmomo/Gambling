@@ -52,6 +52,8 @@ class Strategy:
     kelly_fraction: float = 0.25
     exchange_bookmaker_keys: tuple[str, ...] = ("BFE",)
     maximum_price_ratio: float | None = None
+    execution_price_rank: int = 1
+    maximum_execution_quote_advantage_ratio: float | None = None
 
 
 STRATEGIES = (
@@ -179,11 +181,17 @@ def _priced_books(books: tuple[dict[str, Any], ...], strategy: Strategy) -> list
     return priced_books
 
 
-def _candidate(match: HistoricalMatch, strategy: Strategy) -> dict[str, Any] | None:
+def _candidates(match: HistoricalMatch, strategy: Strategy) -> list[dict[str, Any]]:
     priced_books = _priced_books(match.books, strategy)
     possible: list[dict[str, Any]] = []
     for outcome in OUTCOMES:
-        execution = max(priced_books, key=lambda row: float(row[f"{outcome}_odds"]))
+        ranked_execution = sorted(
+            priced_books, key=lambda row: float(row[f"{outcome}_odds"]), reverse=True
+        )
+        execution_index = strategy.execution_price_rank - 1
+        if execution_index < 0 or execution_index >= len(ranked_execution):
+            continue
+        execution = ranked_execution[execution_index]
         references = [row for row in priced_books if row["bookmaker_key"] != execution["bookmaker_key"]]
         if len(references) < strategy.minimum_reference_bookmakers:
             continue
@@ -192,7 +200,20 @@ def _candidate(match: HistoricalMatch, strategy: Strategy) -> dict[str, Any] | N
             continue
         probabilities, dispersions = robust
         probability = float(probabilities[outcome])
-        commission_net_price = float(execution[f"{outcome}_odds"])
+        uncapped_commission_net_price = float(execution[f"{outcome}_odds"])
+        comparison_index = execution_index + 1
+        second_best_price = (
+            float(ranked_execution[comparison_index][f"{outcome}_odds"])
+            if comparison_index < len(ranked_execution)
+            else uncapped_commission_net_price
+        )
+        commission_net_price = uncapped_commission_net_price
+        if strategy.maximum_execution_quote_advantage_ratio is not None:
+            commission_net_price = min(
+                commission_net_price,
+                second_best_price
+                * float(strategy.maximum_execution_quote_advantage_ratio),
+            )
         price = 1.0 + (commission_net_price - 1.0) * (1.0 - strategy.slippage_rate)
         conservative_probability = max(
             0.001,
@@ -201,6 +222,27 @@ def _candidate(match: HistoricalMatch, strategy: Strategy) -> dict[str, Any] | N
         conservative_ev = conservative_probability * price - 1.0
         fair_price = 1.0 / probability
         price_ratio = price * probability
+        execution_cost_rate = float(execution["execution_cost_rate"])
+        effective_raw_odds = 1.0 + (
+            (commission_net_price - 1.0) / max(1.0 - execution_cost_rate, 1e-9)
+        )
+        raw_execution_implied = {
+            key: 1.0 / float(execution[f"raw_{key}_odds"])
+            for key in OUTCOMES
+        }
+        raw_execution_total = sum(raw_execution_implied.values())
+        execution_probabilities = {
+            key: value / raw_execution_total
+            for key, value in raw_execution_implied.items()
+        }
+        execution_probability_gaps = {
+            key: float(probabilities[key]) - execution_probabilities[key]
+            for key in OUTCOMES
+        }
+        nonselected_gaps = [
+            abs(value) for key, value in execution_probability_gaps.items()
+            if key != outcome
+        ]
         if not strategy.minimum_probability <= probability:
             continue
         if not 1.5 <= price <= strategy.maximum_odds:
@@ -217,14 +259,37 @@ def _candidate(match: HistoricalMatch, strategy: Strategy) -> dict[str, Any] | N
         possible.append({
             "outcome": outcome, "probability": probability,
             "conservative_probability": conservative_probability,
-            "odds": price, "raw_odds": execution[f"raw_{outcome}_odds"],
+            "odds": price, "raw_odds": effective_raw_odds,
+            "uncapped_raw_odds": execution[f"raw_{outcome}_odds"],
+            "uncapped_net_odds": uncapped_commission_net_price,
             "execution_cost_rate": execution["execution_cost_rate"],
             "conservative_ev": conservative_ev,
             "price_ratio": price_ratio,
             "execution_bookmaker": execution["bookmaker_key"],
             "reference_bookmakers": sorted(row["bookmaker_key"] for row in references),
             "reference_dispersion": dispersions[outcome],
+            "consensus_probabilities": {
+                key: float(probabilities[key]) for key in OUTCOMES
+            },
+            "consensus_dispersions": {
+                key: float(dispersions[key]) for key in OUTCOMES
+            },
+            "execution_quote_advantage_pct": (
+                commission_net_price / second_best_price - 1.0
+            ) * 100.0,
+            "execution_book_overround": raw_execution_total - 1.0,
+            "execution_selected_probability_gap": execution_probability_gaps[outcome],
+            "execution_nonselected_mean_absolute_gap": sum(nonselected_gaps) / len(nonselected_gaps),
+            "execution_selection_specificity": (
+                abs(execution_probability_gaps[outcome])
+                - sum(nonselected_gaps) / len(nonselected_gaps)
+            ),
         })
+    return possible
+
+
+def _candidate(match: HistoricalMatch, strategy: Strategy) -> dict[str, Any] | None:
+    possible = _candidates(match, strategy)
     return max(possible, key=lambda row: (row["conservative_ev"], row["odds"])) if possible else None
 
 
@@ -333,6 +398,16 @@ def build_candidate_cache(
     matches: list[HistoricalMatch], strategy: Strategy,
 ) -> dict[tuple[str, int], dict[str, Any] | None]:
     return {(match.source_file, match.source_row): _candidate(match, strategy) for match in matches}
+
+
+def build_candidate_universe_cache(
+    matches: list[HistoricalMatch], strategy: Strategy,
+) -> dict[tuple[str, int], list[dict[str, Any]]]:
+    """Preserve every eligible opening direction for research-only ranking."""
+    return {
+        (match.source_file, match.source_row): _candidates(match, strategy)
+        for match in matches
+    }
 
 
 def replay(matches: list[HistoricalMatch], strategy: Strategy, start: date, end: date,

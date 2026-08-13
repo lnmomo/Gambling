@@ -46,6 +46,38 @@ MULTI_HORIZON_LONG_MODEL_PATH = (
 MULTI_HORIZON_LONG_MOVEMENT_MODEL_PATH = (
     Path(__file__).with_name("model_artifacts") / "clv_ridge_v8_33_long_movement.json"
 )
+MULTI_HORIZON_MID_MODEL_PATH = (
+    Path(__file__).with_name("model_artifacts") / "clv_ridge_v8_34_mid_direct.json"
+)
+MULTI_HORIZON_MID_MOVEMENT_MODEL_PATH = (
+    Path(__file__).with_name("model_artifacts") / "clv_ridge_v8_34_mid_movement.json"
+)
+WIDE_ALL_OUTCOMES_MODEL_PATHS = {
+    "2_5pct": Path(__file__).with_name("model_artifacts")
+    / "clv_ridge_v8_72_wide_all_outcomes_2_5pct.json",
+    "5pct": Path(__file__).with_name("model_artifacts")
+    / "clv_ridge_v8_72_wide_all_outcomes_5pct.json",
+}
+POSITIVE_CLV_MODEL_PATHS = {
+    "9m3m_core": {
+        "2_5pct": Path(__file__).with_name("model_artifacts")
+        / "positive_clv_v8_55_core_2_5pct.json",
+        "5pct": Path(__file__).with_name("model_artifacts")
+        / "positive_clv_v8_55_core_5pct.json",
+    },
+    "18m9m_satellite": {
+        "2_5pct": Path(__file__).with_name("model_artifacts")
+        / "positive_clv_v8_55_long_2_5pct.json",
+        "5pct": Path(__file__).with_name("model_artifacts")
+        / "positive_clv_v8_55_long_5pct.json",
+    },
+    "12m6m_tertiary": {
+        "2_5pct": Path(__file__).with_name("model_artifacts")
+        / "positive_clv_v8_55_mid_2_5pct.json",
+        "5pct": Path(__file__).with_name("model_artifacts")
+        / "positive_clv_v8_55_mid_5pct.json",
+    },
+}
 
 
 def _canonical_without_hash(payload: dict[str, Any]) -> str:
@@ -117,6 +149,28 @@ def score_opening_features(features: dict[str, Any], path: Path | None = None) -
         "estimated_probability_from_training_market": market_probability,
         "minimum_lower_clv_pct": float(model["minimum_lower_clv_pct"]),
         "maximum_odds": float(model["maximum_odds"]),
+        "training_window": model["training_window"],
+    }
+
+
+def score_positive_clv_probability(
+    features: dict[str, Any], path: Path,
+) -> dict[str, Any]:
+    model = load_frozen_model(str(path))
+    if model.get("artifact_type") != "positive_clv_logistic_v1":
+        raise ValueError("not a positive-CLV logistic artifact")
+    logit = float(model["intercept"])
+    for field in model["numeric_features"]:
+        logit += float(model["numeric_coefficients"][field]) * float(features[field])
+    for field in model["categorical_features"]:
+        logit += float(model["categorical_coefficients"].get(field, {}).get(
+            str(features[field]), 0.0
+        ))
+    probability = 1.0 / (1.0 + math.exp(-logit))
+    return {
+        "model_version": model["model_version"],
+        "model_sha256": model["model_sha256"],
+        "positive_clv_probability": probability,
         "training_window": model["training_window"],
     }
 

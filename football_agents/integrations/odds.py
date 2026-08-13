@@ -80,6 +80,9 @@ TEAM_ALIASES.update({
 })
 
 LEAGUE_SPORT_KEYS = {
+    "e0": "soccer_epl",
+    "e1": "soccer_efl_champ",
+    "bra": "soccer_brazil_campeonato",
     "\u4e16\u754c\u676f": "soccer_fifa_world_cup",
     "\u6b27\u51a0": "soccer_uefa_champs_league_qualification",
     "\u5df4\u7532": "soccer_brazil_campeonato",
@@ -191,8 +194,74 @@ class OddsApiClient:
             output.extend(data)
         return output, response_headers
 
+    def fixture_events(
+        self, sport_keys: tuple[str, ...],
+    ) -> tuple[list[dict[str, Any]], dict[str, str]]:
+        """Fetch future fixture metadata from the provider's zero-cost endpoint."""
+        if not self.configured():
+            return [], {}
+        output: list[dict[str, Any]] = []
+        response_headers: dict[str, str] = {}
+        self.request_audits = []
+        for sport_key in sport_keys:
+            rows, response_headers = get_json(
+                f"{settings.odds_api_base_url}/sports/{sport_key}/events",
+                {"apiKey": settings.odds_api_key, "dateFormat": "iso"},
+                settings.enrichment_timeout_seconds,
+            )
+            canonical = json.dumps(
+                rows, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+            )
+            self.request_audits.append({
+                "sport_key": sport_key,
+                "endpoint": f"/sports/{sport_key}/events",
+                "regions": "none",
+                "markets": "none",
+                "estimated_cost": 0,
+                "credits_last": response_headers.get("x-requests-last"),
+                "credits_remaining": response_headers.get("x-requests-remaining"),
+                "credits_used": response_headers.get("x-requests-used"),
+                "events_returned": len(rows),
+                "response_hash": hashlib.sha256(canonical.encode("utf-8")).hexdigest(),
+            })
+            output.extend(rows)
+        return output, response_headers
+
+    def scores(
+        self, sport_key: str, days_from: int = 3,
+    ) -> tuple[list[dict[str, Any]], dict[str, str], dict[str, Any]]:
+        rows, headers = get_json(
+            f"{settings.odds_api_base_url}/sports/{sport_key}/scores",
+            {
+                "apiKey": settings.odds_api_key,
+                "daysFrom": max(1, min(int(days_from), 3)),
+                "dateFormat": "iso",
+            },
+            settings.enrichment_timeout_seconds,
+        )
+        canonical = json.dumps(
+            rows, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        )
+        audit = {
+            "sport_key": sport_key,
+            "endpoint": f"/sports/{sport_key}/scores",
+            "regions": "none",
+            "markets": "scores",
+            "estimated_cost": max(1, min(int(days_from), 3)),
+            "credits_last": headers.get("x-requests-last"),
+            "credits_remaining": headers.get("x-requests-remaining"),
+            "credits_used": headers.get("x-requests-used"),
+            "events_returned": len(rows),
+            "response_hash": hashlib.sha256(canonical.encode("utf-8")).hexdigest(),
+        }
+        return rows, headers, audit
+
     @staticmethod
     def match_event(match: dict[str, Any], events: list[dict[str, Any]]) -> dict[str, Any] | None:
+        external_id = str(match.get("official_match_id") or "")
+        if external_id.startswith("oddsapi-"):
+            event_id = external_id.removeprefix("oddsapi-")
+            return next((event for event in events if str(event.get("id")) == event_id), None)
         kickoff = datetime.fromisoformat(match["kickoff_time"])
         best: tuple[float, dict[str, Any]] | None = None
         home = normalize_team(match["home_team"]); away = normalize_team(match["away_team"])

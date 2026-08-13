@@ -65,19 +65,64 @@ type NamedBookGapPolicyReport = {
       settlements: number; settled_profit: number; equity: number; cash_reserved: number;
     }>;
   };
+  prospective_clv?: {
+    observations: number;
+    settled_selections: number;
+    settled_closing_evidence_coverage_pct: number;
+    average_closing_edge_pct: number | null;
+    positive_clv_rate: number | null;
+    by_horizon_role: Record<string, {
+      observations: number;
+      average_closing_edge_pct: number;
+      positive_clv_rate: number;
+      incremental_evidence_status: "READY" | "COLLECTING";
+    }>;
+    guardrail: string;
+  };
   guardrail: string;
 };
 type NamedBookGapExperiment = {
   policies: NamedBookGapPolicyReport[];
   guardrail: string;
 };
+type FixedMonthReplay = {
+  month: string;
+  purpose: string;
+  daily_budget_limit: number;
+  maximum_daily_league_stake: number;
+  calendar_days: number;
+  betting_days: number;
+  no_bet_days: number;
+  positions: number;
+  staked: number;
+  realized_profit: number;
+  realized_roi_pct: number;
+  ending_equity: number;
+  maximum_drawdown: number;
+  maximum_daily_stake: number;
+  closing_expected_profit: number | null;
+  historical_closing_stability_5pct?: {
+    folds: number; positions: number; closing_expected_profit: number;
+    closing_expected_roi_pct: number; positive_expected_active_months: number;
+    active_months: number; iid_lower_95_pct: number;
+    moving_block_lower_95_pct: number; benchmark: string;
+  };
+  daily: Array<{
+    date: string; opening_equity: number; positions: number; staked: number;
+    unused_daily_budget: number; settled_profit: number; ending_equity: number;
+    drawdown: number;
+  }>;
+};
 
 const WORKFLOW: WorkflowItem[] = [
   {task: "official_sp_sync", title: "官方赛事/SP", description: "中国竞彩网赛事池、状态、官方赔率"},
-  {task: "free_prospective_odds_capture", title: "免费前瞻赔率证据", description: "按 T-6h/T-1h 定向采集具名公司赔率，记录 API 额度并冻结原始证据", dependsOn: "official_sp_sync"},
+  {task: "external_market_fixture_sync", title: "授权外部赛事池", description: "The Odds API 免费 events 端点更新 E0/E1/BRA 赛程；赛果每日低频同步并保留不可变证据，不冒充官方 SP", dependsOn: "official_sp_sync"},
+  {task: "free_prospective_odds_capture", title: "免费前瞻赔率证据", description: "按 T-6h/T-1h 定向采集具名公司赔率，记录 API 额度并冻结原始证据", dependsOn: "external_market_fixture_sync"},
   {task: "external_odds_primary_horizon_capture", title: "T-1 快速赔率采集", description: "每 5 分钟检查 T-120 至 T-60 窗口，只在尚无快照时请求一次真实外部赔率", dependsOn: "free_prospective_odds_capture"},
-  {task: "named_book_gap_primary_horizon_capture", title: "v3.1 至 v8.33 十七策略影子实验", description: "同一 T-1 快照并行冻结全部策略；v8.33 使用 9m3m 核心窗，并在核心不合格时启用 18m9m 低仓位卫星窗", dependsOn: "external_odds_primary_horizon_capture"},
-  {task: "official_results_sync", title: "官方赛果回填", description: "独立赛果页、90分钟比分、冲突隔离与不可变证据", dependsOn: "official_sp_sync"},
+  {task: "named_book_gap_primary_horizon_capture", title: "v3.1 至 v8.35 十九策略影子实验", description: "同一 T-1 快照并行冻结全部策略；v8.35 修复补充层最低下注概率与历史回放不一致的问题", dependsOn: "external_odds_primary_horizon_capture"},
+  {task: "external_odds_closing_capture", title: "外部收盘赔率采集", description: "每 5 分钟检查 T-15 至开赛窗口；每场只冻结一次授权博彩公司原始收盘快照", dependsOn: "named_book_gap_primary_horizon_capture"},
+  {task: "named_book_gap_closing_evidence", title: "真实 CLV 归档", description: "排除执行公司后重新去水形成收盘共识，按时间窗记录不可变 CLV；绝不反向修改方向或仓位", dependsOn: "external_odds_closing_capture"},
+  {task: "official_results_sync", title: "官方赛果回填", description: "独立赛果页、90分钟比分、冲突隔离与不可变证据", dependsOn: "named_book_gap_closing_evidence"},
   {task: "paper_portfolio_settlement", title: "纸面组合结算", description: "用官方赛果和临场SP结算不可变持仓、收益与CLV", dependsOn: "official_results_sync"},
   {task: "official_sp_evidence_quality", title: "SP 证据质量", description: "采集新鲜度、临盘覆盖、赛果完整性与时间一致性", dependsOn: "paper_portfolio_settlement"},
   {task: "prospective_research_critical_capture", title: "关键窗口冻结", description: "每15分钟冻结最新可得SP和模型输入，覆盖T-120至T-60主窗口", dependsOn: "official_sp_evidence_quality"},
@@ -86,7 +131,7 @@ const WORKFLOW: WorkflowItem[] = [
   {task: "feature_build", title: "球队特征", description: "历史样本、Elo、lambda、source confidence", dependsOn: "historical_data_sync"},
   {task: "prospective_research_capture", title: "完整前瞻研究归档", description: "小时级特征刷新后冻结模型、赛前赔率与不可覆盖赛前预测", dependsOn: "feature_build"},
   {task: "external_consensus_challenger_capture", title: "外部共识 Challenger", description: "冻结多家公司去水共识、官方SP、保守EV与真实NO_BET，禁止赛后改规则", dependsOn: "prospective_research_capture"},
-  {task: "named_book_gap_research_capture", title: "市场与仓位十七策略验证", description: "比较 v3 至 v8.33，重点监控 v8.33 的核心/卫星来源、真实 CLV、每日100元与联赛日15元约束；历史门禁通过也不会替代前瞻样本", dependsOn: "named_book_gap_primary_horizon_capture"},
+  {task: "named_book_gap_research_capture", title: "市场与仓位十九策略验证", description: "比较 v3 至 v8.35，重点监控三层时间窗来源、真实 CLV、每日100元与联赛日15元约束；历史门禁通过也不会替代前瞻样本", dependsOn: "named_book_gap_primary_horizon_capture"},
   {task: "qwen_news_analysis", title: "Qwen 情报", description: "新闻摘要、伤停与上下文因子", dependsOn: "external_odds_news_weather_sync"},
   {task: "market_bias_shadow_monitor", title: "市场偏差影子验证", description: "冻结规则、影子预测、赛后评估与晋级门", dependsOn: "feature_build"},
   {task: "profit_scorer_official_pool_diagnosis", title: "盈利评分池诊断", description: "检查当前官方比赛是否进入冻结盈利评分器", dependsOn: "feature_build"},
@@ -173,6 +218,14 @@ export default function AgentMonitorPage() {
   const namedBookExperiment = useApi<NamedBookGapExperiment>(
     "/api/research/named-book-gap/experiment", {policies: [], guardrail: ""},
   );
+  const fixedMonth = useApi<FixedMonthReplay>(
+    "/api/research/clv-v835/fixed-month",
+    {month: "2026-05", purpose: "", daily_budget_limit: 100,
+      maximum_daily_league_stake: 15, calendar_days: 31, betting_days: 0,
+      no_bet_days: 31, positions: 0, staked: 0, realized_profit: 0,
+      realized_roi_pct: 0, ending_equity: 0, maximum_drawdown: 0,
+      maximum_daily_stake: 0, closing_expected_profit: null, daily: []},
+  );
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [running, setRunning] = useState(false), [message, setMessage] = useState("");
 
@@ -194,10 +247,11 @@ export default function AgentMonitorPage() {
   const scorerStatistics = scorerStrategy?.statistical_evidence;
   const scorerBootstrap = scorerStatistics?.bootstrap;
   const scorerPoint = scorerStatistics?.point_estimates;
-  const v833 = namedBookExperiment.data.policies.find(
-    row => row.policy.config.version.startsWith("clv-ridge-v8.33"),
+  const v835 = namedBookExperiment.data.policies.find(
+    row => row.policy.config.version.startsWith("clv-ridge-v8.35"),
   );
-  const v833Daily = v833?.paper_portfolio.daily ?? [];
+  const v835Daily = v835?.paper_portfolio.daily ?? [];
+  const v835Roles = Object.entries(v835?.prospective_clv?.by_horizon_role ?? {});
   const pct = (value?: number | null) => value == null ? "-" : `${value.toFixed(2)}%`;
   const decimal = (value?: number | null) => value == null ? "-" : value.toFixed(4);
 
@@ -234,23 +288,61 @@ export default function AgentMonitorPage() {
     </section>
 
     <section className="panel" style={{marginBottom: 16}}>
-      <div className="panel-heading"><div><h2>v8.33 多时间窗前瞻影子资金曲线</h2><p>仅显示 T-1 冻结仓位；9m3m 核心不合格时才启用 18m9m 卫星，按决策日占用每日 100 元预算，按赛果结算日更新权益。</p></div><button onClick={() => namedBookExperiment.reload()}>刷新组合</button></div>
+      <div className="panel-heading"><div><h2>v8.35 三时间窗前瞻影子资金曲线</h2><p>仅显示 T-1 冻结仓位；补充层最低下注概率与历史回放统一为25%，按决策日占用每日100元预算，按赛果结算日更新权益。</p></div><button onClick={() => namedBookExperiment.reload()}>刷新组合</button></div>
       <section className="summary-strip" style={{padding: 16, margin: 0}}>
-        <span>状态<b>{v833?.decision ?? "尚未注册"}</b></span>
-        <span>每日限额<b>{v833?.paper_portfolio.daily_budget_limit ?? 100} 元</b></span>
-        <span>联赛日上限<b>{v833?.paper_portfolio.maximum_daily_league_stake ?? 15} 元</b></span>
-        <span>待结算<b>{v833?.paper_portfolio.pending_bets ?? 0}</b></span>
-        <span>已结算<b>{v833?.paper_portfolio.settled_bets ?? 0}</b></span>
-        <span>总投入<b>{(v833?.paper_portfolio.staked ?? 0).toFixed(2)} 元</b></span>
-        <span>累计盈亏<b>{(v833?.paper_portfolio.profit ?? 0).toFixed(2)} 元</b></span>
-        <span>ROI<b>{(v833?.paper_portfolio.roi_pct ?? 0).toFixed(2)}%</b></span>
-        <span>窗口期初权益<b>{(v833?.paper_portfolio.opening_equity ?? 0).toFixed(2)} 元</b></span>
-        <span>当前权益<b>{(v833?.paper_portfolio.ending_equity ?? 0).toFixed(2)} 元</b></span>
-        <span>最大回撤<b>{(v833?.paper_portfolio.max_drawdown ?? 0).toFixed(2)} 元</b></span>
+        <span>状态<b>{v835?.decision ?? "尚未注册"}</b></span>
+        <span>每日限额<b>{v835?.paper_portfolio.daily_budget_limit ?? 100} 元</b></span>
+        <span>联赛日上限<b>{v835?.paper_portfolio.maximum_daily_league_stake ?? 15} 元</b></span>
+        <span>待结算<b>{v835?.paper_portfolio.pending_bets ?? 0}</b></span>
+        <span>已结算<b>{v835?.paper_portfolio.settled_bets ?? 0}</b></span>
+        <span>总投入<b>{(v835?.paper_portfolio.staked ?? 0).toFixed(2)} 元</b></span>
+        <span>累计盈亏<b>{(v835?.paper_portfolio.profit ?? 0).toFixed(2)} 元</b></span>
+        <span>ROI<b>{(v835?.paper_portfolio.roi_pct ?? 0).toFixed(2)}%</b></span>
+        <span>窗口期初权益<b>{(v835?.paper_portfolio.opening_equity ?? 0).toFixed(2)} 元</b></span>
+        <span>当前权益<b>{(v835?.paper_portfolio.ending_equity ?? 0).toFixed(2)} 元</b></span>
+        <span>最大回撤<b>{(v835?.paper_portfolio.max_drawdown ?? 0).toFixed(2)} 元</b></span>
+        <span>收盘证据<b>{v835?.prospective_clv?.observations ?? 0}</b></span>
+        <span>证据覆盖率<b>{(v835?.prospective_clv?.settled_closing_evidence_coverage_pct ?? 0).toFixed(2)}%</b></span>
+        <span>平均真实 CLV<b>{v835?.prospective_clv?.average_closing_edge_pct == null ? "-" : `${v835.prospective_clv.average_closing_edge_pct.toFixed(2)}%`}</b></span>
+        <span>正 CLV 率<b>{v835?.prospective_clv?.positive_clv_rate == null ? "-" : `${(v835.prospective_clv.positive_clv_rate * 100).toFixed(2)}%`}</b></span>
       </section>
+      <div className="table-scroll"><table className="data-table"><thead><tr><th>时间窗角色</th><th>收盘证据</th><th>平均真实 CLV</th><th>正 CLV 率</th><th>增量证据状态</th></tr></thead>
+        <tbody>{v835Roles.length ? v835Roles.map(([role, row]) => <tr key={role}><td>{role}</td><td>{row.observations}</td><td>{row.average_closing_edge_pct.toFixed(2)}%</td><td>{(row.positive_clv_rate * 100).toFixed(2)}%</td><td>{row.incremental_evidence_status === "READY" ? "已具备最小样本" : "继续收集（至少30条）"}</td></tr>) : <tr><td colSpan={5}>尚无开赛前收盘证据</td></tr>}</tbody></table></div>
       <div className="table-scroll"><table className="data-table"><thead><tr><th>日期</th><th>建仓场次</th><th>当日投入</th><th>待结算</th><th>结算场次</th><th>结算盈亏</th><th>累计权益</th><th>现金保留</th></tr></thead>
-        <tbody>{v833Daily.length ? v833Daily.map(row => <tr key={row.date}><td>{row.date}</td><td>{row.bets}</td><td>{row.staked.toFixed(2)}</td><td>{row.pending}</td><td>{row.settlements}</td><td>{row.settled_profit.toFixed(2)}</td><td>{row.equity.toFixed(2)}</td><td>{row.cash_reserved.toFixed(2)}</td></tr>) : <tr><td colSpan={8}>尚无前瞻资金记录</td></tr>}</tbody></table></div>
-      <p style={{padding: "0 16px", color: "var(--muted)"}}>{v833?.guardrail ?? namedBookExperiment.data.guardrail ?? "研究影子组合，不创建真实订单。"}</p>
+        <tbody>{v835Daily.length ? v835Daily.map(row => <tr key={row.date}><td>{row.date}</td><td>{row.bets}</td><td>{row.staked.toFixed(2)}</td><td>{row.pending}</td><td>{row.settlements}</td><td>{row.settled_profit.toFixed(2)}</td><td>{row.equity.toFixed(2)}</td><td>{row.cash_reserved.toFixed(2)}</td></tr>) : <tr><td colSpan={8}>尚无前瞻资金记录</td></tr>}</tbody></table></div>
+      <p style={{padding: "0 16px", color: "var(--muted)"}}>{v835?.guardrail ?? namedBookExperiment.data.guardrail ?? "研究影子组合，不创建真实订单。"}</p>
+    </section>
+
+    <section className="panel" style={{marginBottom: 16}}>
+      <div className="panel-heading"><div><h2>v8.35 固定五月逐日模拟</h2><p>方向和仓位先冻结、赛果后附加；该月只验证记账与反泄漏，不能用于选择算法。</p></div><button onClick={() => fixedMonth.reload()}>刷新账本</button></div>
+      <section className="summary-strip" style={{padding: 16, margin: 0}}>
+        <span>月份<b>{fixedMonth.data.month}</b></span>
+        <span>日历天数<b>{fixedMonth.data.calendar_days}</b></span>
+        <span>投注日<b>{fixedMonth.data.betting_days}</b></span>
+        <span>空仓日<b>{fixedMonth.data.no_bet_days}</b></span>
+        <span>仓位<b>{fixedMonth.data.positions}</b></span>
+        <span>总投入<b>{fixedMonth.data.staked.toFixed(2)} 元</b></span>
+        <span>实现盈亏<b>{fixedMonth.data.realized_profit.toFixed(2)} 元</b></span>
+        <span>实现 ROI<b>{fixedMonth.data.realized_roi_pct.toFixed(2)}%</b></span>
+        <span>收盘期望盈亏<b>{fixedMonth.data.closing_expected_profit == null ? "-" : `${fixedMonth.data.closing_expected_profit.toFixed(4)} 元`}</b></span>
+        <span>最大回撤<b>{fixedMonth.data.maximum_drawdown.toFixed(2)} 元</b></span>
+        <span>最大单日投入<b>{fixedMonth.data.maximum_daily_stake.toFixed(2)} / {fixedMonth.data.daily_budget_limit.toFixed(0)} 元</b></span>
+      </section>
+      {fixedMonth.data.historical_closing_stability_5pct && <>
+        <p style={{padding: "0 16px", color: "var(--muted)"}}>5% 成本下的长期基准使用 closing 公平概率，不使用比赛胜负计算期望稳定性。</p>
+        <section className="summary-strip" style={{padding: 16, margin: 0}}>
+          <span>历史折次<b>{fixedMonth.data.historical_closing_stability_5pct.folds}</b></span>
+          <span>历史仓位<b>{fixedMonth.data.historical_closing_stability_5pct.positions}</b></span>
+          <span>Closing 期望利润<b>{fixedMonth.data.historical_closing_stability_5pct.closing_expected_profit.toFixed(4)} 元</b></span>
+          <span>Closing 期望 ROI<b>{fixedMonth.data.historical_closing_stability_5pct.closing_expected_roi_pct.toFixed(4)}%</b></span>
+          <span>期望为正月份<b>{fixedMonth.data.historical_closing_stability_5pct.positive_expected_active_months} / {fixedMonth.data.historical_closing_stability_5pct.active_months}</b></span>
+          <span>IID 下界<b>{fixedMonth.data.historical_closing_stability_5pct.iid_lower_95_pct.toFixed(4)}%</b></span>
+          <span>三月区块下界<b>{fixedMonth.data.historical_closing_stability_5pct.moving_block_lower_95_pct.toFixed(4)}%</b></span>
+        </section>
+      </>}
+      <p style={{padding: "0 16px", color: "var(--danger)"}}>实现盈利不等于真实正 EV：本月收盘期望为负，因此结果被判定为有利赛果方差，而不是算法盈利证据。</p>
+      <div className="table-scroll"><table className="data-table"><thead><tr><th>日期</th><th>期初权益</th><th>仓位</th><th>投入</th><th>未用额度</th><th>结算盈亏</th><th>期末权益</th><th>回撤</th></tr></thead>
+        <tbody>{fixedMonth.data.daily.map(row => <tr key={row.date}><td>{row.date}</td><td>{row.opening_equity.toFixed(2)}</td><td>{row.positions}</td><td>{row.staked.toFixed(2)}</td><td>{row.unused_daily_budget.toFixed(2)}</td><td>{row.settled_profit.toFixed(2)}</td><td>{row.ending_equity.toFixed(2)}</td><td>{row.drawdown.toFixed(2)}</td></tr>)}</tbody></table></div>
     </section>
 
     <section className="panel" style={{marginBottom: 16}}>

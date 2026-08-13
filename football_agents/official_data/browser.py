@@ -102,7 +102,11 @@ class CdpConnection:
     def __init__(self, url: str) -> None:
         if connect is None:
             raise RuntimeError("websockets package is required for official browser sync")
-        self.websocket=connect(url,open_timeout=5); self.sequence=0
+        # CDP is always a loopback connection. Explicitly bypass machine-level
+        # HTTP proxies; websockets 16 otherwise auto-discovers a proxy and can
+        # time out while trying to tunnel 127.0.0.1 through it.
+        self.websocket = connect(url, proxy=None, open_timeout=10)
+        self.sequence = 0
     def command(self, method: str, params: dict[str,Any]|None=None, session_id: str|None=None) -> dict[str,Any]:
         self.sequence+=1; mid=self.sequence; message={"id":mid,"method":method,"params":params or {}}
         if session_id: message["sessionId"]=session_id

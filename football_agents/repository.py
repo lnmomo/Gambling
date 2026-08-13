@@ -31,6 +31,42 @@ class Repository:
             row = c.execute("SELECT id FROM matches WHERE official_match_id=?", (item["official_match_id"],)).fetchone()
             return int(row["id"])
 
+    def upsert_external_market_match(self, event: dict[str, Any], league: str) -> tuple[int, bool]:
+        event_id = str(event.get("id") or "").strip()
+        if not event_id:
+            raise ValueError("external market event id is required")
+        kickoff_time = str(event.get("commence_time") or "").replace("Z", "+00:00")
+        kickoff = datetime.fromisoformat(kickoff_time)
+        if kickoff.tzinfo is None:
+            kickoff = kickoff.replace(tzinfo=timezone.utc)
+        official_match_id = f"oddsapi-{event_id}"
+        now = utcnow()
+        source_url = f"https://api.the-odds-api.com/v4/sports/{event.get('sport_key')}/events"
+        raw_json = json.dumps(event, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        raw_hash = hashlib.sha256(raw_json.encode("utf-8")).hexdigest()
+        with self.db.connect() as connection:
+            previous = connection.execute(
+                "SELECT id FROM matches WHERE official_match_id=?", (official_match_id,)
+            ).fetchone()
+            connection.execute("""INSERT INTO matches(
+                official_match_id,league,home_team,away_team,kickoff_time,status,
+                source_url,first_seen_at,last_seen_at,data_quality_score,raw_hash,source_kind
+            ) VALUES(?,?,?,?,?,'scheduled',?,?,?,?,?,'external_market')
+            ON CONFLICT(official_match_id) DO UPDATE SET
+                league=excluded.league,home_team=excluded.home_team,
+                away_team=excluded.away_team,kickoff_time=excluded.kickoff_time,
+                source_url=excluded.source_url,last_seen_at=excluded.last_seen_at,
+                data_quality_score=excluded.data_quality_score,raw_hash=excluded.raw_hash,
+                source_kind='external_market'""", (
+                official_match_id, league, str(event.get("home_team") or ""),
+                str(event.get("away_team") or ""), kickoff.isoformat(), source_url,
+                now, now, 1.0, raw_hash,
+            ))
+            row = connection.execute(
+                "SELECT id FROM matches WHERE official_match_id=?", (official_match_id,)
+            ).fetchone()
+        return int(row["id"]), previous is None
+
     def upsert_official_match(self, item: dict[str, Any]) -> tuple[int, bool, str | None]:
         now = utcnow()
         with self.db.connect() as c:
@@ -639,6 +675,125 @@ class Repository:
                 active.append(match)
         active.sort(key=lambda item: item["kickoff_time"])
         return active[:max(1, min(limit, 5000))]
+
+    def list_active_research_matches(
+        self, limit: int = 100, as_of: datetime | None = None,
+    ) -> list[dict[str, Any]]:
+        """Combine the official pool with clearly labelled external-market fixtures."""
+        now = as_of or datetime.now(timezone.utc)
+        if now.tzinfo is None:
+            now = now.replace(tzinfo=timezone.utc)
+        with self.db.connect() as connection:
+            rows = connection.execute("""SELECT * FROM matches
+                WHERE official_match_id LIKE 'sporttery-%'
+                   OR source_kind='external_market'
+                ORDER BY kickoff_time""").fetchall()
+        active = []
+        for raw in rows:
+            match = dict(raw)
+            kickoff = datetime.fromisoformat(str(match["kickoff_time"]).replace("Z", "+00:00"))
+            if kickoff.tzinfo is None:
+                kickoff = kickoff.replace(tzinfo=timezone.utc)
+            status = str(match.get("status") or "").strip().lower()
+            if (status in {"scheduled", "not_started"} and kickoff > now) or (
+                status == "live" and kickoff > now - timedelta(hours=4)
+            ):
+                active.append(match)
+        return active[:max(1, min(limit, 5000))]
+
+    def external_market_event_ids(self) -> set[str]:
+        with self.db.connect() as connection:
+            return {
+                str(row[0]).removeprefix("oddsapi-")
+                for row in connection.execute("""SELECT official_match_id FROM matches
+                    WHERE source_kind='external_market'""").fetchall()
+            }
+
+    def archive_external_market_result(
+        self, event: dict[str, Any], observed_at: str,
+    ) -> dict[str, Any]:
+        event_id = str(event.get("id") or "").strip()
+        sport_key = str(event.get("sport_key") or "unknown")
+        raw_json = json.dumps(event, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        response_hash = hashlib.sha256(raw_json.encode("utf-8")).hexdigest()
+        completed = bool(event.get("completed"))
+        score_map = {
+            str(item.get("name") or ""): int(item["score"])
+            for item in (event.get("scores") or [])
+            if item.get("name") and str(item.get("score") or "").isdigit()
+        }
+        home_score = score_map.get(str(event.get("home_team") or ""))
+        away_score = score_map.get(str(event.get("away_team") or ""))
+        official_match_id = f"oddsapi-{event_id}"
+        with self.db.connect() as connection:
+            duplicate = connection.execute(
+                "SELECT resolution_status FROM external_market_result_observations WHERE response_hash=?",
+                (response_hash,),
+            ).fetchone()
+            if duplicate:
+                return {"status": "DUPLICATE", "reason": "same_response_hash"}
+            match = connection.execute(
+                "SELECT * FROM matches WHERE official_match_id=?", (official_match_id,)
+            ).fetchone()
+            match_id = int(match["id"]) if match else None
+            status = "PENDING"
+            reason = "event_not_completed"
+            if not match:
+                status, reason = "UNMATCHED", "external_event_not_found"
+            elif completed and (home_score is None or away_score is None):
+                status, reason = "INVALID", "completed_event_missing_scores"
+            elif completed:
+                observed_time = datetime.fromisoformat(observed_at.replace("Z", "+00:00"))
+                kickoff_time = datetime.fromisoformat(
+                    str(match["kickoff_time"]).replace("Z", "+00:00")
+                )
+                if observed_time.tzinfo is None:
+                    observed_time = observed_time.replace(tzinfo=timezone.utc)
+                if kickoff_time.tzinfo is None:
+                    kickoff_time = kickoff_time.replace(tzinfo=timezone.utc)
+                if observed_time < kickoff_time:
+                    status, reason = "INVALID", "completed_result_observed_before_kickoff"
+                    connection.execute("""INSERT INTO external_market_result_observations(
+                        observation_id,match_id,event_id,sport_key,observed_at,completed,
+                        home_score,away_score,resolution_status,resolution_reason,response_hash,raw_json
+                    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", (
+                        uuid.uuid4().hex, match_id, event_id, sport_key, observed_at,
+                        int(completed), home_score, away_score, status, reason,
+                        response_hash, raw_json,
+                    ))
+                    return {"status": status, "reason": reason, "match_id": match_id}
+                existing = connection.execute(
+                    "SELECT * FROM results WHERE match_id=?", (match_id,)
+                ).fetchone()
+                if existing and (
+                    int(existing["home_score"]), int(existing["away_score"])
+                ) != (home_score, away_score):
+                    status, reason = "CONFLICT", "stored_result_differs_from_external_score"
+                elif existing:
+                    status, reason = "CONFIRMED", "same_score_already_settled"
+                else:
+                    outcome = (
+                        "home" if home_score > away_score else
+                        "draw" if home_score == away_score else "away"
+                    )
+                    connection.execute("""INSERT INTO results(
+                        match_id,home_score,away_score,outcome,settled_at
+                    ) VALUES(?,?,?,?,?)""", (
+                        match_id, home_score, away_score, outcome, observed_at,
+                    ))
+                    connection.execute(
+                        "UPDATE matches SET status='finished' WHERE id=?", (match_id,)
+                    )
+                    status, reason = "SETTLED", "exact_external_event_id"
+            connection.execute("""INSERT INTO external_market_result_observations(
+                observation_id,match_id,event_id,sport_key,observed_at,completed,
+                home_score,away_score,resolution_status,resolution_reason,response_hash,raw_json
+            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", (
+                uuid.uuid4().hex, match_id, event_id, sport_key, observed_at,
+                int(completed), home_score, away_score, status, reason,
+                response_hash, raw_json,
+            ))
+        return {"status": status, "reason": reason, "match_id": match_id}
 
     def latest_odds(self, match_id: int, external: bool = False) -> dict[str, Any]:
         table = "market_odds_snapshots" if external else "odds_snapshots"

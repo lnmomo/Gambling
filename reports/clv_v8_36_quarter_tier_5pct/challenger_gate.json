@@ -1,0 +1,35 @@
+{
+  "decision": "CHALLENGER_REJECTED",
+  "checks": {
+    "historical_research_survivor": true,
+    "absolute_closing_expected_profit_improved": true,
+    "relative_closing_expected_profit_improvement_material": false,
+    "incremental_positions_material": false,
+    "maximum_drawdown_increase_within_limit": true,
+    "late_closing_expected_profit_not_reduced": false,
+    "closing_expected_iid_lower_95_positive": true,
+    "closing_expected_block_lower_95_positive": true
+  },
+  "metrics": {
+    "baseline_positions": 181,
+    "challenger_positions": 189,
+    "incremental_positions": 8,
+    "baseline_closing_expected_profit": 27.0691,
+    "challenger_closing_expected_profit": 27.1733,
+    "closing_expected_profit_delta": 0.1042,
+    "relative_closing_expected_profit_improvement_pct": 0.3849,
+    "baseline_late_closing_expected_profit": 3.3312,
+    "challenger_late_closing_expected_profit": 3.3274,
+    "baseline_maximum_drawdown": 22.29,
+    "challenger_maximum_drawdown": 22.83,
+    "drawdown_increase_pct": 2.4226,
+    "closing_expected_iid_lower_95_pct": 4.658,
+    "closing_expected_block_lower_95_pct": 4.9857
+  },
+  "thresholds": {
+    "minimum_relative_expected_profit_improvement_pct": 2.0,
+    "minimum_incremental_positions": 30,
+    "maximum_drawdown_increase_pct": 5.0
+  },
+  "guardrail": "Realized match profit is reported nowhere in this gate and cannot select a challenger. Historical acceptance still requires prospective evidence."
+}

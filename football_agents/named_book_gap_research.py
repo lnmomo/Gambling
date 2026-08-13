@@ -29,10 +29,15 @@ from .clv_ridge_shadow import (
     MARKET_CALIBRATED_PROBABILITY_MOVEMENT_MODEL_PATH,
     MULTI_HORIZON_LONG_MODEL_PATH,
     MULTI_HORIZON_LONG_MOVEMENT_MODEL_PATH,
+    MULTI_HORIZON_MID_MODEL_PATH,
+    MULTI_HORIZON_MID_MOVEMENT_MODEL_PATH,
+    WIDE_ALL_OUTCOMES_MODEL_PATHS,
+    POSITIVE_CLV_MODEL_PATHS,
     load_frozen_model,
     market_structure_features,
     odds_band,
     score_opening_features,
+    score_positive_clv_probability,
 )
 from .repository import Repository
 
@@ -156,6 +161,15 @@ CLV_RIDGE_DAILY_LEAGUE_CAP_POLICY_CONFIG: dict[str, Any] | None = None
 CLV_RIDGE_CALIBRATED_GOVERNANCE_POLICY_CONFIG: dict[str, Any] | None = None
 CLV_RIDGE_RESTORED_CALIBRATED_POLICY_CONFIG: dict[str, Any] | None = None
 CLV_RIDGE_MULTI_HORIZON_POLICY_CONFIG: dict[str, Any] | None = None
+CLV_RIDGE_THREE_HORIZON_POLICY_CONFIG: dict[str, Any] | None = None
+CLV_RIDGE_RUNTIME_PARITY_POLICY_CONFIG: dict[str, Any] | None = None
+CLV_RIDGE_CROSS_COST_UPLIFT_POLICY_CONFIG: dict[str, Any] | None = None
+CLV_RIDGE_GROWTH_UPLIFT_POLICY_CONFIG: dict[str, Any] | None = None
+CLV_RIDGE_ADAPTIVE_CAP_POLICY_CONFIG: dict[str, Any] | None = None
+CLV_RIDGE_DIRECT_ONLY_TIER_POLICY_CONFIG: dict[str, Any] | None = None
+CLV_RIDGE_BUDGET_DEPLOYMENT_POLICY_CONFIG: dict[str, Any] | None = None
+CLV_RIDGE_MATCHED_ADAPTIVE_BUDGET_POLICY_CONFIG: dict[str, Any] | None = None
+CLV_RIDGE_WIDE_ALL_OUTCOMES_POLICY_CONFIG: dict[str, Any] | None = None
 if ADAPTIVE_MARKET_STRUCTURE_MODEL_PATH.exists() and ADAPTIVE_PROBABILITY_MOVEMENT_MODEL_PATH.exists():
     _CLV_RIDGE_ADAPTIVE_DIRECT_MODEL = load_frozen_model(
         str(ADAPTIVE_MARKET_STRUCTURE_MODEL_PATH)
@@ -508,6 +522,364 @@ if (
                 "same-day league exposure is CNY 15, and no real orders are created"
             ),
         }
+        if (
+            MULTI_HORIZON_MID_MODEL_PATH.exists()
+            and MULTI_HORIZON_MID_MOVEMENT_MODEL_PATH.exists()
+        ):
+            _CLV_RIDGE_MID_DIRECT_MODEL = load_frozen_model(
+                str(MULTI_HORIZON_MID_MODEL_PATH)
+            )
+            _CLV_RIDGE_MID_MOVEMENT_MODEL = load_frozen_model(
+                str(MULTI_HORIZON_MID_MOVEMENT_MODEL_PATH)
+            )
+            _CLV_MID_AGREEMENT_HASH = hashlib.sha256(json.dumps(sorted([
+                _CLV_RIDGE_MID_DIRECT_MODEL["model_sha256"],
+                _CLV_RIDGE_MID_MOVEMENT_MODEL["model_sha256"],
+            ]), separators=(",", ":")).encode()).hexdigest()
+            CLV_RIDGE_THREE_HORIZON_POLICY_CONFIG = {
+                **CLV_RIDGE_MULTI_HORIZON_POLICY_CONFIG,
+                "version": "clv-ridge-v8.34-three-horizon-sequential-prospective-shadow",
+                "decision_model": "frozen_json_clv_three_horizon",
+                "mid_horizon_direct_model_filename": MULTI_HORIZON_MID_MODEL_PATH.name,
+                "mid_horizon_movement_model_filename": (
+                    MULTI_HORIZON_MID_MOVEMENT_MODEL_PATH.name
+                ),
+                "mid_horizon_model_sha256": _CLV_MID_AGREEMENT_HASH,
+                "mid_horizon_training_window": _CLV_RIDGE_MID_DIRECT_MODEL["training_window"],
+                "mid_horizon_training_months": 12,
+                "mid_horizon_validation_months": 6,
+                "tertiary_minimum_lower_clv_pct": 2.0,
+                "tertiary_minimum_staking_probability": 0.0,
+                "tertiary_kelly_fraction": 0.3125,
+                "tertiary_rule": (
+                    "use_12m6m_only_when_9m3m_core_and_18m9m_satellite_are_"
+                    "both_ineligible_on_the_same_frozen_snapshot"
+                ),
+                "selection_challenger_of": (
+                    "clv-ridge-v8.33-multi-horizon-core-satellite-prospective-shadow"
+                ),
+                "historical_clv_attribution": (
+                    "2.5pct_193_positions_closing_expected_profit_29.14_roi_7.79pct_"
+                    "late_expected_profit_5.40_roi_5.78pct"
+                ),
+                "historical_cost_stress_status": (
+                    "5pct_181_positions_closing_expected_profit_27.07_"
+                    "block_lower_95_positive_25.63pct"
+                ),
+                "historical_risk_gate": (
+                    "2.5pct_max_drawdown_22.29_source_lower_12.36_league_lower_6.28_"
+                    "team_lower_14.22"
+                ),
+                "prospective_warning": (
+                    "v8.34 is paper-only: 9m3m, 18m9m and 12m6m models are checked "
+                    "in that fixed order; the 12m6m tertiary can act only when both "
+                    "earlier horizons reject, uses 0.3125 Kelly, and shares the CNY 100 "
+                    "daily and CNY 15 league-day caps; no real orders are created"
+                ),
+            }
+            CLV_RIDGE_RUNTIME_PARITY_POLICY_CONFIG = {
+                **CLV_RIDGE_THREE_HORIZON_POLICY_CONFIG,
+                "version": "clv-ridge-v8.35-three-horizon-runtime-parity-prospective-shadow",
+                "satellite_minimum_staking_probability": 0.25,
+                "tertiary_minimum_staking_probability": 0.25,
+                "selection_challenger_of": (
+                    "clv-ridge-v8.34-three-horizon-sequential-prospective-shadow"
+                ),
+                "runtime_parity_fix": (
+                    "supplemental_horizon_minimum_staking_probability_0.25_"
+                    "matches_frozen_historical_replay"
+                ),
+                "historical_replay_equivalence": (
+                    "same_193_positions_at_2.5pct_and_181_positions_at_5pct_as_"
+                    "v8.34_replay; only runtime threshold mismatch is corrected"
+                ),
+                "prospective_warning": (
+                    "v8.35 is paper-only: it preserves the frozen v8.34 historical "
+                    "portfolio and corrects runtime satellite and tertiary minimum "
+                    "staking probabilities from 0.0 to the replayed 0.25; no real "
+                    "orders are created"
+                ),
+            }
+if (
+    CLV_RIDGE_RUNTIME_PARITY_POLICY_CONFIG
+    and all(
+        path.exists()
+        for role_paths in POSITIVE_CLV_MODEL_PATHS.values()
+        for path in role_paths.values()
+    )
+):
+    _POSITIVE_CLV_MODELS = {
+        role: {
+            cost: load_frozen_model(str(path))
+            for cost, path in role_paths.items()
+        }
+        for role, role_paths in POSITIVE_CLV_MODEL_PATHS.items()
+    }
+    _POSITIVE_CLV_COMBINED_HASH = hashlib.sha256(json.dumps(sorted(
+        model["model_sha256"]
+        for role_models in _POSITIVE_CLV_MODELS.values()
+        for model in role_models.values()
+    ), separators=(",", ":")).encode()).hexdigest()
+    CLV_RIDGE_CROSS_COST_UPLIFT_POLICY_CONFIG = {
+        **CLV_RIDGE_RUNTIME_PARITY_POLICY_CONFIG,
+        "version": "clv-ridge-v8.55-cross-cost-positive-clv-uplift-prospective-shadow",
+        "positive_clv_classifier_filenames": {
+            role: {cost: path.name for cost, path in role_paths.items()}
+            for role, role_paths in POSITIVE_CLV_MODEL_PATHS.items()
+        },
+        "positive_clv_classifier_sha256": {
+            role: {
+                cost: model["model_sha256"]
+                for cost, model in role_models.items()
+            }
+            for role, role_models in _POSITIVE_CLV_MODELS.items()
+        },
+        "positive_clv_combined_sha256": _POSITIVE_CLV_COMBINED_HASH,
+        "positive_clv_cost_rates": {"2_5pct": 0.025, "5pct": 0.05},
+        "positive_clv_probability_anchor": 0.75,
+        "positive_clv_minimum_stake_multiplier": 1.0,
+        "positive_clv_maximum_stake_multiplier": 1.05,
+        "stake_challenger_of": (
+            "clv-ridge-v8.35-three-horizon-runtime-parity-prospective-shadow"
+        ),
+        "historical_clv_attribution": (
+            "matched_48fold_2.5pct_expected_profit_plus_2.6967pct_"
+            "5pct_plus_2.7425pct"
+        ),
+        "historical_risk_gate": (
+            "both_costs_max_drawdown_22.80_growth_3.6364pct_below_5pct_limit"
+        ),
+        "research_evidence_status": (
+            "HISTORICAL_CHALLENGER_ACCEPTED_PROSPECTIVE_REQUIRED"
+        ),
+        "prospective_warning": (
+            "v8.55 is paper-only: each selected horizon receives at most a 5% "
+            "Kelly uplift only when independently frozen 2.5% and 5% positive-CLV "
+            "classifiers agree; immutable prospective closing evidence is required "
+            "and no real orders are created"
+        ),
+    }
+    CLV_RIDGE_GROWTH_UPLIFT_POLICY_CONFIG = {
+        **CLV_RIDGE_CROSS_COST_UPLIFT_POLICY_CONFIG,
+        "version": (
+            "clv-ridge-v8.57-cross-cost-positive-clv-growth-uplift-"
+            "prospective-shadow"
+        ),
+        "positive_clv_maximum_stake_multiplier": 1.25,
+        "stake_challenger_of": (
+            "clv-ridge-v8.55-cross-cost-positive-clv-uplift-prospective-shadow"
+        ),
+        "historical_clv_attribution": (
+            "matched_48fold_2.5pct_expected_profit_plus_3.3651pct_"
+            "5pct_plus_3.3975pct"
+        ),
+        "historical_risk_gate": (
+            "both_costs_max_drawdown_23.45_growth_2.8509pct_below_5pct_limit"
+        ),
+        "research_evidence_status": (
+            "HISTORICAL_CHALLENGER_ACCEPTED_PROSPECTIVE_REQUIRED"
+        ),
+        "prospective_warning": (
+            "v8.57 is paper-only: unchanged selections receive at most a 25% "
+            "Kelly uplift only when independently frozen 2.5% and 5% positive-CLV "
+            "classifiers agree; immutable prospective evidence is required and no "
+            "real orders are created"
+        ),
+    }
+    CLV_RIDGE_ADAPTIVE_CAP_POLICY_CONFIG = {
+        **CLV_RIDGE_GROWTH_UPLIFT_POLICY_CONFIG,
+        "version": (
+            "clv-ridge-v8.58-walk-forward-adaptive-confidence-cap-"
+            "prospective-shadow"
+        ),
+        "adaptive_confidence_cap_enabled": True,
+        "adaptive_conservative_maximum_multiplier": 1.05,
+        "adaptive_growth_maximum_multiplier": 1.25,
+        "adaptive_minimum_prior_uplifted_positions": 10,
+        "stake_challenger_of": (
+            "clv-ridge-v8.55-cross-cost-positive-clv-uplift-prospective-shadow"
+        ),
+        "historical_clv_attribution": (
+            "expanding_walk_forward_2.5pct_expected_profit_27.5242_"
+            "5pct_expected_profit_26.8057"
+        ),
+        "historical_risk_gate": (
+            "both_costs_max_drawdown_22.80_no_increase_vs_v8.55"
+        ),
+        "research_evidence_status": (
+            "HISTORICAL_CHALLENGER_ACCEPTED_PROSPECTIVE_REQUIRED"
+        ),
+        "prospective_warning": (
+            "v8.58 is paper-only: the monthly 1.05 or 1.25 confidence cap is "
+            "selected exclusively from immutable closing evidence in prior calendar "
+            "months; current-month prices and all match results are excluded"
+        ),
+    }
+    CLV_RIDGE_DIRECT_ONLY_TIER_POLICY_CONFIG = {
+        **CLV_RIDGE_ADAPTIVE_CAP_POLICY_CONFIG,
+        "version": (
+            "clv-ridge-v8.60-cross-cost-direct-only-core-tier-"
+            "prospective-shadow"
+        ),
+        "direct_only_fallback_enabled": True,
+        "direct_only_minimum_lower_clv_pct": 1.0,
+        "direct_only_minimum_positive_clv_probability": 0.65,
+        "direct_only_kelly_fraction": 0.50,
+        "incremental_role_gate": "9m3m_direct_only",
+        "incremental_role_minimum_closing_observations": 30,
+        "incremental_role_minimum_average_closing_edge_pct": 0.0,
+        "incremental_role_minimum_positive_clv_rate": 0.50,
+        "selection_challenger_of": (
+            "clv-ridge-v8.58-walk-forward-adaptive-confidence-cap-"
+            "prospective-shadow"
+        ),
+        "historical_clv_attribution": (
+            "incremental_36_at_2.5pct_expected_profit_plus_3.8791pct_"
+            "incremental_33_at_5pct_plus_2.6644pct"
+        ),
+        "historical_risk_gate": (
+            "both_costs_max_drawdown_22.80_no_increase_vs_v8.58"
+        ),
+        "research_evidence_status": (
+            "HISTORICAL_CHALLENGER_ACCEPTED_PROSPECTIVE_REQUIRED"
+        ),
+        "prospective_warning": (
+            "v8.60 is paper-only: a half-Kelly direct-only core candidate is "
+            "considered only after all three agreement horizons reject and both cost "
+            "classifiers retain at least 0.65 positive-CLV probability"
+        ),
+    }
+    CLV_RIDGE_BUDGET_DEPLOYMENT_POLICY_CONFIG = {
+        **CLV_RIDGE_DIRECT_ONLY_TIER_POLICY_CONFIG,
+        "version": (
+            "clv-ridge-v8.61-discovery-selected-budget-deployment-"
+            "prospective-shadow"
+        ),
+        "budget_deployment_multiplier": 10.0,
+        "budget_multiplier_grid": [1.0, 1.25, 1.5, 2.0, 3.0, 5.0, 10.0, 20.0],
+        "budget_multiplier_discovery_end": "2024-05-31",
+        "budget_multiplier_discovery_maximum_drawdown": 100.0,
+        "stake_challenger_of": (
+            "clv-ridge-v8.60-cross-cost-direct-only-core-tier-"
+            "prospective-shadow"
+        ),
+        "historical_clv_attribution": (
+            "2.5pct_expected_profit_113.9265_validation_43.7129_"
+            "5pct_expected_profit_104.0127_validation_33.7991"
+        ),
+        "historical_risk_gate": (
+            "cross_cost_max_drawdown_90.27_below_cny100_"
+            "maximum_active_day_stake_53.40_below_cny100"
+        ),
+        "research_evidence_status": (
+            "HISTORICAL_STAKE_CHALLENGER_ACCEPTED_PROSPECTIVE_REQUIRED"
+        ),
+        "prospective_warning": (
+            "v8.61 is paper-only: it preserves every v8.60 selection and direction, "
+            "multiplies the already-frozen opening stake by 10, then reapplies the "
+            "CNY 15 single and league-day caps and CNY 100 daily cap; no real orders "
+            "are created"
+        ),
+    }
+    CLV_RIDGE_MATCHED_ADAPTIVE_BUDGET_POLICY_CONFIG = {
+        **CLV_RIDGE_BUDGET_DEPLOYMENT_POLICY_CONFIG,
+        "version": (
+            "clv-ridge-v8.64-matched-cross-cost-adaptive-budget-"
+            "prospective-shadow"
+        ),
+        "adaptive_budget_deployment_enabled": True,
+        "adaptive_budget_base_multiplier": 10.0,
+        "adaptive_budget_growth_multiplier": 20.0,
+        "adaptive_budget_prior_active_months": 3,
+        "adaptive_budget_minimum_prior_matched_positions": 20,
+        "adaptive_budget_cost_rates": {"2_5pct": 0.025, "5pct": 0.05},
+        "stake_challenger_of": (
+            "clv-ridge-v8.61-discovery-selected-budget-deployment-"
+            "prospective-shadow"
+        ),
+        "historical_clv_attribution": (
+            "matched_evidence_2.5pct_expected_profit_122.7072_"
+            "5pct_expected_profit_110.9568"
+        ),
+        "historical_risk_gate": (
+            "cross_cost_max_drawdown_90.27_maximum_active_day_stake_53.40"
+        ),
+        "research_evidence_status": (
+            "HISTORICAL_STAKE_CHALLENGER_ACCEPTED_PROSPECTIVE_REQUIRED"
+        ),
+        "prospective_warning": (
+            "v8.64 is paper-only: each month's 10 or 20 multiplier is frozen from "
+            "strictly prior settled decisions that retain the same direction under "
+            "both cost stresses; no current-month evidence or real orders are used"
+        ),
+    }
+    if all(path.exists() for path in WIDE_ALL_OUTCOMES_MODEL_PATHS.values()):
+        _WIDE_ALL_OUTCOMES_MODELS = {
+            cost: load_frozen_model(str(path))
+            for cost, path in WIDE_ALL_OUTCOMES_MODEL_PATHS.items()
+        }
+        _WIDE_ALL_OUTCOMES_COMBINED_HASH = hashlib.sha256(json.dumps(sorted(
+            model["model_sha256"]
+            for model in _WIDE_ALL_OUTCOMES_MODELS.values()
+        ), separators=(",", ":")).encode()).hexdigest()
+        CLV_RIDGE_WIDE_ALL_OUTCOMES_POLICY_CONFIG = {
+            **CLV_RIDGE_MATCHED_ADAPTIVE_BUDGET_POLICY_CONFIG,
+            "version": (
+                "clv-ridge-v8.74-wide-all-outcomes-incremental-adaptive-"
+                "prospective-shadow"
+            ),
+            "wide_all_outcomes_incremental_enabled": True,
+            "wide_all_outcomes_model_filenames": {
+                cost: path.name
+                for cost, path in WIDE_ALL_OUTCOMES_MODEL_PATHS.items()
+            },
+            "wide_all_outcomes_model_sha256": {
+                cost: model["model_sha256"]
+                for cost, model in _WIDE_ALL_OUTCOMES_MODELS.items()
+            },
+            "wide_all_outcomes_combined_sha256": (
+                _WIDE_ALL_OUTCOMES_COMBINED_HASH
+            ),
+            "wide_all_outcomes_cost_rates": {"2_5pct": 0.025, "5pct": 0.05},
+            "wide_all_outcomes_minimum_price_ratio": 0.90,
+            "wide_all_outcomes_minimum_conservative_ev": -0.15,
+            "wide_all_outcomes_minimum_reference_probability": 0.08,
+            "wide_all_outcomes_maximum_price_ratio": 1.20,
+            "wide_all_outcomes_minimum_lower_clv_pct": 1.0,
+            "wide_all_outcomes_maximum_odds": 5.0,
+            "wide_all_outcomes_kelly_fraction": 0.10,
+            "wide_all_outcomes_execution_cost_profile": "5pct_conservative",
+            "wide_all_outcomes_training_window": "2025-07-01..2026-03-31",
+            "selection_challenger_of": (
+                "clv-ridge-v8.64-matched-cross-cost-adaptive-budget-"
+                "prospective-shadow"
+            ),
+            "historical_clv_attribution": (
+                "v8.73_incremental_46_cross_cost_direction_matched_positions_"
+                "v8.74_2.5pct_expected_profit_129.8283_"
+                "5pct_expected_profit_117.7982"
+            ),
+            "historical_risk_gate": (
+                "both_costs_max_drawdown_93.06_below_cny100_"
+                "relative_growth_3.0907pct"
+            ),
+            "latest_retraining_gate": (
+                "LAST_COMMON_PASSED_WINDOW_ENDING_2026_03_31_"
+                "5PCT_LATEST_WINDOW_ENDING_2026_05_31_FAILED"
+            ),
+            "research_evidence_status": (
+                "HISTORICAL_CHALLENGER_ACCEPTED_PROSPECTIVE_REQUIRED"
+            ),
+            "prospective_warning": (
+                "v8.74 is paper-only: the wide 1X2 tier runs only after v8.60 "
+                "rejects, requires independently frozen 2.5% and 5% models to "
+                "select the same direction, executes the 5% cost view, and reuses "
+                "the v8.64 strictly-prior adaptive budget; its latest 5% retraining "
+                "window failed, so immutable prospective evidence is required and "
+                "no real orders are created"
+            ),
+        }
+
 EXPERIMENT_POLICY_CONFIGS = (
     CONTROL_POLICY_CONFIG,
     POLICY_CONFIG,
@@ -537,8 +909,26 @@ EXPERIMENT_POLICY_CONFIGS = (
       if CLV_RIDGE_RESTORED_CALIBRATED_POLICY_CONFIG else ()),
     *((CLV_RIDGE_MULTI_HORIZON_POLICY_CONFIG,)
       if CLV_RIDGE_MULTI_HORIZON_POLICY_CONFIG else ()),
+    *((CLV_RIDGE_THREE_HORIZON_POLICY_CONFIG,)
+      if CLV_RIDGE_THREE_HORIZON_POLICY_CONFIG else ()),
+    *((CLV_RIDGE_RUNTIME_PARITY_POLICY_CONFIG,)
+      if CLV_RIDGE_RUNTIME_PARITY_POLICY_CONFIG else ()),
+    *((CLV_RIDGE_CROSS_COST_UPLIFT_POLICY_CONFIG,)
+      if CLV_RIDGE_CROSS_COST_UPLIFT_POLICY_CONFIG else ()),
+    *((CLV_RIDGE_GROWTH_UPLIFT_POLICY_CONFIG,)
+      if CLV_RIDGE_GROWTH_UPLIFT_POLICY_CONFIG else ()),
+    *((CLV_RIDGE_ADAPTIVE_CAP_POLICY_CONFIG,)
+      if CLV_RIDGE_ADAPTIVE_CAP_POLICY_CONFIG else ()),
+    *((CLV_RIDGE_DIRECT_ONLY_TIER_POLICY_CONFIG,)
+      if CLV_RIDGE_DIRECT_ONLY_TIER_POLICY_CONFIG else ()),
+    *((CLV_RIDGE_BUDGET_DEPLOYMENT_POLICY_CONFIG,)
+      if CLV_RIDGE_BUDGET_DEPLOYMENT_POLICY_CONFIG else ()),
+    *((CLV_RIDGE_MATCHED_ADAPTIVE_BUDGET_POLICY_CONFIG,)
+      if CLV_RIDGE_MATCHED_ADAPTIVE_BUDGET_POLICY_CONFIG else ()),
+    *((CLV_RIDGE_WIDE_ALL_OUTCOMES_POLICY_CONFIG,)
+      if CLV_RIDGE_WIDE_ALL_OUTCOMES_POLICY_CONFIG else ()),
 )
-EXPERIMENT_NAME = "v3.1-v4.1-market-vs-v6.2-v6.3-v6.6-v7.6-v8.1-v8.5-v8.7-v8.8-v8.11-v8.13-v8.18-v8.21-v8.27-v8.28-v8.33-clv-ridge-shadow"
+EXPERIMENT_NAME = "v3.1-v4.1-market-vs-v6.2-v6.3-v6.6-v7.6-v8.1-v8.5-v8.7-v8.8-v8.11-v8.13-v8.18-v8.21-v8.27-v8.28-v8.33-v8.34-v8.35-v8.55-v8.57-v8.58-v8.60-v8.61-v8.64-v8.74-clv-ridge-shadow"
 
 CHINA_TZ = ZoneInfo("Asia/Shanghai")
 
@@ -752,6 +1142,7 @@ def _score_clv_agreement(
 ) -> dict[str, Any]:
     uses_agreement = config.get("decision_model") in {
         "frozen_json_clv_agreement", "frozen_json_clv_multi_horizon",
+        "frozen_json_clv_three_horizon",
     }
     return _score_clv_pair(
         feature_row,
@@ -764,6 +1155,70 @@ def _score_clv_agreement(
     )
 
 
+def _score_wide_all_outcomes_incremental(
+    inputs: dict[str, Any], match: dict[str, Any], config: dict[str, Any],
+) -> tuple[tuple[Any, ...], dict[str, Any]] | None:
+    """Choose one conservative direction only when both frozen cost views agree."""
+    artifact_dir = Path(__file__).with_name("model_artifacts")
+    winners: dict[str, tuple[tuple[Any, ...], dict[str, Any]]] = {}
+    for cost, cost_rate in config["wide_all_outcomes_cost_rates"].items():
+        candidate_config = {
+            **config,
+            "minimum_price_ratio": config[
+                "wide_all_outcomes_minimum_price_ratio"
+            ],
+            "minimum_conservative_ev": config[
+                "wide_all_outcomes_minimum_conservative_ev"
+            ],
+            "minimum_reference_probability": config[
+                "wide_all_outcomes_minimum_reference_probability"
+            ],
+            "maximum_price_ratio": config[
+                "wide_all_outcomes_maximum_price_ratio"
+            ],
+            "maximum_odds": 8.0,
+        }
+        eligible: list[tuple[tuple[Any, ...], dict[str, Any]]] = []
+        model_path = (
+            artifact_dir / config["wide_all_outcomes_model_filenames"][cost]
+        )
+        for candidate in _market_candidates(
+            inputs, candidate_config, exchange_commission_override=float(cost_rate)
+        ):
+            if candidate[9]:
+                continue
+            score = score_opening_features(
+                _clv_feature_row(candidate, match), model_path
+            )
+            lower = float(score["lower_predicted_closing_edge_pct"])
+            if (
+                lower >= float(config["wide_all_outcomes_minimum_lower_clv_pct"])
+                and float(candidate[1])
+                <= float(config["wide_all_outcomes_maximum_odds"])
+            ):
+                eligible.append((candidate, score))
+        if not eligible:
+            return None
+        eligible.sort(key=lambda row: (
+            -float(row[1]["lower_predicted_closing_edge_pct"]),
+            str(row[0][0]),
+        ))
+        winners[cost] = eligible[0]
+
+    if len({str(candidate[0]) for candidate, _score in winners.values()}) != 1:
+        return None
+    selected, conservative_score = winners["5pct"]
+    return selected, {
+        "predicted_clv": float(
+            conservative_score["predicted_closing_edge_pct"]
+        ),
+        "lower_predicted_clv": float(
+            conservative_score["lower_predicted_closing_edge_pct"]
+        ),
+        "model_sha256": config["wide_all_outcomes_combined_sha256"],
+    }
+
+
 def _score_long_horizon_agreement(
     feature_row: dict[str, Any], config: dict[str, Any],
 ) -> dict[str, Any]:
@@ -773,6 +1228,69 @@ def _score_long_horizon_agreement(
         str(config["long_horizon_movement_model_filename"]),
         str(config["long_horizon_model_sha256"]),
     )
+
+
+def _score_mid_horizon_agreement(
+    feature_row: dict[str, Any], config: dict[str, Any],
+) -> dict[str, Any]:
+    return _score_clv_pair(
+        feature_row,
+        str(config["mid_horizon_direct_model_filename"]),
+        str(config["mid_horizon_movement_model_filename"]),
+        str(config["mid_horizon_model_sha256"]),
+    )
+
+
+def _positive_clv_confidence_uplift(
+    inputs: dict[str, Any], match: dict[str, Any], config: dict[str, Any],
+    selected_outcome: str, horizon_role: str,
+) -> dict[str, Any]:
+    filenames = config["positive_clv_classifier_filenames"][horizon_role]
+    expected_hashes = config["positive_clv_classifier_sha256"][horizon_role]
+    probabilities: list[float] = []
+    artifact_dir = Path(__file__).with_name("model_artifacts")
+    stable_candidates: list[tuple[str, tuple[Any, ...]]] = []
+    for cost, rate in config["positive_clv_cost_rates"].items():
+        possible = _market_candidates(inputs, config, float(rate))
+        if not possible:
+            return {
+                "positive_clv_probability": None,
+                "stake_confidence_multiplier": 1.0,
+                "confidence_model_sha256": config["positive_clv_combined_sha256"],
+                "status": f"{cost}_no_valid_candidate",
+            }
+        candidate = max(possible, key=lambda item: (item[8], item[1]))
+        if candidate[0] != selected_outcome or candidate[9]:
+            return {
+                "positive_clv_probability": None,
+                "stake_confidence_multiplier": 1.0,
+                "confidence_model_sha256": config["positive_clv_combined_sha256"],
+                "status": f"{cost}_candidate_not_cost_stable",
+            }
+        stable_candidates.append((cost, candidate))
+
+    for cost, candidate in stable_candidates:
+        score = score_positive_clv_probability(
+            _clv_feature_row(candidate, match), artifact_dir / filenames[cost]
+        )
+        if score["model_sha256"] != expected_hashes[cost]:
+            raise ValueError("positive-CLV policy artifact hash mismatch")
+        probabilities.append(float(score["positive_clv_probability"]))
+    probability = min(probabilities)
+    anchor = float(config["positive_clv_probability_anchor"])
+    multiplier = min(
+        float(config["positive_clv_maximum_stake_multiplier"]),
+        max(
+            float(config["positive_clv_minimum_stake_multiplier"]),
+            probability / anchor,
+        ),
+    )
+    return {
+        "positive_clv_probability": probability,
+        "stake_confidence_multiplier": multiplier,
+        "confidence_model_sha256": config["positive_clv_combined_sha256"],
+        "status": "CROSS_COST_CONSENSUS",
+    }
 
 
 def _dual_cost_stability_blockers(
@@ -904,6 +1422,8 @@ class NamedBookGapResearchService:
     def ensure_policy(self, policy_config: dict[str, Any] | None = None) -> dict[str, Any]:
         registered_config = policy_config or POLICY_CONFIG
         source = "\n".join((inspect.getsource(self.capture), inspect.getsource(self._inputs),
+                             inspect.getsource(self._adaptive_confidence_cap_state),
+                             inspect.getsource(self._adaptive_budget_deployment_state),
                              inspect.getsource(self.report), inspect.getsource(self._paper_portfolio),
                              inspect.getsource(_devig), inspect.getsource(_robust_consensus),
                              inspect.getsource(score_opening_features), inspect.getsource(odds_band),
@@ -913,7 +1433,11 @@ class NamedBookGapResearchService:
                              inspect.getsource(_clv_feature_row),
                              inspect.getsource(_score_clv_pair),
                              inspect.getsource(_score_clv_agreement),
+                             inspect.getsource(_score_wide_all_outcomes_incremental),
                              inspect.getsource(_score_long_horizon_agreement),
+                             inspect.getsource(_score_mid_horizon_agreement),
+                             inspect.getsource(score_positive_clv_probability),
+                             inspect.getsource(_positive_clv_confidence_uplift),
                              inspect.getsource(_dual_cost_stability_blockers),
                              inspect.getsource(_market_residual_probabilities),
                              inspect.getsource(_settlement_day_bootstrap_roi)))
@@ -982,21 +1506,260 @@ class NamedBookGapResearchService:
         return {"fetched_at": fetched_at, "books": adjusted_books,
                 "model_probabilities": model_probabilities}, ""
 
+    def _adaptive_confidence_cap_state(
+        self, config: dict[str, Any], decided_at: datetime,
+    ) -> dict[str, Any]:
+        conservative_cap = float(
+            config.get("adaptive_conservative_maximum_multiplier", 1.05)
+        )
+        state = {
+            "cap": conservative_cap,
+            "prior_uplifted_positions": 0,
+            "prior_closing_expected_profit_delta": 0.0,
+            "status": "STATIC_OR_INSUFFICIENT_PRIOR_EVIDENCE",
+        }
+        if not config.get("adaptive_confidence_cap_enabled"):
+            state["cap"] = float(
+                config.get("positive_clv_maximum_stake_multiplier", 1.0)
+            )
+            state["status"] = "STATIC_POLICY"
+            return state
+        if (
+            CLV_RIDGE_CROSS_COST_UPLIFT_POLICY_CONFIG is None
+            or CLV_RIDGE_GROWTH_UPLIFT_POLICY_CONFIG is None
+        ):
+            return state
+
+        local = decided_at.astimezone(CHINA_TZ)
+        cutoff = datetime(local.year, local.month, 1, tzinfo=CHINA_TZ).astimezone(
+            timezone.utc
+        )
+        conservative_policy = self.ensure_policy(
+            CLV_RIDGE_CROSS_COST_UPLIFT_POLICY_CONFIG
+        )
+        growth_policy = self.ensure_policy(CLV_RIDGE_GROWTH_UPLIFT_POLICY_CONFIG)
+
+        def prior_rows(policy_id: str) -> list[dict[str, Any]]:
+            with self.db.connect() as connection:
+                rows = connection.execute("""SELECT d.*,m.league,c.closing_edge_pct
+                    FROM named_book_gap_decisions d
+                    JOIN matches m ON m.id=d.match_id
+                    JOIN named_book_gap_closing_observations c
+                      ON c.decision_id=d.decision_id
+                    WHERE d.policy_id=? AND d.action='CANDIDATE'
+                      AND datetime(d.decided_at)<datetime(?)
+                      AND datetime(d.kickoff_time)<datetime(?)
+                      AND datetime(c.captured_at)<datetime(?)
+                    ORDER BY d.decided_at,d.decision_id""", (
+                        policy_id, cutoff.isoformat(), cutoff.isoformat(),
+                        cutoff.isoformat(),
+                    )).fetchall()
+            return [dict(row) for row in rows]
+
+        conservative_rows = prior_rows(conservative_policy["policy_id"])
+        growth_rows = prior_rows(growth_policy["policy_id"])
+        conservative_positions = self._paper_portfolio(
+            conservative_rows, conservative_policy["config"], cutoff
+        )["positions"]
+        growth_positions = self._paper_portfolio(
+            growth_rows, growth_policy["config"], cutoff
+        )["positions"]
+        conservative_stakes = {
+            (int(row["match_id"]), str(row["outcome"])): float(row["stake"])
+            for row in conservative_positions
+        }
+        growth_stakes = {
+            (int(row["match_id"]), str(row["outcome"])): float(row["stake"])
+            for row in growth_positions
+        }
+        closing_edges = {
+            (int(row["match_id"]), str(row["selected_outcome"])):
+            float(row["closing_edge_pct"]) / 100.0
+            for row in growth_rows
+        }
+        expected_delta = 0.0
+        uplifted = 0
+        for key in conservative_stakes.keys() & growth_stakes.keys() & closing_edges.keys():
+            stake_delta = growth_stakes[key] - conservative_stakes[key]
+            if stake_delta > 1e-9:
+                uplifted += 1
+                expected_delta += stake_delta * closing_edges[key]
+        state["prior_uplifted_positions"] = uplifted
+        state["prior_closing_expected_profit_delta"] = round(expected_delta, 6)
+        minimum = int(config["adaptive_minimum_prior_uplifted_positions"])
+        if uplifted >= minimum and expected_delta > 0.0:
+            state["cap"] = float(config["adaptive_growth_maximum_multiplier"])
+            state["status"] = "GROWTH_CAP_FROM_PRIOR_MONTHS"
+        return state
+
+    def _adaptive_budget_deployment_state(
+        self, config: dict[str, Any], decided_at: datetime,
+    ) -> dict[str, Any]:
+        base_multiplier = float(config.get(
+            "adaptive_budget_base_multiplier",
+            config.get("budget_deployment_multiplier", 1.0),
+        ))
+        state = {
+            "multiplier": base_multiplier,
+            "prior_active_months": 0,
+            "prior_matched_positions": 0,
+            "expected_profit_2_5pct": 0.0,
+            "expected_profit_5pct": 0.0,
+            "realized_profit_2_5pct": 0.0,
+            "realized_profit_5pct": 0.0,
+            "status": "STATIC_POLICY",
+        }
+        if not config.get("adaptive_budget_deployment_enabled"):
+            return state
+        state["status"] = "INSUFFICIENT_STRICTLY_PRIOR_MATCHED_EVIDENCE"
+        if CLV_RIDGE_BUDGET_DEPLOYMENT_POLICY_CONFIG is None:
+            return state
+
+        local = decided_at.astimezone(CHINA_TZ)
+        cutoff = datetime(local.year, local.month, 1, tzinfo=CHINA_TZ).astimezone(
+            timezone.utc
+        )
+        evidence_policy = self.ensure_policy(
+            CLV_RIDGE_BUDGET_DEPLOYMENT_POLICY_CONFIG
+        )
+        with self.db.connect() as connection:
+            rows = connection.execute("""SELECT d.*,m.league,
+                    c.closing_reference_probability,c.closing_edge_pct,
+                    r.outcome AS actual_outcome,r.settled_at AS result_settled_at
+                FROM named_book_gap_decisions d
+                JOIN matches m ON m.id=d.match_id
+                JOIN named_book_gap_closing_observations c
+                  ON c.decision_id=d.decision_id
+                JOIN results r ON r.match_id=d.match_id
+                WHERE d.policy_id=? AND d.action='CANDIDATE'
+                  AND d.positive_clv_probability IS NOT NULL
+                  AND datetime(d.decided_at)<datetime(?)
+                  AND datetime(d.kickoff_time)<datetime(?)
+                  AND datetime(c.captured_at)<datetime(?)
+                  AND datetime(r.settled_at)>=datetime(d.kickoff_time)
+                  AND datetime(r.settled_at)>datetime(d.decided_at)
+                  AND datetime(r.settled_at)<datetime(?)
+                ORDER BY d.decided_at,d.decision_id""", (
+                    evidence_policy["policy_id"], cutoff.isoformat(),
+                    cutoff.isoformat(), cutoff.isoformat(), cutoff.isoformat(),
+                )).fetchall()
+        if not rows:
+            return state
+
+        raw_rows = [dict(row) for row in rows]
+        exchange_keys = {
+            str(key).lower() for key in config.get("exchange_bookmaker_keys", [])
+        }
+        cost_positions: dict[str, list[dict[str, Any]]] = {}
+        closing_probabilities = {
+            (int(row["match_id"]), str(row["selected_outcome"])):
+            float(row["closing_reference_probability"])
+            for row in raw_rows
+        }
+        evidence_config = {
+            **evidence_policy["config"],
+            "budget_deployment_multiplier": 1.0,
+            "adaptive_budget_deployment_enabled": False,
+        }
+        for label, rate in config["adaptive_budget_cost_rates"].items():
+            adjusted_rows = []
+            for source in raw_rows:
+                row = dict(source)
+                bookmaker_key = str(row.get("execution_bookmaker_key") or "").lower()
+                cost_rate = float(rate) if bookmaker_key in exchange_keys else 0.0
+                row["bet365_odds"] = _net_execution_odds(
+                    float(row["raw_execution_odds"]), cost_rate
+                )
+                adjusted_rows.append(row)
+            cost_positions[str(label)] = self._paper_portfolio(
+                adjusted_rows, evidence_config, cutoff
+            )["positions"]
+
+        common_keys = set.intersection(*[
+            {(int(row["match_id"]), str(row["outcome"])) for row in positions}
+            for positions in cost_positions.values()
+        ])
+        if not common_keys:
+            return state
+        active_months = sorted({
+            str(row["decision_date"])[:7]
+            for positions in cost_positions.values() for row in positions
+            if (int(row["match_id"]), str(row["outcome"])) in common_keys
+        })
+        required_months = int(config["adaptive_budget_prior_active_months"])
+        prior_months = active_months[-required_months:]
+        state["prior_active_months"] = len(prior_months)
+        if len(prior_months) < required_months:
+            return state
+
+        matched_count = None
+        for label, positions in cost_positions.items():
+            evidence = [
+                row for row in positions
+                if (int(row["match_id"]), str(row["outcome"])) in common_keys
+                and str(row["decision_date"])[:7] in prior_months
+            ]
+            matched_count = len(evidence) if matched_count is None else min(
+                matched_count, len(evidence)
+            )
+            expected_profit = sum(
+                float(row["stake"]) * (
+                    closing_probabilities[(int(row["match_id"]), str(row["outcome"]))]
+                    * float(row["odds"]) - 1.0
+                )
+                for row in evidence
+            )
+            realized_profit = sum(float(row.get("profit") or 0.0) for row in evidence)
+            state[f"expected_profit_{label}"] = round(expected_profit, 6)
+            state[f"realized_profit_{label}"] = round(realized_profit, 6)
+        state["prior_matched_positions"] = int(matched_count or 0)
+        minimum = int(config["adaptive_budget_minimum_prior_matched_positions"])
+        labels = list(config["adaptive_budget_cost_rates"])
+        if (
+            state["prior_matched_positions"] >= minimum
+            and all(float(state[f"expected_profit_{label}"]) > 0.0 for label in labels)
+            and all(float(state[f"realized_profit_{label}"]) > 0.0 for label in labels)
+        ):
+            state["multiplier"] = float(config["adaptive_budget_growth_multiplier"])
+            state["status"] = "GROWTH_FROM_STRICTLY_PRIOR_MATCHED_EVIDENCE"
+        return state
+
     def capture(self, limit: int = 100, as_of: str | datetime | None = None,
                 policy_config: dict[str, Any] | None = None) -> dict[str, Any]:
         decided_at = _time(as_of or _now())
         policy = self.ensure_policy(policy_config)
         config = policy["config"]
+        adaptive_cap = self._adaptive_confidence_cap_state(config, decided_at)
+        adaptive_budget = self._adaptive_budget_deployment_state(config, decided_at)
+        confidence_config = config
+        if config.get("adaptive_confidence_cap_enabled"):
+            confidence_config = {
+                **config,
+                "positive_clv_maximum_stake_multiplier": adaptive_cap["cap"],
+            }
         counters: Counter[str] = Counter()
         inserted = candidates = 0
-        for match in self.repository.list_active_official_matches(max(1, min(limit, 500))):
+        active_matches = self.repository.list_active_research_matches(max(1, min(limit, 500)))
+        next_primary_horizon_at: datetime | None = None
+        eligible_matches = 0
+        before_window_matches = 0
+        after_window_matches = 0
+        lower = float(config["primary_horizon_minutes"])
+        upper = lower + float(config["horizon_tolerance_minutes"])
+        for match in active_matches:
             kickoff = _time(match["kickoff_time"])
             minutes = (kickoff - decided_at).total_seconds() / 60.0
-            lower = float(config["primary_horizon_minutes"])
-            upper = lower + float(config["horizon_tolerance_minutes"])
             if not lower <= minutes <= upper:
                 counters["outside_primary_horizon"] += 1
+                if minutes > upper:
+                    before_window_matches += 1
+                    window_at = kickoff - timedelta(minutes=upper)
+                    if next_primary_horizon_at is None or window_at < next_primary_horizon_at:
+                        next_primary_horizon_at = window_at
+                else:
+                    after_window_matches += 1
                 continue
+            eligible_matches += 1
             inputs, blocker = self._inputs(int(match["id"]), decided_at, config)
             if inputs is None:
                 counters[blocker] += 1
@@ -1009,12 +1772,16 @@ class NamedBookGapResearchService:
             predicted_clv = lower_predicted_clv = ranker_model_sha = None
             horizon_role = "single_horizon"
             effective_kelly_fraction = float(config["kelly_fraction"])
+            positive_clv_probability = None
+            stake_confidence_multiplier = 1.0
+            confidence_model_sha = None
             stored_expected_ev = selected[7]
             stored_conservative_ev = selected[8]
             stored_conservative_probability = selected[6]
             if config.get("decision_model") in {
                 "frozen_json_clv_ridge", "frozen_json_clv_agreement",
                 "frozen_json_clv_multi_horizon",
+                "frozen_json_clv_three_horizon",
             }:
                 feature_row = _clv_feature_row(selected, match)
                 try:
@@ -1039,10 +1806,11 @@ class NamedBookGapResearchService:
 
                     chosen = ranker
                     chosen_probability = core_probability
-                    if (
-                        config.get("decision_model") == "frozen_json_clv_multi_horizon"
-                        and core_blockers
-                    ):
+                    is_multi_horizon = config.get("decision_model") in {
+                        "frozen_json_clv_multi_horizon",
+                        "frozen_json_clv_three_horizon",
+                    }
+                    if is_multi_horizon and core_blockers:
                         long_ranker = _score_long_horizon_agreement(feature_row, config)
                         long_lower = float(long_ranker["lower_predicted_clv"])
                         long_probability = min(
@@ -1061,6 +1829,39 @@ class NamedBookGapResearchService:
                             chosen_probability = long_probability
                             horizon_role = "18m9m_satellite"
                             effective_kelly_fraction = float(config["satellite_kelly_fraction"])
+                        elif config.get("decision_model") == "frozen_json_clv_three_horizon":
+                            mid_ranker = _score_mid_horizon_agreement(feature_row, config)
+                            mid_lower = float(mid_ranker["lower_predicted_clv"])
+                            mid_probability = min(
+                                0.999,
+                                max(0.001, (1.0 + mid_lower / 100.0) / selected[1]),
+                            )
+                            mid_blockers = []
+                            if mid_lower < float(config["tertiary_minimum_lower_clv_pct"]):
+                                mid_blockers.append("predicted_lower_clv_below_policy_minimum")
+                            if mid_probability < float(
+                                config.get("tertiary_minimum_staking_probability", 0.0)
+                            ):
+                                mid_blockers.append(
+                                    "conservative_probability_below_policy_minimum"
+                                )
+                            if not mid_blockers:
+                                chosen = mid_ranker
+                                chosen_probability = mid_probability
+                                horizon_role = "12m6m_tertiary"
+                                effective_kelly_fraction = float(
+                                    config["tertiary_kelly_fraction"]
+                                )
+                            else:
+                                selected[9].extend(
+                                    f"core_horizon:{reason}" for reason in core_blockers
+                                )
+                                selected[9].extend(
+                                    f"long_horizon:{reason}" for reason in long_blockers
+                                )
+                                selected[9].extend(
+                                    f"mid_horizon:{reason}" for reason in mid_blockers
+                                )
                         else:
                             selected[9].extend(
                                 f"core_horizon:{reason}" for reason in core_blockers
@@ -1070,7 +1871,7 @@ class NamedBookGapResearchService:
                             )
                     else:
                         selected[9].extend(core_blockers)
-                        if config.get("decision_model") == "frozen_json_clv_multi_horizon":
+                        if is_multi_horizon:
                             horizon_role = "9m3m_core"
 
                     predicted_clv = float(chosen["predicted_clv"])
@@ -1081,10 +1882,124 @@ class NamedBookGapResearchService:
                     stored_conservative_probability = chosen_probability
                 except (KeyError, OSError, TypeError, ValueError) as exc:
                     selected[9].append(f"clv_ranker_unavailable:{type(exc).__name__}")
+            if selected[9] and config.get("direct_only_fallback_enabled"):
+                try:
+                    direct_only = _score_clv_pair(
+                        feature_row,
+                        str(config["ranker_model_filename"]),
+                        None,
+                        str(config["ranker_model_sha256"]),
+                    )
+                    direct_lower = float(direct_only["lower_predicted_clv"])
+                    direct_probabilities = list(
+                        direct_only["market_staking_probabilities"]
+                    )
+                    direct_confidence = _positive_clv_confidence_uplift(
+                        inputs, match, confidence_config, str(selected[0]),
+                        "9m3m_core",
+                    )
+                    direct_positive_probability = direct_confidence[
+                        "positive_clv_probability"
+                    ]
+                    if (
+                        direct_lower >= float(
+                            config["direct_only_minimum_lower_clv_pct"]
+                        )
+                        and direct_probabilities
+                        and direct_positive_probability is not None
+                        and float(direct_positive_probability) >= float(
+                            config[
+                                "direct_only_minimum_positive_clv_probability"
+                            ]
+                        )
+                    ):
+                        selected[9].clear()
+                        predicted_clv = float(direct_only["predicted_clv"])
+                        lower_predicted_clv = direct_lower
+                        ranker_model_sha = str(direct_only["model_sha256"])
+                        stored_expected_ev = predicted_clv / 100.0
+                        stored_conservative_ev = direct_lower / 100.0
+                        stored_conservative_probability = min(
+                            direct_probabilities
+                        )
+                        horizon_role = "9m3m_direct_only"
+                        effective_kelly_fraction = float(
+                            config["direct_only_kelly_fraction"]
+                        )
+                        positive_clv_probability = float(
+                            direct_positive_probability
+                        )
+                        confidence_model_sha = str(
+                            direct_confidence["confidence_model_sha256"]
+                        )
+                except (KeyError, OSError, TypeError, ValueError):
+                    pass
             if not selected[9]:
                 selected[9].extend(_dual_cost_stability_blockers(
                     inputs, config, match, str(selected[0])
                 ))
+            if (
+                not selected[9]
+                and horizon_role != "9m3m_direct_only"
+                and config.get("positive_clv_classifier_filenames")
+            ):
+                try:
+                    confidence = _positive_clv_confidence_uplift(
+                        inputs, match, confidence_config, str(selected[0]), horizon_role
+                    )
+                    positive_clv_probability = confidence[
+                        "positive_clv_probability"
+                    ]
+                    stake_confidence_multiplier = float(
+                        confidence["stake_confidence_multiplier"]
+                    )
+                    confidence_model_sha = str(
+                        confidence["confidence_model_sha256"]
+                    )
+                    effective_kelly_fraction *= stake_confidence_multiplier
+                except (KeyError, OSError, TypeError, ValueError) as exc:
+                    selected[9].append(
+                        f"positive_clv_classifier_unavailable:{type(exc).__name__}"
+                    )
+            if selected[9] and config.get("wide_all_outcomes_incremental_enabled"):
+                try:
+                    incremental = _score_wide_all_outcomes_incremental(
+                        inputs, match, config
+                    )
+                    if incremental is not None:
+                        selected, incremental_score = incremental
+                        selected[9].clear()
+                        predicted_clv = float(
+                            incremental_score["predicted_clv"]
+                        )
+                        lower_predicted_clv = float(
+                            incremental_score["lower_predicted_clv"]
+                        )
+                        ranker_model_sha = str(
+                            incremental_score["model_sha256"]
+                        )
+                        stored_expected_ev = predicted_clv / 100.0
+                        stored_conservative_ev = lower_predicted_clv / 100.0
+                        stored_conservative_probability = min(
+                            0.999,
+                            max(
+                                0.001,
+                                (1.0 + stored_conservative_ev)
+                                / float(selected[1]),
+                            ),
+                        )
+                        horizon_role = "9m3m_wide_all_outcomes_incremental"
+                        effective_kelly_fraction = float(
+                            config["wide_all_outcomes_kelly_fraction"]
+                        )
+                        positive_clv_probability = None
+                        stake_confidence_multiplier = 1.0
+                        confidence_model_sha = None
+                except (KeyError, OSError, TypeError, ValueError) as exc:
+                    selected[9].append(
+                        "wide_all_outcomes_incremental_unavailable:"
+                        f"{type(exc).__name__}"
+                    )
             action = "CANDIDATE" if not selected[9] else "NO_BET"
             execution = selected[10]
             references = selected[11]
@@ -1105,6 +2020,36 @@ class NamedBookGapResearchService:
                 "ranker_model_sha256": ranker_model_sha,
                 "horizon_role": horizon_role,
                 "effective_kelly_fraction": effective_kelly_fraction,
+                "positive_clv_probability": positive_clv_probability,
+                "stake_confidence_multiplier": stake_confidence_multiplier,
+                "confidence_model_sha256": confidence_model_sha,
+                "adaptive_confidence_cap": adaptive_cap["cap"],
+                "adaptive_prior_uplifted_positions": adaptive_cap[
+                    "prior_uplifted_positions"
+                ],
+                "adaptive_prior_closing_expected_profit_delta": adaptive_cap[
+                    "prior_closing_expected_profit_delta"
+                ],
+                "adaptive_budget_multiplier": adaptive_budget["multiplier"],
+                "adaptive_budget_prior_active_months": adaptive_budget[
+                    "prior_active_months"
+                ],
+                "adaptive_budget_prior_matched_positions": adaptive_budget[
+                    "prior_matched_positions"
+                ],
+                "adaptive_budget_prior_expected_profit_2_5pct": adaptive_budget[
+                    "expected_profit_2_5pct"
+                ],
+                "adaptive_budget_prior_expected_profit_5pct": adaptive_budget[
+                    "expected_profit_5pct"
+                ],
+                "adaptive_budget_prior_realized_profit_2_5pct": adaptive_budget[
+                    "realized_profit_2_5pct"
+                ],
+                "adaptive_budget_prior_realized_profit_5pct": adaptive_budget[
+                    "realized_profit_5pct"
+                ],
+                "adaptive_budget_state": adaptive_budget["status"],
             }
             payload_hash = hashlib.sha256(_canonical(payload).encode()).hexdigest()
             try:
@@ -1117,8 +2062,17 @@ class NamedBookGapResearchService:
                          execution_bookmaker,execution_bookmaker_key,reference_method,reference_bookmakers_json,
                          reference_dispersion,snapshot_payload_hash,raw_execution_odds,execution_cost_rate,
                          predicted_closing_edge_pct,lower_predicted_closing_edge_pct,ranker_model_sha256,
-                         horizon_role,effective_kelly_fraction)
-                        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
+                         horizon_role,effective_kelly_fraction,positive_clv_probability,
+                         stake_confidence_multiplier,confidence_model_sha256,
+                          adaptive_confidence_cap,adaptive_prior_uplifted_positions,
+                          adaptive_prior_closing_expected_profit_delta,
+                          adaptive_budget_multiplier,adaptive_budget_prior_active_months,
+                          adaptive_budget_prior_matched_positions,
+                          adaptive_budget_prior_expected_profit_2_5pct,
+                          adaptive_budget_prior_expected_profit_5pct,
+                          adaptive_budget_prior_realized_profit_2_5pct,
+                          adaptive_budget_prior_realized_profit_5pct,adaptive_budget_state)
+                        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
                         str(uuid.uuid4()), policy["policy_id"], match["id"], match["official_match_id"], inputs["fetched_at"],
                         execution["bookmaker_last_update"], max(row["bookmaker_last_update"] for row in references),
                         decided_at.isoformat(), match["kickoff_time"], minutes,
@@ -1129,7 +2083,16 @@ class NamedBookGapResearchService:
                         execution["bookmaker_key"], config["reference_method"], _canonical(reference_keys),
                         selected[12], execution["payload_hash"], execution[f"raw_{selected[0]}_odds"],
                         execution["execution_cost_rate"], predicted_clv, lower_predicted_clv, ranker_model_sha,
-                        horizon_role, effective_kelly_fraction,
+                        horizon_role, effective_kelly_fraction, positive_clv_probability,
+                        stake_confidence_multiplier, confidence_model_sha,
+                        adaptive_cap["cap"], adaptive_cap["prior_uplifted_positions"],
+                        adaptive_cap["prior_closing_expected_profit_delta"],
+                        adaptive_budget["multiplier"], adaptive_budget["prior_active_months"],
+                        adaptive_budget["prior_matched_positions"],
+                        adaptive_budget["expected_profit_2_5pct"],
+                        adaptive_budget["expected_profit_5pct"],
+                        adaptive_budget["realized_profit_2_5pct"],
+                        adaptive_budget["realized_profit_5pct"], adaptive_budget["status"],
                     ))
                 inserted += 1
                 candidates += int(action == "CANDIDATE")
@@ -1139,23 +2102,42 @@ class NamedBookGapResearchService:
                 else:
                     raise
         report = self.report(policy["policy_id"], decided_at)
-        return {"matches": len(self.repository.list_active_official_matches(limit)), "decisions": inserted,
+        return {"matches": len(active_matches), "decisions": inserted,
                 "predictions": candidates, "blocker_counts": [{"reason": key, "matches": value} for key, value in counters.most_common()],
+                "horizon_status": {
+                    "primary_horizon_minutes": lower,
+                    "horizon_tolerance_minutes": upper - lower,
+                    "window_minutes_to_kickoff": [lower, upper],
+                    "eligible_matches": eligible_matches,
+                    "before_window_matches": before_window_matches,
+                    "after_window_matches": after_window_matches,
+                    "next_primary_horizon_at": (
+                        next_primary_horizon_at.isoformat() if next_primary_horizon_at else None
+                    ),
+                },
                 "report": report, "warnings": report["decision_reasons"]}
 
     def capture_experiment(self, limit: int = 100, as_of: str | datetime | None = None) -> dict[str, Any]:
         frozen_at = _time(as_of or _now())
         reports = [self.capture(limit, frozen_at, config) for config in EXPERIMENT_POLICY_CONFIGS]
+        blockers: dict[str, dict[str, Any]] = {}
+        for row in reports:
+            for blocker in row.get("blocker_counts", []):
+                reason = str(blocker["reason"])
+                current = blockers.setdefault(reason, {"reason": reason, "matches": 0, "policies_affected": 0})
+                current["matches"] = max(current["matches"], int(blocker.get("matches") or 0))
+                current["policies_affected"] += 1
+        horizon_status = reports[0].get("horizon_status", {}) if reports else {}
         return {
             "experiment": EXPERIMENT_NAME,
             "matches": max((int(row.get("matches") or 0) for row in reports), default=0),
             "decisions": sum(int(row.get("decisions") or 0) for row in reports),
             "predictions": sum(int(row.get("predictions") or 0) for row in reports),
             "policies": reports,
-            "blocker_counts": [
-                {"policy_version": row["report"]["policy"]["config"]["version"], **blocker}
-                for row in reports for blocker in row.get("blocker_counts", [])
-            ],
+            "horizon_status": horizon_status,
+            "blocker_counts": sorted(
+                blockers.values(), key=lambda item: (-int(item["matches"]), item["reason"])
+            ),
             "warnings": sorted({warning for row in reports for warning in row.get("warnings", [])}),
         }
 
@@ -1169,6 +2151,112 @@ class NamedBookGapResearchService:
             "guardrail": "All policies consume the same prospective snapshot; none places real orders.",
         }
 
+    def capture_closing_evidence(
+        self, limit: int = 1000, as_of: str | datetime | None = None,
+    ) -> dict[str, Any]:
+        """Freeze post-decision, pre-kickoff closing consensus for CLV attribution."""
+        observed_at = _time(as_of or _now())
+        with self.db.connect() as connection:
+            decisions = connection.execute("""SELECT d.*,p.config_json
+                FROM named_book_gap_decisions d
+                JOIN named_book_gap_policies p ON p.policy_id=d.policy_id
+                LEFT JOIN named_book_gap_closing_observations c
+                  ON c.decision_id=d.decision_id
+                WHERE d.action='CANDIDATE' AND c.decision_id IS NULL
+                  AND datetime(d.decided_at)<datetime(?)
+                  AND EXISTS (
+                    SELECT 1 FROM prospective_external_odds_snapshots s
+                    WHERE s.match_id=d.match_id AND s.capture_window='CLOSING'
+                      AND datetime(s.captured_at)>datetime(d.decided_at)
+                      AND datetime(s.captured_at)<=datetime(d.kickoff_time)
+                      AND datetime(s.captured_at)<=datetime(?)
+                  )
+                ORDER BY d.kickoff_time,d.decision_id LIMIT ?""", (
+                    observed_at.isoformat(), observed_at.isoformat(), int(limit),
+                )).fetchall()
+            inserted = skipped = 0
+            for source in decisions:
+                decision = dict(source)
+                snapshots = connection.execute("""SELECT *
+                    FROM prospective_external_odds_snapshots
+                    WHERE match_id=? AND capture_window='CLOSING'
+                      AND datetime(captured_at)>datetime(?)
+                      AND datetime(captured_at)<=datetime(kickoff_time)
+                      AND datetime(captured_at)<=datetime(?)
+                      AND captured_at=(
+                        SELECT MAX(captured_at)
+                        FROM prospective_external_odds_snapshots
+                        WHERE match_id=? AND capture_window='CLOSING'
+                          AND datetime(captured_at)>datetime(?)
+                          AND datetime(captured_at)<=datetime(kickoff_time)
+                          AND datetime(captured_at)<=datetime(?)
+                      )
+                    ORDER BY bookmaker_key""", (
+                        decision["match_id"], decision["decided_at"],
+                        observed_at.isoformat(), decision["match_id"],
+                        decision["decided_at"], observed_at.isoformat(),
+                    )).fetchall()
+                if not snapshots:
+                    skipped += 1
+                    continue
+                rows = [dict(row) for row in snapshots]
+                references = [
+                    {
+                        "bookmaker_key": str(row["bookmaker_key"]),
+                        "home_odds": float(row["home_odds"]),
+                        "draw_odds": float(row["draw_odds"]),
+                        "away_odds": float(row["away_odds"]),
+                    }
+                    for row in rows
+                    if str(row["bookmaker_key"]) != str(decision["execution_bookmaker_key"])
+                ]
+                config = json.loads(str(decision["config_json"]))
+                robust = _robust_consensus(references)
+                if (
+                    robust is None
+                    or len(references) < int(config["minimum_reference_bookmakers"])
+                ):
+                    skipped += 1
+                    continue
+                probabilities, _dispersion = robust
+                outcome = str(decision["selected_outcome"])
+                probability = float(probabilities[outcome])
+                execution_odds = float(decision["bet365_odds"])
+                closing_edge_pct = (probability * execution_odds - 1.0) * 100.0
+                captured_at = str(rows[0]["captured_at"])
+                minutes = max(0.0, _age_minutes(
+                    _time(decision["kickoff_time"]), captured_at
+                ))
+                bookmaker_keys = sorted(str(row["bookmaker_key"]) for row in references)
+                source_hash = hashlib.sha256(json.dumps({
+                    "decision_id": decision["decision_id"],
+                    "snapshot_ids": sorted(str(row["snapshot_id"]) for row in rows),
+                    "payload_hashes": sorted(str(row["payload_hash"]) for row in rows),
+                }, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+                cursor = connection.execute("""INSERT OR IGNORE INTO
+                    named_book_gap_closing_observations(
+                        observation_id,decision_id,policy_id,match_id,selected_outcome,
+                        captured_at,kickoff_time,minutes_to_kickoff,execution_odds,
+                        closing_reference_probability,closing_fair_odds,closing_edge_pct,
+                        positive_clv,reference_bookmakers_json,reference_method,
+                        source_snapshot_hash,created_at
+                    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
+                        uuid.uuid4().hex, decision["decision_id"], decision["policy_id"],
+                        decision["match_id"], outcome, captured_at,
+                        decision["kickoff_time"], minutes, execution_odds, probability,
+                        1.0 / probability, closing_edge_pct, int(closing_edge_pct > 0),
+                        json.dumps(bookmaker_keys, separators=(",", ":")),
+                        "normalized_component_median_leave_execution_book_out",
+                        source_hash, observed_at.isoformat(),
+                    ))
+                inserted += int(cursor.rowcount > 0)
+        return {
+            "matches": inserted, "candidate_decisions_checked": len(decisions),
+            "closing_observations": inserted,
+            "skipped_without_eligible_closing_snapshot": skipped,
+            "as_of": observed_at.isoformat(),
+        }
+
     def report(
         self, policy_id: str | None = None, as_of: str | datetime | None = None,
     ) -> dict[str, Any]:
@@ -1176,6 +2264,9 @@ class NamedBookGapResearchService:
         observed_at = _time(as_of or _now())
         with self.db.connect() as connection:
             rows = connection.execute("""SELECT d.*,m.league,
+                c.captured_at AS closing_captured_at,
+                c.closing_reference_probability,c.closing_fair_odds,
+                c.closing_edge_pct,c.positive_clv,
                 CASE WHEN datetime(r.settled_at)>=datetime(d.kickoff_time)
                        AND datetime(r.settled_at)>datetime(d.decided_at)
                        AND datetime(r.settled_at)<=datetime(?) THEN r.outcome END actual_outcome,
@@ -1185,9 +2276,11 @@ class NamedBookGapResearchService:
                 FROM named_book_gap_decisions d
                 JOIN matches m ON m.id=d.match_id
                 LEFT JOIN results r ON r.match_id=d.match_id
+                LEFT JOIN named_book_gap_closing_observations c
+                  ON c.decision_id=d.decision_id AND datetime(c.captured_at)<=datetime(?)
                 WHERE d.policy_id=? AND datetime(d.decided_at)<=datetime(?)
                 ORDER BY d.decided_at""", (
-                    observed_at.isoformat(), observed_at.isoformat(), policy["policy_id"],
+                    observed_at.isoformat(), observed_at.isoformat(), observed_at.isoformat(), policy["policy_id"],
                     observed_at.isoformat(),
                 )).fetchall()
         decisions = [dict(row) for row in rows]
@@ -1209,6 +2302,40 @@ class NamedBookGapResearchService:
         selected_outcomes = Counter(str(row["selected_outcome"]) for row in candidates)
         execution_books = Counter(str(row.get("execution_bookmaker_key") or "unknown") for row in candidates)
         ranked = [row for row in decisions if row.get("ranker_model_sha256")]
+        closing_evidenced = [
+            row for row in candidates if row.get("closing_edge_pct") is not None
+        ]
+        settled_closing_evidenced = [
+            row for row in settled if row.get("closing_edge_pct") is not None
+        ]
+        closing_coverage = (
+            len(settled_closing_evidenced) / len(settled) if settled else 0.0
+        )
+        average_closing_edge = (
+            fmean(float(row["closing_edge_pct"]) for row in closing_evidenced)
+            if closing_evidenced else None
+        )
+        role_clv = {}
+        for role, count in Counter(
+            str(row.get("horizon_role") or "single_horizon")
+            for row in closing_evidenced
+        ).items():
+            role_rows = [
+                row for row in closing_evidenced
+                if str(row.get("horizon_role") or "single_horizon") == role
+            ]
+            role_clv[role] = {
+                "observations": count,
+                "average_closing_edge_pct": round(fmean(
+                    float(row["closing_edge_pct"]) for row in role_rows
+                ), 4),
+                "positive_clv_rate": round(fmean(
+                    float(bool(row["positive_clv"])) for row in role_rows
+                ), 4),
+                "incremental_evidence_status": (
+                    "READY" if count >= 30 else "COLLECTING"
+                ),
+            }
         outcome_concentration = max(selected_outcomes.values(), default=0) / len(candidates) if candidates else 0.0
         reasons = []
         if len(settled) < 200: reasons.append("settled_selections<200")
@@ -1219,6 +2346,38 @@ class NamedBookGapResearchService:
             reasons.append("conservative_probability_brier_worse_than_market")
         if mature and outcome_concentration > 0.75:
             reasons.append("selected_outcome_concentration>75pct")
+        if mature and closing_coverage < 0.80:
+            reasons.append("prospective_closing_evidence_coverage<80pct")
+        if mature and (average_closing_edge is None or average_closing_edge <= 0):
+            reasons.append("prospective_average_closing_edge<=0")
+        incremental_role = policy["config"].get("incremental_role_gate")
+        if incremental_role:
+            incremental = role_clv.get(str(incremental_role), {})
+            incremental_observations = int(incremental.get("observations") or 0)
+            if incremental_observations < int(policy["config"].get(
+                "incremental_role_minimum_closing_observations", 30
+            )):
+                reasons.append(
+                    f"{incremental_role}_closing_observations<"
+                    f"{int(policy['config'].get('incremental_role_minimum_closing_observations', 30))}"
+                )
+            else:
+                if float(incremental.get("average_closing_edge_pct") or 0.0) <= float(
+                    policy["config"].get(
+                        "incremental_role_minimum_average_closing_edge_pct", 0.0
+                    )
+                ):
+                    reasons.append(
+                        f"{incremental_role}_average_closing_edge_below_minimum"
+                    )
+                if float(incremental.get("positive_clv_rate") or 0.0) < float(
+                    policy["config"].get(
+                        "incremental_role_minimum_positive_clv_rate", 0.5
+                    )
+                ):
+                    reasons.append(
+                        f"{incremental_role}_positive_clv_rate_below_minimum"
+                    )
         return {"method": "timestamp-aligned best named-book quote versus robust leave-one-book-out consensus",
                 "policy": policy, "decision": "NAMED_BOOK_GAP_PROSPECTIVE_PASS" if mature and not reasons else "NAMED_BOOK_GAP_PROSPECTIVE_COLLECTING",
                 "decision_reasons": reasons, "decisions": len(decisions), "candidate_decisions": sum(row["action"] == "CANDIDATE" for row in decisions),
@@ -1243,6 +2402,24 @@ class NamedBookGapResearchService:
                     ), 4) if ranked else None,
                     "ranker_model_sha256": policy["config"].get("ranker_model_sha256"),
                 },
+                "prospective_clv": {
+                    "observations": len(closing_evidenced),
+                    "settled_selections": len(settled),
+                    "settled_closing_evidence_coverage_pct": round(
+                        closing_coverage * 100.0, 2
+                    ),
+                    "average_closing_edge_pct": round(
+                        average_closing_edge, 4
+                    ) if average_closing_edge is not None else None,
+                    "positive_clv_rate": round(fmean(
+                        float(bool(row["positive_clv"])) for row in closing_evidenced
+                    ), 4) if closing_evidenced else None,
+                    "by_horizon_role": role_clv,
+                    "guardrail": (
+                        "Closing observations are post-decision, pre-kickoff and immutable; "
+                        "they never alter the frozen direction or stake."
+                    ),
+                },
                 "settlement_day_bootstrap_roi": bootstrap,
                 "prospective_warnings": (
                     (["historical_league_codes_do_not_match_official_pool_labels; unknown-category fallback is under validation"]
@@ -1264,6 +2441,9 @@ class NamedBookGapResearchService:
         daily_budget = float(config["daily_budget"])
         single_cap = float(config["maximum_single_stake"])
         fraction = float(config["kelly_fraction"])
+        default_budget_deployment_multiplier = float(
+            config.get("budget_deployment_multiplier", 1.0)
+        )
         daily_used: dict[str, float] = {}
         positions: list[dict[str, Any]] = []
         for row in sorted(candidates, key=lambda item: (str(item["decided_at"]), str(item["decision_id"]))):
@@ -1282,9 +2462,16 @@ class NamedBookGapResearchService:
                 else 1.0
             )
             row_fraction = float(row.get("effective_kelly_fraction") or fraction)
+            frozen_budget_multiplier = row.get("adaptive_budget_multiplier")
+            budget_deployment_multiplier = float(
+                frozen_budget_multiplier
+                if frozen_budget_multiplier is not None
+                else default_budget_deployment_multiplier
+            )
             stake = round(min(
                 single_cap, remaining,
-                daily_budget * full_kelly * row_fraction * stake_multiplier,
+                daily_budget * full_kelly * row_fraction * stake_multiplier
+                * budget_deployment_multiplier,
             ), 2)
             if stake <= 0:
                 continue
@@ -1302,6 +2489,7 @@ class NamedBookGapResearchService:
                               "league": row.get("league") or "UNKNOWN",
                               "bookmaker": row.get("execution_bookmaker"), "odds": odds,
                               "stake": stake, "stake_multiplier": stake_multiplier,
+                              "budget_deployment_multiplier": budget_deployment_multiplier,
                               "horizon_role": row.get("horizon_role") or "single_horizon",
                               "effective_kelly_fraction": row_fraction,
                               "reference_depth": reference_depth,

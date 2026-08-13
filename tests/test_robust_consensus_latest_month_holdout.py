@@ -5,12 +5,15 @@ from datetime import date
 import calendar
 import csv
 
+import pytest
+
 import scripts.robust_consensus_latest_month_holdout as holdout
 
 from scripts.robust_consensus_latest_month_holdout import (
     HistoricalMatch,
     STRATEGIES,
     _candidate,
+    _candidates,
     _candidate_buckets,
     _monthly_bootstrap,
     _priced_books,
@@ -102,6 +105,69 @@ def test_candidate_uses_best_named_book_and_excludes_it_from_reference() -> None
     assert candidate["execution_bookmaker"] == "best"
     assert "best" not in candidate["reference_bookmakers"]
     assert len(candidate["reference_bookmakers"]) == 5
+    assert set(candidate["consensus_probabilities"]) == {"home", "draw", "away"}
+    assert set(candidate["consensus_dispersions"]) == {"home", "draw", "away"}
+    assert candidate["execution_quote_advantage_pct"] > 0
+    assert candidate["execution_book_overround"] > -1
+    assert isinstance(candidate["execution_selected_probability_gap"], float)
+    assert candidate["execution_nonselected_mean_absolute_gap"] >= 0
+
+
+def test_candidate_universe_preserves_all_eligible_outcomes() -> None:
+    strategy = replace(
+        STRATEGIES[0], minimum_conservative_ev=-1.0,
+        minimum_price_ratio=0.0, maximum_odds=20.0,
+        minimum_probability=0.0,
+    )
+
+    candidates = _candidates(_match(1), strategy)
+    selected = _candidate(_match(1), strategy)
+
+    assert {row["outcome"] for row in candidates} == {"home", "draw", "away"}
+    assert selected == max(
+        candidates, key=lambda row: (row["conservative_ev"], row["odds"])
+    )
+
+
+def test_confirmed_quote_uses_second_best_execution_price() -> None:
+    strategy = replace(
+        STRATEGIES[0], minimum_conservative_ev=-1.0,
+        minimum_price_ratio=0.0, maximum_odds=20.0,
+        minimum_probability=0.0, execution_price_rank=2,
+    )
+
+    home = next(
+        row for row in _candidates(_match(1), strategy)
+        if row["outcome"] == "home"
+    )
+
+    assert home["execution_bookmaker"] == "b"
+    assert home["odds"] == pytest.approx(1.0 + (2.02 - 1.0) * 0.98)
+    assert "b" not in home["reference_bookmakers"]
+    assert "best" in home["reference_bookmakers"]
+
+
+def test_confirmed_quote_cap_limits_isolated_best_price_to_two_percent() -> None:
+    strategy = replace(
+        STRATEGIES[0], minimum_conservative_ev=-1.0,
+        minimum_price_ratio=0.0, maximum_odds=20.0,
+        minimum_probability=0.0,
+        maximum_execution_quote_advantage_ratio=1.02,
+    )
+
+    home = next(
+        row for row in _candidates(_match(1), strategy)
+        if row["outcome"] == "home"
+    )
+
+    capped_net_price = 2.02 * 1.02
+    assert home["execution_bookmaker"] == "best"
+    assert home["raw_odds"] == pytest.approx(capped_net_price)
+    assert home["uncapped_raw_odds"] == 2.40
+    assert home["odds"] == pytest.approx(
+        1.0 + (capped_net_price - 1.0) * 0.98
+    )
+    assert home["execution_quote_advantage_pct"] == pytest.approx(2.0)
 
 
 def test_exchange_cost_defaults_to_bfe_and_can_be_stress_tested_with_bf() -> None:

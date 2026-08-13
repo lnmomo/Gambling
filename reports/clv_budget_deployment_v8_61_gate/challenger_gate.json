@@ -1,0 +1,67 @@
+{
+  "decision": "HISTORICAL_STAKE_CHALLENGER_ACCEPTED_PROSPECTIVE_REQUIRED",
+  "checks": {
+    "same_frozen_v8_60_selections_and_directions": true,
+    "multiplier_selected_from_discovery_only": true,
+    "cross_cost_closing_expected_profit_improved": true,
+    "cross_cost_validation_closing_expected_profit_positive": true,
+    "full_maximum_drawdown_within_cny100": true,
+    "validation_maximum_drawdown_within_cny100": true,
+    "maximum_active_day_stake_within_cny100": true,
+    "closing_expected_iid_lower_95_positive": true,
+    "closing_expected_block_lower_95_positive": true,
+    "closing_expected_leave_one_source_positive": true,
+    "closing_expected_leave_one_league_positive": true,
+    "closing_expected_leave_one_outcome_positive": true,
+    "closing_expected_leave_one_odds_band_positive": true,
+    "closing_expected_leave_one_team_positive": true
+  },
+  "metrics": {
+    "selected_multiplier": 10.0,
+    "discovery_end": "2024-05-31",
+    "validation_start": "2024-08-01",
+    "2_5pct": {
+      "positions": 237,
+      "baseline_closing_expected_profit": 28.5919,
+      "challenger_closing_expected_profit": 113.9265,
+      "relative_improvement_pct": 298.4573,
+      "validation_closing_expected_profit": 43.7129,
+      "maximum_drawdown": 90.27,
+      "validation_maximum_drawdown": 47.60,
+      "maximum_active_day_stake": 33.00,
+      "closing_expected_iid_lower_95_pct": 5.0634,
+      "closing_expected_block_lower_95_pct": 5.1289,
+      "minimum_leave_one_source_pct": 4.6115,
+      "minimum_leave_one_league_pct": 4.2722,
+      "minimum_leave_one_outcome_pct": 3.9357,
+      "minimum_leave_one_odds_band_pct": 3.7844,
+      "minimum_leave_one_team_pct": 4.7309
+    },
+    "5pct": {
+      "positions": 225,
+      "baseline_closing_expected_profit": 27.5199,
+      "challenger_closing_expected_profit": 104.0127,
+      "relative_improvement_pct": 277.9545,
+      "validation_closing_expected_profit": 33.7991,
+      "maximum_drawdown": 90.27,
+      "validation_maximum_drawdown": 38.04,
+      "maximum_active_day_stake": 53.40,
+      "closing_expected_iid_lower_95_pct": 4.3859,
+      "closing_expected_block_lower_95_pct": 4.2302,
+      "minimum_leave_one_source_pct": 3.5855,
+      "minimum_leave_one_league_pct": 3.4724,
+      "minimum_leave_one_outcome_pct": 3.3833,
+      "minimum_leave_one_odds_band_pct": 3.0568,
+      "minimum_leave_one_team_pct": 3.8878
+    }
+  },
+  "thresholds": {
+    "maximum_discovery_drawdown_cny": 100.0,
+    "maximum_full_drawdown_cny": 100.0,
+    "maximum_validation_drawdown_cny": 100.0,
+    "maximum_active_day_stake_cny": 100.0,
+    "minimum_validation_closing_expected_profit_cny": 0.0,
+    "minimum_closing_expected_robustness_lower_pct": 0.0
+  },
+  "guardrail": "The multiplier uses discovery data only. Validation outcomes cannot select it. Historical acceptance registers a paper-only challenger and cannot authorize real orders."
+}

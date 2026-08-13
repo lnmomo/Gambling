@@ -157,8 +157,15 @@ class Settings:
         "EXTERNAL_ODDS_CAPTURE_WINDOW_MINUTES", "180"
     ))
     odds_api_sport_keys: tuple[str, ...] = tuple(filter(None, os.getenv(
-        "ODDS_API_SPORT_KEYS", "soccer_fifa_world_cup,soccer_finland_veikkausliiga"
+        "ODDS_API_SPORT_KEYS", "soccer_brazil_campeonato,soccer_efl_champ,soccer_epl"
     ).split(",")))
+    external_fixture_sport_keys: tuple[str, ...] = tuple(filter(None, os.getenv(
+        "EXTERNAL_FIXTURE_SPORT_KEYS",
+        os.getenv("ODDS_API_SPORT_KEYS", "soccer_brazil_campeonato,soccer_efl_champ,soccer_epl"),
+    ).split(",")))
+    external_results_sync_interval_hours: int = int(os.getenv(
+        "EXTERNAL_RESULTS_SYNC_INTERVAL_HOURS", "24"
+    ))
     odds_api_auto_sport_keys: bool = _bool("ODDS_API_AUTO_SPORT_KEYS", True)
     international_odds_sport_keys: tuple[str, ...] = tuple(filter(None, os.getenv(
         "INTERNATIONAL_ODDS_SPORT_KEYS",

@@ -21,10 +21,10 @@ from typing import Any
 
 import pandas as pd
 from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import ExtraTreesRegressor
-from sklearn.linear_model import LogisticRegression, Ridge
+from sklearn.ensemble import ExtraTreesRegressor, HistGradientBoostingRegressor
+from sklearn.linear_model import HuberRegressor, LogisticRegression, QuantileRegressor, Ridge
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
 
 from scripts.robust_consensus_latest_month_holdout import (
     HistoricalMatch,
@@ -34,6 +34,7 @@ from scripts.robust_consensus_latest_month_holdout import (
     _monthly_bootstrap,
     _months_before,
     build_candidate_cache,
+    build_candidate_universe_cache,
     complete_months,
     latest_complete_month,
     load_matches,
@@ -77,7 +78,28 @@ MARKET_STRUCTURE_CATEGORICAL_FEATURES = CATEGORICAL_FEATURES_PORTABLE + (
     "outcome_source_type",
     "source_odds_band",
 )
+MARKET_SHAPE_NUMERIC_FEATURES = MARKET_STRUCTURE_NUMERIC_FEATURES + (
+    "consensus_home_probability",
+    "consensus_draw_probability",
+    "consensus_away_probability",
+    "consensus_entropy",
+    "consensus_favorite_probability",
+    "selected_vs_favorite_probability",
+    "home_away_probability_gap",
+    "consensus_max_dispersion",
+    "execution_quote_advantage_pct",
+)
+MARKET_SHAPE_CATEGORICAL_FEATURES = MARKET_STRUCTURE_CATEGORICAL_FEATURES + (
+    "consensus_favorite_outcome",
+)
+MARKET_MICROSTRUCTURE_NUMERIC_FEATURES = MARKET_SHAPE_NUMERIC_FEATURES + (
+    "execution_book_overround",
+    "execution_selected_probability_gap",
+    "execution_nonselected_mean_absolute_gap",
+    "execution_selection_specificity",
+)
 ALPHAS = (1.0, 10.0, 100.0)
+QUANTILE_ALPHA = 0.01
 SAFETY_MARGINS = (0.0, 0.25, 0.5)
 MAXIMUM_ODDS_CAPS = (4.0, 5.0, 6.0, 8.0)
 MINIMUM_LOWER_CLV_PCT = 1.0
@@ -116,6 +138,52 @@ class FittedRanker:
     outcome_probability_validation_brier: float | None = None
     market_probability_validation_brier: float | None = None
     outcome_probability_weight: float = 0.0
+    uncertainty_profile: str = "rmse_grid"
+    positive_clv_model: Pipeline | None = None
+    positive_clv_validation_brier: float | None = None
+    minimum_positive_clv_probability: float = 0.0
+    positive_clv_numeric_features: tuple[str, ...] = ()
+    positive_clv_categorical_features: tuple[str, ...] = ()
+    prediction_bias_profile: str = "none"
+    prediction_bias_corrections: dict[str, float] | None = None
+    selection_ranking_profile: str = "lower_clv"
+    minimum_lower_clv_pct: float = MINIMUM_LOWER_CLV_PCT
+
+
+def _prediction_bias_key(row: dict[str, Any] | pd.Series) -> str:
+    return "|".join((
+        str(row["outcome"]), str(row["odds_band"]), str(row["source_type"]),
+    ))
+
+
+def _fit_prediction_bias_corrections(
+    validation: pd.DataFrame, predictions: Any, target_profile: str,
+    prior_observations: float = 100.0,
+) -> dict[str, float]:
+    if target_profile != "closing_edge_pct":
+        raise ValueError("validation bucket bias correction requires closing_edge_pct")
+    if prior_observations <= 0:
+        raise ValueError("bias correction prior observations must be positive")
+    residuals = validation[target_profile].to_numpy(dtype=float) - predictions
+    frame = validation[["outcome", "odds_band", "source_type"]].copy()
+    frame["residual"] = residuals
+    frame["bias_key"] = frame.apply(_prediction_bias_key, axis=1)
+    corrections = {}
+    for key, values in frame.groupby("bias_key")["residual"]:
+        count = len(values)
+        corrections[str(key)] = float(values.mean()) * count / (
+            count + prior_observations
+        )
+    return corrections
+
+
+def _apply_prediction_bias_corrections(
+    frame: pd.DataFrame, predictions: Any, corrections: dict[str, float],
+) -> Any:
+    offsets = frame.apply(
+        lambda row: corrections.get(_prediction_bias_key(row), 0.0), axis=1
+    ).to_numpy(dtype=float)
+    return predictions + offsets
 
 
 def _feature_contract(feature_profile: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
@@ -125,6 +193,10 @@ def _feature_contract(feature_profile: str) -> tuple[tuple[str, ...], tuple[str,
         return NUMERIC_FEATURES, CATEGORICAL_FEATURES_PORTABLE
     if feature_profile == "market_structure":
         return MARKET_STRUCTURE_NUMERIC_FEATURES, MARKET_STRUCTURE_CATEGORICAL_FEATURES
+    if feature_profile == "market_shape":
+        return MARKET_SHAPE_NUMERIC_FEATURES, MARKET_SHAPE_CATEGORICAL_FEATURES
+    if feature_profile == "market_microstructure":
+        return MARKET_MICROSTRUCTURE_NUMERIC_FEATURES, MARKET_SHAPE_CATEGORICAL_FEATURES
     raise ValueError(f"unknown feature profile: {feature_profile}")
 
 
@@ -152,6 +224,52 @@ def market_structure_features(row: dict[str, Any]) -> dict[str, Any]:
         "outcome_odds_band": f"{outcome}:{odds_band_value}",
         "outcome_source_type": f"{outcome}:{source_type}",
         "source_odds_band": f"{source_type}:{odds_band_value}",
+    }
+
+
+def market_shape_features(candidate: dict[str, Any]) -> dict[str, Any]:
+    """Describe the complete leave-one-book-out opening 1X2 market."""
+    probabilities = {
+        outcome: float(candidate["consensus_probabilities"][outcome])
+        for outcome in ("home", "draw", "away")
+    }
+    dispersions = {
+        outcome: float(candidate["consensus_dispersions"][outcome])
+        for outcome in ("home", "draw", "away")
+    }
+    favorite = max(probabilities, key=probabilities.get)
+    selected_probability = probabilities[str(candidate["outcome"])]
+    favorite_probability = probabilities[favorite]
+    return {
+        "consensus_home_probability": probabilities["home"],
+        "consensus_draw_probability": probabilities["draw"],
+        "consensus_away_probability": probabilities["away"],
+        "consensus_entropy": -sum(
+            probability * math.log(max(probability, 1e-12))
+            for probability in probabilities.values()
+        ),
+        "consensus_favorite_probability": favorite_probability,
+        "selected_vs_favorite_probability": (
+            selected_probability - favorite_probability
+        ),
+        "home_away_probability_gap": abs(
+            probabilities["home"] - probabilities["away"]
+        ),
+        "consensus_max_dispersion": max(dispersions.values()),
+        "execution_quote_advantage_pct": float(
+            candidate["execution_quote_advantage_pct"]
+        ),
+        "execution_book_overround": float(candidate["execution_book_overround"]),
+        "execution_selected_probability_gap": float(
+            candidate["execution_selected_probability_gap"]
+        ),
+        "execution_nonselected_mean_absolute_gap": float(
+            candidate["execution_nonselected_mean_absolute_gap"]
+        ),
+        "execution_selection_specificity": float(
+            candidate["execution_selection_specificity"]
+        ),
+        "consensus_favorite_outcome": favorite,
     }
 
 
@@ -200,7 +318,7 @@ def broad_strategy(
 
 def _opening_rows(
     matches: list[HistoricalMatch], strategy: Strategy,
-    candidate_cache: dict[tuple[str, int], dict[str, Any] | None],
+    candidate_cache: dict[tuple[str, int], Any],
     start: date, end: date, include_closing_target: bool,
 ) -> pd.DataFrame:
     rows: list[dict[str, Any]] = []
@@ -208,12 +326,20 @@ def _opening_rows(
         if not start <= match.match_date <= end:
             continue
         key = (match.source_file, match.source_row)
-        candidate = candidate_cache.get(key)
-        if candidate is None:
+        cached = candidate_cache.get(key)
+        if cached is None:
             continue
-        buckets = _candidate_buckets(candidate)
-        row = {
+        candidates = cached if isinstance(cached, list) else [cached]
+        for candidate in candidates:
+            buckets = _candidate_buckets(candidate)
+            match_key = f"{match.source_file}:{match.source_row}"
+            candidate_id = (
+                f"{match_key}:{candidate['outcome']}"
+                if isinstance(cached, list) else match_key
+            )
+            row = {
             "candidate_id": f"{match.source_file}:{match.source_row}",
+            "match_key": match_key,
             "source_file": match.source_file,
             "source_row": match.source_row,
             "date": match.match_date.isoformat(),
@@ -232,23 +358,34 @@ def _opening_rows(
             "execution_bookmaker": candidate["execution_bookmaker"],
             "odds_band": buckets[1].split(":", 1)[1],
             "source_type": buckets[2].split(":", 1)[1],
-        }
-        row.update(market_structure_features(row))
-        if include_closing_target:
-            quality = _closing_price_quality(match, candidate, strategy)
-            if quality["closing_edge_pct"] is None:
-                continue
-            row["closing_edge_pct"] = float(quality["closing_edge_pct"])
-            row["closing_probability"] = float(quality["closing_probability"])
-            row["closing_probability_delta"] = (
-                float(quality["closing_probability"]) - float(row["probability"])
-            )
-            row["actual_outcome"] = match.actual_outcome
-            row["unit_profit"] = (
-                float(candidate["odds"]) - 1.0
-                if match.actual_outcome == candidate["outcome"] else -1.0
-            )
-        rows.append(row)
+            }
+            row["candidate_id"] = candidate_id
+            row.update(market_structure_features(row))
+            row.update(market_shape_features(candidate))
+            if include_closing_target:
+                quality = _closing_price_quality(match, candidate, strategy)
+                if quality["closing_edge_pct"] is None:
+                    continue
+                row["closing_edge_pct"] = float(quality["closing_edge_pct"])
+                row["closing_probability"] = float(quality["closing_probability"])
+                row["closing_probability_delta"] = (
+                    float(quality["closing_probability"]) - float(row["probability"])
+                )
+                opening_probability = min(0.999, max(0.001, float(row["probability"])))
+                closing_probability = min(
+                    0.999, max(0.001, float(quality["closing_probability"]))
+                )
+                row["closing_logit_delta"] = math.log(
+                    closing_probability / (1.0 - closing_probability)
+                ) - math.log(
+                    opening_probability / (1.0 - opening_probability)
+                )
+                row["actual_outcome"] = match.actual_outcome
+                row["unit_profit"] = (
+                    float(candidate["odds"]) - 1.0
+                    if match.actual_outcome == candidate["outcome"] else -1.0
+                )
+            rows.append(row)
     return pd.DataFrame(rows)
 
 
@@ -256,20 +393,77 @@ def _pipeline(
     alpha: float, numeric_features: tuple[str, ...], categorical_features: tuple[str, ...],
     estimator_profile: str = "ridge",
 ) -> Pipeline:
-    transform = ColumnTransformer((
-        ("numeric", StandardScaler(), list(numeric_features)),
-        ("categorical", OneHotEncoder(handle_unknown="ignore"), list(categorical_features)),
-    ))
+    if estimator_profile == "hist_gradient_boosting":
+        transform = ColumnTransformer((
+            ("numeric", StandardScaler(), list(numeric_features)),
+            (
+                "categorical",
+                OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1),
+                list(categorical_features),
+            ),
+        ))
+    else:
+        transform = ColumnTransformer((
+            ("numeric", StandardScaler(), list(numeric_features)),
+            ("categorical", OneHotEncoder(handle_unknown="ignore"), list(categorical_features)),
+        ))
     if estimator_profile == "ridge":
         estimator = Ridge(alpha=alpha)
+    elif estimator_profile == "huber":
+        estimator = HuberRegressor(
+            epsilon=1.35, alpha=0.0001, max_iter=1000, tol=1e-5,
+        )
+    elif estimator_profile in {"quantile_25", "quantile_40"}:
+        estimator = QuantileRegressor(
+            quantile=0.25 if estimator_profile == "quantile_25" else 0.40,
+            alpha=alpha, solver="highs",
+        )
     elif estimator_profile == "extra_trees":
         estimator = ExtraTreesRegressor(
             n_estimators=120, min_samples_leaf=20, max_features=0.7,
             random_state=42, n_jobs=-1,
         )
+    elif estimator_profile == "hist_gradient_boosting":
+        categorical_mask = [False] * len(numeric_features) + [
+            True
+        ] * len(categorical_features)
+        estimator = HistGradientBoostingRegressor(
+            learning_rate=0.05,
+            max_iter=100,
+            max_leaf_nodes=15,
+            min_samples_leaf=50,
+            l2_regularization=1.0,
+            categorical_features=categorical_mask,
+            random_state=42,
+        )
     else:
         raise ValueError(f"unknown estimator profile: {estimator_profile}")
     return Pipeline((("features", transform), (estimator_profile, estimator)))
+
+
+def _training_sample_weights(
+    frame: pd.DataFrame, profile: str,
+) -> Any | None:
+    if profile == "uniform":
+        return None
+    if profile == "recency_half_life_90d":
+        dates = pd.to_datetime(frame["date"])
+        age_days = (dates.max() - dates).dt.days.astype(float)
+        return 0.5 ** (age_days.to_numpy() / 90.0)
+    raise ValueError(f"unknown training weight profile: {profile}")
+
+
+def _fit_ranker_pipeline(
+    model: Pipeline, frame: pd.DataFrame, target: pd.Series,
+    estimator_profile: str, training_weight_profile: str,
+) -> None:
+    weights = _training_sample_weights(frame, training_weight_profile)
+    if weights is None:
+        model.fit(frame, target)
+        return
+    if estimator_profile != "ridge":
+        raise ValueError("recency sample weights are supported only for Ridge")
+    model.fit(frame, target, ridge__sample_weight=weights)
 
 
 def _outcome_probability_pipeline(
@@ -283,6 +477,11 @@ def _outcome_probability_pipeline(
         ("features", transform),
         ("logistic", LogisticRegression(C=0.1, solver="lbfgs", max_iter=1000)),
     ))
+
+
+def _positive_clv_target(frame: pd.DataFrame) -> pd.Series:
+    """Classification target derived only from observed closing-line movement."""
+    return (frame["closing_edge_pct"].astype(float) > 0.0).astype(int)
 
 
 def _rmse(actual: pd.Series, predicted: Any) -> float:
@@ -308,7 +507,7 @@ def _logit(probability: Any) -> Any:
 def _fit_staking_calibration(
     training: pd.DataFrame, validation: pd.DataFrame, lower_edge: Any, profile: str,
 ) -> tuple[float, float]:
-    if profile == "lower_clv":
+    if profile in {"lower_clv", "validated_market_residual"}:
         return 0.0, 1.0
     if profile == "validation_platt":
         calibration_frame = validation
@@ -383,19 +582,54 @@ def _fit_validated_market_residual_weight(
 def _predicted_edges(
     predicted: Any, odds: pd.Series, opening_probability: pd.Series,
     rmse: float, margin: float, target_profile: str,
+    uncertainty_scale: Any = 1.0,
 ) -> tuple[Any, Any, Any | None]:
     if target_profile == "closing_edge_pct":
-        return predicted, predicted - margin * rmse, None
-    if target_profile not in {"closing_probability", "closing_probability_delta"}:
+        return predicted, predicted - margin * rmse * uncertainty_scale, None
+    if target_profile not in {
+        "closing_probability", "closing_probability_delta", "closing_logit_delta",
+    }:
         raise ValueError(f"unknown target profile: {target_profile}")
     probabilities = pd.Series(predicted, index=odds.index, dtype=float)
     if target_profile == "closing_probability_delta":
         probabilities = probabilities + opening_probability.astype(float)
+    elif target_profile == "closing_logit_delta":
+        opening = opening_probability.astype(float).clip(0.001, 0.999)
+        opening_logit = (opening / (1.0 - opening)).map(math.log)
+        logits = probabilities + opening_logit
+        probabilities = logits.map(lambda value: 1.0 / (1.0 + math.exp(-value)))
     probabilities = probabilities.clip(0.001, 0.999)
-    conservative = (probabilities - margin * rmse).clip(0.001, 0.999)
+    if target_profile == "closing_logit_delta":
+        conservative_logits = logits - margin * rmse
+        conservative = conservative_logits.map(
+            lambda value: 1.0 / (1.0 + math.exp(-value))
+        ).clip(0.001, 0.999)
+    else:
+        conservative = (probabilities - margin * rmse).clip(0.001, 0.999)
     predicted_edge = (probabilities * odds.astype(float) - 1.0) * 100.0
     lower_edge = (conservative * odds.astype(float) - 1.0) * 100.0
     return predicted_edge, lower_edge, probabilities
+
+
+def _uncertainty_scale(
+    odds: pd.Series, target_profile: str, uncertainty_profile: str,
+) -> pd.Series:
+    if (
+        uncertainty_profile in {
+            "odds_scaled_rmse_grid", "odds_upscaled_rmse_grid",
+            "odds_upscaled_freeze_only",
+        }
+        and target_profile == "closing_edge_pct"
+    ):
+        lower = (
+            1.0
+            if uncertainty_profile in {
+                "odds_upscaled_rmse_grid", "odds_upscaled_freeze_only",
+            }
+            else 0.75
+        )
+        return (odds.astype(float) / 3.0).pow(0.5).clip(lower, 1.5)
+    return pd.Series(1.0, index=odds.index, dtype=float)
 
 
 def fit_ranker(
@@ -409,6 +643,14 @@ def fit_ranker(
     outcome_probability_profile: str = "none",
     diagnostics_sink: list[dict[str, Any]] | None = None,
     estimator_profile: str = "ridge",
+    minimum_positive_clv_probability: float = 0.0,
+    fit_positive_clv_probability_model: bool = False,
+    positive_clv_numeric_features: tuple[str, ...] | None = None,
+    positive_clv_categorical_features: tuple[str, ...] | None = None,
+    prediction_bias_profile: str = "none",
+    selection_ranking_profile: str = "lower_clv",
+    training_weight_profile: str = "uniform",
+    minimum_lower_clv_pct: float = MINIMUM_LOWER_CLV_PCT,
 ) -> FittedRanker | None:
     dates = pd.to_datetime(training["date"]).dt.date
     inner_train = training.loc[dates < validation_start].copy()
@@ -416,18 +658,64 @@ def fit_ranker(
     if len(inner_train) < 100 or len(validation) < policy.minimum_inner_validation_positions:
         return None
 
+    positive_clv_validation_probability = None
+    positive_clv_validation_brier = None
+    positive_clv_model_enabled = (
+        fit_positive_clv_probability_model
+        or minimum_positive_clv_probability > 0.0
+        or selection_ranking_profile == "lower_clv_x_positive_probability"
+    )
+    positive_numeric = positive_clv_numeric_features or numeric_features
+    positive_categorical = (
+        positive_clv_categorical_features or categorical_features
+    )
+    if positive_clv_model_enabled:
+        inner_positive_clv = _positive_clv_target(inner_train)
+        if inner_positive_clv.nunique() < 2:
+            return None
+        validation_positive_clv = _positive_clv_target(validation)
+        positive_clv_validation_model = _outcome_probability_pipeline(
+            positive_numeric, positive_categorical
+        )
+        positive_clv_validation_model.fit(inner_train, inner_positive_clv)
+        positive_clv_validation_probability = (
+            positive_clv_validation_model.predict_proba(validation)[:, 1]
+        )
+        positive_clv_validation_brier = float(((
+            positive_clv_validation_probability
+            - validation_positive_clv.to_numpy(dtype=float)
+        ) ** 2).mean())
+
     diagnostics: list[dict[str, Any]] = []
     eligible: list[tuple[tuple[float, float, int, float], float, float, float, float]] = []
     odds_caps = MAXIMUM_ODDS_CAPS if selection_objective == "profit_tuned_cap" else (fixed_maximum_odds,)
-    estimator_parameters = ALPHAS if estimator_profile == "ridge" else (0.0,)
+    estimator_parameters = (
+        ALPHAS if estimator_profile == "ridge"
+        else (QUANTILE_ALPHA,) if estimator_profile in {"quantile_25", "quantile_40"}
+        else (0.0,)
+    )
     for alpha in estimator_parameters:
         model = _pipeline(
             alpha, numeric_features, categorical_features, estimator_profile
         )
-        model.fit(inner_train, inner_train[target_profile])
+        _fit_ranker_pipeline(
+            model, inner_train, inner_train[target_profile], estimator_profile,
+            training_weight_profile,
+        )
         predicted = model.predict(validation)
         rmse = _rmse(validation[target_profile], predicted)
-        if uncertainty_profile == "rmse_grid":
+        if uncertainty_profile in {"direct_quantile_25", "direct_quantile_40"}:
+            expected_estimator = uncertainty_profile.replace("direct_", "")
+            if estimator_profile != expected_estimator or target_profile != "closing_edge_pct":
+                raise ValueError(
+                    f"{uncertainty_profile} requires {expected_estimator} "
+                    "closing-edge estimator"
+                )
+            margins = (0.0,)
+        elif uncertainty_profile in {
+            "rmse_grid", "odds_scaled_rmse_grid", "odds_upscaled_rmse_grid",
+            "odds_upscaled_freeze_only",
+        }:
             margins = SAFETY_MARGINS
         elif uncertainty_profile == "residual_quantile_25":
             residual_q25 = float(
@@ -437,15 +725,30 @@ def fit_ranker(
         else:
             raise ValueError(f"unknown uncertainty profile: {uncertainty_profile}")
         for margin in margins:
+            validation_uncertainty_profile = (
+                "rmse_grid"
+                if uncertainty_profile == "odds_upscaled_freeze_only"
+                else uncertainty_profile
+            )
             _predicted_edge, lower, _probability = _predicted_edges(
                 predicted, validation["odds"], validation["probability"],
-                rmse, margin, target_profile
+                rmse, margin, target_profile,
+                _uncertainty_scale(
+                    validation["odds"], target_profile,
+                    validation_uncertainty_profile,
+                ),
             )
             for maximum_odds in odds_caps:
-                selected = validation.loc[
-                    (lower >= MINIMUM_LOWER_CLV_PCT)
+                selection_mask = (
+                    (lower >= minimum_lower_clv_pct)
                     & (validation["odds"].to_numpy(dtype=float) <= maximum_odds)
-                ]
+                )
+                if positive_clv_validation_probability is not None:
+                    selection_mask &= (
+                        positive_clv_validation_probability
+                        >= minimum_positive_clv_probability
+                    )
+                selected = validation.loc[selection_mask]
                 mean_clv = float(selected["closing_edge_pct"].mean()) if len(selected) else None
                 positive_rate = float((selected["closing_edge_pct"] > 0).mean()) if len(selected) else None
                 validation_months, positive_month_rate = _validation_month_stability(selected)
@@ -476,6 +779,11 @@ def fit_ranker(
                     "rmse": round(rmse, 6),
                     "average_closing_edge_pct": round(mean_clv, 4) if mean_clv is not None else None,
                     "positive_clv_rate": round(positive_rate, 4) if positive_rate is not None else None,
+                    "minimum_positive_clv_probability": minimum_positive_clv_probability,
+                    "positive_clv_validation_brier": (
+                        round(positive_clv_validation_brier, 6)
+                        if positive_clv_validation_brier is not None else None
+                    ),
                     "validation_months": validation_months,
                     "positive_month_rate": (
                         round(positive_month_rate, 4) if positive_month_rate is not None else None
@@ -504,12 +812,30 @@ def fit_ranker(
     final_model = _pipeline(
         alpha, numeric_features, categorical_features, estimator_profile
     )
-    final_model.fit(training, training[target_profile])
+    _fit_ranker_pipeline(
+        final_model, training, training[target_profile], estimator_profile,
+        training_weight_profile,
+    )
     calibration_model = _pipeline(
         alpha, numeric_features, categorical_features, estimator_profile
     )
-    calibration_model.fit(inner_train, inner_train[target_profile])
+    _fit_ranker_pipeline(
+        calibration_model, inner_train, inner_train[target_profile],
+        estimator_profile, training_weight_profile,
+    )
     calibration_prediction = calibration_model.predict(validation)
+    if prediction_bias_profile in {
+        "validation_bucket_shrinkage", "validation_bucket_ranking_only",
+    }:
+        prediction_bias_corrections = _fit_prediction_bias_corrections(
+            validation, calibration_prediction, target_profile
+        )
+    elif prediction_bias_profile == "none":
+        prediction_bias_corrections = {}
+    else:
+        raise ValueError(
+            f"unknown prediction bias profile: {prediction_bias_profile}"
+        )
     _edge, calibration_lower, _probability = _predicted_edges(
         calibration_prediction, validation["odds"], validation["probability"],
         validation_rmse, margin, target_profile,
@@ -567,6 +893,15 @@ def fit_ranker(
         raise ValueError(
             f"unknown outcome probability profile: {outcome_probability_profile}"
         )
+    positive_clv_model = None
+    if positive_clv_model_enabled:
+        training_positive_clv = _positive_clv_target(training)
+        if training_positive_clv.nunique() < 2:
+            return None
+        positive_clv_model = _outcome_probability_pipeline(
+            positive_numeric, positive_categorical
+        )
+        positive_clv_model.fit(training, training_positive_clv)
     return FittedRanker(
         final_model, alpha, margin, maximum_odds, validation_rmse, diagnostics,
         numeric_features, categorical_features, estimator_profile, target_profile,
@@ -575,7 +910,12 @@ def fit_ranker(
         market_calibration_weight,
         outcome_probability_profile, outcome_probability_model,
         outcome_probability_validation_brier, market_probability_validation_brier,
-        outcome_probability_weight,
+        outcome_probability_weight, uncertainty_profile,
+        positive_clv_model, positive_clv_validation_brier,
+        minimum_positive_clv_probability,
+        positive_numeric, positive_categorical,
+        prediction_bias_profile, prediction_bias_corrections,
+        selection_ranking_profile, minimum_lower_clv_pct,
     )
 
 
@@ -586,52 +926,88 @@ def freeze_decisions(
         return []
     frame = opening_candidates.copy()
     raw_prediction = fitted.model.predict(frame)
+    corrected_prediction = raw_prediction
+    if fitted.prediction_bias_profile in {
+        "validation_bucket_shrinkage", "validation_bucket_ranking_only",
+    }:
+        corrected_prediction = _apply_prediction_bias_corrections(
+            frame, raw_prediction, fitted.prediction_bias_corrections or {}
+        )
     predicted_edge, lower_edge, predicted_probability = _predicted_edges(
-        raw_prediction, frame["odds"], frame["probability"], fitted.validation_rmse_pct,
+        (
+            corrected_prediction
+            if fitted.prediction_bias_profile == "validation_bucket_shrinkage"
+            else raw_prediction
+        ),
+        frame["odds"], frame["probability"], fitted.validation_rmse_pct,
         fitted.safety_margin, fitted.target_profile,
+        _uncertainty_scale(
+            frame["odds"], fitted.target_profile, fitted.uncertainty_profile
+        ),
     )
     frame["predicted_closing_edge_pct"] = predicted_edge
     frame["lower_closing_edge_pct"] = lower_edge
+    if fitted.prediction_bias_profile == "validation_bucket_ranking_only":
+        _rank_predicted, ranking_lower, _rank_probability = _predicted_edges(
+            corrected_prediction, frame["odds"], frame["probability"],
+            fitted.validation_rmse_pct, fitted.safety_margin,
+            fitted.target_profile,
+            _uncertainty_scale(
+                frame["odds"], fitted.target_profile,
+                fitted.uncertainty_profile,
+            ),
+        )
+        frame["ranking_lower_closing_edge_pct"] = ranking_lower
+    else:
+        frame["ranking_lower_closing_edge_pct"] = lower_edge
     if predicted_probability is not None:
         frame["predicted_closing_probability"] = predicted_probability
-    frame = frame.loc[
-        (frame["lower_closing_edge_pct"] >= MINIMUM_LOWER_CLV_PCT)
+    if fitted.positive_clv_model is not None:
+        frame["predicted_positive_clv_probability"] = (
+            fitted.positive_clv_model.predict_proba(frame)[:, 1]
+        )
+    if fitted.selection_ranking_profile == "lower_clv_x_positive_probability":
+        if "predicted_positive_clv_probability" not in frame:
+            raise ValueError("positive-CLV ranking model is unavailable")
+        frame["selection_ranking_score"] = (
+            frame["ranking_lower_closing_edge_pct"].astype(float)
+            * frame["predicted_positive_clv_probability"].astype(float)
+        )
+    elif fitted.selection_ranking_profile == "lower_clv":
+        frame["selection_ranking_score"] = frame[
+            "ranking_lower_closing_edge_pct"
+        ]
+    else:
+        raise ValueError(
+            f"unknown selection ranking profile: {fitted.selection_ranking_profile}"
+        )
+    selection_mask = (
+        (frame["lower_closing_edge_pct"] >= fitted.minimum_lower_clv_pct)
         & (frame["odds"] <= fitted.maximum_odds)
-    ].copy()
+    )
+    if fitted.positive_clv_model is not None:
+        selection_mask &= (
+            frame["predicted_positive_clv_probability"]
+            >= fitted.minimum_positive_clv_probability
+        )
+    frame = frame.loc[selection_mask].copy()
     frame.sort_values(
-        ["date", "lower_closing_edge_pct", "candidate_id"],
+        ["date", "selection_ranking_score", "candidate_id"],
         ascending=[True, False, True], inplace=True,
     )
 
     frozen: list[dict[str, Any]] = []
     for match_date, daily in frame.groupby("date", sort=True):
         remaining = policy.daily_budget
+        selected_matches: set[str] = set()
         for row in daily.to_dict("records"):
+            match_key = str(row.get("match_key") or row["candidate_id"])
+            if match_key in selected_matches:
+                continue
             odds = float(row["odds"])
             lower_edge = float(row["lower_closing_edge_pct"]) / 100.0
             probability = min(0.99, (1.0 + lower_edge) / odds)
             lower_clv_probability = probability
-            if fitted.staking_probability_profile == "validation_platt":
-                probability = _calibrate_probability(
-                    probability, fitted.calibration_intercept, fitted.calibration_slope
-                )
-            elif fitted.staking_probability_profile == "training_market_platt":
-                probability = _calibrate_probability(
-                    float(row["probability"]), fitted.calibration_intercept,
-                    fitted.calibration_slope,
-                )
-            full_kelly = max(0.0, (probability * odds - 1.0) / max(odds - 1.0, 1e-9))
-            stake = round(min(
-                policy.maximum_single_stake,
-                remaining,
-                policy.daily_budget * policy.kelly_fraction * full_kelly,
-            ), 2)
-            if stake < 0.10:
-                continue
-            unshrunk_market_probability = _calibrate_probability(
-                float(row["probability"]), fitted.market_calibration_intercept,
-                fitted.market_calibration_slope,
-            )
             market_logistic_probability = None
             validated_market_residual_probability = None
             if fitted.outcome_probability_model is not None:
@@ -645,7 +1021,33 @@ def freeze_decisions(
                     float(row["probability"]) + fitted.outcome_probability_weight
                     * (market_logistic_probability - float(row["probability"])),
                 ))
+            if fitted.staking_probability_profile == "validation_platt":
+                probability = _calibrate_probability(
+                    probability, fitted.calibration_intercept, fitted.calibration_slope
+                )
+            elif fitted.staking_probability_profile == "training_market_platt":
+                probability = _calibrate_probability(
+                    float(row["probability"]), fitted.calibration_intercept,
+                    fitted.calibration_slope,
+                )
+            elif fitted.staking_probability_profile == "validated_market_residual":
+                if validated_market_residual_probability is None:
+                    raise ValueError("validated market residual probability is unavailable")
+                probability = validated_market_residual_probability
+            full_kelly = max(0.0, (probability * odds - 1.0) / max(odds - 1.0, 1e-9))
+            stake = round(min(
+                policy.maximum_single_stake,
+                remaining,
+                policy.daily_budget * policy.kelly_fraction * full_kelly,
+            ), 2)
+            if stake < 0.10:
+                continue
+            unshrunk_market_probability = _calibrate_probability(
+                float(row["probability"]), fitted.market_calibration_intercept,
+                fitted.market_calibration_slope,
+            )
             remaining = round(remaining - stake, 2)
+            selected_matches.add(match_key)
             frozen.append({
                 **row,
                 "stake": stake,
@@ -736,6 +1138,15 @@ def rolling_v6(
     exchange_bookmaker_keys: tuple[str, ...] = ("BFE",),
     maximum_price_ratio: float | None = None,
     estimator_profile: str = "ridge",
+    minimum_positive_clv_probability: float = 0.0,
+    fit_positive_clv_probability_model: bool = False,
+    positive_clv_feature_profile: str | None = None,
+    candidate_population_profile: str = "market_best",
+    candidate_universe_profile: str = "broad",
+    prediction_bias_profile: str = "none",
+    selection_ranking_profile: str = "lower_clv",
+    training_weight_profile: str = "uniform",
+    minimum_lower_clv_pct: float = MINIMUM_LOWER_CLV_PCT,
 ) -> dict[str, Any]:
     rows = matches if matches is not None else load_matches()
     if month_completeness_profile == "calendar_boundary":
@@ -755,12 +1166,66 @@ def rolling_v6(
         exchange_commission_rate, minimum_reference_bookmakers, exchange_bookmaker_keys,
         maximum_price_ratio,
     )
+    if candidate_universe_profile == "wide_all_outcomes":
+        strategy = replace(
+            strategy,
+            minimum_price_ratio=0.90,
+            minimum_conservative_ev=-0.15,
+            minimum_probability=0.08,
+            maximum_price_ratio=1.20,
+        )
+    elif candidate_universe_profile == "quote_sane_all_outcomes":
+        strategy = replace(
+            strategy,
+            minimum_price_ratio=0.0,
+            minimum_conservative_ev=-1.0,
+            minimum_probability=0.0,
+            maximum_price_ratio=1.20,
+        )
+    elif candidate_universe_profile == "confirmed_quote_all_outcomes":
+        strategy = replace(
+            strategy,
+            minimum_price_ratio=0.0,
+            minimum_conservative_ev=-1.0,
+            minimum_probability=0.0,
+            maximum_price_ratio=1.20,
+            execution_price_rank=2,
+        )
+    elif candidate_universe_profile == "confirmed_capped_quote_all_outcomes":
+        strategy = replace(
+            strategy,
+            minimum_price_ratio=0.0,
+            minimum_conservative_ev=-1.0,
+            minimum_probability=0.0,
+            maximum_price_ratio=1.20,
+            maximum_execution_quote_advantage_ratio=1.02,
+        )
+    elif candidate_universe_profile != "broad":
+        raise ValueError(
+            f"unknown candidate universe profile: {candidate_universe_profile}"
+        )
     policy = RankerPolicy(
         minimum_inner_positive_month_rate=minimum_inner_positive_month_rate
     )
     numeric_features, categorical_features = _feature_contract(feature_profile)
-    cache = build_candidate_cache(rows, strategy)
-    matches_by_id = {f"{row.source_file}:{row.source_row}": row for row in rows}
+    positive_numeric_features, positive_categorical_features = (
+        _feature_contract(positive_clv_feature_profile)
+        if positive_clv_feature_profile else (numeric_features, categorical_features)
+    )
+    if candidate_population_profile == "market_best":
+        cache = build_candidate_cache(rows, strategy)
+    elif candidate_population_profile == "all_outcomes":
+        cache = build_candidate_universe_cache(rows, strategy)
+    else:
+        raise ValueError(
+            f"unknown candidate population profile: {candidate_population_profile}"
+        )
+    matches_by_id = {}
+    for row in rows:
+        key = f"{row.source_file}:{row.source_row}"
+        matches_by_id[key] = row
+        for outcome in ("home", "draw", "away"):
+            matches_by_id[f"{key}:{outcome}"] = row
     monthly: list[dict[str, Any]] = []
     all_positions: list[dict[str, Any]] = []
     all_daily: list[dict[str, Any]] = []
@@ -775,6 +1240,14 @@ def rolling_v6(
             numeric_features, categorical_features, target_profile, uncertainty_profile,
             staking_probability_profile, outcome_probability_profile,
             estimator_profile=estimator_profile,
+            minimum_positive_clv_probability=minimum_positive_clv_probability,
+            fit_positive_clv_probability_model=fit_positive_clv_probability_model,
+            positive_clv_numeric_features=positive_numeric_features,
+            positive_clv_categorical_features=positive_categorical_features,
+            prediction_bias_profile=prediction_bias_profile,
+            selection_ranking_profile=selection_ranking_profile,
+            training_weight_profile=training_weight_profile,
+            minimum_lower_clv_pct=minimum_lower_clv_pct,
         )
         if fitted is None:
             monthly.append({
@@ -815,6 +1288,13 @@ def rolling_v6(
                 if fitted.market_probability_validation_brier is not None else None
             ),
             "outcome_probability_weight": round(fitted.outcome_probability_weight, 6),
+            "positive_clv_validation_brier": (
+                round(fitted.positive_clv_validation_brier, 6)
+                if fitted.positive_clv_validation_brier is not None else None
+            ),
+            "minimum_positive_clv_probability": (
+                fitted.minimum_positive_clv_probability
+            ),
             "inner_validation": fitted.validation_diagnostics,
             "bets": len(settled), "active_days": sum(row["bets"] > 0 for row in ledger),
             "staked": staked, "profit": profit,
@@ -894,6 +1374,11 @@ def rolling_v6(
         "uncertainty_profile": uncertainty_profile,
         "staking_probability_profile": staking_probability_profile,
         "outcome_probability_profile": outcome_probability_profile,
+        "minimum_positive_clv_probability": minimum_positive_clv_probability,
+        "positive_clv_probability_model_fitted": (
+            fit_positive_clv_probability_model
+            or minimum_positive_clv_probability > 0.0
+        ),
         "outcome_probability_validation": probability_validation_summary,
         "month_completeness_profile": month_completeness_profile,
         "feature_contract": {
@@ -902,9 +1387,18 @@ def rolling_v6(
             "ridge_model_forbidden": ["actual_outcome", "unit_profit", "won", "profit"],
             "test_decision_frame_forbidden": [
                 "actual_outcome", "unit_profit", "closing_edge_pct", "closing_probability",
-                "closing_probability_delta",
+                "closing_probability_delta", "closing_logit_delta",
             ],
         },
+        "positive_clv_feature_profile": (
+            positive_clv_feature_profile or feature_profile
+        ),
+        "candidate_population_profile": candidate_population_profile,
+        "candidate_universe_profile": candidate_universe_profile,
+        "prediction_bias_profile": prediction_bias_profile,
+        "selection_ranking_profile": selection_ranking_profile,
+        "training_weight_profile": training_weight_profile,
+        "minimum_lower_clv_pct": minimum_lower_clv_pct,
         "strategy": asdict(strategy), "policy": asdict(policy),
         "selection_objective": selection_objective,
         "fixed_maximum_odds": (
@@ -912,7 +1406,7 @@ def rolling_v6(
         ),
         "exchange_commission_rate": exchange_commission_rate,
         "exchange_bookmaker_keys": list(exchange_bookmaker_keys),
-        "maximum_price_ratio": maximum_price_ratio,
+        "maximum_price_ratio": strategy.maximum_price_ratio,
         "latest_sealed_month_excluded": (
             None if include_latest_month else latest_start.strftime("%Y-%m")
         ),
@@ -1020,7 +1514,8 @@ def sealed_latest_month_v6(
         "frozen_decision_sha256": frozen_signature,
         "anti_leakage": {
             "test_decision_frame_forbidden_fields": [
-                "actual_outcome", "unit_profit", "closing_edge_pct", "won", "profit"
+                "actual_outcome", "unit_profit", "closing_edge_pct",
+                "closing_probability_delta", "closing_logit_delta", "won", "profit",
             ],
             "forbidden_fields_present": forbidden_present,
             "decisions_and_stakes_frozen_before_settlement": True,
@@ -1053,6 +1548,8 @@ def export_live_ranker(
     outcome_probability_profile: str = "none",
     exchange_bookmaker_keys: tuple[str, ...] = ("BFE",),
     maximum_price_ratio: float | None = None,
+    candidate_population_profile: str = "market_best",
+    candidate_universe_profile: str = "broad",
 ) -> dict[str, Any]:
     if outcome_probability_profile != "none":
         raise ValueError(
@@ -1064,7 +1561,52 @@ def export_live_ranker(
         exchange_commission_rate, minimum_reference_bookmakers,
         exchange_bookmaker_keys, maximum_price_ratio,
     )
-    cache = build_candidate_cache(rows, strategy)
+    if candidate_universe_profile == "wide_all_outcomes":
+        strategy = replace(
+            strategy,
+            minimum_price_ratio=0.90,
+            minimum_conservative_ev=-0.15,
+            minimum_probability=0.08,
+            maximum_price_ratio=1.20,
+        )
+    elif candidate_universe_profile == "quote_sane_all_outcomes":
+        strategy = replace(
+            strategy,
+            minimum_price_ratio=0.0,
+            minimum_conservative_ev=-1.0,
+            minimum_probability=0.0,
+            maximum_price_ratio=1.20,
+        )
+    elif candidate_universe_profile == "confirmed_quote_all_outcomes":
+        strategy = replace(
+            strategy,
+            minimum_price_ratio=0.0,
+            minimum_conservative_ev=-1.0,
+            minimum_probability=0.0,
+            maximum_price_ratio=1.20,
+            execution_price_rank=2,
+        )
+    elif candidate_universe_profile == "confirmed_capped_quote_all_outcomes":
+        strategy = replace(
+            strategy,
+            minimum_price_ratio=0.0,
+            minimum_conservative_ev=-1.0,
+            minimum_probability=0.0,
+            maximum_price_ratio=1.20,
+            maximum_execution_quote_advantage_ratio=1.02,
+        )
+    elif candidate_universe_profile != "broad":
+        raise ValueError(
+            f"unknown candidate universe profile: {candidate_universe_profile}"
+        )
+    if candidate_population_profile == "market_best":
+        cache = build_candidate_cache(rows, strategy)
+    elif candidate_population_profile == "all_outcomes":
+        cache = build_candidate_universe_cache(rows, strategy)
+    else:
+        raise ValueError(
+            f"unknown candidate population profile: {candidate_population_profile}"
+        )
     training_end = training_end or max(row.match_date for row in rows)
     next_month = training_end.replace(day=1) + timedelta(days=32)
     training_start = _months_before(next_month, training_months)
@@ -1130,6 +1672,8 @@ def export_live_ranker(
             "full": "clv-ridge-v6.2-fixed-cap5-prospective-shadow",
             "portable": "clv-ridge-v6.4-portable-fixed-cap5-prospective-shadow",
             "market_structure": "clv-ridge-v6.6-market-structure-fixed-cap5-prospective-shadow",
+            "market_shape": "clv-ridge-market-shape-research-only",
+            "market_microstructure": "clv-ridge-market-microstructure-research-only",
         }[feature_profile]
     )
     payload = {
@@ -1150,6 +1694,8 @@ def export_live_ranker(
         "minimum_inner_positive_month_rate": minimum_inner_positive_month_rate,
         "staking_probability_profile": staking_probability_profile,
         "outcome_probability_profile": outcome_probability_profile,
+        "candidate_population_profile": candidate_population_profile,
+        "candidate_universe_profile": candidate_universe_profile,
         "calibration_intercept": fitted.calibration_intercept,
         "calibration_slope": fitted.calibration_slope,
         "market_calibration_intercept": fitted.market_calibration_intercept,
@@ -1158,7 +1704,7 @@ def export_live_ranker(
         "maximum_odds": fitted.maximum_odds,
         "exchange_commission_rate": exchange_commission_rate,
         "exchange_bookmaker_keys": list(exchange_bookmaker_keys),
-        "maximum_price_ratio": maximum_price_ratio,
+        "maximum_price_ratio": strategy.maximum_price_ratio,
         "slippage_rate": strategy.slippage_rate,
         "intercept": intercept,
         "numeric_features": list(fitted.numeric_features),
@@ -1188,7 +1734,10 @@ def main() -> None:
     parser.add_argument("--minimum-inner-positive-month-rate", type=float, default=0.0)
     parser.add_argument(
         "--staking-probability-profile",
-        choices=("lower_clv", "validation_platt", "training_market_platt"),
+        choices=(
+            "lower_clv", "validation_platt", "training_market_platt",
+            "validated_market_residual",
+        ),
         default="lower_clv",
     )
     parser.add_argument(
@@ -1197,6 +1746,28 @@ def main() -> None:
             "none", "training_market_logistic", "validated_market_residual_blend",
         ),
         default="none",
+    )
+    parser.add_argument(
+        "--minimum-positive-clv-probability", type=float, default=0.0,
+        help=(
+            "Research-only gate using a prior-window logistic estimate that closing "
+            "CLV will be positive; 0 disables it."
+        ),
+    )
+    parser.add_argument(
+        "--fit-positive-clv-probability-model", action="store_true",
+        help="Emit the research-only positive-CLV probability without filtering.",
+    )
+    parser.add_argument(
+        "--positive-clv-feature-profile",
+        choices=(
+            "full", "portable", "market_structure", "market_shape",
+            "market_microstructure",
+        ),
+        help=(
+            "Optional research-only feature contract for the second-stage "
+            "positive-CLV classifier; the Ridge contract remains unchanged."
+        ),
     )
     parser.add_argument(
         "--month-completeness-profile",
@@ -1223,7 +1794,33 @@ def main() -> None:
     parser.add_argument("--include-latest-month", action="store_true")
     parser.add_argument("--model-training-end", type=date.fromisoformat)
     parser.add_argument(
-        "--feature-profile", choices=("full", "portable", "market_structure"), default="full"
+        "--feature-profile",
+        choices=(
+            "full", "portable", "market_structure", "market_shape",
+            "market_microstructure",
+        ),
+        default="full",
+    )
+    parser.add_argument(
+        "--candidate-population-profile",
+        choices=("market_best", "all_outcomes"), default="market_best",
+        help=(
+            "Research-only all_outcomes scores every eligible 1X2 direction and "
+            "freezes at most one direction per match."
+        ),
+    )
+    parser.add_argument(
+        "--candidate-universe-profile",
+        choices=(
+            "broad", "wide_all_outcomes", "quote_sane_all_outcomes",
+            "confirmed_quote_all_outcomes",
+            "confirmed_capped_quote_all_outcomes",
+        ),
+        default="broad",
+        help=(
+            "Research-only wide_all_outcomes expands opening candidates before "
+            "the unchanged CLV and inner-validation gates."
+        ),
     )
     parser.add_argument("--training-months", type=int, default=6)
     parser.add_argument("--validation-months", type=int, default=2)
@@ -1231,16 +1828,55 @@ def main() -> None:
         "--prediction-profile", choices=("aligned", "unknown_league"), default="aligned"
     )
     parser.add_argument(
+        "--prediction-bias-profile",
+        choices=(
+            "none", "validation_bucket_shrinkage",
+            "validation_bucket_ranking_only",
+        ), default="none",
+        help=(
+            "Research-only correction learned from the trailing inner-validation "
+            "residuals by outcome, odds band and source type."
+        ),
+    )
+    parser.add_argument(
+        "--selection-ranking-profile",
+        choices=("lower_clv", "lower_clv_x_positive_probability"),
+        default="lower_clv",
+        help="Opening-only score used to choose at most one 1X2 direction per match.",
+    )
+    parser.add_argument(
+        "--training-weight-profile",
+        choices=("uniform", "recency_half_life_90d"), default="uniform",
+        help="Optional date-only weighting for the rolling Ridge training sample.",
+    )
+    parser.add_argument(
+        "--minimum-lower-clv-pct", type=float, default=MINIMUM_LOWER_CLV_PCT,
+        help=(
+            "Research-only lower predicted CLV eligibility threshold; the live "
+            "portable policy remains fixed at 1 percent."
+        ),
+    )
+    parser.add_argument(
         "--target-profile",
-        choices=("closing_edge_pct", "closing_probability", "closing_probability_delta"),
+        choices=(
+            "closing_edge_pct", "closing_probability",
+            "closing_probability_delta", "closing_logit_delta",
+        ),
         default="closing_edge_pct",
     )
     parser.add_argument(
-        "--uncertainty-profile", choices=("rmse_grid", "residual_quantile_25"),
+        "--uncertainty-profile", choices=(
+            "rmse_grid", "residual_quantile_25", "odds_scaled_rmse_grid",
+            "odds_upscaled_rmse_grid", "odds_upscaled_freeze_only",
+            "direct_quantile_25", "direct_quantile_40",
+        ),
         default="rmse_grid",
     )
     parser.add_argument(
-        "--estimator-profile", choices=("ridge", "extra_trees"), default="ridge",
+        "--estimator-profile", choices=(
+            "ridge", "huber", "extra_trees", "hist_gradient_boosting",
+            "quantile_25", "quantile_40",
+        ), default="ridge",
     )
     args = parser.parse_args()
     exchange_bookmaker_keys = tuple(
@@ -1248,11 +1884,46 @@ def main() -> None:
     )
     if not exchange_bookmaker_keys:
         parser.error("--exchange-bookmaker-keys must contain at least one bookmaker prefix")
+    if not 0.0 <= args.minimum_positive_clv_probability < 1.0:
+        parser.error("--minimum-positive-clv-probability must be in [0, 1)")
+    if (
+        args.staking_probability_profile == "validated_market_residual"
+        and args.outcome_probability_profile != "validated_market_residual_blend"
+    ):
+        parser.error(
+            "validated_market_residual staking requires the matching outcome profile"
+        )
+    if args.export_live_model and (
+        args.minimum_positive_clv_probability > 0.0
+        or args.fit_positive_clv_probability_model
+    ):
+        parser.error(
+            "positive-CLV probability gating is research-only and cannot be exported"
+        )
     if args.estimator_profile != "ridge" and (
         args.export_live_model or args.sealed_latest_month
     ):
         parser.error(
-            "extra_trees is research-only and cannot be exported or used for sealed live scoring"
+            "non-ridge estimators are research-only and cannot be exported or used for sealed live scoring"
+        )
+    if args.export_live_model and args.prediction_bias_profile != "none":
+        parser.error(
+            "prediction bias correction is research-only and cannot be exported"
+        )
+    if args.export_live_model and args.selection_ranking_profile != "lower_clv":
+        parser.error("alternative selection ranking is research-only")
+    if args.export_live_model and args.training_weight_profile != "uniform":
+        parser.error("recency-weighted Ridge is research-only")
+    if args.export_live_model and args.minimum_lower_clv_pct != MINIMUM_LOWER_CLV_PCT:
+        parser.error("alternative lower-CLV thresholds are research-only")
+    if args.estimator_profile in {"quantile_25", "quantile_40"} and (
+        args.target_profile != "closing_edge_pct"
+        or args.uncertainty_profile
+        != args.estimator_profile.replace("quantile_", "direct_quantile_")
+    ):
+        parser.error(
+            "quantile estimators require --target-profile closing_edge_pct and "
+            "their matching direct_quantile uncertainty profile"
         )
     report = (
         sealed_latest_month_v6(
@@ -1273,6 +1944,8 @@ def main() -> None:
             outcome_probability_profile=args.outcome_probability_profile,
             exchange_bookmaker_keys=exchange_bookmaker_keys,
             maximum_price_ratio=args.maximum_price_ratio,
+            candidate_population_profile=args.candidate_population_profile,
+            candidate_universe_profile=args.candidate_universe_profile,
         ) if args.export_live_model else
         rolling_v6(
             args.output_dir, args.fold_count, args.exchange_commission_rate,
@@ -1294,6 +1967,19 @@ def main() -> None:
             exchange_bookmaker_keys=exchange_bookmaker_keys,
             maximum_price_ratio=args.maximum_price_ratio,
             estimator_profile=args.estimator_profile,
+            minimum_positive_clv_probability=(
+                args.minimum_positive_clv_probability
+            ),
+            fit_positive_clv_probability_model=(
+                args.fit_positive_clv_probability_model
+            ),
+            positive_clv_feature_profile=args.positive_clv_feature_profile,
+            candidate_population_profile=args.candidate_population_profile,
+            candidate_universe_profile=args.candidate_universe_profile,
+            prediction_bias_profile=args.prediction_bias_profile,
+            selection_ranking_profile=args.selection_ranking_profile,
+            training_weight_profile=args.training_weight_profile,
+            minimum_lower_clv_pct=args.minimum_lower_clv_pct,
         )
     )
     print(json.dumps({key: value for key, value in report.items() if key != "monthly"}, ensure_ascii=False, indent=2))

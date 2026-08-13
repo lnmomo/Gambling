@@ -267,6 +267,77 @@ def closing_value_diagnostics(
     }
 
 
+def closing_expected_monthly_stability(
+    settled: pd.DataFrame, month_names: list[str], block_size: int = 3,
+) -> dict[str, Any]:
+    """Measure temporal stability with closing value instead of match outcomes."""
+    required = {"test_month", "stake", "odds", "closing_probability"}
+    if settled.empty or not required.issubset(settled.columns):
+        return {
+            "status": "UNAVAILABLE",
+            "required_columns": sorted(required),
+            "monthly": [],
+        }
+    frame = settled.copy()
+    for column in ("stake", "odds", "closing_probability"):
+        frame[column] = pd.to_numeric(frame[column], errors="coerce")
+    frame = frame.dropna(
+        subset=["test_month", "stake", "odds", "closing_probability"]
+    )
+    if frame.empty:
+        return {
+            "status": "UNAVAILABLE",
+            "required_columns": sorted(required),
+            "monthly": [],
+        }
+    frame["closing_expected_profit"] = (
+        frame["stake"] * (frame["closing_probability"] * frame["odds"] - 1.0)
+    )
+    month_values = frame["test_month"].astype(str)
+    monthly: list[dict[str, Any]] = []
+    for month in month_names:
+        period = frame.loc[month_values == str(month)]
+        stake = float(period["stake"].sum())
+        expected_profit = float(period["closing_expected_profit"].sum())
+        monthly.append({
+            "month": str(month),
+            "bets": len(period),
+            "staked": round(stake, 4),
+            "profit": round(expected_profit, 6),
+            "closing_expected_profit": round(expected_profit, 6),
+            "closing_expected_roi_pct": (
+                round(expected_profit / stake * 100.0, 4) if stake else 0.0
+            ),
+        })
+    active = [row for row in monthly if int(row["bets"]) > 0]
+    iid = _monthly_bootstrap(monthly)
+    block = moving_block_bootstrap_roi(monthly, block_size=block_size)
+    positive = sum(
+        float(row["closing_expected_profit"]) > 0 for row in active
+    )
+    return {
+        "status": (
+            "READY"
+            if iid.get("lower_95_pct") is not None
+            and block.get("lower_95_pct") is not None
+            else "INSUFFICIENT_SAMPLE"
+        ),
+        "benchmark": "position closing fair probability",
+        "active_months": len(active),
+        "positive_expected_active_months": positive,
+        "positive_expected_active_month_rate": (
+            round(positive / len(active), 4) if active else None
+        ),
+        "monthly_bootstrap_roi": iid,
+        "moving_block_bootstrap_roi": block,
+        "monthly": monthly,
+        "guardrail": (
+            "Closing prices are attribution-only and cannot change frozen eligibility, "
+            "direction or stake. Match outcomes are not used by this diagnostic."
+        ),
+    }
+
+
 def agreement_opening(
     direct: pd.DataFrame, movement: pd.DataFrame, disagreement_penalty: float = 0.0,
     minimum_lower_clv_pct: float = 1.0,
@@ -404,6 +475,9 @@ def apply_stake_adjustments(
     short_odds_stake_multiplier: float = 1.0,
     low_clv_upper_pct: float = 0.0,
     low_clv_stake_multiplier: float = 1.0,
+    positive_clv_probability_soft_cap: float = 0.0,
+    positive_clv_probability_minimum_multiplier: float = 0.5,
+    positive_clv_probability_maximum_multiplier: float = 1.0,
 ) -> pd.DataFrame:
     if not 0.0 <= minimum_depth_stake_multiplier <= 1.0:
         raise ValueError("minimum_depth_stake_multiplier must be between 0 and 1")
@@ -411,6 +485,16 @@ def apply_stake_adjustments(
         raise ValueError("short_odds_stake_multiplier must be between 0 and 1")
     if not 0.0 <= low_clv_stake_multiplier <= 1.0:
         raise ValueError("low_clv_stake_multiplier must be between 0 and 1")
+    if positive_clv_probability_soft_cap < 0.0:
+        raise ValueError("positive_clv_probability_soft_cap cannot be negative")
+    if not 0.0 <= positive_clv_probability_minimum_multiplier <= 1.0:
+        raise ValueError(
+            "positive_clv_probability_minimum_multiplier must be between 0 and 1"
+        )
+    if not 1.0 <= positive_clv_probability_maximum_multiplier <= 2.0:
+        raise ValueError(
+            "positive_clv_probability_maximum_multiplier must be between 1 and 2"
+        )
     adjusted = opening.copy()
     adjusted["stake_multiplier"] = 1.0
     if "calibration_reliability_multiplier" in adjusted:
@@ -428,6 +512,17 @@ def apply_stake_adjustments(
             adjusted["lower_closing_edge_pct"] < low_clv_upper_pct,
             "stake_multiplier",
         ] *= low_clv_stake_multiplier
+    if positive_clv_probability_soft_cap > 0.0:
+        field = "predicted_positive_clv_probability"
+        if field not in adjusted:
+            raise ValueError("positive-CLV probability is missing from direct positions")
+        probability_multiplier = (
+            adjusted[field].astype(float) / positive_clv_probability_soft_cap
+        ).clip(
+            lower=positive_clv_probability_minimum_multiplier,
+            upper=positive_clv_probability_maximum_multiplier,
+        )
+        adjusted["stake_multiplier"] *= probability_multiplier
     if minimum_depth is not None:
         adjusted.loc[
             adjusted["reference_bookmakers"] == minimum_depth, "stake_multiplier"
@@ -512,6 +607,32 @@ def filter_opening_by_eligibility_keys(
     return opening.loc[keys.isin(eligible_candidate_keys)].copy()
 
 
+def apply_cross_cost_positive_clv_consensus(
+    opening: pd.DataFrame, peer_positions: pd.DataFrame,
+) -> pd.DataFrame:
+    """Use the lower decision-time CLV probability from two cost models."""
+    probability_field = "predicted_positive_clv_probability"
+    required = {"candidate_id", "outcome", probability_field}
+    if not required.issubset(opening.columns):
+        raise ValueError("local positive-CLV probability is missing")
+    if not required.issubset(peer_positions.columns):
+        raise ValueError("peer positive-CLV probability is missing")
+    peer = peer_positions[list(sorted(required))].copy()
+    peer.rename(columns={probability_field: "peer_positive_clv_probability"}, inplace=True)
+    peer.drop_duplicates(["candidate_id", "outcome"], inplace=True)
+    adjusted = opening.merge(
+        peer, on=["candidate_id", "outcome"], how="left", validate="one_to_one"
+    )
+    adjusted["local_positive_clv_probability"] = adjusted[probability_field]
+    adjusted["peer_positive_clv_probability"] = adjusted[
+        "peer_positive_clv_probability"
+    ].fillna(0.0)
+    adjusted[probability_field] = adjusted[[
+        "local_positive_clv_probability", "peer_positive_clv_probability",
+    ]].min(axis=1)
+    return adjusted
+
+
 def replay_agreement(
     direct_dir: Path, movement_dir: Path, output_dir: Path,
     disagreement_penalty: float = 0.0,
@@ -533,6 +654,10 @@ def replay_agreement(
     governance_gate_profile: str = "absolute_winner_deletion",
     low_clv_upper_pct: float = 0.0,
     low_clv_stake_multiplier: float = 1.0,
+    positive_clv_probability_soft_cap: float = 0.0,
+    positive_clv_probability_minimum_multiplier: float = 0.5,
+    positive_clv_probability_maximum_multiplier: float = 1.0,
+    positive_clv_probability_peer_file: Path | None = None,
 ) -> dict[str, Any]:
     direct = pd.read_csv(direct_dir / "positions.csv")
     movement = pd.read_csv(movement_dir / "positions.csv")
@@ -550,6 +675,11 @@ def replay_agreement(
         direct, movement, disagreement_penalty, minimum_lower_clv_pct,
         agreement_probability_profile,
     )
+    if positive_clv_probability_peer_file is not None:
+        peer_positions = pd.read_csv(positive_clv_probability_peer_file)
+        opening = apply_cross_cost_positive_clv_consensus(
+            opening, peer_positions
+        )
     if "staking_probability" not in opening:
         opening["staking_probability"] = (
             (1.0 + opening["lower_closing_edge_pct"] / 100.0) / opening["odds"]
@@ -591,6 +721,9 @@ def replay_agreement(
         opening, minimum_depth, minimum_depth_stake_multiplier,
         short_odds_threshold, short_odds_stake_multiplier,
         low_clv_upper_pct, low_clv_stake_multiplier,
+        positive_clv_probability_soft_cap,
+        positive_clv_probability_minimum_multiplier,
+        positive_clv_probability_maximum_multiplier,
     )
     if staking_mode not in {"kelly", "flat"}:
         raise ValueError(f"unknown staking mode: {staking_mode}")
@@ -655,6 +788,9 @@ def replay_agreement(
     team_robustness = leave_one_team_out_diagnostics(settled, month_names)
     winner_robustness = top_winner_removal_diagnostics(settled, month_names)
     closing_value = closing_value_diagnostics(settled)
+    closing_monthly_stability = closing_expected_monthly_stability(
+        settled, month_names
+    )
     if governance_gate_profile not in {
         "absolute_winner_deletion", "closing_probability_calibrated",
     }:
@@ -684,6 +820,18 @@ def replay_agreement(
         late_expected_roi = closing_value["late"]["closing_expected_roi_pct"]
         if late_expected_roi is None or float(late_expected_roi) <= 0:
             reasons.append("late_closing_expected_roi<=0")
+    closing_iid_lower = (
+        closing_monthly_stability.get("monthly_bootstrap_roi", {})
+        .get("lower_95_pct")
+    )
+    if closing_iid_lower is None or float(closing_iid_lower) <= 0:
+        reasons.append("closing_expected_monthly_bootstrap_roi_lower_95<=0")
+    closing_block_lower = (
+        closing_monthly_stability.get("moving_block_bootstrap_roi", {})
+        .get("lower_95_pct")
+    )
+    if closing_block_lower is None or float(closing_block_lower) <= 0:
+        reasons.append("closing_expected_moving_block_roi_lower_95<=0")
     if bootstrap["lower_95_pct"] is None or float(bootstrap["lower_95_pct"]) <= 0:
         reasons.append("monthly_bootstrap_roi_lower_95<=0")
     if (
@@ -747,6 +895,19 @@ def replay_agreement(
         "short_odds_stake_multiplier": short_odds_stake_multiplier,
         "low_clv_upper_pct": low_clv_upper_pct,
         "low_clv_stake_multiplier": low_clv_stake_multiplier,
+        "positive_clv_probability_soft_cap": (
+            positive_clv_probability_soft_cap
+        ),
+        "positive_clv_probability_minimum_multiplier": (
+            positive_clv_probability_minimum_multiplier
+        ),
+        "positive_clv_probability_maximum_multiplier": (
+            positive_clv_probability_maximum_multiplier
+        ),
+        "positive_clv_probability_peer_file": (
+            str(positive_clv_probability_peer_file)
+            if positive_clv_probability_peer_file is not None else None
+        ),
         "staking_probability_profile": staking_probability_profile,
         "calibration_minimum_prior_positions": calibration_minimum_prior_positions,
         "calibration_prior_strength": calibration_prior_strength,
@@ -779,6 +940,7 @@ def replay_agreement(
         "leave_one_team_out": team_robustness,
         "top_winner_removal": winner_robustness,
         "closing_value": closing_value,
+        "closing_expected_monthly_stability": closing_monthly_stability,
         "calibrated_concentration_gate": calibrated_concentration,
         "decision": "ROLLING_RESEARCH_SURVIVOR" if not reasons else "ROLLING_REJECTED",
         "decision_reasons": reasons, "monthly": monthly,
@@ -821,6 +983,14 @@ def main() -> None:
     parser.add_argument("--short-odds-stake-multiplier", type=float, default=1.0)
     parser.add_argument("--low-clv-upper-pct", type=float, default=0.0)
     parser.add_argument("--low-clv-stake-multiplier", type=float, default=1.0)
+    parser.add_argument("--positive-clv-probability-soft-cap", type=float, default=0.0)
+    parser.add_argument(
+        "--positive-clv-probability-minimum-multiplier", type=float, default=0.5
+    )
+    parser.add_argument(
+        "--positive-clv-probability-maximum-multiplier", type=float, default=1.0
+    )
+    parser.add_argument("--positive-clv-probability-peer-file", type=Path)
     parser.add_argument(
         "--staking-probability-profile",
         choices=(
@@ -862,6 +1032,10 @@ def main() -> None:
         args.governance_gate_profile,
         args.low_clv_upper_pct,
         args.low_clv_stake_multiplier,
+        args.positive_clv_probability_soft_cap,
+        args.positive_clv_probability_minimum_multiplier,
+        args.positive_clv_probability_maximum_multiplier,
+        args.positive_clv_probability_peer_file,
     )
     print(json.dumps({key: value for key, value in report.items() if key != "monthly"}, indent=2))
 

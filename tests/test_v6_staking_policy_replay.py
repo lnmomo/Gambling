@@ -49,3 +49,15 @@ def test_opening_evidence_stake_multiplier_scales_frozen_kelly_stake() -> None:
     discounted_stake = float(freeze_stakes(discounted, policy).iloc[0]["stake"])
 
     assert discounted_stake == round(baseline_stake * 0.5, 2)
+
+
+def test_opening_evidence_can_uplift_stake_within_policy_caps() -> None:
+    policy = StakePolicy("half_kelly", "kelly", 0.5, 15.0)
+    baseline = _decisions("home").head(1)
+    uplifted = baseline.assign(stake_multiplier=1.25)
+
+    baseline_stake = float(freeze_stakes(baseline, policy).iloc[0]["stake"])
+    uplifted_stake = float(freeze_stakes(uplifted, policy).iloc[0]["stake"])
+
+    assert baseline_stake == 1.67
+    assert uplifted_stake == 2.08

@@ -1,0 +1,8 @@
+ALTER TABLE named_book_gap_decisions
+ADD COLUMN adaptive_confidence_cap REAL;
+
+ALTER TABLE named_book_gap_decisions
+ADD COLUMN adaptive_prior_uplifted_positions INTEGER;
+
+ALTER TABLE named_book_gap_decisions
+ADD COLUMN adaptive_prior_closing_expected_profit_delta REAL;

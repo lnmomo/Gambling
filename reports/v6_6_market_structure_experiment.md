@@ -589,3 +589,321 @@ Both cost paths retain positive closing expected value in the later period and p
 ### v8.33 fixed May replay
 
 The pre-settlement May process contains four positions. May 9 stakes CNY 0.35 on Karagumruk away and closes at +1.06 cumulative. May 10 stakes CNY 1.81 on Volos home and moves cumulative profit to -0.75. On May 17, CNY 6.32 on Genclerbirligi away and CNY 0.35 on Kasimpasa home settle the month at +9.29. All other May days retain cash. This month demonstrates decision-time freezing and settlement timing only; it is not model-selection evidence.
+
+## v8.34 non-overlapping three-horizon sequence
+
+The next pre-specified horizon was trained on 12 months and validated on the immediately following 6 months. Used alone, it is not robust enough: the 2.5% replay contains 80 positions and the 5% replay contains 74, both below the 100-position gate. Their monthly and moving-block lower confidence bounds are negative, and their leave-one-source, leave-one-league and leave-one-team checks also fail. The standalone 12m/6m model is therefore rejected under both execution-cost assumptions.
+
+v8.34 keeps every v8.33 position unchanged and tests the 12m/6m model only on candidates rejected by both earlier horizons. The fixed order is 9m/3m core, 18m/9m satellite, then 12m/6m tertiary. The two supplemental horizons use effective 0.3125 Kelly, share the same CNY 100 daily budget and CNY 15 league-day cap, and cannot duplicate or replace an earlier eligible position.
+
+| Cost | Positions | 9m3m / 18m9m / 12m6m | Staked | Realized profit | Realized ROI | Closing expected profit | Closing expected ROI | Later expected profit | Later expected ROI | Block lower 95% | Source lower 95% | League lower 95% | Team lower 95% | Max drawdown | Decision |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 2.5% | 193 | 118 / 64 / 11 | 373.98 | +129.04 | 34.50% | +29.1369 | 7.7910% | +5.3990 | 5.7805% | +19.5696% | +12.3565% | +6.2797% | +14.2165% | 22.29 | Research survivor |
+| 5.0% | 181 | 108 / 60 / 13 | 359.28 | +136.01 | 37.86% | +27.0691 | 7.5343% | +3.3312 | 4.2327% | +25.6345% | +18.5069% | +12.6119% | +19.2779% | 22.29 | Research survivor |
+
+Against v8.33, v8.34 adds only 11 and 13 non-overlapping positions. Closing-probability expected profit improves by CNY 0.2506 at 2.5% cost and CNY 0.3856 at 5% cost, while maximum drawdown remains CNY 22.29. This is a modest coverage gain rather than evidence of a large new edge. No calendar month was selected, removed or reweighted because of its outcome; all 48 rolling folds remain in both comparisons.
+
+v8.34 is registered as the eighteenth immutable prospective shadow policy. Its runtime models, hashes, training window and sequential role are frozen. It cannot create real orders, and historical survival does not permit promotion. Fresh T-1 decisions, immutable price snapshots and later-observed settlements are required to measure prospective CLV and realized performance.
+
+### v8.35 runtime replay parity correction
+
+A configuration audit found that the v8.33 and v8.34 runtime supplemental horizons used a minimum staking probability of 0.0, while every formal 18m/9m and 12m/6m historical agreement replay required 0.25. The core already used 0.25. Allowing the runtime satellites below the replay threshold would expose the paper portfolio to candidates that never passed the historical evaluation.
+
+The registered v8.34 policy remains immutable. v8.35 creates a nineteenth immutable paper policy with the same models, fixed horizon order, thresholds, Kelly fractions and exposure caps, except that both supplemental minimum staking probabilities are corrected to 0.25. This exactly matches the historical v8.34 replay population: 193 positions at 2.5% cost and 181 at 5% cost. It is a runtime parity correction, not a result-selected signal change, and it cannot create real orders.
+
+The replay output now includes `horizon_role_attribution`. For v8.34 at 2.5% cost, the 9m/3m core contributes CNY 26.3827 closing expected profit from 118 positions, the 18m/9m satellite contributes CNY 2.5036 from 64, and the 12m/6m tertiary contributes CNY 0.2507 from 11. At 5% cost the corresponding values are CNY 24.6911, CNY 1.9925 and CNY 0.3856. The tertiary role is labelled `COLLECTING`, not validated, because both paths remain below 30 observations.
+
+Runtime collection now has a dedicated immutable closing-evidence chain. During the final 15 minutes before kickoff, the authorized external feed is captured at most once per match. For each frozen candidate, the execution bookmaker is excluded, each remaining bookmaker is de-vigged, and the normalized component median becomes the closing reference probability. The stored CLV is `execution_odds * closing_reference_probability - 1`. Closing evidence is observed only after the decision and before kickoff, cannot update the direction or stake, and cannot be updated or deleted from the database.
+
+### v8.35 fixed May calendar ledger
+
+The complete May 2026 ledger contains 31 rows, including 28 no-bet days. Four positions are frozen before settlement. May 9 stakes CNY 0.35 on Karagumruk away and ends at CNY +1.06. May 10 stakes CNY 1.81 on Volos home and ends at CNY -0.75. May 17 stakes CNY 0.35 on Kasimpasa home and CNY 6.32 on Genclerbirligi away; the month ends at CNY +9.29. Total stake is CNY 8.83, realized ROI is 105.21%, maximum daily stake is CNY 6.67, maximum league-day stake is CNY 6.67 and maximum drawdown is CNY 1.81. Every daily and league cap is respected.
+
+The four positions have closing-probability expected profit of CNY -0.6151. Two winning positions also have negative CLV, including the largest CNY 6.32 position. The favorable CNY +9.29 realized result therefore does not demonstrate a profitable algorithm; it is consistent with favorable result variance in a tiny sample. The month is retained as an anti-leakage and accounting audit and is forbidden from selecting v8.36 parameters.
+
+### Outcome-independent monthly governance
+
+Portfolio governance now builds a second monthly ledger from each frozen position's closing fair probability. Its monthly profit is `stake * (closing_probability * execution_odds - 1)`; the match result is never read. Both an IID monthly bootstrap and a three-month moving-block bootstrap must have a positive 95% lower bound. Changing every historical winner to a loser leaves this diagnostic unchanged.
+
+The unchanged v8.34 replay remains a research survivor under this stronger gate. At 2.5% cost, 38 of 40 active months have positive closing expected profit; the IID lower bound is +5.1485% and the moving-block lower bound is +5.7231%. At 5% cost, 34 of 38 active months are positive; the corresponding bounds are +4.6801% and +5.0004%. These values are materially below the 34.50% and 37.86% realized ROIs and are therefore the primary profitability benchmark. Realized results remain useful for settlement and drawdown accounting but cannot promote an algorithm.
+
+### Rejected low-confidence coverage challenger
+
+An exploratory challenger preserved every v8.35 position and then appended non-overlapping candidates with a 1%-2% predicted lower CLV at one quarter of the normal risk. Selection removed closing prices and match outcomes before filtering. A reusable challenger gate required both cost paths to improve closing expected profit by at least 2%, add at least 30 positions, retain non-decreasing later-period closing expected profit, keep closing-value bootstrap bounds positive and limit maximum drawdown growth to 5%.
+
+At 2.5% cost, the challenger increased positions from 193 to 202 and closing expected profit from CNY 29.1369 to CNY 29.3472, a gain of only CNY 0.2103 or 0.7218%. At 5% cost, positions increased from 181 to 189 and expected profit from CNY 27.0691 to CNY 27.1733, only CNY 0.1042 or 0.3849%; later-period expected profit declined from CNY 3.3312 to CNY 3.3274. Maximum drawdown rose from CNY 22.29 to CNY 22.83. Both paths fail the materiality and minimum incremental sample gates, so no v8.36 runtime policy is registered. The experiment increases historical activity too little to justify extra live complexity.
+
+### Rejected lower-probability supplemental coverage
+
+A second coverage probe kept the 2% lower-CLV threshold but lowered the supplemental-horizon staking-probability floor from 0.25 to 0.20. Existing v8.35 positions retained priority; only non-overlapping 20%-25% candidates were appended at one quarter of normal supplemental risk. This produced 28 incremental positions at 2.5% cost and 30 at 5% cost without increasing maximum drawdown.
+
+The added coverage did not add true value. At 2.5% cost, closing expected profit moved from CNY 29.1369 to CNY 29.1395, only +CNY 0.0026 or +0.0089%. At 5% cost it fell from CNY 27.0691 to CNY 26.8896, and later-period expected profit fell from CNY 3.3312 to CNY 3.1677. Intersecting the two cost-specific candidate sets still left negative 5% closing expectation. The lower probability floor is therefore rejected rather than used to manufacture more bets.
+
+### Rejected heteroskedastic uncertainty probes
+
+The direct CLV model originally used a common validation RMSE for every execution price. A two-sided heteroskedastic probe multiplied that RMSE by `clip(sqrt(odds / 3), 0.75, 1.5)`. It incorrectly relaxed short-priced candidates while penalizing long prices. At 2.5% cost its closing expected profit fell by CNY 2.7147 and maximum drawdown increased 11.98%; at 5% cost expected profit fell by CNY 1.5203. It was rejected.
+
+A one-way version changed the lower clip to 1.0, but rerunning it against the old v8.34 artifacts exposed code-version drift: a stricter rule appeared to add positions because the current replay pipeline and historical frozen artifacts were not generated by the same code contract. A current-code `rmse_grid` parity control was therefore generated before any conclusion was accepted. Against that matched control, changing uncertainty during inner model selection improved closing expected profit by only 0.85% and 0.54%, below the 2% materiality threshold.
+
+The final freeze-only probe held training, inner validation and hyperparameter selection identical to the current-code parity control and applied one-way odds scaling only when freezing the test-month decision. Each direct-model candidate set was verified as a subset of its parity control, with zero added candidates. After model agreement and sequential horizon fallback, the final portfolio counts were unchanged. Closing expected profit declined by CNY 0.0696 at 2.5% cost and CNY 0.0252 at 5% cost. This interpretable version is also rejected. No heteroskedastic runtime policy is registered.
+
+### Rejected direct lower-quantile models
+
+The next model-level probe replaced `mean prediction - RMSE margin` with a direct conditional quantile estimate of closing edge. Quantile regression used only opening market-structure fields, a fixed regularization strength and no match-result features. It was research-only and could not be exported to runtime. A q=0.25 model produced zero positions across the 48 core folds. A less conservative q=0.40 model produced only two positions in one active month, both draws; it failed the minimum sample, active-month and outcome-concentration gates.
+
+A Ridge residual-quantile alternative retained the mean model and derived its lower bound from the inner validation residual's 25th percentile. It also produced zero core positions at 5% execution cost. The agreement and three-horizon stages were therefore not run. Direct 25th- or 40th-percentile closing-edge estimation is too conservative for the current rolling sample and cannot solve low portfolio utilization. No quantile policy is registered.
+
+### Rejected positive-CLV probability gate
+
+A two-stage challenger separated predicted CLV magnitude from the probability that CLV would finish above zero. For each 9m/3m fold, a logistic classifier was trained only on earlier opening market-structure fields with `closing_edge_pct > 0` as its label. The test month contained no closing prices or results. Fixed probability thresholds of 0.50, 0.55 and 0.60 were evaluated as an exploratory sensitivity band; realized match profit was excluded from challenger selection, and the classifier cannot be exported to runtime.
+
+| Gate | Agreement positions | Closing expected profit | Closing expected ROI | Later expected profit | IID lower 95% | Block lower 95% | Max drawdown |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| Baseline | 123 | 23.1284 | 7.5896% | 2.6619 | 4.5448% | 5.0301% | 22.00 |
+| 0.50 | 122 | 22.7575 | 7.5291% | 2.1743 | 4.4253% | 4.8476% | 22.00 |
+| 0.55 | 120 | 17.5170 | 6.2088% | 2.0754 | 3.2210% | 1.9503% | 24.96 |
+| 0.60 | 70 | 12.4557 | 7.4403% | 1.5024 | 4.9657% | 4.7168% | 24.96 |
+
+The 0.60 model raised the direct selection's positive-CLV rate to 77.88%, but this binary accuracy improvement discarded too much stake-weighted CLV magnitude. Lowering the agreement threshold from 2% to 1% added only one position and changed closing expected profit to 12.4602. Even the least restrictive 0.50 gate reduced both total and later-period closing expected profit. All thresholds fail the outcome-independent challenger gate and no runtime policy is registered. The result shows that positive-CLV classification is not a substitute for optimizing calibrated, stake-weighted closing value.
+
+### Positive-CLV probability stake reallocation
+
+The same classifier was then evaluated as a sizing signal without deleting any baseline candidate. All 123 core agreement positions were preserved. Probability quartiles showed monotonic closing-value separation: their stake-weighted closing expected ROIs were 4.16%, 5.16%, 8.41% and 8.84%. A downweight-only rule did not improve absolute expected profit because even the lower quartiles remained positive. The staking engine was extended to support an explicitly bounded research uplift while retaining the CNY 15 single-position cap, CNY 15 league-day cap and CNY 100 daily cap.
+
+At 5% execution cost, an uplift of up to 25% improved closing expected profit by 6.23% but increased maximum drawdown by 6.59%, above the 5% limit. Limits of 15% and 10% retained material expected-profit gains but also failed the drawdown gate. A maximum 5% uplift passed the core gate: closing expected profit rose from CNY 23.1284 to CNY 23.7959, or 2.8861%; later expected profit rose from CNY 2.6619 to CNY 2.7287; maximum drawdown rose only 3.6364%; and the IID and moving-block closing-value lower bounds remained positive.
+
+The independent 2.5% path also improved closing expected profit, from CNY 23.3982 to CNY 24.0510, or 2.7900%, with the same 3.6364% drawdown increase. It nevertheless failed cross-cost governance because the leave-one-league moving-block lower bound moved from +0.1786% to -0.3506%. Selecting or excluding the offending league after observing this diagnostic would be outcome-driven overfitting, so the stake reallocation is retained only as a prospective research candidate. It is not registered for runtime use and the unchanged production paper policy remains authoritative.
+
+### v8.55 cross-cost confidence uplift
+
+v8.55 replaces each cost-specific sizing probability with the lower positive-CLV probability from independently trained 2.5% and 5% models for the same candidate and outcome. Missing peer candidates receive no uplift. Positions below the fixed 0.75 probability anchor keep their existing stake; positions above it may receive at most a 5% uplift. No position is deleted, and all original single-position, league-day and CNY 100 daily caps remain in force. The peer merge reads only candidate identity, direction and decision-time probability; future prices and results are ignored.
+
+The core-only 2.5% path still had a marginally negative leave-one-league lower bound. The fixed rule was therefore applied unchanged to the pre-existing three-horizon sequence, whose supplemental horizons diversify the core without replacing it. Candidate counts and horizon roles exactly match the current-code parity control.
+
+| Cost | Positions | Closing expected profit | Improvement | Later expected profit | IID lower 95% | Block lower 95% | Source lower 95% | League lower 95% | Team lower 95% | Max drawdown | Decision |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 2.5% | 201 | 26.8786 | 2.6967% | 4.6875 | 4.9169% | 5.3633% | 9.4150% | 4.2438% | 11.8893% | 22.80 | Historical challenger accepted |
+| 5.0% | 192 | 26.1753 | 2.7425% | 3.9843 | 4.6485% | 4.9330% | 17.7766% | 9.5236% | 16.1147% | 22.80 | Historical challenger accepted |
+
+Against matched current-code baselines, maximum drawdown increases by 3.6364%, below the 5% limit, while both costs exceed the 2% material closing-profit threshold and retain positive later-period value. Historical acceptance does not permit runtime promotion. The logistic side models and cross-cost stake rule remain paper-only until they are serialized under an immutable model contract and pass fresh prospective T-1 evidence gates.
+
+### v8.55 fixed April calendar ledger
+
+The latest fully evaluated month in the frozen 48-fold archive is April 2026; May is excluded as the latest archived month and was not substituted based on profit. The conservative 5% v8.55 ledger contains all 30 calendar days, including 28 no-bet days. On April 4 it stakes CNY 1.67 on Kayserispor away and loses CNY 1.67. On April 6 it stakes CNY 1.94 on Bristol City home and wins CNY 4.28. The month ends at CNY +2.61 after CNY 3.61 total stake, with CNY 1.67 maximum drawdown and CNY 0.4811 closing-probability expected profit.
+
+Neither April position qualifies for the cross-cost confidence uplift, so the month is identical to the matched baseline. Its 72.30% realized ROI is a two-position settlement outcome and cannot select or promote the algorithm. The complete daily ledger preserves zero-investment days, freezes directions and stakes before settlement, and respects both daily and league-day limits.
+
+### v8.55 prospective shadow contract
+
+Six immutable `positive_clv_logistic_v1` JSON artifacts cover the 9m/3m, 12m/6m and 18m/9m horizons under both 2.5% and 5% exchange-cost assumptions. Each artifact contains its exact training window, market-structure feature contract, standardized numeric and one-hot categorical coefficients, validation Brier score, parity error and SHA-256. Export-to-JSON parity errors are below `6e-16`; changing any coefficient without recomputing the policy artifact is rejected by the runtime hash check.
+
+The paper runtime now registers `clv-ridge-v8.55-cross-cost-positive-clv-uplift-prospective-shadow` alongside the unchanged v8.35 policy. For a frozen selected horizon it independently reconstructs the 2.5% and 5% opening candidates. A direction mismatch, failed market gate or missing peer candidate leaves the multiplier at 1.0. Otherwise the two classifier probabilities are scored from JSON, the lower probability is divided by the fixed 0.75 anchor and the result is clipped to `[1.0, 1.05]`. The immutable decision stores the consensus probability, applied multiplier and six-artifact combined hash. Migration `0028_positive_clv_confidence_shadow.sql` adds those audit fields without mutating prior decisions.
+
+At its initial deployment, the backend experiment endpoint reported 20 parallel paper policies and identified v8.55 as `HISTORICAL_CHALLENGER_ACCEPTED_PROSPECTIVE_REQUIRED`. It started with zero prospective settlements. Historical acceptance cannot promote it, and this policy path never creates real orders. The later v8.57 registration raises the parallel policy count to 21 while retaining v8.55 as the unchanged control.
+
+### v8.56 low-CLV coverage probe
+
+The next experiment lowered the decision-time lower-CLV threshold from 2% to 1% without changing models, costs, directions or the no-leakage contract. A temporal diagnostic used data through May 2024 as discovery and August 2024 onward as validation. The additional 1%-2% mid-horizon tier retained positive closing value in both segments; the core tier did not retain positive validation value and the long tier was negative in both segments. The fixed challenger therefore added only the mid-horizon tier at quarter risk after the existing tertiary multiplier.
+
+The final portfolio added only three positions at 2.5% cost and four at 5% cost. Closing expected profit improved by only 0.0074% and 0.1131%, respectively, while several robustness margins weakened slightly. This is below the fixed 2% materiality threshold, so v8.56 is rejected and is not registered for prospective runtime use.
+
+### v8.57 growth confidence uplift
+
+Because the objective has unlimited principal but a fixed CNY 100 daily investment ceiling, v8.57 tests a growth mandate without manufacturing extra bets. It keeps the exact v8.55 selections, directions, models and exposure caps, but raises the maximum cross-cost positive-CLV confidence multiplier from 1.05 to 1.25. The lower probability from the independently frozen 2.5% and 5% classifiers remains authoritative. Missing peers, cost-direction mismatches and failed market gates still receive no uplift.
+
+| Cost assumption | Positions | Closing expected profit | Improvement vs v8.55 | Later expected profit | IID lower 95% | Block lower 95% | Maximum drawdown | Drawdown increase | Gate |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 2.5% | 201 | 27.7831 | 3.3651% | 4.7695 | 5.0024% | 5.4331% | 23.45 | 2.8509% | Accepted |
+| 5.0% | 192 | 27.0646 | 3.3975% | 4.0510 | 4.7189% | 5.0016% | 23.45 | 2.8509% | Accepted |
+
+Both outcome-independent challenger gates pass the fixed 2% expected-profit materiality rule and 5% relative drawdown-growth limit. Leave-one-source, leave-one-league and leave-one-team lower bounds remain positive under both costs. v8.57 is registered only as a parallel paper policy; v8.55 remains unchanged as its prospective control, and no historical result authorizes real-money promotion.
+
+### v8.58 walk-forward adaptive confidence cap
+
+The fixed 1.25 cap has positive incremental closing value in both an early discovery segment and the later August 2024-April 2026 validation segment, but the later gain is materially smaller. v8.58 therefore removes the full-sample cap choice from each monthly decision. Before a calendar month begins, it compares the already frozen v8.55 and v8.57 paper stakes for strictly earlier months. The 1.25 cap is enabled only after at least 10 prior uplifted positions and positive cumulative incremental closing expected profit; otherwise the cap remains 1.05. Current-month closing prices and all match outcomes are excluded.
+
+The first historical growth-cap activation is April 2022, after 11 prior uplifted observations. At 2.5% cost the walk-forward portfolio retains all 201 positions, increases closing expected profit from 26.8786 to 27.5242 (+2.4019%), and leaves maximum drawdown unchanged at 22.80. At 5% cost it retains all 192 positions, increases closing expected profit from 26.1753 to 26.8057 (+2.4083%), and again leaves maximum drawdown at 22.80. Both outcome-independent challenger gates pass; later expected profit and all source, league and team robustness lower bounds remain positive.
+
+Runtime v8.58 stores the selected monthly cap, prior uplifted-position count and prior closing expected-profit delta on every immutable decision. Migration `0029_adaptive_confidence_cap_audit.sql` adds these audit fields. The policy remains prospective paper-only and starts at the conservative 1.05 cap until genuinely new prior-month closing evidence satisfies the fixed rule.
+
+The fixed April 2026 process audit remains two positions over 30 calendar days, CNY 3.61 staked, CNY 2.61 realized profit, CNY 1.67 maximum drawdown and CNY 0.4811 closing expected profit. This unchanged two-bet month is retained only to demonstrate daily accounting and cannot select v8.58.
+
+### v8.59 decision-time odds-band tilt
+
+The v8.58 audit shows that every direction and horizon role retains positive closing value in both discovery and validation periods, so no outcome or horizon is deleted. Odds 2.0-3.0 have higher closing expected ROI than odds 3.0-4.0 in both broad periods. A fixed no-result probe therefore moved 5% stake weight from the 3.0-4.0 band to the 2.0-3.0 band using frozen execution odds only, followed by the unchanged daily and league caps.
+
+Aggregate closing expected profit improved by 2.3837% at 2.5% cost and 2.3611% at 5% cost, with maximum drawdown increasing by 3.1140%. The fixed challenger gate nevertheless rejected both paths because later-period expected profit fell from 4.7695 to 4.7404 and from 4.0510 to 3.9988. This indicates that the historical odds-band spread is weakening. v8.59 is rejected and is not registered for runtime use; a full-period gain cannot override a deteriorating later holdout.
+
+The model archive contains 48 evaluated folds, but a complete natural-calendar audit must also include the empty months between them. Across all 56 calendar months from September 2021 through April 2026, v8.58 has 40 active months at 2.5% cost and 38 at 5% cost. Realized profitable-active-month rates are 65.00% and 73.68%, while closing-probability expected-positive-active-month rates are 95.00% and 92.11%. Total theoretical CNY 100 daily-cap utilization is only about 0.21%, confirming that candidate coverage, rather than the budget ceiling, is the main constraint on absolute profit.
+
+### v8.60 cross-cost direct-only core tier
+
+The low budget utilization motivated a coverage experiment rather than another stake increase. Candidates selected by the frozen direct core model but absent from the three-horizon agreement portfolio were joined across the independently trained 2.5% and 5% positive-CLV classifiers. Mid- and long-horizon direct-only candidates turned negative in the later validation segment and were rejected. Core direct-only candidates retained positive closing value in both discovery and validation at both costs.
+
+The fixed tier requires the same candidate and direction under both costs, a minimum classifier consensus of 0.65, no match conflict with the existing v8.58 portfolio, and half-Kelly sizing from the frozen training-market probability. It adds 36 positions at 2.5% cost and 33 at 5% cost. Closing expected profit increases from 27.5242 to 28.5919 (+3.8791%) and from 26.8057 to 27.5199 (+2.6644%). Later expected profit rises to 5.3266 and 4.2546, respectively, while maximum drawdown remains 22.80. Both fixed challenger gates pass the 30-position coverage, 2% materiality, later-period, drawdown and robustness requirements.
+
+Runtime v8.60 evaluates this tier only after the core, long and mid agreement horizons all reject. It requires a direct lower-CLV estimate of at least 1%, an available training-market staking probability and cross-cost positive-CLV consensus of at least 0.65. The tier uses fixed half Kelly and does not receive an additional confidence multiplier. It is registered as a parallel prospective paper policy; historical acceptance cannot authorize real-money use.
+
+In the unchanged April 2026 process month, v8.60 adds one Peterborough-Port Vale away position to the two v8.58 positions. The three-position ledger stakes CNY 4.17 and realizes CNY +4.53 with CNY 1.67 maximum drawdown, but closing expected profit falls from CNY 0.4811 to CNY 0.3527. The added position happened to win despite negative closing attribution in that month. This is direct evidence that the 108.63% realized monthly ROI is settlement luck and must not be used to promote the tier; only the full rolling and fresh prospective evidence governs it.
+
+An expanding monthly activation probe required at least 10 prior direct-only observations and positive cumulative incremental closing value. It retained only 25 incremental positions at 2.5% cost and 22 at 5% cost, below the fixed 30-position coverage requirement, and did not deliver a material cross-cost improvement. This adaptive activation variant is rejected. The fixed v8.60 paper tier is retained specifically to collect unbiased prospective evidence.
+
+The runtime promotion gate now evaluates `9m3m_direct_only` independently from the base portfolio. v8.60 cannot pass until that role alone has at least 30 immutable closing observations, positive average closing edge and at least 50% positive CLV. Base-strategy settlements cannot satisfy these incremental-role requirements.
+
+### v8.60 complete natural-month distribution
+
+The complete audit contains all 1,703 calendar days from September 2021 through April 2026, including every zero-position day and 15/17 entirely empty months under 2.5%/5% costs. At 2.5% cost, 27 of 41 active months are profitable and 14 lose, a 65.85% profitable-active-month rate; an arbitrary calendar month is profitable 48.21% of the time, losing 25.00% and otherwise empty. At 5% cost, 29 of 39 active months are profitable and 10 lose, a 74.36% profitable-active-month rate; an arbitrary calendar month is profitable 51.79%, losing 17.86% and otherwise empty.
+
+The median active-month realized profit is approximately CNY 1.00. The 10th-90th percentile active-month range is CNY -1.52 to +9.14 at 2.5% cost and CNY -1.01 to +9.87 at 5% cost. The best realized month is April 2022 at CNY +32.49, the worst is March 2022 at CNY -12.04, and the worst closing-expected month is March 2023 at CNY -0.8709. These extrema are diagnostics only and cannot select an algorithm. Full daily and monthly ledgers are stored under `reports/monthly_distribution_v8_60_*`.
+
+### Direct-only calibration probes after v8.60
+
+The direct-only tier contains only about 40 cross-cost candidates at the 0.65 threshold. Predicted positive-CLV probability and predicted lower CLV are not reliably monotonic inside this small subgroup: under 5% cost the validation subset with predicted lower CLV above 5% has negative observed closing value, while the 3%-5% subset remains positive. Fitting a dedicated classifier to this sample would be underpowered and is deferred until prospective evidence grows.
+
+Lowering the classifier threshold to 0.50 expands the cross-cost diagnostic pool to 58-60 candidates and retains positive average closing value in both discovery and validation. Uniform half-Kelly sizing raises expected profit but increases maximum drawdown by more than the fixed 5% limit. Uniform three-eighths Kelly passes drawdown but is dominated by v8.60 on expected profit and risk.
+
+A two-tier probe keeps half Kelly above 0.65 and assigns one-eighth, one-quarter or three-eighths Kelly to probabilities from 0.50 to 0.65. All variants add a small amount of expected profit, but the improvement over v8.60 is only approximately 0.2%-0.6%, below the fixed 2% materiality requirement, while risk rises with the lower tier. These variants are rejected and are not registered for runtime use.
+
+### v8.36 pre-registered evidence gate
+
+The next genuine parameter challenger may be specified only after the 12m/6m tertiary role has at least 30 immutable prospective closing observations. At strategy level, at least 80% of settled selections must have a post-decision, pre-kickoff closing observation and average prospective closing edge must be positive. Any eventual challenger must then improve closing-probability expected profit under both 2.5% and 5% execution costs without increasing maximum drawdown by more than 5%, while preserving positive moving-block, leave-one-source, leave-one-league and leave-one-team lower bounds. Realized outcome profit cannot select the rule.
+
+## Prospective evidence input recovery
+
+The official Sporttery browser path is technically operational, but the upstream page currently returns an explicit `HTTP 567 Restricted Access` response. The system records that failure and does not bypass the access control or relabel another feed as official SP.
+
+An authorized external research universe now uses The Odds API event endpoint for configured E0, E1 and Brazil fixtures. These rows are labelled `external_market`, remain separate from the official pool, and are eligible only for market-research shadow capture. Result observations are immutable: a completed score first observed before the stored kickoff is rejected, conflicting observations are quarantined, and settlement time is the system observation time rather than a provider timestamp. After deployment on 2026-08-11, the database contained 52 external fixtures: 30 Brazil, 12 E1 and 10 E0. The latest free event refresh processed 42 active fixtures; 10 older fixtures had settled only after kickoff. The immutable evidence table contained 52 pending observations and 10 later settled observations, with zero premature settlements and zero quarantined conflicts. This restores prospective evidence collection but does not itself validate v8.34 profitability.
+
+### v8.60 prospective scheduler audit
+
+The 2026-08-11 runtime audit confirmed that the named-book research and closing-evidence tasks were running successfully, but all 20 earliest active fixtures were still outside the fixed T-120 to T-60 decision window. Consequently v8.60 correctly had zero decisions and zero closing observations. The first fixture was scheduled to enter the window at 2026-08-14T17:00:00Z (2026-08-15 01:00 Asia/Shanghai); creating a decision earlier would violate the frozen historical timing contract.
+
+The experiment runner now aggregates a shared blocker across all parallel paper policies instead of repeating it once per policy. Scheduler records distinguish `awaiting_primary_horizon` from a failed task and include the decision window, affected match count and next eligible timestamp. The active database had 48 future external fixtures; the configured 20-match scan remains ordered by kickoff and already includes the next eligible fixtures. Raising the global agent limit would also expand news, weather and Qwen work, so it is deferred until evidence shows that more than 20 simultaneous near-horizon fixtures are being omitted.
+
+### v8.61 discovery-selected budget deployment
+
+The v8.60 portfolio uses only about 0.22% of the theoretical CNY 100 daily budget across all calendar days. Because every broad decision-time direction, odds band and horizon role retained positive closing attribution in both discovery and validation periods, the next experiment changed only stake deployment. It tested the fixed multiplier grid `1, 1.25, 1.5, 2, 3, 5, 10, 20` using matches through May 2024. After multiplication, the unchanged CNY 15 single-position and league-day caps and CNY 100 daily cap were reapplied. The largest multiplier with cross-cost discovery maximum drawdown no greater than CNY 100 was 10; the 20 multiplier failed at CNY 171.78. Matches from August 2024 onward did not select the multiplier.
+
+At 2.5% cost, v8.61 retains the same 237 positions, raises closing expected profit from CNY 28.5919 to CNY 113.9265 (+298.46%), and has CNY 43.7129 positive validation-period closing expected profit. At 5% cost, the unchanged 225 positions rise from CNY 27.5199 to CNY 104.0127 (+277.95%), with CNY 33.7991 positive validation expected profit. Full maximum drawdown is CNY 90.27 at both costs; validation drawdown is CNY 47.60/CNY 38.04 and maximum active-day stake is CNY 33.00/CNY 53.40. All remain below CNY 100.
+
+The earlier leave-one diagnostics used realized settlement profit and can reflect direction-specific historical luck. v8.61 therefore adds a separate outcome-independent leave-one diagnostic whose pseudo-profit is frozen stake multiplied by closing edge. Under both costs, moving-block lower bounds remain positive after leaving out each execution source, league, outcome, odds band or team; the minimum is 3.0568%. Whole-portfolio closing-expected IID and moving-block lower bounds are also positive. The strategy is registered as the 24th parallel paper policy. It preserves all v8.60 selections and directions, does not place real orders, and inherits the independent `9m3m_direct_only` prospective evidence gate.
+
+The fixed April 2026 process audit contains 30 calendar days, three betting days and 27 no-bet days. It stakes CNY 35.60, realizes CNY +37.29, reaches CNY 15.00 maximum drawdown and has CNY +2.5533 closing expected profit. The 104.75% realized ROI is settlement luck and cannot select or promote v8.61; the fixed month exists only to demonstrate that directions and stakes are frozen before results and daily accounting does not reveal future outcomes.
+
+### v8.63 prior-active-month adaptive deployment
+
+A confidence-tier multiplier grid did not beat the uniform v8.61 multiplier in discovery, so classifier probabilities are not used as a stake ranking. The next challenger instead fixes each month's multiplier before the month starts. A 24-rule discovery grid combines 3/6/12 prior active months, 3/5/10/20 minimum positions and 15/20 growth multipliers. The objective is maximum minimum cross-cost closing expected profit subject to CNY 100 maximum discovery drawdown. The selected rule uses a base multiplier of 10 and changes to 20 only when the preceding three active portfolio months contain at least 20 positions in each cost path and both realized profit and closing expected profit are positive in both paths.
+
+The selected rule activates the growth multiplier in 10 historical months. At 2.5% cost, closing expected profit rises from v8.61's CNY 113.9265 to CNY 116.6134 (+2.3585%); at 5% it rises from CNY 104.0127 to CNY 109.8154 (+5.5788%). Validation-period expected profit remains positive at CNY 44.1151/CNY 37.3172. Full maximum drawdown remains CNY 90.27, maximum active-day stake remains below CNY 100, and all outcome-independent closing-expected bootstrap and leave-one lower bounds remain positive.
+
+v8.63 is not registered in the live paper experiment yet. Its historical month gate requires simultaneous state from the 2.5% and 5% counterfactual portfolios, while runtime currently persists only one actual policy path. Approximating that gate with a single path would violate replay parity. The challenger is therefore recorded as `HISTORICAL_STAKE_CHALLENGER_ACCEPTED_RUNTIME_PARITY_BLOCKED`; v8.61 remains the 24th active paper policy until dual-cost prospective state is persisted and tested.
+
+### v8.64 matched cross-cost adaptive deployment
+
+v8.64 resolves the v8.63 runtime-parity blocker by restricting monthly evidence to candidate ID and direction pairs present in both historical cost paths. There are 197 such matched positions. Deployment still covers the unchanged 237/225 v8.60 portfolios, but the 10-to-20 growth switch can use only the matched evidence subset. Months with no matched evidence retain the frozen base multiplier rather than disappearing from the deployment calendar.
+
+The same 24-rule discovery grid again selects three prior active evidence months, at least 20 matched positions, a base multiplier of 10 and a growth multiplier of 20. At 2.5% cost, closing expected profit reaches CNY 122.7072, a 7.7073% improvement over v8.61; validation expected profit is CNY 50.2089. At 5% cost, closing expected profit reaches CNY 110.9568, a 6.6762% improvement; validation expected profit is CNY 38.4586. Full maximum drawdown remains CNY 90.27, active-day stake remains below CNY 100 and every outcome-independent robustness lower bound remains positive.
+
+Runtime v8.64 uses v8.61 decisions whose cross-cost confidence field proves same-direction eligibility. Before a calendar month starts, it reconstructs 2.5% and 5% net execution odds from the immutable raw quote, rebuilds cost-specific capped base stakes, and requires both prior realized profit and prior closing expected profit to be positive. Migration `0030_adaptive_budget_deployment_audit.sql` stores the selected multiplier, evidence-month and matched-position counts, both expected and realized cost-path totals, and the state label on each immutable decision. Later results cannot retroactively change a past multiplier. v8.64 is the 25th parallel paper policy and still cannot create real orders.
+
+The unchanged April 2026 process month uses the base multiplier because its prior matched-evidence gate is not active. It contains three positions across three betting days, stakes CNY 35.60, realizes CNY +37.29, has CNY 15.00 maximum drawdown and CNY +2.5533 closing expected profit. As with every fixed-month audit, realized ROI cannot select the algorithm.
+
+### Post-v8.64 rejected deployment probes
+
+An expanded growth-multiplier grid tested `15, 20, 25, 30, 40, 50` while retaining the frozen discovery endpoint and all v8.64 evidence rules. Discovery selected 50, but the 2.5% validation path reached CNY 107.85 maximum drawdown, above the fixed CNY 100 limit. The expanded grid is rejected as a whole. A lower multiplier was not selected after viewing validation because that would use the holdout to tune the rule.
+
+A separately pre-specified coverage probe retained the v8.60 half-Kelly tier above 0.65 cross-cost positive-CLV probability and added candidates from 0.50 to 0.65 at one-eighth Kelly. Frozen v8.64 monthly multipliers were then applied. It added 14 positions at 2.5% cost and 15 at 5% cost, but closing expected profit improved by only 0.2418% and 0.0940%. Both are below the fixed 2% materiality requirement, so the coverage tier is rejected despite remaining inside the drawdown limit.
+
+Finally, an outcome-independent deployment diagnostic removed the requirement that prior matched evidence also have positive realized profit. It selected exactly the same 13 growth months and reproduced every v8.64 portfolio metric under both cost assumptions. This confirms that the historical growth decisions are already determined by prior cross-cost closing-value evidence rather than settlement luck. Because it changes no decision or metric, it is an audit finding rather than a new policy version.
+
+### v8.64 prospective collection readiness
+
+The live scheduler audit on 2026-08-11 found 20 eligible future fixtures but none inside the immutable T-120 to T-60 decision window. The first fixture enters that window at `2026-08-14T17:00:00Z` (`2026-08-15 01:00` Asia/Shanghai). `named_book_gap_primary_horizon_capture` and `named_book_gap_closing_evidence` both completed successfully; zero current decisions therefore reflects the timing guardrail, not a failed worker. v8.64 remains paper-only and must collect genuinely prospective decisions, closing observations and settlements before any promotion decision.
+
+### Post-v8.64 continuous and drawdown deployment probes
+
+A prior-only continuous deployment rule replaced the binary 10/20 multiplier with a smooth function of the minimum cross-cost closing expected ROI over the preceding active evidence months. A 72-rule grid was selected only through May 2024. The chosen rule used three prior months, at least 20 matched positions, slope 2.0 and cap 30, but it reduced full closing expected profit by 1.9233% and 0.6883% relative to v8.64 and also reduced validation expected profit. It is dominated and rejected.
+
+A realized-drawdown budget probe then allowed a higher target multiplier while scaling each day's positions from the drawdown known before that day. Same-day outcomes were unavailable when stakes were frozen. Although the 5% cost path improved by 5.8308%, the 2.5% path lost 11.3771% of v8.64 closing expected profit and exhausted the CNY 100 drawdown budget. The result demonstrates execution-cost path dependence and is rejected. Removing all cost-sensitive positions was also dominated, reducing closing expected profit by 10.3509% and 2.7453%.
+
+### Market-shape feature probe
+
+The existing portable Ridge sees only the selected direction's probability, quote and dispersion. A research-only `market_shape` contract now preserves the complete leave-one-book-out opening 1X2 consensus: home/draw/away probabilities, entropy, favorite identity and strength, home-away gap, maximum cross-direction dispersion and the best executable quote's advantage over the second-best quote. These fields are computed before closing prices and results are attached.
+
+Using the unchanged 48 monthly folds, 9m/3m windows, inner positive-month gate, bookmaker contract and 2.5%/5% execution costs, the richer model increased coverage to 276/213 direct positions but reduced average closing edge from 4.6065%/4.8290% to 3.8325%/4.0874%. Total closing expected profit fell from CNY 2.8792 to CNY 2.8104 at 2.5% cost and from CNY 2.6765 to CNY 2.4490 at 5% cost. Both monthly bootstrap lower bounds remained negative. The feature implementation is retained for future genuinely new data, but this historical model is rejected and is not exported or registered as a runtime policy.
+
+### v8.66-v8.67 execution microstructure probes
+
+The opening archive now derives the execution bookmaker's normalized 1X2 shape, raw overround, selected-direction probability gap from leave-one-book-out consensus, mean absolute gap on the other directions and selection specificity. These fields distinguish a direction-specific high quote from a bookmaker whose whole board is lower-margin.
+
+Putting the fields directly into Ridge reduced average closing edge to 3.5474%/3.4854%, with negative monthly bootstrap lower bounds. A fixed two-stage version retained the market-structure Ridge and used microstructure only in a positive-CLV logistic classifier at 0.50. It modestly increased absolute expected profit, but reduced expected ROI and later expected ROI under both costs; the cross-cost common incremental set had no later observations. Both probes are rejected and not registered.
+
+### v8.68 all-outcomes CLV ranking
+
+The previous pipeline selected one direction per match by opening market EV before Ridge scoring. v8.68 instead scores every opening-eligible home, draw and away direction, then freezes at most one direction per match by predicted lower CLV. Results and closing prices remain absent from the decision frame.
+
+The standalone 48-fold path produced realized monthly bootstrap lower bounds of +2.4103% at 2.5% cost and +5.1020% at 5% cost. Average closing edge was 4.9216%/4.4303%; only the 5% path passed the standalone rolling gate because the 2.5% path had fewer than 60% profitable active months. One favorable cost path cannot authorize replacement.
+
+A stricter incremental tier required both cost paths to select the same match and direction and excluded every match already present in either v8.60 base portfolio. It added 56 positions with isolated closing expected ROI of 2.6386%/2.4977% and positive later attribution, but only seven later observations. The combined portfolio improved closing expected profit by 0.8111%/0.7976%, below the fixed 2% materiality threshold, while maximum drawdown rose 1.0526%. All other robustness checks passed. Both formal challenger gates reject v8.68; the reproducible replay is retained for future independent evidence but is not registered at runtime.
+
+### 2026-08-13 prospective audit
+
+The five-minute primary and closing loops remained active. A `2026-08-13 22:15` next-window warning referred to a Sporttery fixture in the combined research universe; the first labelled external-market fixture remains Wolverhampton Wanderers-Blackburn Rovers at `2026-08-14T19:00:00Z`, entering T-120 at `2026-08-14T17:00:00Z`. It is inside the first 20 ordered research fixtures, so the scan limit does not omit it.
+
+### v8.69-v8.71 rejected coverage and sizing probes
+
+v8.69 replaced the direct closing-edge target with closing-probability movement while preserving the all-outcomes candidate process. It produced 253/242 positions and average CLV of 4.0247%/3.9840%, but the 2.5% bootstrap lower bound was -3.8133%. The four-way intersection with v8.68 contained only 26 incremental positions, below the fixed 30-position coverage gate. Both variants are rejected.
+
+v8.70 applied a pre-specified quarter-Kelly interpretation to the v8.68 incremental tier. Expected profit improved by 2.0303% at 2.5% cost but only 1.9971% at 5% cost. The 5% path misses the unchanged 2% materiality gate, and the multiplier was not adjusted after seeing that result. v8.71 combined the same tier with adaptive deployment; expected profit increased, but maximum drawdown rose to CNY 110.49 and breached the CNY 100 limit. Neither policy is registered.
+
+### v8.72 wide all-outcomes candidate universe
+
+v8.72 changes the algorithm before model scoring rather than searching for a favorable month. Its opening-only candidate universe uses fixed bounds: minimum price ratio 0.90, minimum conservative EV -15%, minimum consensus probability 8% and maximum price ratio 1.20. The unchanged market-structure Ridge then scores all home/draw/away directions, requires a lower predicted CLV of at least 1%, caps execution odds at 5.0 and freezes at most one direction per match.
+
+The standalone 48-fold replay produced 206 positions at 2.5% cost and 186 at 5% cost. Average closing edge was 6.0670%/6.0605%, positive-CLV rates were 73.79%/72.58%, and realized monthly bootstrap lower bounds were +3.9759%/+9.8954%. The common cross-cost direction set contained 167 positions. After excluding every match already selected by either v8.60 base path, 46 genuinely incremental positions remained: 23 away, 21 home and 2 draw. Their isolated closing expected ROI was 7.2215%/7.1476%, with positive later attribution under both costs.
+
+### v8.73 incremental gate and v8.74 adaptive deployment
+
+v8.73 adds those 46 positions only when the v8.60 sequence rejects the match and independently frozen 2.5% and 5% models select the same direction. It uses the original one-tenth Kelly rule. At 2.5% cost, positions rise from 237 to 283 and closing expected profit rises from CNY 28.5919 to CNY 29.4130 (+2.8718%). At 5% cost, positions rise from 225 to 271 and expected profit rises from CNY 27.5199 to CNY 28.3254 (+2.9270%). Later expected profit improves, maximum drawdown rises only 2.5877%, and IID and moving-block lower bounds remain positive. Both formal gates accept the historical challenger.
+
+v8.74 applies the already frozen v8.64 monthly 10/20 deployment rule to the combined portfolio. Incremental positions cannot select their own multiplier; the only previously absent deployment month receives a multiplier from unchanged, strictly prior v8.60 matched evidence. The 2.5% path reaches CNY 129.8283 closing expected profit and CNY 55.1992 later expected profit. The 5% path reaches CNY 117.7982 and CNY 43.1691. Improvements over v8.64 are 5.8033%/6.1658%; maximum drawdown is CNY 93.06, a 3.0907% increase and below the fixed CNY 100 limit. Both formal gates accept v8.74 as the current historical research champion.
+
+Historical acceptance does not establish real profitability. Runtime uses two immutable JSON models from the last training window that passed under both costs (`2025-07-01..2026-03-31`), requires direction agreement and records the conservative 5% execution view. The newer 5% window ending 2026-05-31 failed inner validation, so v8.74 is explicitly paper-only, starts with no prospective authority and never creates real orders. Fresh pre-kickoff decisions, closing observations and settlements must validate it before any promotion discussion.
+
+### v8.75-v8.82 temporal and objective diversification
+
+An independently specified 18m/6m slow model removed the latest-window abstention but failed its standalone monthly bootstrap under both costs. Requiring fast and slow models to agree left only 11 incremental positions. Using the slow model only when the fast path abstained for an entire month added six positions beyond v8.73 and improved expected profit by less than 1%; using it as a general supplement was worse. These temporal variants are rejected.
+
+Requiring positive risk-adjusted settlement profit inside the already trailing inner validation produced a stable 5% path but a negative 2.5% bootstrap lower bound. Its 33 cross-cost incremental positions did not outperform v8.74. Supplementing the CLV model with profit-gated, probability-movement or narrow-universe model selections increased position counts but reduced expected profit. The evidence rejects model unions as a coverage shortcut: additional directions need positive marginal closing value, not merely a different training target.
+
+### v8.83-v8.91 market structure and microstructure
+
+The wide all-outcomes market-shape model added full 1X2 entropy, favorite strength, home-away gap and cross-direction dispersion. Both realized bootstrap lower bounds were positive, but profitable-active-month rates remained below 60%. Its strict 49-position incremental tier improved v8.73 by only about 0.16%-0.18%. The richer execution-microstructure model used quote advantage, execution-book overround and selected versus nonselected probability gaps. Its 44-position tier reached CNY 29.6929/28.6673 expected profit before deployment, but reduced the 2.5% later expected profit and remained below the 2% replacement threshold.
+
+Applying the unchanged v8.64 deployment rule to that microstructure tier produced CNY 132.2370/121.0358 expected profit and CNY 93.87 maximum drawdown. Relative to v8.74, the 5% path improved 2.75%, but the 2.5% path improved only 1.86% and its later expected profit fell from CNY 55.1992 to CNY 54.7755. Cross-cost governance therefore rejects it. Neither all-month supplementation nor abstention-month fallback passed the replacement gate.
+
+### v8.92-v8.97 candidate and estimator probes
+
+v8.92 removed the model-preceding minimum EV, price-ratio and probability filters while retaining quote sanity, reference depth and the maximum price-ratio guard. Both standalone paths survived: 205/188 positions, average CLV 6.0929%/5.9361%, and monthly bootstrap lower bounds +3.1518%/+10.3122%. The strict cross-cost incremental set nevertheless reproduced almost exactly the v8.73 portfolio, and using v8.92 as a supplement reproduced it exactly. This shows that the Ridge decision boundary, rather than the earlier loose prefilter, already determines the accepted set. The broader implementation is retained as a research capability but does not justify a new runtime policy.
+
+A fixed ExtraTrees estimator reduced average CLV to 3.7888% and produced a -17.6318% bootstrap lower bound on the first cost path, so the second cost run was stopped. Direct 25% quantile regression produced no positions; the pre-existing 40% specification produced only five positions in one month. Nonlinear trees and direct quantile lower-bound models are rejected for the current sample.
+
+### v8.98-v8.101 incremental sizing audit
+
+The 46 v8.73 incremental positions have isolated expected ROI above 7%, so a fixed 1.25 stake multiplier reused the already accepted v8.57 growth limit. After frozen v8.64 deployment it reached CNY 131.6011/119.4926 expected profit with CNY 93.57 drawdown, but improved v8.74 by only 1.37%/1.44%. A more selective rule used the lower 2.5%/5% predicted positive-CLV probability, no uplift below 0.75 and a fixed 1.25 cap. It reached CNY 130.9320/118.9018, only +0.85%/+0.94%, while preserving CNY 93.06 drawdown.
+
+Both sizing variants are rejected by the unchanged 2% materiality gate. The result localizes the current bottleneck: increasing stake on existing incremental positions cannot create enough cross-cost improvement. Further work should improve genuinely new candidate quality and prospective calibration rather than relax risk limits or tune stake multipliers.
+
+### v8.102-v8.111 calibration and estimator probes
+
+Trailing-validation residual corrections by outcome, odds band and source type were tested both as direct prediction shrinkage and as ranking-only adjustments. Direct correction expanded the 2.5% path to 268 positions but produced a -1.3351% bootstrap lower bound; ranking-only correction retained 205 positions but its lower bound was -1.3822%. Ranking by lower CLV times predicted positive-CLV probability reproduced v8.92 exactly, while a fixed 0.50 classifier gate reduced profitable-month coverage. These corrections are rejected because the validation buckets do not generalize across the next-month folds.
+
+Second-best execution quotes and best quotes capped at 102% of the second-best quote produced no eligible positions under the unchanged lower-CLV rule. A market-residual probability blend assigned zero model weight in all 29 validation folds because its mean Brier score did not beat the opening market. Ninety-day recency weighting, Huber regression and 25% residual quantile regression also failed the first 2.5% path. The second cost runs were intentionally stopped after their pre-specified first-path rejection conditions were met.
+
+### v8.112-v8.116 closing-logit target
+
+v8.112 predicts closing minus opening probability in log-odds space, then converts the predicted closing logit back to probability before calculating lower CLV. This keeps equal model movements comparable near 10%, 50% and 90% probabilities without using closing data in the decision frame. The standalone 2.5% path selected 181 positions, achieved 5.7891% average CLV, a 74.03% positive-CLV rate and a +11.3412% monthly bootstrap lower bound. The 5% path selected 147 positions with 6.1875% average CLV, a 76.19% positive-CLV rate and a +11.0540% lower bound. Both paths passed their standalone research gates.
+
+The strict cross-cost incremental replay added 33 directions beyond v8.60 and reached CNY 29.5180/CNY 28.4306 expected profit before deployment. Applying the previously frozen v8.64 monthly rule produced CNY 130.2046/CNY 118.2006 expected profit, CNY 53.7309/CNY 41.7270 later expected profit and CNY 87.60 maximum drawdown. Relative to v8.74, total expected profit improved only 0.29%/0.34%, below the fixed 2% materiality gate, while later expected profit decreased. v8.114 is therefore rejected despite its lower drawdown.
+
+A pre-specified supplemental replay let v8.72 retain every conflict and used v8.112 only for matches absent from the primary path. It added 59 incremental directions. Frozen deployment reached CNY 130.3990/CNY 118.3272 expected profit and improved later expected profit to CNY 55.5075/CNY 43.4357, but the gains over v8.74 were only 0.44%/0.45% and maximum drawdown rose to CNY 94.26. v8.116 also fails materiality. The logit target remains a useful research capability, but v8.74 remains the historical paper champion and no v8.112 artifact is exported or registered.

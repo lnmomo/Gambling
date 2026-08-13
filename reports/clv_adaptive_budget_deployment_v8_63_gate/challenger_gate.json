@@ -1,0 +1,47 @@
+{
+  "decision": "HISTORICAL_STAKE_CHALLENGER_ACCEPTED_RUNTIME_PARITY_BLOCKED",
+  "checks": {
+    "same_frozen_v8_60_selections_and_directions": true,
+    "rule_selected_from_24_discovery_grid_candidates": true,
+    "current_month_excluded_from_multiplier_evidence": true,
+    "cross_cost_expected_profit_improvement_material": true,
+    "cross_cost_validation_expected_profit_positive": true,
+    "full_maximum_drawdown_not_increased_vs_v8_61": true,
+    "daily_budget_respected": true,
+    "closing_expected_bootstrap_lower_bounds_positive": true,
+    "closing_expected_leave_one_lower_bounds_positive": true,
+    "runtime_can_reconstruct_both_cost_paths": false
+  },
+  "selected_rule": {
+    "prior_active_months": 3,
+    "minimum_prior_positions_per_cost_path": 20,
+    "base_multiplier": 10.0,
+    "growth_multiplier": 20.0,
+    "discovery_end": "2024-05-31",
+    "validation_start": "2024-08-01"
+  },
+  "metrics": {
+    "2_5pct": {
+      "positions": 237,
+      "closing_expected_profit": 116.6134,
+      "improvement_vs_v8_61_pct": 2.3585,
+      "validation_closing_expected_profit": 44.1151,
+      "maximum_drawdown": 90.27,
+      "validation_maximum_drawdown": 66.59,
+      "maximum_active_day_stake": 37.20,
+      "minimum_closing_expected_leave_one_lower_pct": 3.1304
+    },
+    "5pct": {
+      "positions": 225,
+      "closing_expected_profit": 109.8154,
+      "improvement_vs_v8_61_pct": 5.5788,
+      "validation_closing_expected_profit": 37.3172,
+      "maximum_drawdown": 90.27,
+      "validation_maximum_drawdown": 38.04,
+      "maximum_active_day_stake": 53.40,
+      "minimum_closing_expected_leave_one_lower_pct": 2.9422
+    }
+  },
+  "blocker": "The historical activation requires simultaneous evidence from the 2.5% and 5% counterfactual portfolios. Runtime currently persists one actual policy path and cannot reconstruct that dual-cost monthly state exactly.",
+  "guardrail": "v8.63 remains an offline challenger. v8.61 stays the active paper policy until dual-cost prospective state is persisted and runtime parity is tested. No real orders are permitted."
+}

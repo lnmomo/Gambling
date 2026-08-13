@@ -7,9 +7,27 @@ import pytest
 
 from football_agents.official_data.browser import (
     BROWSER_CANDIDATES,
+    CdpConnection,
     SportteryBrowserClient,
     _resolve_browser_path,
 )
+
+
+def test_cdp_loopback_connection_bypasses_system_proxy(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured = {}
+    websocket = object()
+
+    def fake_connect(url, **kwargs):
+        captured.update({"url": url, **kwargs})
+        return websocket
+
+    monkeypatch.setattr("football_agents.official_data.browser.connect", fake_connect)
+
+    connection = CdpConnection("ws://127.0.0.1:9222/devtools/browser/test")
+
+    assert connection.websocket is websocket
+    assert captured["proxy"] is None
+    assert captured["open_timeout"] == 10
 
 
 def test_explicit_path_returned_when_exists(tmp_path: Path) -> None:

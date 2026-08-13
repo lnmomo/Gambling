@@ -1,0 +1,23 @@
+ALTER TABLE named_book_gap_decisions
+ADD COLUMN adaptive_budget_multiplier REAL;
+
+ALTER TABLE named_book_gap_decisions
+ADD COLUMN adaptive_budget_prior_active_months INTEGER;
+
+ALTER TABLE named_book_gap_decisions
+ADD COLUMN adaptive_budget_prior_matched_positions INTEGER;
+
+ALTER TABLE named_book_gap_decisions
+ADD COLUMN adaptive_budget_prior_expected_profit_2_5pct REAL;
+
+ALTER TABLE named_book_gap_decisions
+ADD COLUMN adaptive_budget_prior_expected_profit_5pct REAL;
+
+ALTER TABLE named_book_gap_decisions
+ADD COLUMN adaptive_budget_prior_realized_profit_2_5pct REAL;
+
+ALTER TABLE named_book_gap_decisions
+ADD COLUMN adaptive_budget_prior_realized_profit_5pct REAL;
+
+ALTER TABLE named_book_gap_decisions
+ADD COLUMN adaptive_budget_state TEXT;

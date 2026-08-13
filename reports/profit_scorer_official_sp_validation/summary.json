@@ -1,19 +1,19 @@
 {
   "method": "prospective official-SP validation for market-anchored profit scorer",
-  "created_at": "2026-07-30T09:21:32.218861+00:00",
+  "created_at": "2026-08-13T09:56:24.616425+00:00",
   "scorer_artifact": "reports\\market_anchored_sp1_home_avg_close_shadow_scorer_v1\\scorer.json",
   "scorer_artifact_sha256": "dfb6d7d487a9fe68240a1e9d6c112241a7b15563db8407489481c33df831ef0d",
   "feature_engine": "market-anchored-research-parity-v1",
-  "capture_as_of": "2026-07-30T09:21:32.186800+00:00",
+  "capture_as_of": "2026-08-13T09:56:24.601691+00:00",
   "immutable_attempts_written": 0,
   "immutable_evidence_written": 0,
-  "opening_pre_match_snapshots": 99,
-  "valid_three_way_snapshots": 99,
-  "settled_opening_snapshots": 98,
-  "frozen_attempts": 99,
+  "opening_pre_match_snapshots": 119,
+  "valid_three_way_snapshots": 119,
+  "settled_opening_snapshots": 115,
+  "frozen_attempts": 119,
   "frozen_scored_attempts": 0,
-  "frozen_blocked_attempts": 46,
-  "missed_pre_match_attempts": 53,
+  "frozen_blocked_attempts": 63,
+  "missed_pre_match_attempts": 56,
   "frozen_evidence_temporal_violations": 0,
   "scored_snapshots": 0,
   "selected_snapshots": 0,
@@ -102,24 +102,24 @@
   },
   "blocker_counts": [
     {
-      "reason": "capture_started_at_or_after_kickoff",
-      "snapshots": 53
+      "reason": "league_not_sp1",
+      "snapshots": 63
     },
     {
-      "reason": "league_not_sp1",
-      "snapshots": 46
+      "reason": "capture_started_at_or_after_kickoff",
+      "snapshots": 56
     },
     {
       "reason": "home_history<10:0",
-      "snapshots": 36
+      "snapshots": 49
     },
     {
       "reason": "away_history<10:0",
-      "snapshots": 34
+      "snapshots": 46
     },
     {
       "reason": "home_market_probability_below_0.55",
-      "snapshots": 31
+      "snapshots": 38
     }
   ],
   "decision": "OFFICIAL_SP_PROSPECTIVE_BLOCKED",

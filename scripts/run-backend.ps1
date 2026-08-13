@@ -14,11 +14,20 @@ if (-not (Test-Path -LiteralPath $python)) {
 New-Item -ItemType Directory -Path $runtimeDir -Force | Out-Null
 Set-Location -LiteralPath $projectRoot
 
-# Clear any stale process still bound to port 8000 before starting. The
-# scheduler's IgnoreNew guard prevents the healthy instance from being killed;
-# this only reaps leftover python.exe that failed to release the port.
-Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue | ForEach-Object {
-    Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue
+# The scheduled task is a watchdog. Never terminate an arbitrary process that
+# happens to own the configured port. A healthy project backend needs no work;
+# any other listener is an explicit configuration error.
+$listeners = @(Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue)
+foreach ($listener in $listeners) {
+    $owner = Get-CimInstance Win32_Process -Filter "ProcessId=$($listener.OwningProcess)" `
+        -ErrorAction SilentlyContinue
+    $commandLine = [string]$owner.CommandLine
+    if ($commandLine -match 'football_agents\.cli serve' -and $commandLine -match '--port 8000') {
+        "[$([DateTimeOffset]::Now.ToString('o'))] backend already healthy (PID $($listener.OwningProcess))" |
+            Add-Content -LiteralPath $logPath
+        exit 0
+    }
+    throw "Port 8000 is occupied by PID $($listener.OwningProcess); refusing to stop an unrelated process."
 }
 
 "[$([DateTimeOffset]::Now.ToString('o'))] backend service starting" | Add-Content -LiteralPath $logPath

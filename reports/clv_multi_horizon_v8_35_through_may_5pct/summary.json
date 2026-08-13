@@ -1,0 +1,1699 @@
+{
+  "method": "v8.35 runtime-parity fixed sequence through May: 9m3m core, non-overlapping 18m9m satellite, non-overlapping 12m6m tertiary; supplemental minimum probability 0.25",
+  "anti_leakage": "both input portfolios were frozen independently before results; future columns are removed before deduplication, conflict rejection and exposure caps",
+  "daily_budget_limit": 100.0,
+  "maximum_daily_league_stake": 15.0,
+  "satellite_stake_multiplier": 0.5,
+  "positions": 198,
+  "core_positions": 110,
+  "satellite_positions": 62,
+  "horizon_role_counts": {
+    "9m3m_core": 110,
+    "18m9m_satellite": 62,
+    "12m6m_tertiary": 26
+  },
+  "horizon_role_attribution": {
+    "12m6m_tertiary": {
+      "positions": 26,
+      "staked": 12.53,
+      "realized_profit": 1.51,
+      "realized_roi_pct": 12.0511,
+      "closing_expected_profit": 0.659,
+      "closing_expected_roi_pct": 5.2596,
+      "positive_clv_rate": 0.7692,
+      "realized_minus_closing_expected_profit": 0.851,
+      "minimum_positions_for_incremental_validation": 30,
+      "incremental_evidence_status": "COLLECTING"
+    },
+    "18m9m_satellite": {
+      "positions": 62,
+      "staked": 39.41,
+      "realized_profit": 13.05,
+      "realized_roi_pct": 33.1134,
+      "closing_expected_profit": 2.1028,
+      "closing_expected_roi_pct": 5.3357,
+      "positive_clv_rate": 0.7097,
+      "realized_minus_closing_expected_profit": 10.9472,
+      "minimum_positions_for_incremental_validation": 30,
+      "incremental_evidence_status": "READY"
+    },
+    "9m3m_core": {
+      "positions": 110,
+      "staked": 322.43,
+      "realized_profit": 131.13,
+      "realized_roi_pct": 40.6693,
+      "closing_expected_profit": 23.9657,
+      "closing_expected_roi_pct": 7.4328,
+      "positive_clv_rate": 0.7636,
+      "realized_minus_closing_expected_profit": 107.1643,
+      "minimum_positions_for_incremental_validation": 30,
+      "incremental_evidence_status": "READY"
+    }
+  },
+  "active_months": 41,
+  "positive_active_months": 29,
+  "staked": 374.37,
+  "profit": 145.69,
+  "roi_pct": 38.92,
+  "maximum_drawdown": 22.29,
+  "monthly_bootstrap_roi": {
+    "status": "READY",
+    "folds": 48,
+    "iterations": 5000,
+    "seed": 42,
+    "lower_95_pct": 17.8489,
+    "median_pct": 39.5957,
+    "upper_95_pct": 59.4868
+  },
+  "moving_block_bootstrap_roi": {
+    "status": "READY",
+    "months": 48,
+    "block_size": 3,
+    "iterations": 5000,
+    "seed": 42,
+    "lower_95_pct": 26.7686,
+    "median_pct": 39.4624,
+    "upper_95_pct": 58.0802
+  },
+  "leave_one_execution_source_out": {
+    "status": "READY",
+    "sources": [
+      {
+        "excluded_bookmaker": "1XB",
+        "retained_bets": 169,
+        "retained_staked": 358.23,
+        "retained_profit": 131.3,
+        "retained_roi_pct": 36.65,
+        "moving_block_lower_95_pct": 24.039
+      },
+      {
+        "excluded_bookmaker": "B365",
+        "retained_bets": 182,
+        "retained_staked": 368.41,
+        "retained_profit": 147.51,
+        "retained_roi_pct": 40.04,
+        "moving_block_lower_95_pct": 27.4278
+      },
+      {
+        "excluded_bookmaker": "BF",
+        "retained_bets": 195,
+        "retained_staked": 372.4,
+        "retained_profit": 146.0,
+        "retained_roi_pct": 39.21,
+        "moving_block_lower_95_pct": 26.9924
+      },
+      {
+        "excluded_bookmaker": "BFE",
+        "retained_bets": 167,
+        "retained_staked": 352.05,
+        "retained_profit": 140.01,
+        "retained_roi_pct": 39.77,
+        "moving_block_lower_95_pct": 26.4461
+      },
+      {
+        "excluded_bookmaker": "BMGM",
+        "retained_bets": 177,
+        "retained_staked": 359.23,
+        "retained_profit": 136.16,
+        "retained_roi_pct": 37.9,
+        "moving_block_lower_95_pct": 25.3934
+      },
+      {
+        "excluded_bookmaker": "BV",
+        "retained_bets": 197,
+        "retained_staked": 368.05,
+        "retained_profit": 136.71,
+        "retained_roi_pct": 37.14,
+        "moving_block_lower_95_pct": 25.173
+      },
+      {
+        "excluded_bookmaker": "BW",
+        "retained_bets": 183,
+        "retained_staked": 319.19,
+        "retained_profit": 121.98,
+        "retained_roi_pct": 38.22,
+        "moving_block_lower_95_pct": 24.5475
+      },
+      {
+        "excluded_bookmaker": "IW",
+        "retained_bets": 194,
+        "retained_staked": 357.72,
+        "retained_profit": 139.38,
+        "retained_roi_pct": 38.96,
+        "moving_block_lower_95_pct": 26.5256
+      },
+      {
+        "excluded_bookmaker": "PS",
+        "retained_bets": 181,
+        "retained_staked": 360.77,
+        "retained_profit": 140.56,
+        "retained_roi_pct": 38.96,
+        "moving_block_lower_95_pct": 26.4303
+      },
+      {
+        "excluded_bookmaker": "VC",
+        "retained_bets": 193,
+        "retained_staked": 353.71,
+        "retained_profit": 135.06,
+        "retained_roi_pct": 38.18,
+        "moving_block_lower_95_pct": 24.6024
+      },
+      {
+        "excluded_bookmaker": "WH",
+        "retained_bets": 142,
+        "retained_staked": 173.94,
+        "retained_profit": 82.23,
+        "retained_roi_pct": 47.27,
+        "moving_block_lower_95_pct": 22.1488
+      }
+    ],
+    "minimum_lower_95_pct": 22.1488
+  },
+  "leave_one_group_out": {
+    "league": {
+      "status": "READY",
+      "group_column": "league",
+      "groups": [
+        {
+          "excluded_group": "B1",
+          "retained_bets": 178,
+          "retained_staked": 317.99,
+          "retained_profit": 122.54,
+          "retained_roi_pct": 38.54,
+          "moving_block_lower_95_pct": 21.5513
+        },
+        {
+          "excluded_group": "D1",
+          "retained_bets": 194,
+          "retained_staked": 371.82,
+          "retained_profit": 142.5,
+          "retained_roi_pct": 38.32,
+          "moving_block_lower_95_pct": 25.7802
+        },
+        {
+          "excluded_group": "D2",
+          "retained_bets": 197,
+          "retained_staked": 373.45,
+          "retained_profit": 146.61,
+          "retained_roi_pct": 39.26,
+          "moving_block_lower_95_pct": 26.9473
+        },
+        {
+          "excluded_group": "E0",
+          "retained_bets": 197,
+          "retained_staked": 373.98,
+          "retained_profit": 146.08,
+          "retained_roi_pct": 39.06,
+          "moving_block_lower_95_pct": 26.8612
+        },
+        {
+          "excluded_group": "E1",
+          "retained_bets": 186,
+          "retained_staked": 359.53,
+          "retained_profit": 149.3,
+          "retained_roi_pct": 41.53,
+          "moving_block_lower_95_pct": 30.6407
+        },
+        {
+          "excluded_group": "E2",
+          "retained_bets": 188,
+          "retained_staked": 364.66,
+          "retained_profit": 139.05,
+          "retained_roi_pct": 38.13,
+          "moving_block_lower_95_pct": 25.9258
+        },
+        {
+          "excluded_group": "E3",
+          "retained_bets": 186,
+          "retained_staked": 367.33,
+          "retained_profit": 143.4,
+          "retained_roi_pct": 39.04,
+          "moving_block_lower_95_pct": 26.6112
+        },
+        {
+          "excluded_group": "F1",
+          "retained_bets": 193,
+          "retained_staked": 372.21,
+          "retained_profit": 145.39,
+          "retained_roi_pct": 39.06,
+          "moving_block_lower_95_pct": 26.7463
+        },
+        {
+          "excluded_group": "F2",
+          "retained_bets": 187,
+          "retained_staked": 357.3,
+          "retained_profit": 129.47,
+          "retained_roi_pct": 36.24,
+          "moving_block_lower_95_pct": 23.7826
+        },
+        {
+          "excluded_group": "G1",
+          "retained_bets": 191,
+          "retained_staked": 355.5,
+          "retained_profit": 141.18,
+          "retained_roi_pct": 39.71,
+          "moving_block_lower_95_pct": 25.9419
+        },
+        {
+          "excluded_group": "I1",
+          "retained_bets": 191,
+          "retained_staked": 368.46,
+          "retained_profit": 147.16,
+          "retained_roi_pct": 39.94,
+          "moving_block_lower_95_pct": 28.23
+        },
+        {
+          "excluded_group": "I2",
+          "retained_bets": 162,
+          "retained_staked": 315.28,
+          "retained_profit": 125.92,
+          "retained_roi_pct": 39.94,
+          "moving_block_lower_95_pct": 28.3948
+        },
+        {
+          "excluded_group": "N1",
+          "retained_bets": 192,
+          "retained_staked": 367.47,
+          "retained_profit": 146.43,
+          "retained_roi_pct": 39.85,
+          "moving_block_lower_95_pct": 26.7557
+        },
+        {
+          "excluded_group": "P1",
+          "retained_bets": 192,
+          "retained_staked": 370.3,
+          "retained_profit": 141.28,
+          "retained_roi_pct": 38.15,
+          "moving_block_lower_95_pct": 25.4629
+        },
+        {
+          "excluded_group": "SC0",
+          "retained_bets": 195,
+          "retained_staked": 372.76,
+          "retained_profit": 147.3,
+          "retained_roi_pct": 39.52,
+          "moving_block_lower_95_pct": 27.3307
+        },
+        {
+          "excluded_group": "SP1",
+          "retained_bets": 192,
+          "retained_staked": 371.74,
+          "retained_profit": 143.85,
+          "retained_roi_pct": 38.7,
+          "moving_block_lower_95_pct": 26.4939
+        },
+        {
+          "excluded_group": "SP2",
+          "retained_bets": 168,
+          "retained_staked": 263.34,
+          "retained_profit": 109.33,
+          "retained_roi_pct": 41.52,
+          "moving_block_lower_95_pct": 15.0883
+        },
+        {
+          "excluded_group": "T1",
+          "retained_bets": 177,
+          "retained_staked": 321.17,
+          "retained_profit": 109.94,
+          "retained_roi_pct": 34.23,
+          "moving_block_lower_95_pct": 20.2912
+        }
+      ],
+      "minimum_lower_95_pct": 15.0883
+    },
+    "outcome": {
+      "status": "READY",
+      "group_column": "outcome",
+      "groups": [
+        {
+          "excluded_group": "away",
+          "retained_bets": 135,
+          "retained_staked": 259.39,
+          "retained_profit": 89.92,
+          "retained_roi_pct": 34.67,
+          "moving_block_lower_95_pct": 16.794
+        },
+        {
+          "excluded_group": "draw",
+          "retained_bets": 135,
+          "retained_staked": 339.02,
+          "retained_profit": 140.21,
+          "retained_roi_pct": 41.36,
+          "moving_block_lower_95_pct": 26.9224
+        },
+        {
+          "excluded_group": "home",
+          "retained_bets": 126,
+          "retained_staked": 150.33,
+          "retained_profit": 61.25,
+          "retained_roi_pct": 40.74,
+          "moving_block_lower_95_pct": 14.6009
+        }
+      ],
+      "minimum_lower_95_pct": 14.6009
+    },
+    "odds_band": {
+      "status": "READY",
+      "group_column": "odds_band",
+      "groups": [
+        {
+          "excluded_group": "1.5-2.0",
+          "retained_bets": 177,
+          "retained_staked": 250.95,
+          "retained_profit": 122.35,
+          "retained_roi_pct": 48.75,
+          "moving_block_lower_95_pct": 23.8876
+        },
+        {
+          "excluded_group": "2.0-3.0",
+          "retained_bets": 145,
+          "retained_staked": 206.6,
+          "retained_profit": 51.07,
+          "retained_roi_pct": 24.72,
+          "moving_block_lower_95_pct": 4.0265
+        },
+        {
+          "excluded_group": "3.0-4.0",
+          "retained_bets": 98,
+          "retained_staked": 308.44,
+          "retained_profit": 130.31,
+          "retained_roi_pct": 42.25,
+          "moving_block_lower_95_pct": 28.0661
+        },
+        {
+          "excluded_group": "4.0-5.0",
+          "retained_bets": 174,
+          "retained_staked": 357.12,
+          "retained_profit": 133.34,
+          "retained_roi_pct": 37.34,
+          "moving_block_lower_95_pct": 24.7106
+        }
+      ],
+      "minimum_lower_95_pct": 4.0265
+    }
+  },
+  "leave_one_team_out": {
+    "status": "READY",
+    "minimum_exposures": 2,
+    "teams": [
+      {
+        "excluded_team": "Almeria",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 368.27,
+        "retained_profit": 141.97,
+        "retained_roi_pct": 38.55,
+        "moving_block_lower_95_pct": 25.8232
+      },
+      {
+        "excluded_team": "Amiens",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 363.22,
+        "retained_profit": 132.33,
+        "retained_roi_pct": 36.43,
+        "moving_block_lower_95_pct": 23.8273
+      },
+      {
+        "excluded_team": "Amorebieta",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 354.6,
+        "retained_profit": 132.6,
+        "retained_roi_pct": 37.39,
+        "moving_block_lower_95_pct": 24.0138
+      },
+      {
+        "excluded_team": "Anderlecht",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 370.91,
+        "retained_profit": 140.29,
+        "retained_roi_pct": 37.82,
+        "moving_block_lower_95_pct": 25.6925
+      },
+      {
+        "excluded_team": "Annecy",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 371.88,
+        "retained_profit": 140.77,
+        "retained_roi_pct": 37.85,
+        "moving_block_lower_95_pct": 25.7996
+      },
+      {
+        "excluded_team": "Antalyaspor",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 359.95,
+        "retained_profit": 131.72,
+        "retained_roi_pct": 36.59,
+        "moving_block_lower_95_pct": 24.248
+      },
+      {
+        "excluded_team": "Antwerp",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 360.88,
+        "retained_profit": 134.0,
+        "retained_roi_pct": 37.13,
+        "moving_block_lower_95_pct": 22.5835
+      },
+      {
+        "excluded_team": "Ascoli",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 370.55,
+        "retained_profit": 141.89,
+        "retained_roi_pct": 38.29,
+        "moving_block_lower_95_pct": 25.8458
+      },
+      {
+        "excluded_team": "Asteras Tripolis",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 361.44,
+        "retained_profit": 137.79,
+        "retained_roi_pct": 38.12,
+        "moving_block_lower_95_pct": 25.0029
+      },
+      {
+        "excluded_team": "Blackpool",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 371.97,
+        "retained_profit": 143.81,
+        "retained_roi_pct": 38.66,
+        "moving_block_lower_95_pct": 26.5247
+      },
+      {
+        "excluded_team": "Boavista",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 372.27,
+        "retained_profit": 144.46,
+        "retained_roi_pct": 38.81,
+        "moving_block_lower_95_pct": 26.5623
+      },
+      {
+        "excluded_team": "Brescia",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 370.46,
+        "retained_profit": 148.47,
+        "retained_roi_pct": 40.08,
+        "moving_block_lower_95_pct": 27.7299
+      },
+      {
+        "excluded_team": "Bristol City",
+        "historical_exposures": 4,
+        "retained_bets": 194,
+        "retained_staked": 364.52,
+        "retained_profit": 149.19,
+        "retained_roi_pct": 40.93,
+        "moving_block_lower_95_pct": 30.2964
+      },
+      {
+        "excluded_team": "Burgos",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 369.62,
+        "retained_profit": 140.62,
+        "retained_roi_pct": 38.04,
+        "moving_block_lower_95_pct": 25.6201
+      },
+      {
+        "excluded_team": "Burnley",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 372.94,
+        "retained_profit": 145.48,
+        "retained_roi_pct": 39.01,
+        "moving_block_lower_95_pct": 26.8185
+      },
+      {
+        "excluded_team": "Burton",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 373.34,
+        "retained_profit": 146.72,
+        "retained_roi_pct": 39.3,
+        "moving_block_lower_95_pct": 27.0789
+      },
+      {
+        "excluded_team": "Buyuksehyr",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 373.97,
+        "retained_profit": 145.31,
+        "retained_roi_pct": 38.86,
+        "moving_block_lower_95_pct": 26.7681
+      },
+      {
+        "excluded_team": "Cadiz",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 372.51,
+        "retained_profit": 145.48,
+        "retained_roi_pct": 39.05,
+        "moving_block_lower_95_pct": 26.8896
+      },
+      {
+        "excluded_team": "Caen",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 373.29,
+        "retained_profit": 145.4,
+        "retained_roi_pct": 38.95,
+        "moving_block_lower_95_pct": 26.8954
+      },
+      {
+        "excluded_team": "Carrarese",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 373.41,
+        "retained_profit": 145.39,
+        "retained_roi_pct": 38.94,
+        "moving_block_lower_95_pct": 26.8714
+      },
+      {
+        "excluded_team": "Cartagena",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 364.11,
+        "retained_profit": 138.25,
+        "retained_roi_pct": 37.97,
+        "moving_block_lower_95_pct": 24.8685
+      },
+      {
+        "excluded_team": "Catanzaro",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 373.66,
+        "retained_profit": 145.16,
+        "retained_roi_pct": 38.85,
+        "moving_block_lower_95_pct": 26.7662
+      },
+      {
+        "excluded_team": "Charleroi",
+        "historical_exposures": 5,
+        "retained_bets": 193,
+        "retained_staked": 368.49,
+        "retained_profit": 138.87,
+        "retained_roi_pct": 37.69,
+        "moving_block_lower_95_pct": 25.1698
+      },
+      {
+        "excluded_team": "Cittadella",
+        "historical_exposures": 5,
+        "retained_bets": 193,
+        "retained_staked": 366.85,
+        "retained_profit": 146.24,
+        "retained_roi_pct": 39.86,
+        "moving_block_lower_95_pct": 28.6656
+      },
+      {
+        "excluded_team": "Colchester",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 372.53,
+        "retained_profit": 144.35,
+        "retained_roi_pct": 38.75,
+        "moving_block_lower_95_pct": 26.1567
+      },
+      {
+        "excluded_team": "Como",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 371.21,
+        "retained_profit": 146.06,
+        "retained_roi_pct": 39.35,
+        "moving_block_lower_95_pct": 27.1319
+      },
+      {
+        "excluded_team": "Cosenza",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 370.35,
+        "retained_profit": 141.61,
+        "retained_roi_pct": 38.24,
+        "moving_block_lower_95_pct": 26.1727
+      },
+      {
+        "excluded_team": "Cremonese",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 366.6,
+        "retained_profit": 140.68,
+        "retained_roi_pct": 38.37,
+        "moving_block_lower_95_pct": 26.5775
+      },
+      {
+        "excluded_team": "Crotone",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 362.89,
+        "retained_profit": 137.8,
+        "retained_roi_pct": 37.97,
+        "moving_block_lower_95_pct": 25.014
+      },
+      {
+        "excluded_team": "Eibar",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 363.81,
+        "retained_profit": 136.04,
+        "retained_roi_pct": 37.39,
+        "moving_block_lower_95_pct": 23.5778
+      },
+      {
+        "excluded_team": "Estoril",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 372.5,
+        "retained_profit": 142.41,
+        "retained_roi_pct": 38.23,
+        "moving_block_lower_95_pct": 25.9
+      },
+      {
+        "excluded_team": "Fleetwood Town",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 371.78,
+        "retained_profit": 144.58,
+        "retained_roi_pct": 38.89,
+        "moving_block_lower_95_pct": 26.7917
+      },
+      {
+        "excluded_team": "For Sittard",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 370.42,
+        "retained_profit": 147.47,
+        "retained_roi_pct": 39.81,
+        "moving_block_lower_95_pct": 26.6685
+      },
+      {
+        "excluded_team": "Frosinone",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 371.89,
+        "retained_profit": 140.81,
+        "retained_roi_pct": 37.86,
+        "moving_block_lower_95_pct": 24.6935
+      },
+      {
+        "excluded_team": "Fuenlabrada",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 366.12,
+        "retained_profit": 137.08,
+        "retained_roi_pct": 37.44,
+        "moving_block_lower_95_pct": 24.0993
+      },
+      {
+        "excluded_team": "Galatasaray",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 357.54,
+        "retained_profit": 128.05,
+        "retained_roi_pct": 35.81,
+        "moving_block_lower_95_pct": 23.4205
+      },
+      {
+        "excluded_team": "Gaziantep",
+        "historical_exposures": 4,
+        "retained_bets": 194,
+        "retained_staked": 373.21,
+        "retained_profit": 145.75,
+        "retained_roi_pct": 39.05,
+        "moving_block_lower_95_pct": 26.8724
+      },
+      {
+        "excluded_team": "Genclerbirligi",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 367.69,
+        "retained_profit": 137.07,
+        "retained_roi_pct": 37.28,
+        "moving_block_lower_95_pct": 25.3313
+      },
+      {
+        "excluded_team": "Genk",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 365.74,
+        "retained_profit": 137.46,
+        "retained_roi_pct": 37.58,
+        "moving_block_lower_95_pct": 25.6053
+      },
+      {
+        "excluded_team": "Genoa",
+        "historical_exposures": 4,
+        "retained_bets": 194,
+        "retained_staked": 370.95,
+        "retained_profit": 143.13,
+        "retained_roi_pct": 38.58,
+        "moving_block_lower_95_pct": 26.2308
+      },
+      {
+        "excluded_team": "Gent",
+        "historical_exposures": 5,
+        "retained_bets": 193,
+        "retained_staked": 359.36,
+        "retained_profit": 133.69,
+        "retained_roi_pct": 37.2,
+        "moving_block_lower_95_pct": 24.8197
+      },
+      {
+        "excluded_team": "Gillingham",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 373.16,
+        "retained_profit": 146.9,
+        "retained_roi_pct": 39.37,
+        "moving_block_lower_95_pct": 27.1027
+      },
+      {
+        "excluded_team": "Grenoble",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 372.75,
+        "retained_profit": 147.31,
+        "retained_roi_pct": 39.52,
+        "moving_block_lower_95_pct": 27.1237
+      },
+      {
+        "excluded_team": "Grimsby",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 373.04,
+        "retained_profit": 147.02,
+        "retained_roi_pct": 39.41,
+        "moving_block_lower_95_pct": 27.3571
+      },
+      {
+        "excluded_team": "Harrogate",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 372.75,
+        "retained_profit": 144.13,
+        "retained_roi_pct": 38.67,
+        "moving_block_lower_95_pct": 26.3362
+      },
+      {
+        "excluded_team": "Huddersfield",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 373.19,
+        "retained_profit": 143.63,
+        "retained_roi_pct": 38.49,
+        "moving_block_lower_95_pct": 26.4112
+      },
+      {
+        "excluded_team": "Huesca",
+        "historical_exposures": 4,
+        "retained_bets": 194,
+        "retained_staked": 368.85,
+        "retained_profit": 150.09,
+        "retained_roi_pct": 40.69,
+        "moving_block_lower_95_pct": 28.6674
+      },
+      {
+        "excluded_team": "Juve Stabia",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 370.9,
+        "retained_profit": 142.26,
+        "retained_roi_pct": 38.36,
+        "moving_block_lower_95_pct": 26.284
+      },
+      {
+        "excluded_team": "Kasimpasa",
+        "historical_exposures": 5,
+        "retained_bets": 193,
+        "retained_staked": 362.94,
+        "retained_profit": 155.71,
+        "retained_roi_pct": 42.9,
+        "moving_block_lower_95_pct": 28.817
+      },
+      {
+        "excluded_team": "Kayserispor",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 371.78,
+        "retained_profit": 145.47,
+        "retained_roi_pct": 39.13,
+        "moving_block_lower_95_pct": 26.5002
+      },
+      {
+        "excluded_team": "Kocaelispor",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 373.38,
+        "retained_profit": 144.12,
+        "retained_roi_pct": 38.6,
+        "moving_block_lower_95_pct": 26.5892
+      },
+      {
+        "excluded_team": "Konyaspor",
+        "historical_exposures": 4,
+        "retained_bets": 194,
+        "retained_staked": 372.47,
+        "retained_profit": 143.76,
+        "retained_roi_pct": 38.6,
+        "moving_block_lower_95_pct": 26.3206
+      },
+      {
+        "excluded_team": "Las Palmas",
+        "historical_exposures": 5,
+        "retained_bets": 193,
+        "retained_staked": 349.0,
+        "retained_profit": 122.89,
+        "retained_roi_pct": 35.21,
+        "moving_block_lower_95_pct": 20.6997
+      },
+      {
+        "excluded_team": "Le Havre",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 373.65,
+        "retained_profit": 146.41,
+        "retained_roi_pct": 39.18,
+        "moving_block_lower_95_pct": 27.04
+      },
+      {
+        "excluded_team": "Leganes",
+        "historical_exposures": 6,
+        "retained_bets": 192,
+        "retained_staked": 361.42,
+        "retained_profit": 149.43,
+        "retained_roi_pct": 41.35,
+        "moving_block_lower_95_pct": 28.2454
+      },
+      {
+        "excluded_team": "Levante",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 373.18,
+        "retained_profit": 146.88,
+        "retained_roi_pct": 39.36,
+        "moving_block_lower_95_pct": 27.1818
+      },
+      {
+        "excluded_team": "Leyton Orient",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 372.57,
+        "retained_profit": 145.14,
+        "retained_roi_pct": 38.96,
+        "moving_block_lower_95_pct": 26.7597
+      },
+      {
+        "excluded_team": "Lincoln",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 370.42,
+        "retained_profit": 141.17,
+        "retained_roi_pct": 38.11,
+        "moving_block_lower_95_pct": 25.9356
+      },
+      {
+        "excluded_team": "Malaga",
+        "historical_exposures": 4,
+        "retained_bets": 194,
+        "retained_staked": 360.07,
+        "retained_profit": 140.58,
+        "retained_roi_pct": 39.04,
+        "moving_block_lower_95_pct": 25.8459
+      },
+      {
+        "excluded_team": "Mansfield",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 372.95,
+        "retained_profit": 146.37,
+        "retained_roi_pct": 39.25,
+        "moving_block_lower_95_pct": 26.8697
+      },
+      {
+        "excluded_team": "Mantova",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 371.8,
+        "retained_profit": 140.89,
+        "retained_roi_pct": 37.89,
+        "moving_block_lower_95_pct": 26.0515
+      },
+      {
+        "excluded_team": "Mechelen",
+        "historical_exposures": 4,
+        "retained_bets": 194,
+        "retained_staked": 369.09,
+        "retained_profit": 148.79,
+        "retained_roi_pct": 40.31,
+        "moving_block_lower_95_pct": 27.3639
+      },
+      {
+        "excluded_team": "Millwall",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 372.92,
+        "retained_profit": 147.14,
+        "retained_roi_pct": 39.46,
+        "moving_block_lower_95_pct": 27.2632
+      },
+      {
+        "excluded_team": "Mirandes",
+        "historical_exposures": 4,
+        "retained_bets": 194,
+        "retained_staked": 350.92,
+        "retained_profit": 135.63,
+        "retained_roi_pct": 38.65,
+        "moving_block_lower_95_pct": 23.3205
+      },
+      {
+        "excluded_team": "Nice",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 373.58,
+        "retained_profit": 146.48,
+        "retained_roi_pct": 39.21,
+        "moving_block_lower_95_pct": 27.0016
+      },
+      {
+        "excluded_team": "Oostende",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 373.75,
+        "retained_profit": 146.31,
+        "retained_roi_pct": 39.15,
+        "moving_block_lower_95_pct": 26.9428
+      },
+      {
+        "excluded_team": "Oviedo",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 359.97,
+        "retained_profit": 138.42,
+        "retained_roi_pct": 38.45,
+        "moving_block_lower_95_pct": 26.5747
+      },
+      {
+        "excluded_team": "Oxford",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 373.33,
+        "retained_profit": 146.73,
+        "retained_roi_pct": 39.3,
+        "moving_block_lower_95_pct": 27.0458
+      },
+      {
+        "excluded_team": "Palermo",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 370.95,
+        "retained_profit": 139.45,
+        "retained_roi_pct": 37.59,
+        "moving_block_lower_95_pct": 25.689
+      },
+      {
+        "excluded_team": "Panserraikos",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 372.1,
+        "retained_profit": 145.41,
+        "retained_roi_pct": 39.08,
+        "moving_block_lower_95_pct": 26.8123
+      },
+      {
+        "excluded_team": "Parma",
+        "historical_exposures": 4,
+        "retained_bets": 194,
+        "retained_staked": 363.25,
+        "retained_profit": 150.51,
+        "retained_roi_pct": 41.43,
+        "moving_block_lower_95_pct": 30.4921
+      },
+      {
+        "excluded_team": "Perugia",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 370.95,
+        "retained_profit": 149.11,
+        "retained_roi_pct": 40.2,
+        "moving_block_lower_95_pct": 27.7018
+      },
+      {
+        "excluded_team": "Pisa",
+        "historical_exposures": 4,
+        "retained_bets": 194,
+        "retained_staked": 370.16,
+        "retained_profit": 148.19,
+        "retained_roi_pct": 40.03,
+        "moving_block_lower_95_pct": 27.7332
+      },
+      {
+        "excluded_team": "Ponferradina",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 354.24,
+        "retained_profit": 156.05,
+        "retained_roi_pct": 44.05,
+        "moving_block_lower_95_pct": 29.945
+      },
+      {
+        "excluded_team": "Reggina",
+        "historical_exposures": 4,
+        "retained_bets": 194,
+        "retained_staked": 357.36,
+        "retained_profit": 155.08,
+        "retained_roi_pct": 43.4,
+        "moving_block_lower_95_pct": 32.5414
+      },
+      {
+        "excluded_team": "Ross County",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 373.13,
+        "retained_profit": 146.93,
+        "retained_roi_pct": 39.38,
+        "moving_block_lower_95_pct": 27.2171
+      },
+      {
+        "excluded_team": "Salernitana",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 373.76,
+        "retained_profit": 145.16,
+        "retained_roi_pct": 38.84,
+        "moving_block_lower_95_pct": 26.7171
+      },
+      {
+        "excluded_team": "Sampdoria",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 373.65,
+        "retained_profit": 146.41,
+        "retained_roi_pct": 39.18,
+        "moving_block_lower_95_pct": 26.961
+      },
+      {
+        "excluded_team": "Sheffield United",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 372.07,
+        "retained_profit": 141.64,
+        "retained_roi_pct": 38.07,
+        "moving_block_lower_95_pct": 26.2571
+      },
+      {
+        "excluded_team": "Shrewsbury",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 373.17,
+        "retained_profit": 144.54,
+        "retained_roi_pct": 38.73,
+        "moving_block_lower_95_pct": 26.3386
+      },
+      {
+        "excluded_team": "Sivasspor",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 372.95,
+        "retained_profit": 142.42,
+        "retained_roi_pct": 38.19,
+        "moving_block_lower_95_pct": 25.9533
+      },
+      {
+        "excluded_team": "Sociedad B",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 370.3,
+        "retained_profit": 149.76,
+        "retained_roi_pct": 40.44,
+        "moving_block_lower_95_pct": 28.8864
+      },
+      {
+        "excluded_team": "Sp Gijon",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 371.34,
+        "retained_profit": 148.72,
+        "retained_roi_pct": 40.05,
+        "moving_block_lower_95_pct": 28.1924
+      },
+      {
+        "excluded_team": "Spal",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 371.79,
+        "retained_profit": 142.98,
+        "retained_roi_pct": 38.46,
+        "moving_block_lower_95_pct": 26.1392
+      },
+      {
+        "excluded_team": "Spezia",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 372.42,
+        "retained_profit": 146.4,
+        "retained_roi_pct": 39.31,
+        "moving_block_lower_95_pct": 27.039
+      },
+      {
+        "excluded_team": "St Etienne",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 372.23,
+        "retained_profit": 140.42,
+        "retained_roi_pct": 37.72,
+        "moving_block_lower_95_pct": 25.7183
+      },
+      {
+        "excluded_team": "St Truiden",
+        "historical_exposures": 4,
+        "retained_bets": 194,
+        "retained_staked": 356.95,
+        "retained_profit": 155.83,
+        "retained_roi_pct": 43.66,
+        "moving_block_lower_95_pct": 29.5714
+      },
+      {
+        "excluded_team": "Standard",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 368.99,
+        "retained_profit": 143.71,
+        "retained_roi_pct": 38.95,
+        "moving_block_lower_95_pct": 26.2511
+      },
+      {
+        "excluded_team": "Tenerife",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 369.16,
+        "retained_profit": 142.41,
+        "retained_roi_pct": 38.58,
+        "moving_block_lower_95_pct": 26.11
+      },
+      {
+        "excluded_team": "Trabzonspor",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 367.95,
+        "retained_profit": 136.81,
+        "retained_roi_pct": 37.18,
+        "moving_block_lower_95_pct": 25.2086
+      },
+      {
+        "excluded_team": "Valladolid",
+        "historical_exposures": 4,
+        "retained_bets": 194,
+        "retained_staked": 362.38,
+        "retained_profit": 138.47,
+        "retained_roi_pct": 38.21,
+        "moving_block_lower_95_pct": 26.2417
+      },
+      {
+        "excluded_team": "Venezia",
+        "historical_exposures": 4,
+        "retained_bets": 194,
+        "retained_staked": 371.53,
+        "retained_profit": 144.26,
+        "retained_roi_pct": 38.83,
+        "moving_block_lower_95_pct": 26.6921
+      },
+      {
+        "excluded_team": "Verona",
+        "historical_exposures": 4,
+        "retained_bets": 194,
+        "retained_staked": 370.61,
+        "retained_profit": 148.44,
+        "retained_roi_pct": 40.05,
+        "moving_block_lower_95_pct": 28.4183
+      },
+      {
+        "excluded_team": "Vicenza",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 368.15,
+        "retained_profit": 137.32,
+        "retained_roi_pct": 37.3,
+        "moving_block_lower_95_pct": 24.7506
+      },
+      {
+        "excluded_team": "Villarreal B",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 370.17,
+        "retained_profit": 149.89,
+        "retained_roi_pct": 40.49,
+        "moving_block_lower_95_pct": 28.1828
+      },
+      {
+        "excluded_team": "Volos NFC",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 371.47,
+        "retained_profit": 148.59,
+        "retained_roi_pct": 40.0,
+        "moving_block_lower_95_pct": 27.3697
+      },
+      {
+        "excluded_team": "Westerlo",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 372.89,
+        "retained_profit": 144.35,
+        "retained_roi_pct": 38.71,
+        "moving_block_lower_95_pct": 26.5631
+      },
+      {
+        "excluded_team": "Wigan",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 369.9,
+        "retained_profit": 141.69,
+        "retained_roi_pct": 38.3,
+        "moving_block_lower_95_pct": 26.2003
+      },
+      {
+        "excluded_team": "Zaragoza",
+        "historical_exposures": 2,
+        "retained_bets": 196,
+        "retained_staked": 371.69,
+        "retained_profit": 140.74,
+        "retained_roi_pct": 37.86,
+        "moving_block_lower_95_pct": 25.5139
+      },
+      {
+        "excluded_team": "Zwolle",
+        "historical_exposures": 3,
+        "retained_bets": 195,
+        "retained_staked": 370.06,
+        "retained_profit": 148.14,
+        "retained_roi_pct": 40.03,
+        "moving_block_lower_95_pct": 26.9439
+      }
+    ],
+    "minimum_lower_95_pct": 20.6997
+  },
+  "closing_value": {
+    "status": "READY",
+    "benchmark": "position closing fair probability",
+    "all": {
+      "positions": 198,
+      "staked": 374.37,
+      "closing_expected_profit": 26.7275,
+      "closing_expected_roi_pct": 7.1393,
+      "positive_clv_rate": 0.7475
+    },
+    "late": {
+      "starts_on": "2023-08-01",
+      "positions": 120,
+      "staked": 93.79,
+      "closing_expected_profit": 2.9896,
+      "closing_expected_roi_pct": 3.1875,
+      "positive_clv_rate": 0.725
+    },
+    "realized_profit": 145.69,
+    "realized_minus_closing_expected_profit": 118.9625,
+    "guardrail": "Post-settlement attribution only; closing prices and outcomes never alter eligibility, direction, or stake."
+  },
+  "calibrated_concentration_gate": {
+    "method": "fixed-position Bernoulli simulation from closing fair probability",
+    "simulations": 2000,
+    "bootstrap_iterations_per_simulation": 1000,
+    "block_size_months": 3,
+    "seed": 20260730,
+    "positions": 198,
+    "months": 48,
+    "closing_probability_expected_profit": 26.7275,
+    "closing_probability_expected_roi_pct": 7.1393,
+    "remove_top_5": {
+      "block_lower_95_positive_rate": 0.0065,
+      "aggregate_profit_positive_rate": 0.2515,
+      "median_block_lower_95_pct": -38.4799,
+      "median_retained_profit": -32.88
+    },
+    "remove_top_10": {
+      "aggregate_profit_positive_rate": 0.048,
+      "median_retained_profit": -72.31
+    },
+    "joint_current_concentration_gate_pass_rate": 0.0065,
+    "guardrail": "Post-settlement gate-power diagnostic only; simulated outcomes never alter historical eligibility, direction, probability, or stake.",
+    "observed_calibrated_diagnostics": {
+      "remove_top_5_block_lower_95_pct": -1.6609,
+      "remove_top_5_block_lower_percentile": 0.9915,
+      "remove_top_10_retained_profit": 31.88,
+      "remove_top_10_profit_percentile": 0.995,
+      "positive_active_months": 29,
+      "active_months": 41,
+      "positive_month_count_percentile": 0.9995,
+      "minimum_acceptable_percentile": 0.05,
+      "calibrated_concentration_gate_passed": true
+    }
+  },
+  "decision": "ROLLING_RESEARCH_SURVIVOR",
+  "decision_reasons": [],
+  "monthly": [
+    {
+      "month": "2021-10",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2021-11",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2021-12",
+      "bets": 6,
+      "staked": 18.25,
+      "profit": 10.15,
+      "roi_pct": 55.62
+    },
+    {
+      "month": "2022-01",
+      "bets": 1,
+      "staked": 0.54,
+      "profit": 1.32,
+      "roi_pct": 244.44
+    },
+    {
+      "month": "2022-02",
+      "bets": 11,
+      "staked": 43.16,
+      "profit": 22.39,
+      "roi_pct": 51.88
+    },
+    {
+      "month": "2022-03",
+      "bets": 11,
+      "staked": 45.96,
+      "profit": -11.63,
+      "roi_pct": -25.3
+    },
+    {
+      "month": "2022-04",
+      "bets": 8,
+      "staked": 44.81,
+      "profit": 32.5,
+      "roi_pct": 72.53
+    },
+    {
+      "month": "2022-05",
+      "bets": 5,
+      "staked": 24.56,
+      "profit": 0.79,
+      "roi_pct": 3.22
+    },
+    {
+      "month": "2022-08",
+      "bets": 2,
+      "staked": 2.28,
+      "profit": 3.7,
+      "roi_pct": 162.28
+    },
+    {
+      "month": "2022-09",
+      "bets": 3,
+      "staked": 1.67,
+      "profit": -1.67,
+      "roi_pct": -100.0
+    },
+    {
+      "month": "2022-10",
+      "bets": 3,
+      "staked": 14.57,
+      "profit": 13.82,
+      "roi_pct": 94.85
+    },
+    {
+      "month": "2022-11",
+      "bets": 3,
+      "staked": 1.66,
+      "profit": -0.29,
+      "roi_pct": -17.47
+    },
+    {
+      "month": "2022-12",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2023-01",
+      "bets": 1,
+      "staked": 0.52,
+      "profit": -0.52,
+      "roi_pct": -100.0
+    },
+    {
+      "month": "2023-02",
+      "bets": 6,
+      "staked": 2.13,
+      "profit": -2.13,
+      "roi_pct": -100.0
+    },
+    {
+      "month": "2023-03",
+      "bets": 5,
+      "staked": 25.16,
+      "profit": 0.02,
+      "roi_pct": 0.08
+    },
+    {
+      "month": "2023-04",
+      "bets": 10,
+      "staked": 38.5,
+      "profit": 18.16,
+      "roi_pct": 47.17
+    },
+    {
+      "month": "2023-05",
+      "bets": 3,
+      "staked": 16.81,
+      "profit": 7.7,
+      "roi_pct": 45.81
+    },
+    {
+      "month": "2023-08",
+      "bets": 1,
+      "staked": 0.36,
+      "profit": 0.88,
+      "roi_pct": 244.44
+    },
+    {
+      "month": "2023-09",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2023-10",
+      "bets": 1,
+      "staked": 1.55,
+      "profit": 1.0,
+      "roi_pct": 64.52
+    },
+    {
+      "month": "2023-11",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2023-12",
+      "bets": 1,
+      "staked": 1.09,
+      "profit": -1.09,
+      "roi_pct": -100.0
+    },
+    {
+      "month": "2024-01",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2024-02",
+      "bets": 2,
+      "staked": 0.5,
+      "profit": 1.53,
+      "roi_pct": 306.0
+    },
+    {
+      "month": "2024-03",
+      "bets": 1,
+      "staked": 0.18,
+      "profit": 0.56,
+      "roi_pct": 311.11
+    },
+    {
+      "month": "2024-04",
+      "bets": 2,
+      "staked": 0.44,
+      "profit": 0.11,
+      "roi_pct": 25.0
+    },
+    {
+      "month": "2024-05",
+      "bets": 2,
+      "staked": 0.76,
+      "profit": 0.9,
+      "roi_pct": 118.42
+    },
+    {
+      "month": "2024-08",
+      "bets": 28,
+      "staked": 20.81,
+      "profit": 3.85,
+      "roi_pct": 18.5
+    },
+    {
+      "month": "2024-09",
+      "bets": 5,
+      "staked": 2.23,
+      "profit": 0.41,
+      "roi_pct": 18.39
+    },
+    {
+      "month": "2024-10",
+      "bets": 4,
+      "staked": 2.37,
+      "profit": -0.1,
+      "roi_pct": -4.22
+    },
+    {
+      "month": "2024-11",
+      "bets": 3,
+      "staked": 1.44,
+      "profit": 1.75,
+      "roi_pct": 121.53
+    },
+    {
+      "month": "2024-12",
+      "bets": 1,
+      "staked": 0.86,
+      "profit": 2.55,
+      "roi_pct": 296.51
+    },
+    {
+      "month": "2025-01",
+      "bets": 1,
+      "staked": 0.3,
+      "profit": 0.8,
+      "roi_pct": 266.67
+    },
+    {
+      "month": "2025-02",
+      "bets": 15,
+      "staked": 17.15,
+      "profit": 9.44,
+      "roi_pct": 55.04
+    },
+    {
+      "month": "2025-03",
+      "bets": 6,
+      "staked": 2.23,
+      "profit": 0.69,
+      "roi_pct": 30.94
+    },
+    {
+      "month": "2025-04",
+      "bets": 2,
+      "staked": 0.56,
+      "profit": -0.56,
+      "roi_pct": -100.0
+    },
+    {
+      "month": "2025-05",
+      "bets": 7,
+      "staked": 2.68,
+      "profit": -0.25,
+      "roi_pct": -9.33
+    },
+    {
+      "month": "2025-08",
+      "bets": 11,
+      "staked": 4.48,
+      "profit": -0.11,
+      "roi_pct": -2.46
+    },
+    {
+      "month": "2025-09",
+      "bets": 6,
+      "staked": 2.62,
+      "profit": 1.98,
+      "roi_pct": 75.57
+    },
+    {
+      "month": "2025-10",
+      "bets": 6,
+      "staked": 9.6,
+      "profit": 7.45,
+      "roi_pct": 77.6
+    },
+    {
+      "month": "2025-11",
+      "bets": 2,
+      "staked": 0.63,
+      "profit": -0.63,
+      "roi_pct": -100.0
+    },
+    {
+      "month": "2025-12",
+      "bets": 2,
+      "staked": 0.59,
+      "profit": 0.53,
+      "roi_pct": 89.83
+    },
+    {
+      "month": "2026-01",
+      "bets": 4,
+      "staked": 7.54,
+      "profit": 8.04,
+      "roi_pct": 106.63
+    },
+    {
+      "month": "2026-02",
+      "bets": 0,
+      "staked": 0.0,
+      "profit": 0.0,
+      "roi_pct": 0.0
+    },
+    {
+      "month": "2026-03",
+      "bets": 1,
+      "staked": 0.32,
+      "profit": -0.32,
+      "roi_pct": -100.0
+    },
+    {
+      "month": "2026-04",
+      "bets": 2,
+      "staked": 3.67,
+      "profit": 2.68,
+      "roi_pct": 73.02
+    },
+    {
+      "month": "2026-05",
+      "bets": 4,
+      "staked": 8.83,
+      "profit": 9.29,
+      "roi_pct": 105.21
+    }
+  ],
+  "live_promotion_allowed": false
+}

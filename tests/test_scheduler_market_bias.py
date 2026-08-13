@@ -66,6 +66,7 @@ def test_hourly_pipeline_runs_dependencies_before_prospective_capture(tmp_path, 
 
     scheduler._pipeline_loop(tasks, 60)
 
+    assert seen.index("external_market_fixture_sync") < seen.index("external_odds_news_weather_sync")
     assert seen.index("external_odds_news_weather_sync") < seen.index("historical_data_sync")
     assert seen.index("historical_data_sync") < seen.index("feature_build")
     assert seen.index("feature_build") < seen.index("prospective_research_capture")
@@ -97,6 +98,23 @@ def test_startup_pipeline_waits_for_initial_official_sync(tmp_path, monkeypatch)
     scheduler._pipeline_loop([("external_odds_news_weather_sync", lambda: {})], 60, True)
 
     assert events == ["waited_for_official", "external_odds_news_weather_sync"]
+
+
+def test_delayed_maintenance_does_not_run_during_startup(tmp_path, monkeypatch):
+    database = Database(Path(tmp_path) / "scheduler-delayed-maintenance.db")
+    database.initialize()
+    scheduler = BackgroundAgentScheduler(
+        Repository(database), TaskRunnerService(database), interval_seconds=60
+    )
+    events: list[str] = []
+    scheduler.stop_event.wait = lambda seconds: events.append(f"wait:{seconds}") or True
+    monkeypatch.setattr(
+        scheduler, "_run_task", lambda task_name, _action: events.append(task_name)
+    )
+
+    scheduler._delayed_loop("db_retention_cleanup", lambda: {}, 3600)
+
+    assert events == ["wait:3600"]
 
 
 def test_capture_warnings_expose_actionable_input_blockers(tmp_path, monkeypatch):
@@ -185,7 +203,10 @@ def test_primary_horizon_odds_capture_is_lightweight_and_runs_evidence_chain(tmp
 
     def sync(limit, evaluate, **kwargs):
         seen.update({"limit": limit, "evaluate": evaluate, **kwargs})
-        return {"matches": 3, "market_odds": 2, "market_target_matches": 3}
+        return {
+            "matches": 10, "market_candidate_matches": 3,
+            "market_odds": 2, "market_target_matches": 3,
+        }
 
     monkeypatch.setattr(
         "football_agents.scheduler.DataEnrichmentService",
@@ -200,6 +221,8 @@ def test_primary_horizon_odds_capture_is_lightweight_and_runs_evidence_chain(tmp
     report = scheduler._capture_primary_horizon_external_odds()
 
     assert report["market_odds"] == 2
+    assert report["matches"] == 3
+    assert report["matches_scanned"] == 10
     assert seen == {
         "limit": settings.agent_match_limit,
         "evaluate": False,
@@ -241,6 +264,75 @@ def test_primary_horizon_rechecks_fresh_existing_odds_without_new_fetch(tmp_path
         "named_book_gap_primary_horizon_capture",
         "profit_allocation_readiness_primary_horizon",
     ]
+
+
+def test_named_gap_scheduler_reports_waiting_window_once(tmp_path, monkeypatch):
+    database = Database(Path(tmp_path) / "scheduler-named-gap-window.db")
+    database.initialize()
+    scheduler = BackgroundAgentScheduler(Repository(database), TaskRunnerService(database))
+    result = {
+        "matches": 20,
+        "decisions": 0,
+        "predictions": 0,
+        "warnings": ["settled_selections<200"],
+        "blocker_counts": [
+            {"reason": "outside_primary_horizon", "matches": 20, "policies_affected": 25},
+        ],
+        "horizon_status": {
+            "eligible_matches": 0,
+            "before_window_matches": 20,
+            "after_window_matches": 0,
+            "window_minutes_to_kickoff": [60.0, 120.0],
+            "next_primary_horizon_at": "2026-08-14T17:00:00+00:00",
+        },
+    }
+    service = SimpleNamespace(
+        capture_experiment=lambda _limit: result,
+        experiment_report=lambda: {},
+    )
+    monkeypatch.setattr(
+        "football_agents.scheduler.NamedBookGapResearchService",
+        lambda *_args, **_kwargs: service,
+    )
+    monkeypatch.setattr(scheduler, "_write_report", lambda *_args: None)
+
+    report = scheduler._capture_named_book_gap_research()
+
+    assert report["warnings"] == [
+        "settled_selections<200",
+        "awaiting_primary_horizon:T-120..T-60;matches=20;"
+        "next=2026-08-14T17:00:00+00:00",
+    ]
+
+
+def test_external_closing_capture_uses_last_fifteen_minutes_only(tmp_path, monkeypatch):
+    database = Database(Path(tmp_path) / "scheduler-closing-horizon.db")
+    database.initialize()
+    scheduler = BackgroundAgentScheduler(Repository(database), TaskRunnerService(database))
+    seen: dict = {}
+
+    def sync(limit, evaluate, **kwargs):
+        seen.update({"limit": limit, "evaluate": evaluate, **kwargs})
+        return {"matches": 20, "market_candidate_matches": 2, "market_odds": 2}
+
+    monkeypatch.setattr(
+        "football_agents.scheduler.DataEnrichmentService",
+        lambda _repository: SimpleNamespace(sync=sync),
+    )
+
+    report = scheduler._capture_external_closing_odds()
+
+    assert report["market_odds"] == 2
+    assert report["matches"] == 2
+    assert report["matches_scanned"] == 20
+    assert seen == {
+        "limit": settings.agent_match_limit,
+        "evaluate": False,
+        "include_news_weather": False,
+        "odds_minimum_minutes": 0,
+        "odds_window_minutes": 15,
+        "skip_existing_horizon_capture": True,
+    }
 
 
 def test_qwen_terminal_auth_and_quota_errors_trip_circuit_breaker(tmp_path):

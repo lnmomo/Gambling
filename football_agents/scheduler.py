@@ -13,7 +13,7 @@ from .free_prospective import FreeProspectiveOddsService
 from .external_consensus_challenger import ExternalConsensusChallengerService
 from .named_book_gap_research import NamedBookGapResearchService
 from .historical_agent import HistoricalCollectionAgent
-from .integrations import DataEnrichmentService
+from .integrations import DataEnrichmentService, ExternalMarketUniverseService
 from .international_history_agent import InternationalHistoryAgent
 from .llm import LLMNewsAgent
 from .market_bias_monitor import MarketBiasMonitorService
@@ -72,7 +72,7 @@ class BackgroundAgentScheduler:
         self.threads.append(hourly_thread)
 
         cleanup_thread = threading.Thread(
-            target=self._loop,
+            target=self._delayed_loop,
             name="background-db-cleanup",
             args=("db_retention_cleanup", self._cleanup_retention,
                   self._interval_for("db_retention_cleanup")),
@@ -102,6 +102,17 @@ class BackgroundAgentScheduler:
         primary_odds_thread.start()
         self.threads.append(primary_odds_thread)
 
+        external_closing_thread = threading.Thread(
+            target=self._pipeline_loop,
+            name="background-external-odds-closing-evidence",
+            args=([("external_odds_closing_capture", self._capture_external_closing_odds),
+                   ("named_book_gap_closing_evidence", self._capture_named_book_gap_closing_evidence)],
+                  self._interval_for("external_odds_closing_capture"), True),
+            daemon=True,
+        )
+        external_closing_thread.start()
+        self.threads.append(external_closing_thread)
+
     def stop(self) -> None:
         self.stop_event.set()
 
@@ -112,6 +123,14 @@ class BackgroundAgentScheduler:
                 self.initial_official_sync_complete.set()
             if self.stop_event.wait(interval_seconds):
                 break
+
+    def _delayed_loop(
+        self, task_name: str, action: TaskAction, interval_seconds: int,
+    ) -> None:
+        """Run maintenance after its first interval, not during startup writes."""
+        if self.stop_event.wait(interval_seconds):
+            return
+        self._loop(task_name, action, interval_seconds)
 
     def _pipeline_loop(self, tasks: list[tuple[str, TaskAction]], interval_seconds: int,
                        wait_for_official: bool = False) -> None:
@@ -132,7 +151,10 @@ class BackgroundAgentScheduler:
             return self.interval_seconds
         if task_name in {"official_sp_sync", "official_sp_evidence_quality"}:
             return max(60, settings.official_sp_refresh_minutes * 60)
-        if task_name in {"official_sp_closing_capture", "external_odds_primary_horizon_capture"}:
+        if task_name in {
+            "official_sp_closing_capture", "external_odds_primary_horizon_capture",
+            "external_odds_closing_capture",
+        }:
             return max(60, settings.live_fast_refresh_minutes * 60)
         if task_name == "db_retention_cleanup":
             return max(3600, settings.db_vacuum_interval_hours * 3600)
@@ -160,6 +182,7 @@ class BackgroundAgentScheduler:
     def _tasks(self) -> list[tuple[str, TaskAction]]:
         tasks = [
             ("official_sp_sync", self._sync_official),
+            ("external_market_fixture_sync", self._sync_external_market_fixtures),
             ("free_prospective_odds_capture", self._capture_free_prospective_odds),
             ("external_odds_news_weather_sync", self._sync_external_news_weather),
             ("historical_data_sync", self._sync_history),
@@ -178,6 +201,9 @@ class BackgroundAgentScheduler:
             ("model_governance_check", self._check_model_governance),
         ])
         return tasks
+
+    def _sync_external_market_fixtures(self) -> dict[str, Any]:
+        return ExternalMarketUniverseService(self.repository).sync()
 
     def _capture_free_prospective_odds(self) -> dict[str, Any]:
         capture = FreeProspectiveOddsService(self.repository).capture(settings.agent_match_limit)
@@ -303,6 +329,8 @@ class BackgroundAgentScheduler:
             odds_window_minutes=120,
             skip_existing_horizon_capture=True,
         )
+        report["matches_scanned"] = int(report.get("matches", 0) or 0)
+        report["matches"] = int(report.get("market_candidate_matches", 0) or 0)
         if settings.enable_prospective_research:
             # A skipped external fetch may mean an already-captured snapshot is
             # still fresh, not that no valid T-60 decision exists. Always let
@@ -327,6 +355,24 @@ class BackgroundAgentScheduler:
                 self._refresh_profit_allocation_readiness,
             )
         return report
+
+    def _capture_external_closing_odds(self) -> dict[str, Any]:
+        report = DataEnrichmentService(self.repository).sync(
+            settings.agent_match_limit,
+            evaluate=False,
+            include_news_weather=False,
+            odds_minimum_minutes=0,
+            odds_window_minutes=15,
+            skip_existing_horizon_capture=True,
+        )
+        report["matches_scanned"] = int(report.get("matches", 0) or 0)
+        report["matches"] = int(report.get("market_candidate_matches", 0) or 0)
+        return report
+
+    def _capture_named_book_gap_closing_evidence(self) -> dict[str, Any]:
+        return NamedBookGapResearchService(
+            self.repository.db, self.repository
+        ).capture_closing_evidence(limit=max(100, settings.agent_match_limit * 20))
 
     def _build_features(self) -> dict[str, Any]:
         report = build_features_for_official_matches(
@@ -518,7 +564,22 @@ class BackgroundAgentScheduler:
             f'{item.get("reason")}:{int(item.get("matches") or 0)}'
             for item in result.get("blocker_counts", [])
             if int(item.get("matches") or 0) > 0
+            and item.get("reason") != "outside_primary_horizon"
         ]
+        horizon = result.get("horizon_status", {})
+        if int(horizon.get("eligible_matches") or 0) == 0:
+            before = int(horizon.get("before_window_matches") or 0)
+            after = int(horizon.get("after_window_matches") or 0)
+            lower, upper = (horizon.get("window_minutes_to_kickoff") or [60, 120])[:2]
+            if before:
+                blockers.append(
+                    f"awaiting_primary_horizon:T-{upper:g}..T-{lower:g};"
+                    f"matches={before};next={horizon.get('next_primary_horizon_at') or '-'}"
+                )
+            elif after:
+                blockers.append(
+                    f"primary_horizon_passed:T-{upper:g}..T-{lower:g};matches={after}"
+                )
         return {
             **result,
             "snapshots": result.get("decisions", 0),

@@ -4,6 +4,7 @@ import pandas as pd
 
 from scripts.multi_horizon_clv_replay import (
     freeze_multi_horizon_positions,
+    horizon_role_attribution,
     settle_multi_horizon_positions,
 )
 
@@ -49,3 +50,39 @@ def test_multi_horizon_settlement_recomputes_profit_after_joint_cap() -> None:
 
     assert settled.loc[settled["candidate_id"] == "core", "profit"].item() == 11.25
     assert settled.loc[settled["candidate_id"] == "satellite", "profit"].item() == -3.75
+
+
+def test_multi_horizon_can_preserve_existing_roles_for_tertiary_extension() -> None:
+    core = pd.DataFrame([
+        {**_row("core", "home", 5.0, True), "horizon_role": "9m3m_core"},
+        {**_row("long", "away", 4.0, False), "horizon_role": "18m9m_satellite"},
+    ])
+    tertiary = pd.DataFrame([_row("mid", "draw", 2.0, True)])
+
+    frozen = freeze_multi_horizon_positions(
+        core, tertiary, preserve_core_roles=True,
+        satellite_role="12m6m_tertiary",
+    )
+
+    assert dict(zip(frozen["candidate_id"], frozen["horizon_role"])) == {
+        "core": "9m3m_core",
+        "long": "18m9m_satellite",
+        "mid": "12m6m_tertiary",
+    }
+
+
+def test_horizon_role_attribution_separates_closing_value_from_outcome_luck() -> None:
+    settled = pd.DataFrame([
+        {**_row("a", "home", 10.0, True), "horizon_role": "9m3m_core"},
+        {**_row("b", "away", 5.0, False), "horizon_role": "12m6m_tertiary"},
+    ])
+
+    report = horizon_role_attribution(settled, minimum_positions=2)
+
+    assert report["9m3m_core"]["closing_expected_profit"] == 1.0
+    assert report["9m3m_core"]["realized_profit"] == 10.0
+    assert report["9m3m_core"]["realized_minus_closing_expected_profit"] == 9.0
+    assert report["9m3m_core"]["incremental_evidence_status"] == "COLLECTING"
+    assert report["12m6m_tertiary"]["closing_expected_profit"] == 0.5
+    assert report["12m6m_tertiary"]["realized_profit"] == -5.0
+    assert report["12m6m_tertiary"]["realized_minus_closing_expected_profit"] == -5.5

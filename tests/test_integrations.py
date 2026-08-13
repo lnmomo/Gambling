@@ -10,7 +10,8 @@ from datetime import datetime, timedelta, timezone
 from football_agents.db import Database
 from football_agents.integrations.odds import OddsApiClient, normalize_team
 from football_agents.integrations.service import (
-    DataEnrichmentService, _odds_capture_targets, _requests_remaining,
+    DataEnrichmentService, _capture_window_label, _odds_capture_targets,
+    _requests_remaining,
 )
 from football_agents.repository import Repository
 
@@ -40,6 +41,12 @@ class IntegrationTests(unittest.TestCase):
         targets = _odds_capture_targets(matches, now, 120, 60)
 
         self.assertEqual([row["id"] for row in targets], [2, 3])
+
+    def test_last_fifteen_minutes_are_archived_as_closing(self) -> None:
+        now = datetime.now(timezone.utc)
+        match = {"kickoff_time": (now + timedelta(minutes=10)).isoformat()}
+
+        self.assertEqual(_capture_window_label(match, now), "CLOSING")
 
     def test_primary_horizon_capture_is_not_requested_twice(self) -> None:
         with TemporaryDirectory() as directory:
